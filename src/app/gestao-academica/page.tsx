@@ -1,0 +1,93 @@
+'use client'
+
+import { useState, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
+import { useAuth } from '@/components/providers/auth-provider'
+import { Sidebar } from '@/components/layout/sidebar'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { CalendarDays, GraduationCap, BookOpen } from 'lucide-react'
+import { getFirstSchool } from '@/lib/actions/schools'
+import { TabCalendarios } from './TabCalendarios'
+import { TabEtapas } from './TabEtapas'
+import { TabMatrizes } from './TabMatrizes'
+
+export default function GestaoAcademicaPage() {
+  const { user, loading } = useAuth()
+  const router = useRouter()
+  const [schoolId, setSchoolId] = useState<string>('')
+
+  useEffect(() => {
+    if (!loading && !user) {
+      router.push('/login')
+    }
+  }, [user, loading, router])
+
+  useEffect(() => {
+    if (user) {
+      loadSchool()
+    }
+  }, [user])
+
+  async function loadSchool() {
+    try {
+      const school = await getFirstSchool()
+      setSchoolId(school.id)
+    } catch (error) {
+      console.error('Erro ao carregar escola:', error)
+    }
+  }
+
+  if (loading || !schoolId) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-[#f8fafc]">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#1D3557] mx-auto mb-4"></div>
+          <p className="text-[#64748b]">Carregando...</p>
+        </div>
+      </div>
+    )
+  }
+
+  return (
+    <>
+      <Sidebar />
+      <div className="md:pl-64 container mx-auto py-8 px-4">
+        <div className="mb-8 animate-fade-in-up">
+          <h1 className="text-3xl font-bold text-[#0f172a]">Gestão Acadêmica</h1>
+          <p className="text-[#64748b] mt-1">
+            Configure a estrutura acadêmica da escola
+          </p>
+        </div>
+
+        <Tabs defaultValue="calendarios" className="w-full">
+          <TabsList className="grid w-full max-w-md grid-cols-3 mb-8">
+            <TabsTrigger value="calendarios" className="gap-2">
+              <CalendarDays className="w-4 h-4" />
+              Calendários
+            </TabsTrigger>
+            <TabsTrigger value="etapas" className="gap-2">
+              <GraduationCap className="w-4 h-4" />
+              Etapas
+            </TabsTrigger>
+            <TabsTrigger value="matrizes" className="gap-2">
+              <BookOpen className="w-4 h-4" />
+              Matrizes
+            </TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="calendarios">
+            <TabCalendarios schoolId={schoolId} />
+          </TabsContent>
+
+          <TabsContent value="etapas">
+            <TabEtapas schoolId={schoolId} />
+          </TabsContent>
+
+          <TabsContent value="matrizes">
+            <TabMatrizes schoolId={schoolId} />
+          </TabsContent>
+        </Tabs>
+      </div>
+    </>
+  )
+}
