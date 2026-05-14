@@ -40,6 +40,12 @@
   --color-popover: var(--popover);
   --color-card-foreground: var(--card-foreground);
   --color-card: var(--card);
+  --color-success: #2BAE66;
+  --color-success-light: #D1FAE5;
+  --color-warning: #E9A23B;
+  --color-warning-light: #FEF3C7;
+  --color-info: #457B9D;
+  --color-info-light: #E0F2FE;
   --radius-sm: calc(var(--radius) * 0.6);
   --radius-md: calc(var(--radius) * 0.8);
   --radius-lg: var(--radius);
@@ -72,14 +78,14 @@
   --input: #FFFFFF;
   --ring: #4FB3BF;
 
-  --destructive: #D9534F;
+  --destructive: #C0565B;
   --destructive-foreground: #FFFFFF;
   --calendar-letivo: #5f8b6f;
   --calendar-recesso: #b5624b;
-  --success: #2BAE66;
-  --success-light: #D1FAE5;
-  --warning: #E9A23B;
-  --warning-light: #FEF3C7;
+  --success: #2F855A;
+  --success-light: #E6F4EC;
+  --warning: #C0843D;
+  --warning-light: #FFF7E8;
   --info: #457B9D;
   --info-light: #E0F2FE;
 
@@ -410,6 +416,25 @@
 .badge-error {
   background-color: #D9534F;
   color: white;
+}
+
+/* Sonner Toast custom styles */
+.toast-success {
+  background-color: var(--success) !important;
+  color: white !important;
+  border: 1px solid var(--success) !important;
+}
+
+.toast-error {
+  background-color: var(--destructive) !important;
+  color: white !important;
+  border: 1px solid var(--destructive) !important;
+}
+
+.toast-warning {
+  background-color: var(--warning) !important;
+  color: white !important;
+  border: 1px solid var(--warning) !important;
 }
 
 /* Card styles minimalistas */

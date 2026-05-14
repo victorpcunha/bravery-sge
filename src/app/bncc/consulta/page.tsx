@@ -49,7 +49,7 @@ const mockDados: BNCCObjetivo[] = [
   { id: '7', tipo_ensino: 'infantil', etapa: 'creche', faixa_etaria: 'Bebês (zero a 1 ano e 6 meses)', campo_experiencia: 'Traços, Sons, Cores e Formas', codigo_bncc: 'EI01TS01', descricao: 'Explorar sons produzidos com o próprio corpo e com objetos do ambiente.' },
 ]
 
-export default function BNCCPage() {
+export default function BNCCConsultaPage() {
   const [etapa, setEtapa] = useState('creche')
   const [faixaEtaria, setFaixaEtaria] = useState('')
   const [objetivos, setObjetivos] = useState<BNCCObjetivo[]>([])
@@ -120,7 +120,7 @@ export default function BNCCPage() {
     <>
       <div className="container mx-auto py-8 px-4 md:pl-64">
         <div className="mb-8 animate-fade-in-up">
-          <h1 className="text-3xl font-bold text-[#0f172a]">Consulta BNCC</h1>
+          <h1 className="text-3xl font-bold text-[#0f172a]">Consulta da BNCC</h1>
           <p className="text-[#64748b] mt-1">
             Base Nacional Comum Curricular - Objetivos de Aprendizagem
           </p>

@@ -5,18 +5,21 @@ import { usePathname } from 'next/navigation'
 import { cn } from '@/lib/utils'
 import { useAuth } from '@/components/providers/auth-provider'
 import { Button } from '@/components/ui/button'
-import { 
-  School, 
-  Users, 
-  GraduationCap, 
-  DoorOpen, 
+import {
+  School,
+  Users,
+  GraduationCap,
+  DoorOpen,
   UserCheck,
   BookOpen,
   LogOut,
   Menu,
   LayoutDashboard,
   Calendar,
-  Settings
+  Settings,
+  ClipboardList,
+  ChevronDown,
+  ChevronRight
 } from 'lucide-react'
 import { useState } from 'react'
 
@@ -51,15 +54,68 @@ const modules = [
     href: '/matriculas',
     icon: DoorOpen,
   },
+{
+        title: 'Gestão Acadêmica',
+        icon: Calendar,
+        submenu: [
+          {
+            title: 'Estrutura Acadêmica',
+            href: '/gestao-academica/estrutura-academica',
+            icon: GraduationCap,
+          },
+          {
+            title: 'Métodos de Avaliação',
+            href: '/gestao-academica/metodos',
+            icon: ClipboardList,
+          },
+        ],
+      },
+      {
+        title: 'Gestão Pedagógica',
+        icon: BookOpen,
+        submenu: [
+          {
+            title: 'Disciplinas',
+            href: '/gestao-pedagogica/disciplinas',
+            icon: BookOpen,
+          },
+        ],
+      },
   {
-    title: 'Gestão Acadêmica',
-    href: '/gestao-academica',
-    icon: Calendar,
-  },
-  {
-    title: 'Consulta BNCC',
-    href: '/bncc',
+    title: 'BNCC',
     icon: BookOpen,
+    submenu: [
+      {
+        title: 'Consulta da BNCC',
+        href: '/bncc/consulta',
+        icon: BookOpen,
+      },
+      {
+        title: 'Campos de Experiência',
+        href: '/bncc/campos-experiencia',
+        icon: BookOpen,
+      },
+      {
+        title: 'Objetivos de Aprendizagem',
+        href: '/bncc/objetivos',
+        icon: BookOpen,
+      },
+      {
+        title: 'Habilidades',
+        href: '/bncc/habilidades',
+        icon: BookOpen,
+      },
+      {
+        title: 'Objetos de Conhecimento',
+        href: '/bncc/objetos-conhecimento',
+        icon: BookOpen,
+      },
+      {
+        title: 'Unidades Temáticas',
+        href: '/bncc/unidades-tematicas',
+        icon: BookOpen,
+      },
+    ],
   },
 ]
 
@@ -67,11 +123,22 @@ export function Sidebar() {
   const pathname = usePathname()
   const { signOut, user } = useAuth()
   const [isOpen, setIsOpen] = useState(false)
+  const [openSubmenus, setOpenSubmenus] = useState<string[]>([])
 
   const handleSignOut = async () => {
     await signOut()
     window.location.href = '/login'
   }
+
+  const toggleSubmenu = (moduleTitle: string) => {
+    setOpenSubmenus(prev =>
+      prev.includes(moduleTitle)
+        ? prev.filter(title => title !== moduleTitle)
+        : [...prev, moduleTitle]
+    )
+  }
+
+  const isSubmenuOpen = (moduleTitle: string) => openSubmenus.includes(moduleTitle)
 
   return (
     <>
@@ -118,40 +185,132 @@ export function Sidebar() {
               Menu Principal
             </div>
             {modules.map((module, index) => {
-              const isActive = pathname === module.href || 
-                (module.href !== '/' && pathname.startsWith(module.href))
-              
+              const isActive = module.href ? (pathname === module.href ||
+                (module.href !== '/' && pathname.startsWith(module.href))) : false
+
+              const hasSubmenu = module.submenu && module.submenu.length > 0
+              const submenuOpen = isSubmenuOpen(module.title)
+
+              // Verificar se algum item do submenu está ativo
+              const isSubmenuActive = hasSubmenu && module.submenu.some(sub =>
+                pathname === sub.href || (sub.href !== '/' && pathname.startsWith(sub.href))
+              )
+
+              const effectiveActive = isActive || isSubmenuActive
+
               return (
-                <Link
-                  key={module.href}
-                  href={module.href}
-                  onClick={() => setIsOpen(false)}
-                  className={cn(
-                    "flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 group",
-                    isActive 
-                      ? "bg-white/15 text-white shadow-lg shadow-black/10" 
-                      : "text-white/60 hover:bg-white/10 hover:text-white"
+                <div key={module.title} style={{ animationDelay: `${index * 50}ms` }}>
+                  {hasSubmenu ? (
+                    // Módulo com submenu - usa div com onClick
+                    <div
+                      className={cn(
+                        "flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 group cursor-pointer",
+                        effectiveActive
+                          ? "bg-white/15 text-white shadow-lg shadow-black/10"
+                          : "text-white/60 hover:bg-white/10 hover:text-white"
+                      )}
+                      onClick={() => toggleSubmenu(module.title)}
+                    >
+                      <div className={cn(
+                        "p-2 rounded-lg transition-all duration-200",
+                        effectiveActive
+                          ? "bg-[#457B9D]"
+                          : "bg-white/10 group-hover:bg-white/15"
+                      )}>
+                        <module.icon className={cn(
+                          "h-4 w-4 transition-transform duration-200",
+                          effectiveActive ? "text-white" : "text-white/60 group-hover:text-white"
+                        )} />
+                      </div>
+                      <span className="relative flex-1">
+                        {module.title}
+                        {effectiveActive && (
+                          <span className="absolute -bottom-1 left-0 right-0 h-0.5 bg-[#4FB3BF] rounded-full" />
+                        )}
+                      </span>
+                      <div className="transition-transform duration-200">
+                        {submenuOpen ? (
+                          <ChevronDown className="h-4 w-4 text-white/60" />
+                        ) : (
+                          <ChevronRight className="h-4 w-4 text-white/60" />
+                        )}
+                      </div>
+                    </div>
+                  ) : (
+                    // Módulo normal - usa Link
+                    <Link
+                      href={module.href || '#'}
+                      onClick={() => setIsOpen(false)}
+                      className={cn(
+                        "flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 group",
+                        effectiveActive
+                          ? "bg-white/15 text-white shadow-lg shadow-black/10"
+                          : "text-white/60 hover:bg-white/10 hover:text-white"
+                      )}
+                    >
+                      <div className={cn(
+                        "p-2 rounded-lg transition-all duration-200",
+                        effectiveActive
+                          ? "bg-[#457B9D]"
+                          : "bg-white/10 group-hover:bg-white/15"
+                      )}>
+                        <module.icon className={cn(
+                          "h-4 w-4 transition-transform duration-200",
+                          effectiveActive ? "text-white" : "text-white/60 group-hover:text-white"
+                        )} />
+                      </div>
+                      <span className="relative flex-1">
+                        {module.title}
+                        {effectiveActive && (
+                          <span className="absolute -bottom-1 left-0 right-0 h-0.5 bg-[#4FB3BF] rounded-full" />
+                        )}
+                      </span>
+                    </Link>
                   )}
-                  style={{ animationDelay: `${index * 50}ms` }}
-                >
-                  <div className={cn(
-                    "p-2 rounded-lg transition-all duration-200",
-                    isActive 
-                      ? "bg-[#457B9D]" 
-                      : "bg-white/10 group-hover:bg-white/15"
-                  )}>
-                    <module.icon className={cn(
-                      "h-4 w-4 transition-transform duration-200",
-                      isActive ? "text-white" : "text-white/60 group-hover:text-white"
-                    )} />
-                  </div>
-                  <span className="relative">
-                    {module.title}
-                    {isActive && (
-                      <span className="absolute -bottom-1 left-0 right-0 h-0.5 bg-[#4FB3BF] rounded-full" />
-                    )}
-                  </span>
-                </Link>
+
+                  {/* Submenu */}
+                  {hasSubmenu && submenuOpen && (
+                    <div className="ml-6 mt-1 space-y-1">
+                      {module.submenu.map((submenuItem, subIndex) => {
+                        const isSubActive = pathname === submenuItem.href ||
+                          (submenuItem.href !== '/' && pathname.startsWith(submenuItem.href))
+
+                        return (
+                          <Link
+                            key={submenuItem.href}
+                            href={submenuItem.href}
+                            onClick={() => setIsOpen(false)}
+                            className={cn(
+                              "flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 group",
+                              isSubActive
+                                ? "bg-white/10 text-white"
+                                : "text-white/50 hover:bg-white/5 hover:text-white/80"
+                            )}
+                            style={{ animationDelay: `${(index * 50) + (subIndex * 25)}ms` }}
+                          >
+                            <div className={cn(
+                              "p-1.5 rounded-lg transition-all duration-200",
+                              isSubActive
+                                ? "bg-[#457B9D]/80"
+                                : "bg-white/5 group-hover:bg-white/10"
+                            )}>
+                              <submenuItem.icon className={cn(
+                                "h-3 w-3 transition-transform duration-200",
+                                isSubActive ? "text-white" : "text-white/50 group-hover:text-white/80"
+                              )} />
+                            </div>
+                            <span className="relative">
+                              {submenuItem.title}
+                              {isSubActive && (
+                                <span className="absolute -bottom-0.5 left-0 right-0 h-0.5 bg-[#4FB3BF] rounded-full" />
+                              )}
+                            </span>
+                          </Link>
+                        )
+                      })}
+                    </div>
+                  )}
+                </div>
               )
             })}
           </nav>
