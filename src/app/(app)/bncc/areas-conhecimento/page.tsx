@@ -86,10 +86,10 @@ export default function AreasConhecimentoPage() {
             <div>
               <label className="text-sm font-medium mb-2 block text-foreground">Tipo de Ensino</label>
               <Select value={tipoEnsino} onValueChange={(v) => { setTipoEnsino(v); setSelectedArea(null) }}>
-                <SelectTrigger className="bg-card/80 border-border">
+                <SelectTrigger className="border-2 border-[#e2e8f0] focus:border-[#1D3557] [&_svg:not([class*='rotate'])]:rotate-0">
                   <SelectValue placeholder="Selecione" />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent position="popper" side="bottom" sideOffset={5}>
                   <SelectItem value="fundamental">Ensino Fundamental</SelectItem>
                   <SelectItem value="medio">Ensino Médio</SelectItem>
                 </SelectContent>
@@ -98,10 +98,10 @@ export default function AreasConhecimentoPage() {
             <div>
               <label className="text-sm font-medium mb-2 block text-foreground">Área do Conhecimento</label>
               <Select value={selectedArea || ''} onValueChange={setSelectedArea}>
-                <SelectTrigger className="bg-card/80 border-border">
+                <SelectTrigger className="border-2 border-[#e2e8f0] focus:border-[#1D3557] [&_svg:not([class*='rotate'])]:rotate-0">
                   <SelectValue placeholder="Selecione" />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent position="popper" side="bottom" sideOffset={5}>
                   {areas.map(a => <SelectItem key={a.id} value={a.id}>{a.nome}</SelectItem>)}
                 </SelectContent>
               </Select>

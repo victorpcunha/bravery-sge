@@ -154,10 +154,10 @@ export default function ObjetivosPage() {
             <div>
               <label className="text-sm font-medium mb-2 block text-foreground">Etapa de Ensino</label>
               <Select value={etapa} onValueChange={setEtapa}>
-                <SelectTrigger className="bg-card/80 border-border focus:border-primary focus:ring-primary/20">
+                <SelectTrigger className="border-2 border-[#e2e8f0] focus:border-[#1D3557] [&_svg:not([class*='rotate'])]:rotate-0">
                   <SelectValue placeholder="Selecione" />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent position="popper" side="bottom" sideOffset={5}>
                   {etapas.map(e => <SelectItem key={e.value} value={e.value}>{e.label}</SelectItem>)}
                 </SelectContent>
               </Select>
@@ -165,10 +165,10 @@ export default function ObjetivosPage() {
             <div className="min-w-0">
               <label className="text-sm font-medium mb-2 block text-foreground">Faixa Etária</label>
               <Select value={faixaEtariaFilter} onValueChange={setFaixaEtariaFilter}>
-                <SelectTrigger className="bg-card/80 border-border focus:border-primary focus:ring-primary/20 overflow-hidden text-ellipsis whitespace-nowrap">
+                <SelectTrigger className="border-2 border-[#e2e8f0] focus:border-[#1D3557] [&_svg:not([class*='rotate'])]:rotate-0 overflow-hidden text-ellipsis whitespace-nowrap">
                   <SelectValue placeholder="Selecione" className="overflow-hidden text-ellipsis" />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent position="popper" side="bottom" sideOffset={5}>
                   <SelectItem value="all">Todas as Faixas</SelectItem>
                   {(faixas[etapa] || []).map(f => <SelectItem key={f} value={f} className="whitespace-normal">{f}</SelectItem>)}
                 </SelectContent>
@@ -177,10 +177,10 @@ export default function ObjetivosPage() {
             <div>
               <label className="text-sm font-medium mb-2 block text-foreground">Campo de Experiência</label>
               <Select value={campoExperiencia} onValueChange={setCampoExperiencia}>
-                <SelectTrigger className="bg-card/80 border-border focus:border-primary focus:ring-primary/20">
+                <SelectTrigger className="border-2 border-[#e2e8f0] focus:border-[#1D3557] [&_svg:not([class*='rotate'])]:rotate-0">
                   <SelectValue placeholder="Selecione" />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent position="popper" side="bottom" sideOffset={5}>
                   <SelectItem value="all">Todos os Campos</SelectItem>
                   {camposList.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
                 </SelectContent>
@@ -298,8 +298,8 @@ export default function ObjetivosPage() {
               <div>
                 <label className="text-sm font-medium mb-2 block text-foreground">Etapa de Ensino</label>
                 <Select value={form.etapa_obj} onValueChange={v => setForm({ ...form, etapa_obj: v, faixa_etaria: (faixas[v] || [])[0] || '' })}>
-                  <SelectTrigger className="bg-card/80 border-border"><SelectValue placeholder="Selecione" /></SelectTrigger>
-                  <SelectContent>
+                  <SelectTrigger className="border-2 border-[#e2e8f0] focus:border-[#1D3557] [&_svg:not([class*='rotate'])]:rotate-0"><SelectValue placeholder="Selecione" /></SelectTrigger>
+                  <SelectContent position="popper" side="bottom" sideOffset={5}>
                     {etapas.map(e => <SelectItem key={e.value} value={e.value}>{e.label}</SelectItem>)}
                   </SelectContent>
                 </Select>
@@ -307,8 +307,8 @@ export default function ObjetivosPage() {
               <div>
                 <label className="text-sm font-medium mb-2 block text-foreground">Campo de Experiência</label>
                 <Select value={form.campo_experiencia} onValueChange={v => setForm({ ...form, campo_experiencia: v })}>
-                  <SelectTrigger className="bg-card/80 border-border"><SelectValue placeholder="Selecione" /></SelectTrigger>
-                  <SelectContent>
+                  <SelectTrigger className="border-2 border-[#e2e8f0] focus:border-[#1D3557] [&_svg:not([class*='rotate'])]:rotate-0"><SelectValue placeholder="Selecione" /></SelectTrigger>
+                  <SelectContent position="popper" side="bottom" sideOffset={5}>
                     {camposList.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
                   </SelectContent>
                 </Select>
@@ -316,8 +316,8 @@ export default function ObjetivosPage() {
               <div>
                 <label className="text-sm font-medium mb-2 block text-foreground">Faixa Etária</label>
                 <Select value={form.faixa_etaria} onValueChange={v => setForm({ ...form, faixa_etaria: v })}>
-                  <SelectTrigger className="bg-card/80 border-border"><SelectValue placeholder="Selecione" /></SelectTrigger>
-                  <SelectContent>
+                  <SelectTrigger className="border-2 border-[#e2e8f0] focus:border-[#1D3557] [&_svg:not([class*='rotate'])]:rotate-0"><SelectValue placeholder="Selecione" /></SelectTrigger>
+                  <SelectContent position="popper" side="bottom" sideOffset={5}>
                     {(faixas[form.etapa_obj] || []).map(f => <SelectItem key={f} value={f} className="text-sm whitespace-normal">{f}</SelectItem>)}
                   </SelectContent>
                 </Select>

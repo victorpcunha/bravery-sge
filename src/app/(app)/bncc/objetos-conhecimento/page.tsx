@@ -216,10 +216,10 @@ export default function ObjetosConhecimentoPage() {
             <div>
               <label className="text-sm font-medium mb-2 block text-[#334155]">Disciplina</label>
               <Select value={disciplina} onValueChange={setDisciplina}>
-                <SelectTrigger className="bg-white/80 border-[#e2e8f0] focus:border-[#1D3557] focus:ring-[#1D3557]/20">
+                <SelectTrigger className="border-2 border-[#e2e8f0] focus:border-[#1D3557] [&_svg:not([class*='rotate'])]:rotate-0">
                   <SelectValue placeholder="Selecione" />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent position="popper" side="bottom" sideOffset={5}>
                   <SelectItem value="all">Todas as Disciplinas</SelectItem>
                   {disciplinasList.map(d => (
                     <SelectItem key={d.id} value={d.nome}>{d.nome}</SelectItem>
@@ -231,10 +231,10 @@ export default function ObjetosConhecimentoPage() {
             <div>
               <label className="text-sm font-medium mb-2 block text-[#334155]">Etapa de Ensino</label>
               <Select value={etapa} onValueChange={setEtapa}>
-                <SelectTrigger className="bg-white/80 border-[#e2e8f0] focus:border-[#1D3557] focus:ring-[#1D3557]/20">
+                <SelectTrigger className="border-2 border-[#e2e8f0] focus:border-[#1D3557] [&_svg:not([class*='rotate'])]:rotate-0">
                   <SelectValue placeholder="Selecione" />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent position="popper" side="bottom" sideOffset={5}>
                   <SelectItem value="all">Todos os Anos</SelectItem>
                   {etapasList.map(e => (
                     <SelectItem key={e.id} value={e.etapa_nome}>{e.etapa_nome}</SelectItem>
