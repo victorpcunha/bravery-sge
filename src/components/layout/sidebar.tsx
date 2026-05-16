@@ -115,6 +115,16 @@ const modules = [
         href: '/bncc/unidades-tematicas',
         icon: BookOpen,
       },
+      {
+        title: 'Áreas do Conhecimento',
+        href: '/bncc/areas-conhecimento',
+        icon: BookOpen,
+      },
+      {
+        title: 'Competências e Habilidades',
+        href: '/bncc/competencias-habilidades',
+        icon: BookOpen,
+      },
     ],
   },
 ]

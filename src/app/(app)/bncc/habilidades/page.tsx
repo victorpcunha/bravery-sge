@@ -113,18 +113,16 @@ export default function HabilidadesPage() {
     try {
       const supabase = getSupabaseClient()
       
-      let query = supabase
-        .from('bncc_habilidades')
-        .select(`
+      let q = supabase.from('bncc_habilidades').select(`
           id,
           codigo_bncc,
           descricao,
           anos,
           etapa_ensino,
-          objeto_conhecimento:bncc_objetos_conhecimento(
+          objeto_conhecimento:bncc_objetos_conhecimento!inner(
             id,
             objeto_conhecimento,
-            unidade_tematica:bncc_unidades_tematicas(
+            unidade_tematica:bncc_unidades_tematicas!inner(
               id,
               unidade_tematica,
               disciplina
@@ -132,25 +130,25 @@ export default function HabilidadesPage() {
           )
         `)
 
-      const { data, error } = await query
+      if (disciplina !== 'all') {
+        q = q.eq('objeto_conhecimento.unidade_tematica.disciplina', disciplina)
+      }
+
+      const { data, error } = await q
 
       if (error || !data) {
+        console.error('Habilidades error:', error)
         setHabilidades([])
       } else {
         const habilidadesData = data as unknown as Habilidade[]
         
         let filtered = habilidadesData
-        if (disciplina !== 'all') {
-          filtered = filtered.filter(h => 
-            h.objeto_conhecimento?.unidade_tematica?.disciplina === disciplina
-          )
-        }
         if (etapa !== 'all') {
-          // Normalizar: "1º Ano" -> "1º"
           const anoNormalizado = etapa.replace(/ Ano$/, '')
-          filtered = filtered.filter(h => 
-            h.anos?.some((a: string) => a.includes(anoNormalizado))
-          )
+          filtered = filtered.filter(h => {
+            const match = h.anos?.some((a: string) => a.includes(anoNormalizado))
+            return match === true
+          })
         }
         
         setHabilidades(filtered)
@@ -177,11 +175,15 @@ export default function HabilidadesPage() {
     if (!acc[unidade][objeto]) {
       acc[unidade][objeto] = []
     }
-    acc[unidade][objeto].push(h)
+    const exists = acc[unidade][objeto].some(e => e.codigo_bncc === h.codigo_bncc)
+    if (!exists) {
+      acc[unidade][objeto].push(h)
+    }
     return acc
   }, {} as Record<string, Record<string, Habilidade[]>>)
 
-  const totalHabilidades = filteredHabilidades.length
+  const uniqueCodes = new Set(filteredHabilidades.map(h => h.codigo_bncc))
+  const totalHabilidades = uniqueCodes.size
   const totalUnidades = Object.keys(groupedByUnidade).length
 
   return (
