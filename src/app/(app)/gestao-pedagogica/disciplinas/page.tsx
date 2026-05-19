@@ -331,7 +331,7 @@ export default function DisciplinasPage() {
                       </td>
                       <td className="p-4 text-[#64748b]">{disciplina.sigla || '-'}</td>
                       <td className="p-4 text-[#64748b]">
-                        {areas.find(a => a.codigo === disciplina.area_codigo)?.nome || '-'}
+                        {areas.find(a => a.id === Number(disciplina.area_codigo))?.nome || '-'}
                       </td>
                       <td className="p-4 text-[#64748b]">{disciplina.codigo_inep || '-'}</td>
                       <td className="p-4 text-[#64748b]">

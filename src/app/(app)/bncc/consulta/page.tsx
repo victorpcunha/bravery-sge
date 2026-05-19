@@ -345,7 +345,7 @@ export default function BNCCConsultaPage() {
         </Card>
       ) : (
         <div className="space-y-4">
-          {Object.entries(grupos).map(([grupo, items]: [string, any[]], idx) => (
+          {Object.entries(grupos as Record<string, any[]>).map(([grupo, items], idx) => (
             <Card key={grupo} className="border-0 shadow-md card-glass animate-fade-in-up">
               <CardHeader
                 className="cursor-pointer hover:bg-muted/50 transition-all duration-200 bg-muted/30"

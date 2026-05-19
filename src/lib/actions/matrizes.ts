@@ -23,6 +23,8 @@ export type MatrizCurricular = {
   ativa: boolean
   created_at: string
   updated_at: string
+  academico_etapas_ensino?: { etapa_nome: string; etapa_tipo: string } | null
+  academico_metodos_avaliacao?: { nome: string } | null
 }
 
 export type PeriodoMatriz = {
@@ -287,12 +289,50 @@ export async function createDisciplinaMatriz(disciplina: Partial<DisciplinaMatri
 }
 
 export async function deleteDisciplinaMatriz(id: string) {
+  // Remove habilidades vinculadas
+  await supabase.from('academico_matriz_habilidades_bncc').delete().eq('matriz_disciplina_id', id)
+  await supabase.from('academico_matriz_habilidades_manuais').delete().eq('matriz_disciplina_id', id)
+  // Remove a disciplina
   const { error } = await supabase
     .from('academico_matriz_disciplinas')
     .delete()
     .eq('id', id)
 
   if (error) throw error
+}
+
+export async function updateDisciplinaMatriz(id: string, data: Partial<DisciplinaMatriz>) {
+  const { error } = await supabase
+    .from('academico_matriz_disciplinas')
+    .update(data)
+    .eq('id', id)
+
+  if (error) throw error
+}
+
+export async function substituirHabilidades(
+  disciplinaId: string,
+  bnccCodigos: string[],
+  manuais: { codigo: string; descricao: string }[]
+) {
+  await Promise.all([
+    supabase.from('academico_matriz_habilidades_bncc').delete().eq('matriz_disciplina_id', disciplinaId),
+    supabase.from('academico_matriz_habilidades_manuais').delete().eq('matriz_disciplina_id', disciplinaId),
+  ])
+
+  const { error: err1 } = await supabase
+    .from('academico_matriz_habilidades_bncc')
+    .insert(bnccCodigos.map(c => ({ matriz_disciplina_id: disciplinaId, habilidade_codigo: c })))
+
+  if (err1) throw err1
+
+  if (manuais.length > 0) {
+    const { error: err2 } = await supabase
+      .from('academico_matriz_habilidades_manuais')
+      .insert(manuais.map(h => ({ matriz_disciplina_id: disciplinaId, codigo: h.codigo, descricao: h.descricao })))
+
+    if (err2) throw err2
+  }
 }
 
 // ============================================
@@ -380,9 +420,24 @@ export async function replicarDisciplinas(
     .eq('periodo_id', periodoOrigemId)
 
   if (errorBusca) throw errorBusca
+  if (!disciplinasOrigem?.length) return true
 
-  // Para cada período destino, criar as disciplinas
+  // Para cada período destino, remover disciplinas existentes e inserir as novas
   for (const periodoDestinoId of periodoDestinoIds) {
+    // Remove disciplinas existentes no período destino
+    const { data: existentes } = await supabase
+      .from('academico_matriz_disciplinas')
+      .select('id')
+      .eq('periodo_id', periodoDestinoId)
+
+    if (existentes?.length) {
+      const ids = existentes.map(d => d.id)
+      await supabase.from('academico_matriz_habilidades_bncc').delete().in('matriz_disciplina_id', ids)
+      await supabase.from('academico_matriz_habilidades_manuais').delete().in('matriz_disciplina_id', ids)
+      await supabase.from('academico_matriz_disciplinas').delete().in('id', ids)
+    }
+
+    // Inserir novas disciplinas
     const novasDisciplinas = disciplinasOrigem.map(d => ({
       periodo_id: periodoDestinoId,
       disciplina_id: d.disciplina_id,
@@ -392,11 +447,41 @@ export async function replicarDisciplinas(
       tipo_disciplina: d.tipo_disciplina
     }))
 
-    const { error: errorInsert } = await supabase
+    const { data: inseridas, error: errorInsert } = await supabase
       .from('academico_matriz_disciplinas')
       .insert(novasDisciplinas)
+      .select()
 
     if (errorInsert) throw errorInsert
+
+    // Copiar habilidades vinculadas (BNCC e manuais)
+    for (let i = 0; i < disciplinasOrigem.length; i++) {
+      const origem = disciplinasOrigem[i]
+      const destino = inseridas?.[i]
+      if (!destino) continue
+
+      const { data: bnccs } = await supabase
+        .from('academico_matriz_habilidades_bncc')
+        .select('habilidade_codigo')
+        .eq('matriz_disciplina_id', origem.id)
+
+      if (bnccs?.length) {
+        await supabase.from('academico_matriz_habilidades_bncc').insert(
+          bnccs.map(h => ({ matriz_disciplina_id: destino.id, habilidade_codigo: h.habilidade_codigo }))
+        )
+      }
+
+      const { data: manuais } = await supabase
+        .from('academico_matriz_habilidades_manuais')
+        .select('codigo, descricao')
+        .eq('matriz_disciplina_id', origem.id)
+
+      if (manuais?.length) {
+        await supabase.from('academico_matriz_habilidades_manuais').insert(
+          manuais.map(h => ({ matriz_disciplina_id: destino.id, codigo: h.codigo, descricao: h.descricao }))
+        )
+      }
+    }
   }
 
   return true
@@ -424,4 +509,36 @@ export async function getHabilidadesBNCCSistema(tipoEnsino?: string, componente?
 
   if (error) throw error
   return data as any[]
+}
+
+// ============================================
+// Buscar habilidades BNCC por disciplina + etapa
+// ============================================
+
+export async function getHabilidadesBNCCPorDisciplinaEtapa(disciplinaNome: string, etapaEnsino: string) {
+  const { data, error } = await supabase
+    .from('bncc_habilidades')
+    .select(`
+      id, codigo_bncc, descricao, anos,
+      objeto_conhecimento:bncc_objetos_conhecimento!inner(
+        id, objeto_conhecimento,
+        unidade_tematica:bncc_unidades_tematicas!inner(
+          id, unidade_tematica, disciplina
+        )
+      )
+    `)
+    .eq('objeto_conhecimento.unidade_tematica.disciplina', disciplinaNome)
+    .eq('objeto_conhecimento.unidade_tematica.etapa_ensino', etapaEnsino)
+
+  if (error) throw error
+
+  // Deduplicar por codigo_bncc (o inner join pode gerar duplicatas)
+  const seen = new Set<string>()
+  const deduped = ((data as any[]) || []).filter(h => {
+    if (seen.has(h.codigo_bncc)) return false
+    seen.add(h.codigo_bncc)
+    return true
+  })
+
+  return deduped
 }

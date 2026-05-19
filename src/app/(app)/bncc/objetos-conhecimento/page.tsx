@@ -125,8 +125,19 @@ export default function ObjetosConhecimentoPage() {
         setObjetos([])
       } else {
         const objetosData = data as unknown as ObjetoConhecimento[]
+
+        // Deduplica por texto + unidade temática (mesmo objeto aparece em vários anos)
+        const vistos = new Set<string>()
+        const dedup: ObjetoConhecimento[] = []
+        for (const obj of objetosData) {
+          const chave = `${obj.objeto_conhecimento}|${obj.unidade_tematica?.unidade_tematica}`
+          if (!vistos.has(chave)) {
+            vistos.add(chave)
+            dedup.push(obj)
+          }
+        }
         
-        let filtered = objetosData
+        let filtered = dedup
         
         if (disciplina !== 'all') {
           filtered = filtered.filter(o => o.unidade_tematica?.disciplina === disciplina)
