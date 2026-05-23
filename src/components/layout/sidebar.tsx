@@ -20,7 +20,8 @@ import {
   Settings,
   ClipboardList,
   ChevronDown,
-  ChevronRight
+  ChevronRight,
+  Table2
 } from 'lucide-react'
 import { useState } from 'react'
 
@@ -65,6 +66,11 @@ const modules = [
         href: '/gestao-turmas/turmas',
         icon: GraduationCap,
       },
+      {
+        title: 'Quadro de Aulas',
+        href: '/gestao-turmas/quadro-aulas',
+        icon: Table2,
+      },
     ],
   },
   {
@@ -96,6 +102,11 @@ const modules = [
             title: 'Disciplinas',
             href: '/gestao-pedagogica/disciplinas',
             icon: BookOpen,
+          },
+          {
+            title: 'Indicadores de Avaliação',
+            href: '/gestao-pedagogica/indicadores',
+            icon: ClipboardList,
           },
         ],
       },
