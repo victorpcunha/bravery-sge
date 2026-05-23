@@ -1,0 +1,33 @@
+export const FUNCOES_PADRAO = [
+  { nome: 'Docente', tipo_censo: '130' },
+  { nome: 'Auxiliar/assistente educacional', tipo_censo: '121' },
+  { nome: 'Profissional/monitor de atividade complementar', tipo_censo: '133' },
+  { nome: 'Tradutor e Intérprete de Libras', tipo_censo: '136' },
+  { nome: 'Docente titular - coordenador de tutoria (EAD)', tipo_censo: '130' },
+  { nome: 'Docente tutor - auxiliar (EAD)', tipo_censo: '130' },
+  { nome: 'Guia-Intérprete', tipo_censo: '136' },
+  { nome: 'Profissional de apoio escolar para alunos com deficiência', tipo_censo: '122' },
+  { nome: 'Instrutor da Educação Profissional', tipo_censo: '133' },
+]
+
+export const CENSO_FUNCOES: { nome: string; codigo: string }[] = [
+  { nome: 'Agrônomos, horticultores, técnicos ou monitores de horta/plantação', codigo: '119' },
+  { nome: 'Assistente social', codigo: '120' },
+  { nome: 'Auxiliares de secretaria ou administrativos', codigo: '121' },
+  { nome: 'Auxiliar de serviços gerais, porteiro, zelador, faxineiro, jardineiro', codigo: '122' },
+  { nome: 'Bibliotecário, auxiliar de biblioteca ou monitor de sala de leitura', codigo: '123' },
+  { nome: 'Bombeiro brigadista, enfermeiro, técnico de enfermagem, socorrista', codigo: '124' },
+  { nome: 'Coordenador de turno/disciplinar', codigo: '125' },
+  { nome: 'Fonoaudiólogo', codigo: '126' },
+  { nome: 'Nutricionista', codigo: '127' },
+  { nome: 'Psicólogo escolar', codigo: '128' },
+  { nome: 'Cozinheiro, merendeira, auxiliar de cozinha', codigo: '129' },
+  { nome: 'Pedagogo, coordenador pedagógico, orientador educacional, supervisor escolar', codigo: '130' },
+  { nome: 'Secretário escolar', codigo: '131' },
+  { nome: 'Segurança, guarda patrimonial', codigo: '132' },
+  { nome: 'Técnico, monitor, supervisor de laboratório ou multimídia', codigo: '133' },
+  { nome: 'Vice-diretor, diretor adjunto, gestor administrativo/financeiro', codigo: '134' },
+  { nome: 'Orientador comunitário', codigo: '135' },
+  { nome: 'Tradutor e Intérprete de Libras (fora de sala de aula)', codigo: '136' },
+  { nome: 'Revisor de texto Braille, assistente vidente', codigo: '137' },
+]

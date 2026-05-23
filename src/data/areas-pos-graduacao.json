@@ -1,0 +1,46 @@
+[
+  {
+    "codigo": 1,
+    "nome": "Educação"
+  },
+  {
+    "codigo": 2,
+    "nome": "Artes e humanidades"
+  },
+  {
+    "codigo": 3,
+    "nome": "Ciências sociais, comunicação e informação"
+  },
+  {
+    "codigo": 4,
+    "nome": "Negócios, administração e direito"
+  },
+  {
+    "codigo": 5,
+    "nome": "Ciências naturais, matemática e estatística"
+  },
+  {
+    "codigo": 6,
+    "nome": "Computação e Tecnologias da Informação e Comunicação (TIC)"
+  },
+  {
+    "codigo": 7,
+    "nome": "Engenharia, produção e construção"
+  },
+  {
+    "codigo": 8,
+    "nome": "Agricultura, silvicultura, pesca e veterinária"
+  },
+  {
+    "codigo": 9,
+    "nome": "Saúde e bem-estar"
+  },
+  {
+    "codigo": 10,
+    "nome": "Serviços"
+  },
+  {
+    "codigo": 99,
+    "nome": "Programas básicos"
+  }
+]

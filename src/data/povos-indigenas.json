@@ -1,0 +1,1218 @@
+[
+  {
+    "codigo": 1,
+    "nome": "Aconã"
+  },
+  {
+    "codigo": 2,
+    "nome": "Aikaná"
+  },
+  {
+    "codigo": 3,
+    "nome": "Aimore"
+  },
+  {
+    "codigo": 4,
+    "nome": "Ajuru"
+  },
+  {
+    "codigo": 5,
+    "nome": "Akuntsú"
+  },
+  {
+    "codigo": 6,
+    "nome": "Alaketesu"
+  },
+  {
+    "codigo": 7,
+    "nome": "Alantesu"
+  },
+  {
+    "codigo": 8,
+    "nome": "Amanayé"
+  },
+  {
+    "codigo": 9,
+    "nome": "Amondáwa"
+  },
+  {
+    "codigo": 10,
+    "nome": "Anacé"
+  },
+  {
+    "codigo": 11,
+    "nome": "Anambé"
+  },
+  {
+    "codigo": 12,
+    "nome": "Apalaí"
+  },
+  {
+    "codigo": 13,
+    "nome": "Apiaká"
+  },
+  {
+    "codigo": 14,
+    "nome": "Apinayé"
+  },
+  {
+    "codigo": 15,
+    "nome": "Apolima  Arara"
+  },
+  {
+    "codigo": 16,
+    "nome": "Apurinã"
+  },
+  {
+    "codigo": 17,
+    "nome": "Aranã"
+  },
+  {
+    "codigo": 18,
+    "nome": "Arapáso"
+  },
+  {
+    "codigo": 19,
+    "nome": "Arapiun"
+  },
+  {
+    "codigo": 20,
+    "nome": "Arara de Rondônia"
+  },
+  {
+    "codigo": 21,
+    "nome": "Arara do Acre"
+  },
+  {
+    "codigo": 22,
+    "nome": "Arara do Aripuanã"
+  },
+  {
+    "codigo": 23,
+    "nome": "Arara do Pará"
+  },
+  {
+    "codigo": 24,
+    "nome": "Araweté"
+  },
+  {
+    "codigo": 25,
+    "nome": "Arikapú"
+  },
+  {
+    "codigo": 26,
+    "nome": "Arikén"
+  },
+  {
+    "codigo": 27,
+    "nome": "Arikosé"
+  },
+  {
+    "codigo": 28,
+    "nome": "Aruá"
+  },
+  {
+    "codigo": 29,
+    "nome": "Ashaninka"
+  },
+  {
+    "codigo": 30,
+    "nome": "Asurini do Tocantins"
+  },
+  {
+    "codigo": 31,
+    "nome": "Asurini do Xingu"
+  },
+  {
+    "codigo": 32,
+    "nome": "Atikum"
+  },
+  {
+    "codigo": 33,
+    "nome": "Ava-Canoeiro"
+  },
+  {
+    "codigo": 34,
+    "nome": "Aweti"
+  },
+  {
+    "codigo": 35,
+    "nome": "Baenã"
+  },
+  {
+    "codigo": 36,
+    "nome": "Bakairí"
+  },
+  {
+    "codigo": 37,
+    "nome": "Banawa"
+  },
+  {
+    "codigo": 38,
+    "nome": "Baniwa"
+  },
+  {
+    "codigo": 39,
+    "nome": "Bará"
+  },
+  {
+    "codigo": 40,
+    "nome": "Barasána"
+  },
+  {
+    "codigo": 41,
+    "nome": "Baré"
+  },
+  {
+    "codigo": 42,
+    "nome": "Bóra"
+  },
+  {
+    "codigo": 43,
+    "nome": "Borari"
+  },
+  {
+    "codigo": 44,
+    "nome": "Bororo"
+  },
+  {
+    "codigo": 45,
+    "nome": "Botocudo"
+  },
+  {
+    "codigo": 46,
+    "nome": "Catokin"
+  },
+  {
+    "codigo": 47,
+    "nome": "Chamakóko"
+  },
+  {
+    "codigo": 48,
+    "nome": "Charrua"
+  },
+  {
+    "codigo": 49,
+    "nome": "Chiquitáno"
+  },
+  {
+    "codigo": 50,
+    "nome": "Cinta Larga"
+  },
+  {
+    "codigo": 51,
+    "nome": "Dâw"
+  },
+  {
+    "codigo": 52,
+    "nome": "Dení"
+  },
+  {
+    "codigo": 53,
+    "nome": "Desána"
+  },
+  {
+    "codigo": 54,
+    "nome": "Diahói"
+  },
+  {
+    "codigo": 55,
+    "nome": "Djeoromitxí - Jabutí"
+  },
+  {
+    "codigo": 56,
+    "nome": "Enawenê-Nawê"
+  },
+  {
+    "codigo": 57,
+    "nome": "Fulni-ô"
+  },
+  {
+    "codigo": 58,
+    "nome": "Galibi do Oiapoque"
+  },
+  {
+    "codigo": 59,
+    "nome": "Galibí Marwórno"
+  },
+  {
+    "codigo": 60,
+    "nome": "Gavião de Rondônia"
+  },
+  {
+    "codigo": 61,
+    "nome": "Gavião Krikatejê"
+  },
+  {
+    "codigo": 62,
+    "nome": "Gavião Parkatejê"
+  },
+  {
+    "codigo": 63,
+    "nome": "Gavião Pukobiê"
+  },
+  {
+    "codigo": 64,
+    "nome": "Guaikurú"
+  },
+  {
+    "codigo": 65,
+    "nome": "Guajá"
+  },
+  {
+    "codigo": 66,
+    "nome": "Guaraní"
+  },
+  {
+    "codigo": 67,
+    "nome": "Guarani Kaiowá"
+  },
+  {
+    "codigo": 68,
+    "nome": "Guarani Mbya"
+  },
+  {
+    "codigo": 69,
+    "nome": "Guarani Nhandeva"
+  },
+  {
+    "codigo": 70,
+    "nome": "Guató"
+  },
+  {
+    "codigo": 71,
+    "nome": "Hahaintesu"
+  },
+  {
+    "codigo": 72,
+    "nome": "Halotesu"
+  },
+  {
+    "codigo": 73,
+    "nome": "Hixkaryána"
+  },
+  {
+    "codigo": 74,
+    "nome": "Hupda"
+  },
+  {
+    "codigo": 75,
+    "nome": "Ikpeng"
+  },
+  {
+    "codigo": 76,
+    "nome": "Ingarikó"
+  },
+  {
+    "codigo": 77,
+    "nome": "Irántxe"
+  },
+  {
+    "codigo": 78,
+    "nome": "Issé"
+  },
+  {
+    "codigo": 79,
+    "nome": "Jamamadí"
+  },
+  {
+    "codigo": 80,
+    "nome": "Jarawára"
+  },
+  {
+    "codigo": 81,
+    "nome": "Jaricuna"
+  },
+  {
+    "codigo": 82,
+    "nome": "Javaé"
+  },
+  {
+    "codigo": 83,
+    "nome": "Jeripancó"
+  },
+  {
+    "codigo": 84,
+    "nome": "Juma"
+  },
+  {
+    "codigo": 85,
+    "nome": "Kaapor"
+  },
+  {
+    "codigo": 86,
+    "nome": "Kadiwéu"
+  },
+  {
+    "codigo": 87,
+    "nome": "Kaeté"
+  },
+  {
+    "codigo": 88,
+    "nome": "Kahyana"
+  },
+  {
+    "codigo": 89,
+    "nome": "Kaiabi"
+  },
+  {
+    "codigo": 90,
+    "nome": "Kaimbé"
+  },
+  {
+    "codigo": 91,
+    "nome": "Kaingang"
+  },
+  {
+    "codigo": 92,
+    "nome": "Kaixana"
+  },
+  {
+    "codigo": 93,
+    "nome": "Kalabaça"
+  },
+  {
+    "codigo": 94,
+    "nome": "Kalankó"
+  },
+  {
+    "codigo": 95,
+    "nome": "Kalapalo"
+  },
+  {
+    "codigo": 96,
+    "nome": "Kamakã"
+  },
+  {
+    "codigo": 97,
+    "nome": "Kamayurá"
+  },
+  {
+    "codigo": 98,
+    "nome": "Kamba"
+  },
+  {
+    "codigo": 99,
+    "nome": "Kambéba"
+  },
+  {
+    "codigo": 100,
+    "nome": "Kambiwá"
+  },
+  {
+    "codigo": 101,
+    "nome": "Kambiwá-Pipipã"
+  },
+  {
+    "codigo": 102,
+    "nome": "Kampé"
+  },
+  {
+    "codigo": 103,
+    "nome": "Kanamanti"
+  },
+  {
+    "codigo": 104,
+    "nome": "Kanamarí"
+  },
+  {
+    "codigo": 105,
+    "nome": "Kanela"
+  },
+  {
+    "codigo": 106,
+    "nome": "Kanela Apaniekra"
+  },
+  {
+    "codigo": 107,
+    "nome": "Kanela Rankocamekra"
+  },
+  {
+    "codigo": 108,
+    "nome": "Kanindé"
+  },
+  {
+    "codigo": 109,
+    "nome": "Kanoé"
+  },
+  {
+    "codigo": 110,
+    "nome": "Kantaruré"
+  },
+  {
+    "codigo": 111,
+    "nome": "Kapinawá"
+  },
+  {
+    "codigo": 112,
+    "nome": "Kapon Patamóna"
+  },
+  {
+    "codigo": 113,
+    "nome": "Karafawyana"
+  },
+  {
+    "codigo": 114,
+    "nome": "Karajá"
+  },
+  {
+    "codigo": 115,
+    "nome": "Karapanã"
+  },
+  {
+    "codigo": 116,
+    "nome": "Karapotó"
+  },
+  {
+    "codigo": 117,
+    "nome": "Karijó"
+  },
+  {
+    "codigo": 118,
+    "nome": "Karipuna"
+  },
+  {
+    "codigo": 119,
+    "nome": "Karipúna do Amapá"
+  },
+  {
+    "codigo": 120,
+    "nome": "Kariri"
+  },
+  {
+    "codigo": 121,
+    "nome": "Kariri - Xocó"
+  },
+  {
+    "codigo": 122,
+    "nome": "Karitiana"
+  },
+  {
+    "codigo": 123,
+    "nome": "Katawixí"
+  },
+  {
+    "codigo": 124,
+    "nome": "Katuena"
+  },
+  {
+    "codigo": 125,
+    "nome": "Katukina"
+  },
+  {
+    "codigo": 126,
+    "nome": "Katukina do Acre"
+  },
+  {
+    "codigo": 127,
+    "nome": "Kawahíb"
+  },
+  {
+    "codigo": 128,
+    "nome": "Kaxarari"
+  },
+  {
+    "codigo": 129,
+    "nome": "Kaxinawá"
+  },
+  {
+    "codigo": 130,
+    "nome": "Kaxixó"
+  },
+  {
+    "codigo": 131,
+    "nome": "Kaxuyana"
+  },
+  {
+    "codigo": 132,
+    "nome": "Kayapó"
+  },
+  {
+    "codigo": 133,
+    "nome": "Kayuisiana"
+  },
+  {
+    "codigo": 134,
+    "nome": "Kinikinau"
+  },
+  {
+    "codigo": 135,
+    "nome": "Kiriri"
+  },
+  {
+    "codigo": 136,
+    "nome": "Kisêdjê"
+  },
+  {
+    "codigo": 137,
+    "nome": "Kithaulu"
+  },
+  {
+    "codigo": 138,
+    "nome": "Koiupanká"
+  },
+  {
+    "codigo": 139,
+    "nome": "Kokama"
+  },
+  {
+    "codigo": 140,
+    "nome": "Kokuiregatejê"
+  },
+  {
+    "codigo": 141,
+    "nome": "Kontanawá"
+  },
+  {
+    "codigo": 142,
+    "nome": "Korúbo"
+  },
+  {
+    "codigo": 143,
+    "nome": "Krahô"
+  },
+  {
+    "codigo": 144,
+    "nome": "Krahô-Kanela"
+  },
+  {
+    "codigo": 145,
+    "nome": "Krenák"
+  },
+  {
+    "codigo": 146,
+    "nome": "Krenyê"
+  },
+  {
+    "codigo": 147,
+    "nome": "Krikati"
+  },
+  {
+    "codigo": 148,
+    "nome": "Kubeo"
+  },
+  {
+    "codigo": 149,
+    "nome": "Kuikuro"
+  },
+  {
+    "codigo": 150,
+    "nome": "Kujubim"
+  },
+  {
+    "codigo": 151,
+    "nome": "Kulina Madijá"
+  },
+  {
+    "codigo": 152,
+    "nome": "Kulina Páno"
+  },
+  {
+    "codigo": 153,
+    "nome": "Kuripako"
+  },
+  {
+    "codigo": 154,
+    "nome": "Kuruáya"
+  },
+  {
+    "codigo": 155,
+    "nome": "Kwazá"
+  },
+  {
+    "codigo": 156,
+    "nome": "Laiana"
+  },
+  {
+    "codigo": 157,
+    "nome": "Lakondê"
+  },
+  {
+    "codigo": 158,
+    "nome": "Latundê"
+  },
+  {
+    "codigo": 159,
+    "nome": "Makú"
+  },
+  {
+    "codigo": 160,
+    "nome": "Makúna"
+  },
+  {
+    "codigo": 161,
+    "nome": "Makuráp"
+  },
+  {
+    "codigo": 162,
+    "nome": "Makuxí"
+  },
+  {
+    "codigo": 163,
+    "nome": "Mamaindê"
+  },
+  {
+    "codigo": 164,
+    "nome": "Manao"
+  },
+  {
+    "codigo": 165,
+    "nome": "Manchineri"
+  },
+  {
+    "codigo": 166,
+    "nome": "Manduka"
+  },
+  {
+    "codigo": 167,
+    "nome": "Maragua"
+  },
+  {
+    "codigo": 168,
+    "nome": "Marimã"
+  },
+  {
+    "codigo": 169,
+    "nome": "Marúbo"
+  },
+  {
+    "codigo": 170,
+    "nome": "Matipú"
+  },
+  {
+    "codigo": 171,
+    "nome": "Matís"
+  },
+  {
+    "codigo": 172,
+    "nome": "Matsés"
+  },
+  {
+    "codigo": 173,
+    "nome": "Mawayána"
+  },
+  {
+    "codigo": 174,
+    "nome": "Maxakali"
+  },
+  {
+    "codigo": 175,
+    "nome": "Maya"
+  },
+  {
+    "codigo": 176,
+    "nome": "Maytapu"
+  },
+  {
+    "codigo": 177,
+    "nome": "Mehináku"
+  },
+  {
+    "codigo": 178,
+    "nome": "Migueléno"
+  },
+  {
+    "codigo": 179,
+    "nome": "Miránha"
+  },
+  {
+    "codigo": 180,
+    "nome": "Mirititapuia"
+  },
+  {
+    "codigo": 181,
+    "nome": "Mucurim"
+  },
+  {
+    "codigo": 182,
+    "nome": "Múra"
+  },
+  {
+    "codigo": 183,
+    "nome": "Mynky"
+  },
+  {
+    "codigo": 184,
+    "nome": "Nadëb"
+  },
+  {
+    "codigo": 185,
+    "nome": "Nahukuá"
+  },
+  {
+    "codigo": 186,
+    "nome": "Nambikwára"
+  },
+  {
+    "codigo": 187,
+    "nome": "Naravute"
+  },
+  {
+    "codigo": 188,
+    "nome": "Nawa"
+  },
+  {
+    "codigo": 189,
+    "nome": "Negarotê"
+  },
+  {
+    "codigo": 190,
+    "nome": "Ninám"
+  },
+  {
+    "codigo": 191,
+    "nome": "Nukiní"
+  },
+  {
+    "codigo": 192,
+    "nome": "Ofayé"
+  },
+  {
+    "codigo": 193,
+    "nome": "Oro Win"
+  },
+  {
+    "codigo": 194,
+    "nome": "Paiaku"
+  },
+  {
+    "codigo": 195,
+    "nome": "Pakaa Nova"
+  },
+  {
+    "codigo": 196,
+    "nome": "Palikur"
+  },
+  {
+    "codigo": 197,
+    "nome": "Panará"
+  },
+  {
+    "codigo": 198,
+    "nome": "Pankará"
+  },
+  {
+    "codigo": 199,
+    "nome": "Pankararé"
+  },
+  {
+    "codigo": 200,
+    "nome": "Pankararú"
+  },
+  {
+    "codigo": 201,
+    "nome": "Pankararú - Karuazu"
+  },
+  {
+    "codigo": 202,
+    "nome": "Pankaru"
+  },
+  {
+    "codigo": 203,
+    "nome": "Papavó"
+  },
+  {
+    "codigo": 204,
+    "nome": "Parakanã"
+  },
+  {
+    "codigo": 205,
+    "nome": "Paresí"
+  },
+  {
+    "codigo": 206,
+    "nome": "Parintintim"
+  },
+  {
+    "codigo": 207,
+    "nome": "Pataxó"
+  },
+  {
+    "codigo": 208,
+    "nome": "Pataxo Há-Há-Há"
+  },
+  {
+    "codigo": 209,
+    "nome": "Paumarí"
+  },
+  {
+    "codigo": 210,
+    "nome": "Paumelenho"
+  },
+  {
+    "codigo": 211,
+    "nome": "Pirahã"
+  },
+  {
+    "codigo": 212,
+    "nome": "Piratapuya"
+  },
+  {
+    "codigo": 213,
+    "nome": "Piri-Piri"
+  },
+  {
+    "codigo": 214,
+    "nome": "Pitaguari"
+  },
+  {
+    "codigo": 215,
+    "nome": "Potiguara"
+  },
+  {
+    "codigo": 216,
+    "nome": "Poyanáwa"
+  },
+  {
+    "codigo": 217,
+    "nome": "Puri"
+  },
+  {
+    "codigo": 218,
+    "nome": "Puroborá"
+  },
+  {
+    "codigo": 219,
+    "nome": "Rikbaktsa"
+  },
+  {
+    "codigo": 220,
+    "nome": "Sabanê"
+  },
+  {
+    "codigo": 221,
+    "nome": "Sakurabiat"
+  },
+  {
+    "codigo": 222,
+    "nome": "Salamãy"
+  },
+  {
+    "codigo": 223,
+    "nome": "Sanumá"
+  },
+  {
+    "codigo": 224,
+    "nome": "Sapará"
+  },
+  {
+    "codigo": 225,
+    "nome": "Sarare"
+  },
+  {
+    "codigo": 226,
+    "nome": "Sawentesu"
+  },
+  {
+    "codigo": 227,
+    "nome": "Shanenáwa"
+  },
+  {
+    "codigo": 228,
+    "nome": "Siriano"
+  },
+  {
+    "codigo": 229,
+    "nome": "Suruí de Rondônia"
+  },
+  {
+    "codigo": 230,
+    "nome": "Suruí do Pará"
+  },
+  {
+    "codigo": 231,
+    "nome": "Tabajara"
+  },
+  {
+    "codigo": 232,
+    "nome": "Tamoio"
+  },
+  {
+    "codigo": 233,
+    "nome": "Tapajós"
+  },
+  {
+    "codigo": 234,
+    "nome": "Tapayuna"
+  },
+  {
+    "codigo": 235,
+    "nome": "Tapirapé"
+  },
+  {
+    "codigo": 236,
+    "nome": "Tapiuns"
+  },
+  {
+    "codigo": 237,
+    "nome": "Tapuia"
+  },
+  {
+    "codigo": 238,
+    "nome": "Tariana"
+  },
+  {
+    "codigo": 239,
+    "nome": "Taulipáng"
+  },
+  {
+    "codigo": 240,
+    "nome": "Tawandê"
+  },
+  {
+    "codigo": 241,
+    "nome": "Tembé"
+  },
+  {
+    "codigo": 242,
+    "nome": "Tenetehara"
+  },
+  {
+    "codigo": 243,
+    "nome": "Tenharim"
+  },
+  {
+    "codigo": 244,
+    "nome": "Terena"
+  },
+  {
+    "codigo": 245,
+    "nome": "Tikúna"
+  },
+  {
+    "codigo": 246,
+    "nome": "Timbira"
+  },
+  {
+    "codigo": 247,
+    "nome": "Tingui-Botó"
+  },
+  {
+    "codigo": 248,
+    "nome": "Tiriyó"
+  },
+  {
+    "codigo": 249,
+    "nome": "Torá"
+  },
+  {
+    "codigo": 250,
+    "nome": "Tremembé"
+  },
+  {
+    "codigo": 251,
+    "nome": "Truká"
+  },
+  {
+    "codigo": 252,
+    "nome": "Trumái"
+  },
+  {
+    "codigo": 253,
+    "nome": "Tukano"
+  },
+  {
+    "codigo": 254,
+    "nome": "Tumbalalá"
+  },
+  {
+    "codigo": 255,
+    "nome": "Tunayana"
+  },
+  {
+    "codigo": 256,
+    "nome": "Tupaiu"
+  },
+  {
+    "codigo": 257,
+    "nome": "Tuparí"
+  },
+  {
+    "codigo": 258,
+    "nome": "Tupinambá"
+  },
+  {
+    "codigo": 259,
+    "nome": "Tupinambaraná"
+  },
+  {
+    "codigo": 260,
+    "nome": "Tupiniquim"
+  },
+  {
+    "codigo": 261,
+    "nome": "Turiwára"
+  },
+  {
+    "codigo": 262,
+    "nome": "Tuxá"
+  },
+  {
+    "codigo": 263,
+    "nome": "Tuyúca"
+  },
+  {
+    "codigo": 264,
+    "nome": "Umutina"
+  },
+  {
+    "codigo": 265,
+    "nome": "Urucú"
+  },
+  {
+    "codigo": 266,
+    "nome": "Uru-Eu-Wau-Wau"
+  },
+  {
+    "codigo": 267,
+    "nome": "Wai Wai"
+  },
+  {
+    "codigo": 268,
+    "nome": "Waiãpy"
+  },
+  {
+    "codigo": 269,
+    "nome": "Waikisu"
+  },
+  {
+    "codigo": 270,
+    "nome": "Waimiri Atroari"
+  },
+  {
+    "codigo": 271,
+    "nome": "Wakalitesu"
+  },
+  {
+    "codigo": 272,
+    "nome": "Wanana"
+  },
+  {
+    "codigo": 273,
+    "nome": "Wapixana"
+  },
+  {
+    "codigo": 274,
+    "nome": "Warekena"
+  },
+  {
+    "codigo": 275,
+    "nome": "Wassú"
+  },
+  {
+    "codigo": 276,
+    "nome": "Wasusu"
+  },
+  {
+    "codigo": 277,
+    "nome": "Wauja"
+  },
+  {
+    "codigo": 278,
+    "nome": "Wayana"
+  },
+  {
+    "codigo": 279,
+    "nome": "Witóto"
+  },
+  {
+    "codigo": 280,
+    "nome": "Xacriabá"
+  },
+  {
+    "codigo": 281,
+    "nome": "Xambioá"
+  },
+  {
+    "codigo": 282,
+    "nome": "Xavante"
+  },
+  {
+    "codigo": 283,
+    "nome": "Xerente"
+  },
+  {
+    "codigo": 284,
+    "nome": "Xereu"
+  },
+  {
+    "codigo": 285,
+    "nome": "Xetá"
+  },
+  {
+    "codigo": 286,
+    "nome": "Xipáya"
+  },
+  {
+    "codigo": 287,
+    "nome": "Xocó"
+  },
+  {
+    "codigo": 288,
+    "nome": "Xokléng"
+  },
+  {
+    "codigo": 289,
+    "nome": "Xucuru"
+  },
+  {
+    "codigo": 290,
+    "nome": "Xucuru - Kariri"
+  },
+  {
+    "codigo": 291,
+    "nome": "Yaipiyana"
+  },
+  {
+    "codigo": 292,
+    "nome": "Yamináwa"
+  },
+  {
+    "codigo": 293,
+    "nome": "Yanomámi"
+  },
+  {
+    "codigo": 294,
+    "nome": "Yanomán"
+  },
+  {
+    "codigo": 295,
+    "nome": "Yawalapití"
+  },
+  {
+    "codigo": 296,
+    "nome": "Yawanawá"
+  },
+  {
+    "codigo": 297,
+    "nome": "Yekuana"
+  },
+  {
+    "codigo": 298,
+    "nome": "Yudjá"
+  },
+  {
+    "codigo": 299,
+    "nome": "Yurutí"
+  },
+  {
+    "codigo": 300,
+    "nome": "Zoé"
+  },
+  {
+    "codigo": 301,
+    "nome": "Zoró"
+  },
+  {
+    "codigo": 302,
+    "nome": "Zuruahã"
+  },
+  {
+    "codigo": 998,
+    "nome": "Outro povo indígena"
+  },
+  {
+    "codigo": 999,
+    "nome": "Não declarado"
+  }
+]

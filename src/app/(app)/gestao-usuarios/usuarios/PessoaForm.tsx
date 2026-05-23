@@ -1,0 +1,1309 @@
+'use client'
+
+import { useState, useEffect, useMemo } from 'react'
+import { Card, CardContent } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { Checkbox } from '@/components/ui/checkbox'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
+import { DatePicker } from '@/components/ui/date-picker'
+import { Combobox } from '@/components/ui/combobox'
+import { paises } from '@/data/paises'
+import { municipios } from '@/data/municipios'
+import { povosIndigenas } from '@/data/povos-indigenas'
+import { cursosSuperiores } from '@/data/cursos-superiores'
+import { iesList } from '@/data/ies'
+import { areasConhecimento } from '@/data/areas-conhecimento'
+import { areasPosGraduacao } from '@/data/areas-pos-graduacao'
+import { Plus, Trash2 } from 'lucide-react'
+import { toast } from 'sonner'
+import { createPerson, updatePerson, Person, getVinculosResponsavel, vincularResponsavel, desvincularResponsavel, buscarAlunos } from '@/lib/actions/people'
+import { getVinculosProfissionais, createVinculoProfissional, updateVinculoProfissional, deleteVinculoProfissional, type VinculoProfissionalWithFuncao } from '@/lib/actions/vinculos-profissionais'
+import { getFuncoes, type FuncaoProfissional } from '@/lib/actions/funcoes-profissionais'
+
+const DEFICIENCIA_CAMPOS = [
+  { key: 'cegueira', label: 'Cegueira' },
+  { key: 'baixa_visao', label: 'Baixa Visão' },
+  { key: 'visao_monocular', label: 'Visão Monocular' },
+  { key: 'surdez', label: 'Surdez' },
+  { key: 'deficiencia_auditiva', label: 'Deficiência Auditiva' },
+  { key: 'surdocegueira', label: 'Surdocegueira' },
+  { key: 'deficiencia_fisica', label: 'Deficiência Física' },
+  { key: 'deficiencia_intelectual', label: 'Deficiência Intelectual' },
+  { key: 'deficiencia_multipla', label: 'Deficiência Múltipla' },
+  { key: 'tea', label: 'Transtorno do Espectro Autista' },
+  { key: 'altas_habilidades', label: 'Altas Habilidades/Superdotação' },
+]
+
+const TRANSTORNO_CAMPOS = [
+  { key: 'discalculia', label: 'Discalculia ou outro transtorno da matemática e raciocínio lógico' },
+  { key: 'disgrafia', label: 'Disgrafia, Disortografia ou outro transtorno da escrita e ortografia' },
+  { key: 'dislalia', label: 'Dislalia ou outro transtorno da linguagem e comunicação' },
+  { key: 'dislexia', label: 'Dislexia' },
+  { key: 'tdah', label: 'Transtorno do Déficit de Atenção com Hiperatividade (TDAH)' },
+  { key: 'tpac', label: 'Transtorno do Processamento Auditivo Central (TPAC)' },
+]
+
+const RECURSO_CAMPOS = [
+  { key: 'auxilio_ledor', label: 'Auxílio Ledor' },
+  { key: 'auxiliary_transcricao', label: 'Auxílio Transcrição' },
+  { key: 'guia_interprete', label: 'Guia-Intérprete' },
+  { key: 'tradutor_libras', label: 'Tradutor-Intérprete de Libras' },
+  { key: 'leitura_labial', label: 'Leitura Labial' },
+  { key: 'prova_ampliada', label: 'Prova Ampliada (Fonte 18)' },
+  { key: 'prova_superampliada', label: 'Prova Superampliada (Fonte 24)' },
+  { key: 'cd_audio', label: 'CD com Áudio' },
+  { key: 'prova_libras', label: 'Prova LP 2ª Língua para Surdos' },
+  { key: 'prova_video_libras', label: 'Prova em Vídeo em Libras' },
+  { key: 'material_braille', label: 'Material Didático em Braille' },
+  { key: 'prova_braille', label: 'Prova em Braille' },
+  { key: 'tempo_adicional', label: 'Tempo Adicional' },
+  { key: 'nenhum_recurso', label: 'Nenhum' },
+]
+
+// Mapeamento Deficiência x Recurso (Tabela Auxiliar INEP 2025)
+// Campos 18-25 (deficiências base para Deficiência Múltipla)
+const DEFICIENCIA_BASE = ['cegueira', 'baixa_visao', 'visao_monocular', 'surdez', 'deficiencia_auditiva', 'surdocegueira', 'deficiencia_fisica', 'deficiencia_intelectual']
+
+// Pares incompatíveis de deficiência (regra INEP)
+const INCOMPATIVEIS: Record<string, string[]> = {
+  surdocegueira: ['cegueira', 'baixa_visao', 'visao_monocular', 'surdez', 'deficiencia_auditiva'],
+  cegueira: ['surdocegueira', 'baixa_visao', 'surdez', 'visao_monocular'],
+  baixa_visao: ['surdocegueira', 'cegueira', 'visao_monocular'],
+  visao_monocular: ['surdocegueira', 'cegueira', 'baixa_visao'],
+  surdez: ['surdocegueira', 'cegueira', 'deficiencia_auditiva'],
+  deficiencia_auditiva: ['surdocegueira', 'surdez'],
+}
+
+const DEFICIENCIA_RECURSOS: Record<string, string[]> = {
+  cegueira: ['auxilio_ledor', 'auxiliary_transcricao', 'cd_audio', 'material_braille', 'prova_braille', 'tempo_adicional'],
+  baixa_visao: ['auxilio_ledor', 'auxiliary_transcricao', 'cd_audio', 'nenhum_recurso', 'prova_ampliada', 'prova_superampliada', 'tempo_adicional'],
+  visao_monocular: ['auxilio_ledor', 'auxiliary_transcricao', 'cd_audio', 'nenhum_recurso', 'prova_ampliada', 'prova_superampliada', 'tempo_adicional'],
+  surdez: ['leitura_labial', 'nenhum_recurso', 'prova_libras', 'prova_video_libras', 'tempo_adicional', 'tradutor_libras'],
+  deficiencia_auditiva: ['leitura_labial', 'nenhum_recurso', 'prova_libras', 'prova_video_libras', 'tempo_adicional', 'tradutor_libras'],
+  surdocegueira: ['auxilio_ledor', 'auxiliary_transcricao', 'cd_audio', 'guia_interprete', 'leitura_labial', 'material_braille', 'prova_braille', 'prova_ampliada', 'prova_libras', 'prova_video_libras', 'prova_superampliada', 'tempo_adicional', 'tradutor_libras'],
+  deficiencia_fisica: ['auxilio_ledor', 'auxiliary_transcricao', 'cd_audio', 'nenhum_recurso', 'tempo_adicional'],
+  deficiencia_intelectual: ['auxilio_ledor', 'auxiliary_transcricao', 'cd_audio', 'nenhum_recurso', 'tempo_adicional'],
+  deficiencia_multipla: ['auxilio_ledor', 'auxiliary_transcricao', 'cd_audio', 'nenhum_recurso', 'tempo_adicional'],
+  tea: ['auxilio_ledor', 'auxiliary_transcricao', 'cd_audio', 'nenhum_recurso', 'tempo_adicional'],
+  altas_habilidades: [],
+}
+
+const FORMACAO_CAMPOS = [
+  { key: 'form_creche', label: 'Creche (0-3 anos)' },
+  { key: 'form_pre_escola', label: 'Pré-escola (4-5 anos)' },
+  { key: 'form_alfabetizacao', label: 'Alfabetização' },
+  { key: 'form_anos_iniciais', label: 'Anos Iniciais EF' },
+  { key: 'form_anos_finais', label: 'Anos Finais EF' },
+  { key: 'form_medio', label: 'Ensino Médio' },
+  { key: 'form_eja', label: 'EJA' },
+  { key: 'form_especial', label: 'Educação Especial' },
+  { key: 'form_indigena', label: 'Educação Indígena' },
+  { key: 'form_campo', label: 'Educação do Campo' },
+  { key: 'form_ambiental', label: 'Educação Ambiental' },
+  { key: 'form_direitos', label: 'Educação em Direitos Humanos' },
+  { key: 'form_bilingue', label: 'Educação Bilíngue de Surdos' },
+  { key: 'form_tic', label: 'Educação e TIC' },
+  { key: 'form_integral', label: 'Educação Integral' },
+  { key: 'form_genero', label: 'Gênero e Diversidade Sexual' },
+  { key: 'form_direitos_crianca', label: 'Direitos de Criança e Adolescente' },
+  { key: 'form_etnico_raciais', label: 'Relações Étnico-Raciais' },
+  { key: 'form_gestao_escolar', label: 'Gestão Escolar' },
+  { key: 'form_outros', label: 'Outros' },
+]
+
+const TIPOS_VINCULO = [
+  { value: '1', label: 'Pai' },
+  { value: '2', label: 'Mãe' },
+  { value: '3', label: 'Responsável Legal' },
+  { value: '4', label: 'Tutor' },
+  { value: '5', label: 'Outro' },
+]
+
+function formatCPF(digits: string): string {
+  const d = digits.replace(/\D/g, '').slice(0, 11)
+  if (d.length <= 3) return d
+  if (d.length <= 6) return `${d.slice(0, 3)}.${d.slice(3)}`
+  if (d.length <= 9) return `${d.slice(0, 3)}.${d.slice(3, 6)}.${d.slice(6)}`
+  return `${d.slice(0, 3)}.${d.slice(3, 6)}.${d.slice(6, 9)}-${d.slice(9)}`
+}
+
+const PAIS_OPTIONS = paises.map(p => ({ value: String(p.codigo), label: p.nome, searchLabel: `${p.nome} ${p.nacionalidade}` }))
+const MUNICIPIO_OPTIONS = municipios.map(m => ({ value: String(m.codigo), label: `${m.nome} - ${m.nomeUF}`, searchLabel: `${m.nome} ${m.nomeUF}` }))
+const POVO_OPTIONS = povosIndigenas.map(p => ({ value: String(p.codigo), label: `${p.codigo} - ${p.nome}`, searchLabel: `${p.nome} ${p.codigo}` }))
+const CURSO_OPTIONS = cursosSuperiores.map(c => ({ value: c.codigo, label: `${c.codigo} - ${c.nome}`, searchLabel: `${c.nome} ${c.codigo}` }))
+const IES_OPTIONS = iesList.map(i => ({ value: String(i.codigo), label: `${i.codigo} - ${i.nome}`, searchLabel: `${i.nome}` }))
+const AREA_CONHECIMENTO_OPTIONS = areasConhecimento.filter(a => a.codigo).map(a => ({ value: String(a.codigo), label: `${a.codigo} - ${a.nome}`, searchLabel: `${a.nome}` }))
+const AREA_POS_OPTIONS = areasPosGraduacao.map(a => ({ value: String(a.codigo), label: `${a.codigo} - ${a.nome}`, searchLabel: `${a.nome}` }))
+
+interface Props {
+  schoolId: string
+  person?: Person | null
+  onSaved: () => void
+  onCancel: () => void
+}
+
+type FormData = Record<string, any>
+
+const defaultForm: FormData = {
+  perfil: [] as string[],
+  codigo_pessoa: null,
+  inep_id: '',
+  cpf: '',
+  nome_completo: '',
+  data_nascimento: '',
+  filiacao_declarada: '',
+  filiacao_1: '',
+  filiacao_2: '',
+  sexo: '',
+  cor_raca: '',
+  povo_indigena: '',
+  nacionalidade: '',
+  pais_nacionalidade: '',
+  municipio_nascimento: '',
+  certidao_nascimento: '',
+  email: '',
+  telefone_celular: '',
+  telefone_fixo: '',
+  whatsapp: '',
+  // Deficiência
+  deficiencia: false,
+  cegueira: false, baixa_visao: false, visao_monocular: false,
+  surdez: false, deficiencia_auditiva: false, surdocegueira: false,
+  deficiencia_fisica: false, deficiencia_intelectual: false, deficiencia_multipla: false,
+  tea: false, altas_habilidades: false,
+  // Transtornos
+  transtorno_aprendizagem: false,
+  discalculia: false, disgrafia: false, dislalia: false,
+  dislexia: false, tdah: false, tpac: false,
+  // Recursos SAEB
+  auxilio_ledor: false, auxiliary_transcricao: false, guia_interprete: false,
+  tradutor_libras: false, leitura_labial: false, prova_ampliada: false,
+  prova_superampliada: false, cd_audio: false, prova_libras: false,
+  prova_video_libras: false, material_braille: false, prova_braille: false,
+  tempo_adicional: false, nenhum_recurso: false,
+  // Endereço
+  pais_residencia: '', cep: '',
+  municipio_residencia: '', zona_residencia: '', localizacao_diferenciada: '',
+  bairro: '', logradouro: '', numero: '', complemento: '', referencia: '',
+  // Escolaridade
+  escolaridade: '', tipo_ensino_medio: '',
+  curso_superior_1: '', ano_conclusao_1: 0, ies_1: '',
+  curso_superior_2: '', ano_conclusao_2: 0, ies_2: '',
+  curso_superior_3: '', ano_conclusao_3: 0, ies_3: '',
+  area_pedagogica_1: '', area_pedagogica_2: '', area_pedagogica_3: '',
+  // Pós
+  pos_tipo_1: '', pos_area_1: '', pos_ano_1: 0,
+  pos_tipo_2: '', pos_area_2: '', pos_ano_2: 0,
+  pos_tipo_3: '', pos_area_3: '', pos_ano_3: 0,
+  pos_tipo_4: '', pos_area_4: '', pos_ano_4: 0,
+  pos_tipo_5: '', pos_area_5: '', pos_ano_5: 0,
+  pos_tipo_6: '', pos_area_6: '', pos_ano_6: 0,
+  sem_pos: false,
+  // Formação Continuada
+  form_creche: false, form_pre_escola: false, form_alfabetizacao: false,
+  form_anos_iniciais: false, form_anos_finais: false, form_medio: false,
+  form_eja: false, form_especial: false, form_indigena: false,
+  form_campo: false, form_ambiental: false, form_direitos: false,
+  form_bilingue: false, form_tic: false, form_integral: false,
+  form_genero: false, form_direitos_crianca: false, form_etnico_raciais: false,
+  form_gestao_escolar: false, form_outros: false, sem_formacao: false,
+  recebeu_formacao: false,
+  // Vinculos responsável
+  vinculos: [] as any[],
+  alunosBusca: [] as { id: string; nome_completo: string }[],
+}
+
+export function PessoaForm({ schoolId, person, onSaved, onCancel }: Props) {
+  const [form, setForm] = useState<FormData>({ ...defaultForm })
+  const [saving, setSaving] = useState(false)
+  const [activeTab, setActiveTab] = useState('identificacao')
+  const [alunosSearch, setAlunosSearch] = useState('')
+  const [alunosOptions, setAlunosOptions] = useState<{ id: string; nome_completo: string }[]>([])
+  const [cursoCount, setCursoCount] = useState(1)
+  const [posCount, setPosCount] = useState(1)
+  const [vinculosProfissionais, setVinculosProfissionais] = useState<VinculoProfissionalWithFuncao[]>([])
+  const [funcoesOptions, setFuncoesOptions] = useState<FuncaoProfissional[]>([])
+
+  const set = (field: string, value: any) => setForm(prev => ({ ...prev, [field]: value }))
+
+  // Carregar funções disponíveis
+  useEffect(() => {
+    if (!schoolId) return
+    getFuncoes(schoolId).then(setFuncoesOptions).catch(() => {})
+  }, [schoolId])
+
+  useEffect(() => {
+    if (person) {
+      const data: FormData = { ...defaultForm }
+      for (const key of Object.keys(defaultForm)) {
+        if (key in person) data[key] = (person as any)[key] ?? defaultForm[key]
+      }
+      data.data_nascimento = person.data_nascimento?.split('T')[0] || ''
+      data.perfil = person.perfil || []
+      data.vinculos = []
+      if (person.codigo_pessoa) data.codigo_pessoa = person.codigo_pessoa
+      setForm(data)
+
+      // Carregar vínculos profissionais na edição
+      if (person.perfil?.includes('profissional') || person.perfil?.includes('gestor')) {
+        getVinculosProfissionais(person.id).then(setVinculosProfissionais).catch(() => {})
+      }
+
+      // Calcular quantos cursos superiores estão preenchidos
+      let count = 1
+      for (let i = 2; i <= 3; i++) {
+        if (data[`curso_superior_${i}`]) count = i
+      }
+      setCursoCount(count)
+
+      // Calcular quantas pós-graduações estão preenchidas
+      let posCountVal = 1
+      for (let i = 2; i <= 6; i++) {
+        if (data[`pos_tipo_${i}`]) posCountVal = i
+      }
+      setPosCount(posCountVal)
+
+      if (person.perfil?.includes('responsavel')) {
+        getVinculosResponsavel(person.id).then((vinculos: any[]) => {
+          setForm(prev => ({ ...prev, vinculos: vinculos || [] }))
+        }).catch(() => {})
+      }
+    }
+  }, [person])
+
+  // Auto-select Brasil quando nacionalidade for Brasileira
+  useEffect(() => {
+    if (form.nacionalidade === '1' && form.pais_nacionalidade !== '76') {
+      set('pais_nacionalidade', '76')
+    }
+    if (!form.nacionalidade || form.nacionalidade === '') {
+      set('pais_nacionalidade', '')
+    }
+  }, [form.nacionalidade])
+
+  const buscarAlunosHandler = async (search: string) => {
+    setAlunosSearch(search)
+    if (search.length < 2) { setAlunosOptions([]); return }
+    try {
+      const data = await buscarAlunos(schoolId, search)
+      setAlunosOptions(data || [])
+    } catch { setAlunosOptions([]) }
+  }
+
+  const adicionarVinculo = (alunoId: string) => {
+    if (form.vinculos.some((v: any) => v.aluno_id === alunoId)) return
+    const aluno = alunosOptions.find(a => a.id === alunoId)
+    if (!aluno) return
+    setForm(prev => ({
+      ...prev,
+      vinculos: [...prev.vinculos, { aluno_id: alunoId, aluno_nome: aluno.nome_completo, tipo_vinculo: '3', principal: false, autorizado_retirar: true, autorizado_boleto: true, receber_comunicados: true, _new: true }],
+    }))
+    setAlunosSearch('')
+    setAlunosOptions([])
+  }
+
+  const removerVinculo = (idx: number) => {
+    setForm(prev => ({ ...prev, vinculos: prev.vinculos.filter((_: any, i: number) => i !== idx) }))
+  }
+
+  const updateVinculo = (idx: number, field: string, value: any) => {
+    setForm(prev => ({
+      ...prev,
+      vinculos: prev.vinculos.map((v: any, i: number) => i === idx ? { ...v, [field]: value } : v),
+    }))
+  }
+
+  // Vínculo Profissional
+  const adicionarVinculoProfissional = () => {
+    setVinculosProfissionais(prev => [...prev, {
+      id: '',
+      person_id: '',
+      school_id: schoolId,
+      regime_contratacao: null,
+      funcao_id: null,
+      situacao: null,
+      data_inicio: null,
+      carga_horaria: null,
+      observacoes: null,
+      data_inicio_afastamento: null,
+      data_termino_afastamento: null,
+      data_termino: null,
+      created_at: '',
+      updated_at: '',
+      funcao: null,
+      _new: true,
+    } as any])
+  }
+
+  const removerVinculoProfissional = (idx: number) => {
+    setVinculosProfissionais(prev => prev.filter((_, i) => i !== idx))
+  }
+
+  const updateVinculoProfissionalState = (idx: number, field: string, value: any) => {
+    setVinculosProfissionais(prev => prev.map((v, i) => i === idx ? { ...v, [field]: value } : v))
+  }
+
+  const handleSave = async () => {
+    if (!form.nome_completo.trim()) { toast.error('Nome completo é obrigatório'); return }
+    if (!form.perfil || form.perfil.length === 0) { toast.error('Selecione pelo menos um perfil'); return }
+    if (isAluno && !form.cpf && !form.certidao_nascimento?.trim()) { toast.error('Informe CPF ou Matrícula da Certidão de Nascimento'); return }
+    if (apenasResponsavel && !form.cpf) { toast.error('CPF é obrigatório para Responsável'); return }
+    if (isAluno || isProfissionalOuGestor) {
+      if (!form.pais_residencia) { toast.error('País de residência é obrigatório'); return }
+      if (form.pais_residencia === '76') {
+        if (!form.cep) { toast.error('CEP é obrigatório para residentes no Brasil'); return }
+        if (!form.municipio_residencia) { toast.error('Município de residência é obrigatório para residentes no Brasil'); return }
+        if (!form.logradouro) { toast.error('Logradouro é obrigatório'); return }
+        if (!form.numero) { toast.error('Número é obrigatório'); return }
+        if (!form.bairro) { toast.error('Bairro é obrigatório'); return }
+        if (!form.zona_residencia) { toast.error('Zona de residência é obrigatória'); return }
+      }
+    }
+    if (isProfissionalOuGestor) {
+      if (!form.escolaridade) { toast.error('Escolaridade é obrigatória para Profissional/Gestor'); return }
+      if (form.escolaridade === '6') {
+        const temPos = [1, 2, 3, 4, 5, 6].some(i => form[`pos_tipo_${i}`])
+        if (!form.sem_pos && !temPos) { toast.error('Informe a Pós-Graduação ou marque "Não tem pós-graduação"'); return }
+      }
+      const temFormacao = FORMACAO_CAMPOS.some(c => form[c.key])
+      if (!form.sem_formacao && !temFormacao) { toast.error('Informe a Formação Continuada ou marque "Nenhuma"'); return }
+    }
+    if (form.deficiencia) {
+      const algumaDef = DEFICIENCIA_CAMPOS.some(c => form[c.key])
+      if (!algumaDef) { toast.error('Selecione ao menos um tipo de deficiência, TEA ou Altas Habilidades'); return }
+    }
+
+    setSaving(true)
+    try {
+      const payload: any = { ...form, school_id: schoolId }
+
+      for (const key of Object.keys(payload)) {
+        if (typeof payload[key] === 'boolean') continue
+        if (payload[key] === '') payload[key] = null
+      }
+
+      delete payload.vinculos
+      delete payload.alunosBusca
+
+      if (person) {
+        await updatePerson(person.id, payload)
+        // Salvar vínculos profissionais (edição)
+        for (const v of vinculosProfissionais) {
+          if (v.id) {
+            await updateVinculoProfissional(v.id, {
+              regime_contratacao: v.regime_contratacao,
+              funcao_id: v.funcao_id,
+              situacao: v.situacao,
+              data_inicio: v.data_inicio,
+              carga_horaria: v.carga_horaria,
+              observacoes: v.observacoes,
+              data_inicio_afastamento: v.data_inicio_afastamento,
+              data_termino_afastamento: v.data_termino_afastamento,
+              data_termino: v.data_termino,
+            })
+          } else {
+            await createVinculoProfissional({
+              person_id: person.id,
+              school_id: schoolId,
+              regime_contratacao: v.regime_contratacao,
+              funcao_id: v.funcao_id,
+              situacao: v.situacao,
+              data_inicio: v.data_inicio,
+              carga_horaria: v.carga_horaria,
+              observacoes: v.observacoes,
+              data_inicio_afastamento: v.data_inicio_afastamento,
+              data_termino_afastamento: v.data_termino_afastamento,
+              data_termino: v.data_termino,
+            })
+          }
+        }
+      } else {
+        const created = await createPerson(payload)
+        for (const v of form.vinculos) {
+          if (v._new && created) {
+            await vincularResponsavel(created.id, v.aluno_id, v)
+          }
+        }
+        // Salvar vínculos profissionais (criação)
+        for (const v of vinculosProfissionais) {
+          await createVinculoProfissional({
+            person_id: created.id,
+            school_id: schoolId,
+            regime_contratacao: v.regime_contratacao,
+            funcao_id: v.funcao_id,
+            situacao: v.situacao,
+            data_inicio: v.data_inicio,
+            carga_horaria: v.carga_horaria,
+            observacoes: v.observacoes,
+            data_inicio_afastamento: v.data_inicio_afastamento,
+            data_termino_afastamento: v.data_termino_afastamento,
+            data_termino: v.data_termino,
+          })
+        }
+      }
+      toast.success(person ? 'Usuário atualizado!' : 'Usuário criado!')
+      onSaved()
+    } catch (err: any) {
+      toast.error('Erro ao salvar: ' + (err?.message || err?.details || 'erro desconhecido'))
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  const perfis = [
+    { value: 'aluno', label: 'Aluno' },
+    { value: 'profissional', label: 'Profissional' },
+    { value: 'gestor', label: 'Gestor' },
+    { value: 'responsavel', label: 'Responsável' },
+  ]
+
+  const perfisAtivos = (form.perfil as string[]) || []
+  const isAluno = perfisAtivos.includes('aluno')
+  const isProfissionalOuGestor = perfisAtivos.includes('profissional') || perfisAtivos.includes('gestor')
+  const isResponsavel = perfisAtivos.includes('responsavel')
+  const apenasResponsavel = isResponsavel && !isAluno && !isProfissionalOuGestor
+  const hasDeficiencia = form.deficiencia
+  const hasTranstorno = form.transtorno_aprendizagem
+
+  // Recursos permitidos baseados nas deficiências/transtornos selecionados
+  const recursosDisponiveis = useMemo(() => {
+    let keys = new Set<string>()
+    for (const d of DEFICIENCIA_CAMPOS) {
+      if (form[d.key]) {
+        for (const r of (DEFICIENCIA_RECURSOS[d.key] || [])) keys.add(r)
+      }
+    }
+    // Se tem só transtorno (sem deficiência), libera todos os recursos
+    if (keys.size === 0 && form.transtorno_aprendizagem) {
+      return RECURSO_CAMPOS
+    }
+    return RECURSO_CAMPOS.filter(c => keys.has(c.key))
+  }, [form.cegueira, form.baixa_visao, form.visao_monocular, form.surdez, form.deficiencia_auditiva, form.surdocegueira, form.deficiencia_fisica, form.deficiencia_intelectual, form.deficiencia_multipla, form.tea, form.altas_habilidades, form.transtorno_aprendizagem])
+
+  // Limpar recursos não disponíveis quando muda deficiência
+  useEffect(() => {
+    const chavesDisponiveis = new Set(recursosDisponiveis.map(c => c.key))
+    for (const c of RECURSO_CAMPOS) {
+      if (form[c.key] && !chavesDisponiveis.has(c.key) && c.key !== 'nenhum_recurso') {
+        set(c.key, false)
+      }
+    }
+  }, [recursosDisponiveis])
+
+  const nenhumRecurso = () => {
+    const next = !form.nenhum_recurso
+    set('nenhum_recurso', next)
+    if (next) for (const c of RECURSO_CAMPOS.filter(c => c.key !== 'nenhum_recurso')) set(c.key, false)
+  }
+
+  const toggleRecurso = (key: string) => {
+    if (key === 'nenhum_recurso') { nenhumRecurso(); return }
+    if (form[key]) { set(key, false); return }
+    // Prova superampliada não pode estar junto com Prova Ampliada
+    if (key === 'prova_superampliada' && form.prova_ampliada) set('prova_ampliada', false)
+    if (key === 'prova_ampliada' && form.prova_superampliada) set('prova_superampliada', false)
+    set(key, true)
+    if (form.nenhum_recurso) set('nenhum_recurso', false)
+  }
+
+  const nenhumaFormacao = () => {
+    const next = !form.sem_formacao
+    set('sem_formacao', next)
+    if (next) for (const c of FORMACAO_CAMPOS) set(c.key, false)
+  }
+
+  const marcaFormacao = (key: string) => {
+    const next = !form[key]
+    set(key, next)
+    if (next) set('sem_formacao', false)
+  }
+
+  const toggleDeficiencia = (key: string) => {
+    if (isDeficienciaDisabled(key)) return
+    const checked = form[key]
+    if (checked) {
+      // Desmarcando um campo
+      set(key, false)
+      // Se desmarcou uma base e agora só tem 0 ou 1, limpa deficiência múltipla
+      if (DEFICIENCIA_BASE.includes(key)) {
+        const active = DEFICIENCIA_BASE.filter(k => k !== key && form[k])
+        if (active.length < 2) set('deficiencia_multipla', false)
+      }
+    } else {
+      // Marcando um campo
+      // Incompatibilidades: se marcou um que é incompatível com já marcados, desmarca os incompatíveis
+      const incompativeisAtivos = (INCOMPATIVEIS[key] || []).filter(k => form[k])
+      for (const k of incompativeisAtivos) set(k, false)
+      set(key, true)
+      // deficiência múltipla precisa de 2+ bases
+      if (key === 'deficiencia_multipla') {
+        const active = DEFICIENCIA_BASE.filter(k => form[k])
+        if (active.length < 2) {
+          set('deficiencia_multipla', false)
+          toast.error('Deficiência Múltipla requer pelo menos 2 deficiências (campos 18 a 25)')
+          return
+        }
+      }
+      // Se não era múltipla e virou 2+, marca múltipla automaticamente
+      if (key !== 'deficiencia_multipla') {
+        const active = DEFICIENCIA_BASE.filter(k => form[k] || k === key).length
+        if (active >= 2 && !form.deficiencia_multipla) set('deficiencia_multipla', true)
+      }
+    }
+  }
+
+  const isDeficienciaDisabled = (key: string) => {
+    if (key === 'deficiencia_multipla') {
+      return DEFICIENCIA_BASE.filter(k => form[k]).length >= 2
+    }
+    if (form[key]) return false
+    return (INCOMPATIVEIS[key] || []).some(k => form[k])
+  }
+
+  return (
+    <div className="flex flex-col flex-1 min-h-0 [&_[data-slot='input']]:border-slate-300 [&_[data-slot='input']]:focus-visible:border-primary [&_[data-slot='input']]:focus-visible:ring-2 [&_[data-slot='input']]:focus-visible:ring-primary/20 [&_[data-slot='checkbox']]:border-slate-400 [&_[data-slot='checkbox']]:data-[state=checked]:bg-primary">
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="flex flex-col flex-1 min-h-0">
+        <div className="px-6 shrink-0">
+          <TabsList className="w-full flex-wrap h-auto">
+          <TabsTrigger value="identificacao">Identificação</TabsTrigger>
+          {isAluno && <TabsTrigger value="acessibilidade">Acessibilidade/SAEB</TabsTrigger>}
+          {!isResponsavel && <TabsTrigger value="endereco">Endereço</TabsTrigger>}
+          {isProfissionalOuGestor && <TabsTrigger value="escolaridade">Escolaridade</TabsTrigger>}
+          {isProfissionalOuGestor && <TabsTrigger value="posgraduacao">Pós-Graduação</TabsTrigger>}
+          {isProfissionalOuGestor && <TabsTrigger value="formacao">Formação Continuada</TabsTrigger>}
+          {isProfissionalOuGestor && <TabsTrigger value="vinculo">Vínculo Profissional</TabsTrigger>}
+          {isResponsavel && <TabsTrigger value="contato">Contato/Vínculos</TabsTrigger>}
+        </TabsList>
+        </div>
+
+        <div className="flex-1 overflow-y-auto px-6 py-4">
+        {/* ===== ABA IDENTIFICAÇÃO ===== */}
+        <TabsContent value="identificacao" className="space-y-5">
+          <div className="space-y-2">
+            <Label>Perfis *</Label>
+            <p className="text-xs text-muted-foreground">A pessoa pode ter múltiplos perfis (ex: Profissional e Responsável)</p>
+            <div className="flex flex-wrap gap-4 pt-1">
+              {perfis.map(p => {
+                const isChecked = (form.perfil as string[]).includes(p.value)
+                return (
+                  <div key={p.value} className="flex items-center gap-2 cursor-pointer" onClick={() => {
+                    const current = form.perfil as string[]
+                    if (isChecked) {
+                      set('perfil', current.filter((x: string) => x !== p.value))
+                    } else {
+                      set('perfil', [...current, p.value])
+                    }
+                  }}>
+                    <Checkbox checked={isChecked} className="pointer-events-none" />
+                    <span className="text-sm">{p.label}</span>
+                  </div>
+                )
+              })}
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label>Código da Pessoa</Label>
+              <Input value={form.codigo_pessoa ?? ''} placeholder={person ? '' : 'Gerado automaticamente'} disabled className="bg-slate-50 text-slate-500 cursor-not-allowed" />
+            </div>
+            <div className="space-y-2">
+              <Label>CPF {isResponsavel && '*'}</Label>
+              <Input
+                value={formatCPF(form.cpf || '')}
+                onChange={(e) => set('cpf', e.target.value.replace(/\D/g, '').slice(0, 11))}
+                placeholder="000.000.000-00"
+                maxLength={14}
+                inputMode="numeric"
+              />
+            </div>
+            {!apenasResponsavel && (
+              <div className="space-y-2">
+                <Label>Identificação INEP</Label>
+                <Input value={form.inep_id || ''} onChange={(e) => set('inep_id', e.target.value)} placeholder="Código INEP (12 dígitos)" maxLength={12} />
+              </div>
+            )}
+          </div>
+
+          {!isAluno && !apenasResponsavel && (
+            <div className="space-y-2">
+              <Label>E-mail</Label>
+              <Input type="email" value={form.email} onChange={(e) => set('email', e.target.value)} placeholder="email@exemplo.com" />
+            </div>
+          )}
+
+          <div className="space-y-2">
+            <Label>Nome Completo *</Label>
+            <Input value={form.nome_completo} onChange={(e) => set('nome_completo', e.target.value)} placeholder="Nome completo" />
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label>Data de Nascimento</Label>
+              <DatePicker
+                value={form.data_nascimento || ''}
+                onChange={(v) => set('data_nascimento', v)}
+                placeholder="dd/mm/aaaa"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Sexo</Label>
+              <Select value={form.sexo} onValueChange={(v) => set('sexo', v)}>
+                <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="1">Masculino</SelectItem>
+                  <SelectItem value="2">Feminino</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          {!apenasResponsavel && (
+            <>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>Cor/Raça</Label>
+                  <Select value={form.cor_raca} onValueChange={(v) => set('cor_raca', v)}>
+                    <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="0">Não Declarada</SelectItem>
+                      <SelectItem value="1">Branca</SelectItem>
+                      <SelectItem value="2">Preta</SelectItem>
+                      <SelectItem value="3">Parda</SelectItem>
+                      <SelectItem value="4">Amarela</SelectItem>
+                      <SelectItem value="5">Indígena</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  {form.cor_raca === '5' && !isProfissionalOuGestor && (
+                    <div className="mt-2">
+                      <Combobox label="Povo Indígena" options={POVO_OPTIONS} value={form.povo_indigena} onChange={(v) => set('povo_indigena', v)} searchThreshold={2} />
+                    </div>
+                  )}
+                </div>
+                <div className="space-y-2">
+                  <Label>Nacionalidade</Label>
+                  <Select value={form.nacionalidade} onValueChange={(v) => set('nacionalidade', v)}>
+                    <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="1">Brasileira</SelectItem>
+                      <SelectItem value="2">Brasileira - Nascido no Exterior</SelectItem>
+                      <SelectItem value="3">Estrangeira</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
+              {form.nacionalidade && (
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Combobox
+                      label="País de Nacionalidade"
+                      options={PAIS_OPTIONS}
+                      value={form.pais_nacionalidade || ''}
+                      onChange={(v) => set('pais_nacionalidade', v)}
+                      placeholder="Selecione o país"
+                      disabled={form.nacionalidade === '1'}
+                    />
+                  </div>
+                  {form.nacionalidade === '1' && (
+                    <div className="space-y-2">
+                      <Combobox
+                        label="Município de Nascimento"
+                        options={MUNICIPIO_OPTIONS}
+                        value={form.municipio_nascimento || ''}
+                        onChange={(v) => set('municipio_nascimento', v)}
+                        placeholder="Digite para buscar..."
+                        searchThreshold={2}
+                      />
+                    </div>
+                  )}
+                </div>
+              )}
+            </>
+          )}
+
+          {!isResponsavel && (
+            <div className="space-y-2">
+              <Label>Filiação</Label>
+              <Select value={form.filiacao_declarada} onValueChange={(v) => set('filiacao_declarada', v)}>
+                <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="0">Não declarado/Ignorado</SelectItem>
+                  <SelectItem value="1">Filiação 1 e/ou Filiação 2</SelectItem>
+                </SelectContent>
+              </Select>
+              {form.filiacao_declarada === '1' && (
+                <div className="grid grid-cols-2 gap-4 mt-2">
+                  <div className="space-y-2">
+                    <Label>Filiação 1 (mãe)</Label>
+                    <Input value={form.filiacao_1} onChange={(e) => set('filiacao_1', e.target.value)} />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Filiação 2 (pai)</Label>
+                    <Input value={form.filiacao_2} onChange={(e) => set('filiacao_2', e.target.value)} />
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
+          {isAluno && (
+            <div className="space-y-2">
+              <Label>
+                Matrícula da Certidão de Nascimento
+                {!form.cpf && <span className="text-destructive"> *</span>}
+              </Label>
+              <Input value={form.certidao_nascimento} onChange={(e) => set('certidao_nascimento', e.target.value)} placeholder="30 + 2 caracteres" maxLength={32} />
+              {!form.cpf && <p className="text-xs text-destructive">Obrigatório quando não informado CPF.</p>}
+            </div>
+          )}
+        </TabsContent>
+
+        {/* ===== ABA ACESSIBILIDADE / SAEB ===== */}
+        {isAluno && (
+          <TabsContent value="acessibilidade" className="space-y-5 ">
+            <div className="space-y-4">
+              <div className="flex items-center gap-2 cursor-pointer" onClick={() => {
+                const next = !form.deficiencia
+                set('deficiencia', next)
+                if (!next) for (const c of DEFICIENCIA_CAMPOS) set(c.key, false)
+              }}>
+                <Checkbox checked={form.deficiencia} className="pointer-events-none" />
+                <Label className="text-sm cursor-pointer">Pessoa com Deficiência, TEA ou Altas Habilidades</Label>
+              </div>
+
+              {hasDeficiencia && (
+                <Card>
+                  <CardContent className="pt-3 space-y-3">
+                    <Label>Tipos de Deficiência / TEA / AH</Label>
+                    <div className="grid grid-cols-2 gap-2">
+                      {DEFICIENCIA_CAMPOS.map(c => {
+                        const disabled = isDeficienciaDisabled(c.key)
+                        return (
+                          <div key={c.key} className={`flex items-center gap-2 ${disabled ? 'opacity-50' : 'cursor-pointer'}`} onClick={() => toggleDeficiencia(c.key)}>
+                            <Checkbox checked={form[c.key]} disabled={disabled} className="pointer-events-none" />
+                            <span className="text-sm">{c.label}</span>
+                          </div>
+                        )
+                      })}
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+
+              <div className="flex items-center gap-2 cursor-pointer" onClick={() => {
+                const next = !form.transtorno_aprendizagem
+                set('transtorno_aprendizagem', next)
+                if (!next) for (const c of TRANSTORNO_CAMPOS) set(c.key, false)
+              }}>
+                <Checkbox checked={form.transtorno_aprendizagem} className="pointer-events-none" />
+                <Label className="text-sm cursor-pointer">Pessoa com Transtornos que Impactam a Aprendizagem</Label>
+              </div>
+
+              {hasTranstorno && (
+                <Card>
+                  <CardContent className="pt-3 space-y-3">
+                    <Label>Tipos de Transtorno</Label>
+                    <div className="grid grid-cols-2 gap-2">
+                      {TRANSTORNO_CAMPOS.map(c => (
+                        <div key={c.key} className="flex items-center gap-2 cursor-pointer" onClick={() => set(c.key, !form[c.key])}>
+                          <Checkbox checked={form[c.key]} className="pointer-events-none" />
+                          <span className="text-sm">{c.label}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+
+              {(hasDeficiencia || hasTranstorno) && recursosDisponiveis.length > 0 && (
+                <Card>
+                  <CardContent className="pt-3 space-y-3">
+                    <Label>Recursos SAEB</Label>
+                    <p className="text-xs text-muted-foreground">Recursos disponíveis conforme a(s) deficiência(s) selecionada(s) (Tabela INEP 2025)</p>
+                    <div className="grid grid-cols-2 gap-2">
+                      {recursosDisponiveis.map(c => (
+                        <div key={c.key} className="flex items-center gap-2 cursor-pointer" onClick={() => toggleRecurso(c.key)}>
+                          <Checkbox checked={form[c.key]} className="pointer-events-none" />
+                          <span className="text-sm">{c.label}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+            </div>
+          </TabsContent>
+        )}
+
+        {/* ===== ABA ENDEREÇO ===== */}
+        {!isResponsavel && (
+          <TabsContent value="endereco" className="space-y-5 ">
+            <div className="space-y-2">
+              <Combobox
+                label="País de Residência"
+                options={PAIS_OPTIONS}
+                value={form.pais_residencia || ''}
+                onChange={(v) => set('pais_residencia', v)}
+                placeholder="Selecione o país"
+              />
+            </div>
+            {form.pais_residencia === '76' && (
+              <>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label>CEP</Label>
+                    <Input value={form.cep} onChange={(e) => set('cep', e.target.value)} placeholder="00000-000" maxLength={8} />
+                  </div>
+                  <div className="space-y-2">
+                    <Combobox
+                      label="Município de Residência"
+                      options={MUNICIPIO_OPTIONS}
+                      value={form.municipio_residencia || ''}
+                      onChange={(v) => set('municipio_residencia', v)}
+                      placeholder="Digite para buscar..."
+                      searchThreshold={2}
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label>Logradouro</Label>
+                    <Input value={form.logradouro} onChange={(e) => set('logradouro', e.target.value)} placeholder="Rua, Avenida..." />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Número</Label>
+                    <Input value={form.numero} onChange={(e) => set('numero', e.target.value)} placeholder="Nº" />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label>Bairro</Label>
+                    <Input value={form.bairro} onChange={(e) => set('bairro', e.target.value)} placeholder="Bairro" />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Complemento</Label>
+                    <Input value={form.complemento} onChange={(e) => set('complemento', e.target.value)} placeholder="Apto, Bloco..." />
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label>Ponto de Referência</Label>
+                  <Input value={form.referencia} onChange={(e) => set('referencia', e.target.value)} placeholder="Próximo a..." />
+                </div>
+
+                {!isResponsavel && (
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label>Zona de Residência</Label>
+                      <Select value={form.zona_residencia} onValueChange={(v) => set('zona_residencia', v)}>
+                        <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="1">Urbana</SelectItem>
+                          <SelectItem value="2">Rural</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Localização Diferenciada</Label>
+                      <Select value={form.localizacao_diferenciada} onValueChange={(v) => set('localizacao_diferenciada', v)}>
+                        <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="1">Área de Assentamento</SelectItem>
+                          <SelectItem value="2">Terra Indígena</SelectItem>
+                          <SelectItem value="3">Comunidade Quilombola</SelectItem>
+                          <SelectItem value="7">Não está em área diferenciada</SelectItem>
+                          <SelectItem value="8">Comunidades Tradicionais</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+                )}
+              </>
+            )}
+          </TabsContent>
+        )}
+
+        {/* ===== ABA ESCOLARIDADE ===== */}
+        {isProfissionalOuGestor && (
+          <TabsContent value="escolaridade" className="space-y-5 ">
+            <div className="space-y-2">
+              <Label>Maior Nível de Escolaridade Concluído</Label>
+              <Select value={form.escolaridade} onValueChange={(v) => set('escolaridade', v)}>
+                <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="1">Não concluiu o Ensino Fundamental</SelectItem>
+                  <SelectItem value="2">Ensino Fundamental</SelectItem>
+                  <SelectItem value="7">Ensino Médio</SelectItem>
+                  <SelectItem value="6">Educação Superior</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            {(form.escolaridade === '6' || form.escolaridade === '7') && (
+              <div className="space-y-2">
+                <Label>Tipo de Ensino Médio Cursado</Label>
+                <Select value={form.tipo_ensino_medio} onValueChange={(v) => set('tipo_ensino_medio', v)}>
+                  <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="1">Formação Geral</SelectItem>
+                    <SelectItem value="2">Modalidade Normal (Magistério)</SelectItem>
+                    <SelectItem value="3">Curso Técnico</SelectItem>
+                    <SelectItem value="4">Magistério Indígena</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+
+            {form.escolaridade === '6' && (
+              <>
+                {Array.from({ length: cursoCount }, (_, i) => i + 1).map(i => (
+                  <Card key={i}>
+                    <CardContent className="pt-4 space-y-3">
+                      <div className="flex items-center justify-between">
+                        <Label className="text-sm font-semibold">Curso Superior {i}</Label>
+                        {i > 1 && (
+                          <button type="button" onClick={() => {
+                            for (const key of [`curso_superior_${i}`, `ano_conclusao_${i}`, `ies_${i}`, `area_pedagogica_${i}`]) set(key, '')
+                            setCursoCount(i - 1)
+                          }} className="text-xs text-destructive hover:text-destructive/80">
+                            Remover
+                          </button>
+                        )}
+                      </div>
+                      <div className="grid grid-cols-3 gap-3">
+                        <div className="space-y-2"><Label className="text-xs">Curso</Label><Combobox options={CURSO_OPTIONS} value={form[`curso_superior_${i}`]} onChange={(v) => set(`curso_superior_${i}`, v)} searchThreshold={2} /></div>
+                        <div className="space-y-2"><Label className="text-xs">Ano Conclusão</Label><Input type="number" value={form[`ano_conclusao_${i}`] || ''} onChange={(e) => set(`ano_conclusao_${i}`, parseInt(e.target.value) || 0)} /></div>
+                        <div className="space-y-2"><Label className="text-xs">IES</Label><Combobox options={IES_OPTIONS} value={form[`ies_${i}`]} onChange={(v) => set(`ies_${i}`, v)} searchThreshold={2} /></div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+                {cursoCount < 3 && (
+                  <Button type="button" variant="outline" className="border-slate-300" onClick={() => setCursoCount(c => c + 1)}>
+                    + Adicionar outro curso superior
+                  </Button>
+                )}
+              </>
+            )}
+          </TabsContent>
+        )}
+
+        {/* ===== ABA PÓS-GRADUAÇÃO ===== */}
+        {isProfissionalOuGestor && (
+          <TabsContent value="posgraduacao" className="space-y-5 ">
+            {form.escolaridade === '6' ? (
+              <>
+                <div className="flex items-center gap-2 cursor-pointer" onClick={() => {
+                  const next = !form.sem_pos
+                  set('sem_pos', next)
+                  if (next) for (let i = 1; i <= 6; i++) { set(`pos_tipo_${i}`, ''); set(`pos_area_${i}`, ''); set(`pos_ano_${i}`, 0) }
+                }}>
+                  <Checkbox checked={form.sem_pos} className="pointer-events-none" />
+                  <Label className="text-sm cursor-pointer">Não tem pós-graduação concluída</Label>
+                </div>
+
+                {!form.sem_pos && Array.from({ length: posCount }, (_, i) => i + 1).map(i => (
+                  <Card key={i}>
+                    <CardContent className="pt-4 space-y-3">
+                      <div className="flex items-center justify-between">
+                        <Label className="text-sm font-semibold">Pós-Graduação {i}</Label>
+                        {i > 1 && (
+                          <button type="button" onClick={() => {
+                            for (const key of [`pos_tipo_${i}`, `pos_area_${i}`, `pos_ano_${i}`]) set(key, '')
+                            setPosCount(i - 1)
+                          }} className="text-xs text-destructive hover:text-destructive/80">
+                            Remover
+                          </button>
+                        )}
+                      </div>
+                      <div className="grid grid-cols-3 gap-3">
+                        <div>
+                          <Label className="text-xs">Tipo</Label>
+                          <Select value={form[`pos_tipo_${i}`]} onValueChange={(v) => set(`pos_tipo_${i}`, v)}>
+                            <SelectTrigger><SelectValue placeholder="Tipo" /></SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="1">Especialização</SelectItem>
+                              <SelectItem value="2">Mestrado</SelectItem>
+                              <SelectItem value="3">Doutorado</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div className="space-y-2"><Label className="text-xs">Área</Label><Combobox options={AREA_POS_OPTIONS} value={form[`pos_area_${i}`]} onChange={(v) => set(`pos_area_${i}`, v)} searchThreshold={2} /></div>
+                        <div className="space-y-2"><Label className="text-xs">Ano Conclusão</Label><Input type="number" value={form[`pos_ano_${i}`] || ''} onChange={(e) => set(`pos_ano_${i}`, parseInt(e.target.value) || 0)} /></div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+                {!form.sem_pos && posCount < 6 && (
+                  <Button type="button" variant="outline" className="border-slate-300" onClick={() => setPosCount(c => c + 1)}>
+                    + Adicionar outra pós-graduação
+                  </Button>
+                )}
+              </>
+            ) : (
+              <p className="text-sm text-muted-foreground">Disponível apenas para nível superior concluído.</p>
+            )}
+          </TabsContent>
+        )}
+
+        {/* ===== ABA FORMAÇÃO CONTINUADA ===== */}
+        {isProfissionalOuGestor && (
+          <TabsContent value="formacao" className="space-y-5 ">
+            <Label>Formação Continuada (mín. 80h)</Label>
+            <div className="grid grid-cols-2 gap-2">
+              {FORMACAO_CAMPOS.map(c => (
+                <div key={c.key} className="flex items-center gap-2 cursor-pointer" onClick={() => marcaFormacao(c.key)}>
+                  <Checkbox checked={form[c.key]} className="pointer-events-none" />
+                  <span className="text-sm">{c.label}</span>
+                </div>
+              ))}
+            </div>
+            <div className="flex items-center gap-2 pt-2 cursor-pointer" onClick={nenhumaFormacao}>
+              <Checkbox checked={form.sem_formacao} className="pointer-events-none" />
+              <Label className="text-sm cursor-pointer">Nenhum</Label>
+            </div>
+          </TabsContent>
+        )}
+
+        {/* ===== ABA VÍNCULO PROFISSIONAL ===== */}
+        {isProfissionalOuGestor && (
+          <TabsContent value="vinculo" className="space-y-4">
+            <div className="flex items-center justify-between">
+              <Label className="text-sm font-semibold">Vínculos Profissionais</Label>
+              <Button variant="outline" size="sm" onClick={adicionarVinculoProfissional} className="border-slate-300">
+                <Plus className="mr-1 h-3.5 w-3.5" /> Adicionar Vínculo
+              </Button>
+            </div>
+
+            {vinculosProfissionais.length === 0 && (
+              <p className="text-sm text-muted-foreground py-4 text-center">
+                Nenhum vínculo cadastrado. Clique em "Adicionar Vínculo" para começar.
+              </p>
+            )}
+
+            {vinculosProfissionais.map((v, idx) => (
+              <Card key={idx} className="border-[#cbd5e1] shadow-[0_2px_8px_rgba(0,0,0,0.06)]">
+                <CardContent className="pt-4 space-y-4">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-semibold text-primary">Vínculo #{idx + 1}</span>
+                    <Button variant="ghost" size="icon-sm" onClick={() => removerVinculoProfissional(idx)}>
+                      <Trash2 className="h-4 w-4 text-destructive" />
+                    </Button>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label>Regime de Contratação *</Label>
+                      <Select value={v.regime_contratacao || ''} onValueChange={(val) => updateVinculoProfissionalState(idx, 'regime_contratacao', val)}>
+                        <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="1">Concursado/efetivo/estável</SelectItem>
+                          <SelectItem value="2">Contrato temporário</SelectItem>
+                          <SelectItem value="3">Contrato terceirizado</SelectItem>
+                          <SelectItem value="4">Contrato CLT</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Função *</Label>
+                      <Select value={v.funcao_id || ''} onValueChange={(val) => updateVinculoProfissionalState(idx, 'funcao_id', val)}>
+                        <SelectTrigger><SelectValue placeholder="Selecione a função" /></SelectTrigger>
+                        <SelectContent>
+                          {funcoesOptions.map(f => (
+                            <SelectItem key={f.id} value={f.id}>{f.nome}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-3 gap-4">
+                    <div className="space-y-2">
+                      <Label>Situação *</Label>
+                      <Select value={v.situacao || ''} onValueChange={(val) => {
+                        updateVinculoProfissionalState(idx, 'situacao', val)
+                        if (val !== '2') { updateVinculoProfissionalState(idx, 'data_inicio_afastamento', null); updateVinculoProfissionalState(idx, 'data_termino_afastamento', null) }
+                        if (val !== '3') updateVinculoProfissionalState(idx, 'data_termino', null)
+                      }}>
+                        <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="1">Ativo</SelectItem>
+                          <SelectItem value="2">Afastado</SelectItem>
+                          <SelectItem value="3">Encerrado</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Data de Início *</Label>
+                      <Input type="date" value={v.data_inicio || ''} onChange={(e) => updateVinculoProfissionalState(idx, 'data_inicio', e.target.value)} />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Carga Horária Semanal</Label>
+                      <Input type="number" value={v.carga_horaria || ''} onChange={(e) => updateVinculoProfissionalState(idx, 'carga_horaria', e.target.value ? Number(e.target.value) : null)} min={0} max={60} />
+                    </div>
+                  </div>
+
+                  {v.situacao === '2' && (
+                    <div className="grid grid-cols-2 gap-4 p-3 bg-amber-50/40 rounded-lg border border-amber-200">
+                      <div className="space-y-2">
+                        <Label className="text-amber-800">Data de Início do Afastamento *</Label>
+                        <Input type="date" value={v.data_inicio_afastamento || ''} onChange={(e) => updateVinculoProfissionalState(idx, 'data_inicio_afastamento', e.target.value)} />
+                      </div>
+                      <div className="space-y-2">
+                        <Label className="text-amber-800">Data de Término do Afastamento</Label>
+                        <Input type="date" value={v.data_termino_afastamento || ''} onChange={(e) => updateVinculoProfissionalState(idx, 'data_termino_afastamento', e.target.value)} />
+                      </div>
+                    </div>
+                  )}
+
+                  {v.situacao === '3' && (
+                    <div className="p-3 bg-red-50/40 rounded-lg border border-red-200">
+                      <div className="space-y-2">
+                        <Label className="text-red-800">Data de Término *</Label>
+                        <Input type="date" value={v.data_termino || ''} onChange={(e) => updateVinculoProfissionalState(idx, 'data_termino', e.target.value)} />
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="space-y-2">
+                    <Label>Observações</Label>
+                    <textarea
+                      className="w-full min-h-[60px] rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 resize-y"
+                      value={v.observacoes || ''}
+                      onChange={(e) => updateVinculoProfissionalState(idx, 'observacoes', e.target.value)}
+                      placeholder="Observações sobre este vínculo..."
+                    />
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </TabsContent>
+        )}
+
+        {/* ===== ABA CONTATO / VÍNCULOS (RESPONSÁVEL) ===== */}
+        {isResponsavel && (
+          <TabsContent value="contato" className="space-y-5 ">
+            <div className="space-y-2">
+              <Label>E-mail</Label>
+              <Input type="email" value={form.email} onChange={(e) => set('email', e.target.value)} placeholder="email@exemplo.com" />
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>Telefone Celular *</Label>
+                <Input value={form.telefone_celular} onChange={(e) => set('telefone_celular', e.target.value)} placeholder="(00) 00000-0000" maxLength={11} />
+              </div>
+              <div className="space-y-2">
+                <Label>Telefone Fixo</Label>
+                <Input value={form.telefone_fixo} onChange={(e) => set('telefone_fixo', e.target.value)} placeholder="(00) 0000-0000" maxLength={10} />
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label>WhatsApp</Label>
+              <Input value={form.whatsapp} onChange={(e) => set('whatsapp', e.target.value)} placeholder="(00) 00000-0000" maxLength={11} />
+            </div>
+
+            <Card>
+              <CardContent className="pt-4 space-y-3">
+                <Label className="text-sm font-semibold">Vínculo com Alunos</Label>
+                <div className="space-y-2">
+                  <Label className="text-xs">Buscar Aluno</Label>
+                  <Input
+                    placeholder="Digite o nome do aluno (mín. 2 caracteres)"
+                    value={alunosSearch}
+                    onChange={(e) => buscarAlunosHandler(e.target.value)}
+                  />
+                  {alunosOptions.length > 0 && (
+                    <div className="border border-slate-200 rounded-lg max-h-40 overflow-y-auto">
+                      {alunosOptions.map(a => (
+                        <button key={a.id} type="button" className="w-full text-left px-3 py-2 text-sm hover:bg-slate-50 transition-colors" onClick={() => adicionarVinculo(a.id)}>
+                          {a.nome_completo}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {form.vinculos.length > 0 && (
+                  <div className="space-y-2">
+                    {form.vinculos.map((v: any, idx: number) => (
+                      <div key={idx} className="flex items-center justify-between p-3 bg-slate-50/40 rounded-lg border border-slate-200">
+                        <div className="flex-1 space-y-2">
+                          <span className="text-sm font-medium">{v.aluno_nome}</span>
+                          <div className="flex flex-wrap gap-2">
+                            <Select value={v.tipo_vinculo} onValueChange={(val) => updateVinculo(idx, 'tipo_vinculo', val)}>
+                              <SelectTrigger className="w-36 h-7 text-xs"><SelectValue /></SelectTrigger>
+                              <SelectContent>
+                                {TIPOS_VINCULO.map(t => <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>)}
+                              </SelectContent>
+                            </Select>
+                            <TooltipProvider delayDuration={300}>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <div className="flex items-center gap-1 text-xs cursor-pointer" onClick={() => updateVinculo(idx, 'principal', !v.principal)}>
+                                    <Checkbox checked={v.principal} className="size-3 pointer-events-none" />
+                                    Principal
+                                  </div>
+                                </TooltipTrigger>
+                                <TooltipContent className="max-w-56">
+                                  <p>Responsável principal do aluno</p>
+                                </TooltipContent>
+                              </Tooltip>
+                            </TooltipProvider>
+                            <TooltipProvider delayDuration={300}>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <div className="flex items-center gap-1 text-xs cursor-pointer" onClick={() => updateVinculo(idx, 'autorizado_retirar', !v.autorizado_retirar)}>
+                                    <Checkbox checked={v.autorizado_retirar} className="size-3 pointer-events-none" />
+                                    Retirar
+                                  </div>
+                                </TooltipTrigger>
+                                <TooltipContent className="max-w-56">
+                                  <p>Autorizado a retirar o aluno da escola</p>
+                                </TooltipContent>
+                              </Tooltip>
+                            </TooltipProvider>
+                            <TooltipProvider delayDuration={300}>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <div className="flex items-center gap-1 text-xs cursor-pointer" onClick={() => updateVinculo(idx, 'receber_comunicados', !v.receber_comunicados)}>
+                                    <Checkbox checked={v.receber_comunicados} className="size-3 pointer-events-none" />
+                                    Comunicados
+                                  </div>
+                                </TooltipTrigger>
+                                <TooltipContent className="max-w-56">
+                                  <p>Recebe comunicados escolares sobre o aluno</p>
+                                </TooltipContent>
+                              </Tooltip>
+                            </TooltipProvider>
+                          </div>
+                        </div>
+                        <button type="button" onClick={() => removerVinculo(idx)} className="text-destructive hover:text-destructive/80 text-xs ml-2">
+                          Remover
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+        )}
+        </div>
+      </Tabs>
+
+      <div className="bg-white pt-4 pb-2 px-6 flex justify-end gap-3 border-t border-slate-200 shrink-0">
+        <Button variant="outline" onClick={onCancel} className="border-slate-300">Cancelar</Button>
+        <Button onClick={handleSave} disabled={saving} className="bg-primary hover:bg-primary/90 shadow-sm shadow-primary/20">
+          {saving ? 'Salvando...' : person ? 'Atualizar' : 'Criar'}
+        </Button>
+      </div>
+    </div>
+  )
+}

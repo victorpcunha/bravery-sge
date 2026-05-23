@@ -1,0 +1,4842 @@
+[
+  {
+    "codigo": "0111C012",
+    "nome": "Ciência da educação - Bacharelado",
+    "nivel": "Bacharelado",
+    "areaGeral": "01",
+    "areaEspecifica": "011",
+    "areaDetalhada": "0111"
+  },
+  {
+    "codigo": "0111C014",
+    "nome": "Ciência da educação - Sequencial",
+    "nivel": "Sequencial",
+    "areaGeral": "01",
+    "areaEspecifica": "011",
+    "areaDetalhada": "0111"
+  },
+  {
+    "codigo": "0111P013",
+    "nome": "Processos escolares - Tecnológico",
+    "nivel": "Tecnológico",
+    "areaGeral": "01",
+    "areaEspecifica": "011",
+    "areaDetalhada": "0111"
+  },
+  {
+    "codigo": "0111P022",
+    "nome": "Psicopedagogia - Bacharelado",
+    "nivel": "Bacharelado",
+    "areaGeral": "01",
+    "areaEspecifica": "011",
+    "areaDetalhada": "0111"
+  },
+  {
+    "codigo": "0111P024",
+    "nome": "Psicopedagogia - Sequencial",
+    "nivel": "Sequencial",
+    "areaGeral": "01",
+    "areaEspecifica": "011",
+    "areaDetalhada": "0111"
+  },
+  {
+    "codigo": "0112E011",
+    "nome": "Educação infantil formação de professor - Licenciatura",
+    "nivel": "Licenciatura",
+    "areaGeral": "01",
+    "areaEspecifica": "011",
+    "areaDetalhada": "0112"
+  },
+  {
+    "codigo": "0113E011",
+    "nome": "Educação do campo formação de professor - Licenciatura",
+    "nivel": "Licenciatura",
+    "areaGeral": "01",
+    "areaEspecifica": "011",
+    "areaDetalhada": "0113"
+  },
+  {
+    "codigo": "0113E021",
+    "nome": "Educação especial formação de professor - Licenciatura",
+    "nivel": "Licenciatura",
+    "areaGeral": "01",
+    "areaEspecifica": "011",
+    "areaDetalhada": "0113"
+  },
+  {
+    "codigo": "0113E031",
+    "nome": "Educação indígena formação de professor - Licenciatura",
+    "nivel": "Licenciatura",
+    "areaGeral": "01",
+    "areaEspecifica": "011",
+    "areaDetalhada": "0113"
+  },
+  {
+    "codigo": "0113F011",
+    "nome": "Formação pedagógica de professor para a educação básica - Licenciatura",
+    "nivel": "Licenciatura",
+    "areaGeral": "01",
+    "areaEspecifica": "011",
+    "areaDetalhada": "0113"
+  },
+  {
+    "codigo": "0113F014",
+    "nome": "Formação pedagógica de professor para a educação básica - Sequencial",
+    "nivel": "Sequencial",
+    "areaGeral": "01",
+    "areaEspecifica": "011",
+    "areaDetalhada": "0113"
+  },
+  {
+    "codigo": "0113P011",
+    "nome": "Pedagogia - Licenciatura",
+    "nivel": "Licenciatura",
+    "areaGeral": "01",
+    "areaEspecifica": "011",
+    "areaDetalhada": "0113"
+  },
+  {
+    "codigo": "0113P012",
+    "nome": "Pedagogia - Bacharelado",
+    "nivel": "Bacharelado",
+    "areaGeral": "01",
+    "areaEspecifica": "011",
+    "areaDetalhada": "0113"
+  },
+  {
+    "codigo": "0113P014",
+    "nome": "Pedagogia - Sequencial",
+    "nivel": "Sequencial",
+    "areaGeral": "01",
+    "areaEspecifica": "011",
+    "areaDetalhada": "0113"
+  },
+  {
+    "codigo": "0114A011",
+    "nome": "Artes formação de professor - Licenciatura",
+    "nivel": "Licenciatura",
+    "areaGeral": "01",
+    "areaEspecifica": "011",
+    "areaDetalhada": "0114"
+  },
+  {
+    "codigo": "0114A014",
+    "nome": "Artes formação de professor - Sequencial",
+    "nivel": "Sequencial",
+    "areaGeral": "01",
+    "areaEspecifica": "011",
+    "areaDetalhada": "0114"
+  },
+  {
+    "codigo": "0114A021",
+    "nome": "Artes visuais formação de professor - Licenciatura",
+    "nivel": "Licenciatura",
+    "areaGeral": "01",
+    "areaEspecifica": "011",
+    "areaDetalhada": "0114"
+  },
+  {
+    "codigo": "0114B011",
+    "nome": "Biologia formação de professor - Licenciatura",
+    "nivel": "Licenciatura",
+    "areaGeral": "01",
+    "areaEspecifica": "011",
+    "areaDetalhada": "0114"
+  },
+  {
+    "codigo": "0114C011",
+    "nome": "Ciências agrárias formação de professor - Licenciatura",
+    "nivel": "Licenciatura",
+    "areaGeral": "01",
+    "areaEspecifica": "011",
+    "areaDetalhada": "0114"
+  },
+  {
+    "codigo": "0114C021",
+    "nome": "Ciências naturais formação de professor - Licenciatura",
+    "nivel": "Licenciatura",
+    "areaGeral": "01",
+    "areaEspecifica": "011",
+    "areaDetalhada": "0114"
+  },
+  {
+    "codigo": "0114C031",
+    "nome": "Ciências sociais formação de professor - Licenciatura",
+    "nivel": "Licenciatura",
+    "areaGeral": "01",
+    "areaEspecifica": "011",
+    "areaDetalhada": "0114"
+  },
+  {
+    "codigo": "0114C041",
+    "nome": "Cinema e audiovisual formação de professor - Licenciatura",
+    "nivel": "Licenciatura",
+    "areaGeral": "01",
+    "areaEspecifica": "011",
+    "areaDetalhada": "0114"
+  },
+  {
+    "codigo": "0114C051",
+    "nome": "Computação formação de professor - Licenciatura",
+    "nivel": "Licenciatura",
+    "areaGeral": "01",
+    "areaEspecifica": "011",
+    "areaDetalhada": "0114"
+  },
+  {
+    "codigo": "0114D011",
+    "nome": "Dança formação de professor - Licenciatura",
+    "nivel": "Licenciatura",
+    "areaGeral": "01",
+    "areaEspecifica": "011",
+    "areaDetalhada": "0114"
+  },
+  {
+    "codigo": "0114E011",
+    "nome": "Economia doméstica formação de professor - Licenciatura",
+    "nivel": "Licenciatura",
+    "areaGeral": "01",
+    "areaEspecifica": "011",
+    "areaDetalhada": "0114"
+  },
+  {
+    "codigo": "0114E021",
+    "nome": "Educação do campo em áreas de conhecimento da educação básica formação de professor - Licenciatura",
+    "nivel": "Licenciatura",
+    "areaGeral": "01",
+    "areaEspecifica": "011",
+    "areaDetalhada": "0114"
+  },
+  {
+    "codigo": "0114E031",
+    "nome": "Educação física formação de professor - Licenciatura",
+    "nivel": "Licenciatura",
+    "areaGeral": "01",
+    "areaEspecifica": "011",
+    "areaDetalhada": "0114"
+  },
+  {
+    "codigo": "0114E041",
+    "nome": "Educação indígena em áreas de conhecimento da educação básica formação de professor - Licenciatura",
+    "nivel": "Licenciatura",
+    "areaGeral": "01",
+    "areaEspecifica": "011",
+    "areaDetalhada": "0114"
+  },
+  {
+    "codigo": "0114E051",
+    "nome": "Enfermagem formação de professor - Licenciatura",
+    "nivel": "Licenciatura",
+    "areaGeral": "01",
+    "areaEspecifica": "011",
+    "areaDetalhada": "0114"
+  },
+  {
+    "codigo": "0114E061",
+    "nome": "Ensino profissionalizante em área específica formação de professor - Licenciatura",
+    "nivel": "Licenciatura",
+    "areaGeral": "01",
+    "areaEspecifica": "011",
+    "areaDetalhada": "0114"
+  },
+  {
+    "codigo": "0114E071",
+    "nome": "Ensino religioso formação de professor - Licenciatura",
+    "nivel": "Licenciatura",
+    "areaGeral": "01",
+    "areaEspecifica": "011",
+    "areaDetalhada": "0114"
+  },
+  {
+    "codigo": "0114E081",
+    "nome": "Estatística formação de professor - Licenciatura",
+    "nivel": "Licenciatura",
+    "areaGeral": "01",
+    "areaEspecifica": "011",
+    "areaDetalhada": "0114"
+  },
+  {
+    "codigo": "0114F011",
+    "nome": "Filosofia formação de professor - Licenciatura",
+    "nivel": "Licenciatura",
+    "areaGeral": "01",
+    "areaEspecifica": "011",
+    "areaDetalhada": "0114"
+  },
+  {
+    "codigo": "0114F021",
+    "nome": "Física formação de professor - Licenciatura",
+    "nivel": "Licenciatura",
+    "areaGeral": "01",
+    "areaEspecifica": "011",
+    "areaDetalhada": "0114"
+  },
+  {
+    "codigo": "0114G011",
+    "nome": "Geografia formação de professor - Licenciatura",
+    "nivel": "Licenciatura",
+    "areaGeral": "01",
+    "areaEspecifica": "011",
+    "areaDetalhada": "0114"
+  },
+  {
+    "codigo": "0114H011",
+    "nome": "História formação de professor - Licenciatura",
+    "nivel": "Licenciatura",
+    "areaGeral": "01",
+    "areaEspecifica": "011",
+    "areaDetalhada": "0114"
+  },
+  {
+    "codigo": "0114M011",
+    "nome": "Matemática formação de professor - Licenciatura",
+    "nivel": "Licenciatura",
+    "areaGeral": "01",
+    "areaEspecifica": "011",
+    "areaDetalhada": "0114"
+  },
+  {
+    "codigo": "0114M021",
+    "nome": "Música formação de professor - Licenciatura",
+    "nivel": "Licenciatura",
+    "areaGeral": "01",
+    "areaEspecifica": "011",
+    "areaDetalhada": "0114"
+  },
+  {
+    "codigo": "0114P011",
+    "nome": "Psicologia formação de professor - Licenciatura",
+    "nivel": "Licenciatura",
+    "areaGeral": "01",
+    "areaEspecifica": "011",
+    "areaDetalhada": "0114"
+  },
+  {
+    "codigo": "0114Q011",
+    "nome": "Química formação de professor - Licenciatura",
+    "nivel": "Licenciatura",
+    "areaGeral": "01",
+    "areaEspecifica": "011",
+    "areaDetalhada": "0114"
+  },
+  {
+    "codigo": "0114T011",
+    "nome": "Teatro formação de professor - Licenciatura",
+    "nivel": "Licenciatura",
+    "areaGeral": "01",
+    "areaEspecifica": "011",
+    "areaDetalhada": "0114"
+  },
+  {
+    "codigo": "0115L011",
+    "nome": "Letras alemão formação de professor - Licenciatura",
+    "nivel": "Licenciatura",
+    "areaGeral": "01",
+    "areaEspecifica": "011",
+    "areaDetalhada": "0115"
+  },
+  {
+    "codigo": "0115L021",
+    "nome": "Letras espanhol formação de professor - Licenciatura",
+    "nivel": "Licenciatura",
+    "areaGeral": "01",
+    "areaEspecifica": "011",
+    "areaDetalhada": "0115"
+  },
+  {
+    "codigo": "0115L031",
+    "nome": "Letras francês formação de professor - Licenciatura",
+    "nivel": "Licenciatura",
+    "areaGeral": "01",
+    "areaEspecifica": "011",
+    "areaDetalhada": "0115"
+  },
+  {
+    "codigo": "0115L041",
+    "nome": "Letras inglês formação de professor - Licenciatura",
+    "nivel": "Licenciatura",
+    "areaGeral": "01",
+    "areaEspecifica": "011",
+    "areaDetalhada": "0115"
+  },
+  {
+    "codigo": "0115L051",
+    "nome": "Letras italiano formação de professor  - Licenciatura",
+    "nivel": "Licenciatura",
+    "areaGeral": "01",
+    "areaEspecifica": "011",
+    "areaDetalhada": "0115"
+  },
+  {
+    "codigo": "0115L061",
+    "nome": "Letras japonês formação de professor  - Licenciatura",
+    "nivel": "Licenciatura",
+    "areaGeral": "01",
+    "areaEspecifica": "011",
+    "areaDetalhada": "0115"
+  },
+  {
+    "codigo": "0115L071",
+    "nome": "Letras língua brasileira de sinais formação de professor - Licenciatura",
+    "nivel": "Licenciatura",
+    "areaGeral": "01",
+    "areaEspecifica": "011",
+    "areaDetalhada": "0115"
+  },
+  {
+    "codigo": "0115L081",
+    "nome": "Letras línguas estrangeiras clássicas formação de professor - Licenciatura",
+    "nivel": "Licenciatura",
+    "areaGeral": "01",
+    "areaEspecifica": "011",
+    "areaDetalhada": "0115"
+  },
+  {
+    "codigo": "0115L091",
+    "nome": "Letras linguística formação de professor  - Licenciatura",
+    "nivel": "Licenciatura",
+    "areaGeral": "01",
+    "areaEspecifica": "011",
+    "areaDetalhada": "0115"
+  },
+  {
+    "codigo": "0115L101",
+    "nome": "Letras outras línguas estrangeiras modernas formação de professor  - Licenciatura",
+    "nivel": "Licenciatura",
+    "areaGeral": "01",
+    "areaEspecifica": "011",
+    "areaDetalhada": "0115"
+  },
+  {
+    "codigo": "0115L111",
+    "nome": "Letras português alemão formação de professor - Licenciatura",
+    "nivel": "Licenciatura",
+    "areaGeral": "01",
+    "areaEspecifica": "011",
+    "areaDetalhada": "0115"
+  },
+  {
+    "codigo": "0115L121",
+    "nome": "Letras português espanhol formação de professor - Licenciatura",
+    "nivel": "Licenciatura",
+    "areaGeral": "01",
+    "areaEspecifica": "011",
+    "areaDetalhada": "0115"
+  },
+  {
+    "codigo": "0115L131",
+    "nome": "Letras português formação de professor - Licenciatura",
+    "nivel": "Licenciatura",
+    "areaGeral": "01",
+    "areaEspecifica": "011",
+    "areaDetalhada": "0115"
+  },
+  {
+    "codigo": "0115L141",
+    "nome": "Letras português francês formação de professor - Licenciatura",
+    "nivel": "Licenciatura",
+    "areaGeral": "01",
+    "areaEspecifica": "011",
+    "areaDetalhada": "0115"
+  },
+  {
+    "codigo": "0115L151",
+    "nome": "Letras português inglês formação de professor - Licenciatura",
+    "nivel": "Licenciatura",
+    "areaGeral": "01",
+    "areaEspecifica": "011",
+    "areaDetalhada": "0115"
+  },
+  {
+    "codigo": "0115L161",
+    "nome": "Letras português italiano formação de professor - Licenciatura",
+    "nivel": "Licenciatura",
+    "areaGeral": "01",
+    "areaEspecifica": "011",
+    "areaDetalhada": "0115"
+  },
+  {
+    "codigo": "0115L171",
+    "nome": "Letras português japonês formação de professor - Licenciatura",
+    "nivel": "Licenciatura",
+    "areaGeral": "01",
+    "areaEspecifica": "011",
+    "areaDetalhada": "0115"
+  },
+  {
+    "codigo": "0115L181",
+    "nome": "Letras português língua brasileira de sinais formação de professor - Licenciatura",
+    "nivel": "Licenciatura",
+    "areaGeral": "01",
+    "areaEspecifica": "011",
+    "areaDetalhada": "0115"
+  },
+  {
+    "codigo": "0115L191",
+    "nome": "Letras português línguas estrangeiras clássicas formação de professor - Licenciatura",
+    "nivel": "Licenciatura",
+    "areaGeral": "01",
+    "areaEspecifica": "011",
+    "areaDetalhada": "0115"
+  },
+  {
+    "codigo": "0115L201",
+    "nome": "Letras português outras línguas estrangeiras modernas formação de professor - Licenciatura",
+    "nivel": "Licenciatura",
+    "areaGeral": "01",
+    "areaEspecifica": "011",
+    "areaDetalhada": "0115"
+  },
+  {
+    "codigo": "0115L211",
+    "nome": "Letras tradutor e intérprete formação de professor - Licenciatura",
+    "nivel": "Licenciatura",
+    "areaGeral": "01",
+    "areaEspecifica": "011",
+    "areaDetalhada": "0115"
+  },
+  {
+    "codigo": "0188P011",
+    "nome": "Programas interdisciplinares abrangendo educação - Licenciatura",
+    "nivel": "Licenciatura",
+    "areaGeral": "01",
+    "areaEspecifica": "018",
+    "areaDetalhada": "0188"
+  },
+  {
+    "codigo": "0188P012",
+    "nome": "Programas interdisciplinares abrangendo educação - Bacharelado",
+    "nivel": "Bacharelado",
+    "areaGeral": "01",
+    "areaEspecifica": "018",
+    "areaDetalhada": "0188"
+  },
+  {
+    "codigo": "0188P013",
+    "nome": "Programas interdisciplinares abrangendo educação - Tecnológico",
+    "nivel": "Tecnológico",
+    "areaGeral": "01",
+    "areaEspecifica": "018",
+    "areaDetalhada": "0188"
+  },
+  {
+    "codigo": "0211A012",
+    "nome": "Animação - Bacharelado",
+    "nivel": "Bacharelado",
+    "areaGeral": "02",
+    "areaEspecifica": "021",
+    "areaDetalhada": "0211"
+  },
+  {
+    "codigo": "0211A013",
+    "nome": "Animação - Tecnológico",
+    "nivel": "Tecnológico",
+    "areaGeral": "02",
+    "areaEspecifica": "021",
+    "areaDetalhada": "0211"
+  },
+  {
+    "codigo": "0211A014",
+    "nome": "Animação - Sequencial",
+    "nivel": "Sequencial",
+    "areaGeral": "02",
+    "areaEspecifica": "021",
+    "areaDetalhada": "0211"
+  },
+  {
+    "codigo": "0211C012",
+    "nome": "Cinema e audiovisual - Bacharelado",
+    "nivel": "Bacharelado",
+    "areaGeral": "02",
+    "areaEspecifica": "021",
+    "areaDetalhada": "0211"
+  },
+  {
+    "codigo": "0211C013",
+    "nome": "Cinema e audiovisual - Tecnológico",
+    "nivel": "Tecnológico",
+    "areaGeral": "02",
+    "areaEspecifica": "021",
+    "areaDetalhada": "0211"
+  },
+  {
+    "codigo": "0211C014",
+    "nome": "Cinema e audiovisual - Sequencial",
+    "nivel": "Sequencial",
+    "areaGeral": "02",
+    "areaEspecifica": "021",
+    "areaDetalhada": "0211"
+  },
+  {
+    "codigo": "0211C023",
+    "nome": "Comunicação assistiva - Tecnológico",
+    "nivel": "Tecnológico",
+    "areaGeral": "02",
+    "areaEspecifica": "021",
+    "areaDetalhada": "0211"
+  },
+  {
+    "codigo": "0211D012",
+    "nome": "Design gráfico - Bacharelado",
+    "nivel": "Bacharelado",
+    "areaGeral": "02",
+    "areaEspecifica": "021",
+    "areaDetalhada": "0211"
+  },
+  {
+    "codigo": "0211D013",
+    "nome": "Design gráfico - Tecnológico",
+    "nivel": "Tecnológico",
+    "areaGeral": "02",
+    "areaEspecifica": "021",
+    "areaDetalhada": "0211"
+  },
+  {
+    "codigo": "0211D014",
+    "nome": "Design gráfico - Sequencial",
+    "nivel": "Sequencial",
+    "areaGeral": "02",
+    "areaEspecifica": "021",
+    "areaDetalhada": "0211"
+  },
+  {
+    "codigo": "0211F012",
+    "nome": "Fotografia - Bacharelado",
+    "nivel": "Bacharelado",
+    "areaGeral": "02",
+    "areaEspecifica": "021",
+    "areaDetalhada": "0211"
+  },
+  {
+    "codigo": "0211F013",
+    "nome": "Fotografia - Tecnológico",
+    "nivel": "Tecnológico",
+    "areaGeral": "02",
+    "areaEspecifica": "021",
+    "areaDetalhada": "0211"
+  },
+  {
+    "codigo": "0211F014",
+    "nome": "Fotografia - Sequencial",
+    "nivel": "Sequencial",
+    "areaGeral": "02",
+    "areaEspecifica": "021",
+    "areaDetalhada": "0211"
+  },
+  {
+    "codigo": "0211P012",
+    "nome": "Produção audiovisual - Bacharelado",
+    "nivel": "Bacharelado",
+    "areaGeral": "02",
+    "areaEspecifica": "021",
+    "areaDetalhada": "0211"
+  },
+  {
+    "codigo": "0211P013",
+    "nome": "Produção audiovisual - Tecnológico",
+    "nivel": "Tecnológico",
+    "areaGeral": "02",
+    "areaEspecifica": "021",
+    "areaDetalhada": "0211"
+  },
+  {
+    "codigo": "0211P014",
+    "nome": "Produção audiovisual - Sequencial",
+    "nivel": "Sequencial",
+    "areaGeral": "02",
+    "areaEspecifica": "021",
+    "areaDetalhada": "0211"
+  },
+  {
+    "codigo": "0211P023",
+    "nome": "Produção cênica - Tecnológico",
+    "nivel": "Tecnológico",
+    "areaGeral": "02",
+    "areaEspecifica": "021",
+    "areaDetalhada": "0211"
+  },
+  {
+    "codigo": "0211P032",
+    "nome": "Produção cultural - Bacharelado",
+    "nivel": "Bacharelado",
+    "areaGeral": "02",
+    "areaEspecifica": "021",
+    "areaDetalhada": "0211"
+  },
+  {
+    "codigo": "0211P033",
+    "nome": "Produção cultural - Tecnológico",
+    "nivel": "Tecnológico",
+    "areaGeral": "02",
+    "areaEspecifica": "021",
+    "areaDetalhada": "0211"
+  },
+  {
+    "codigo": "0211P034",
+    "nome": "Produção cultural - Sequencial",
+    "nivel": "Sequencial",
+    "areaGeral": "02",
+    "areaEspecifica": "021",
+    "areaDetalhada": "0211"
+  },
+  {
+    "codigo": "0211P043",
+    "nome": "Produção fonográfica - Tecnológico",
+    "nivel": "Tecnológico",
+    "areaGeral": "02",
+    "areaEspecifica": "021",
+    "areaDetalhada": "0211"
+  },
+  {
+    "codigo": "0211P052",
+    "nome": "Produção multimídia - Bacharelado",
+    "nivel": "Bacharelado",
+    "areaGeral": "02",
+    "areaEspecifica": "021",
+    "areaDetalhada": "0211"
+  },
+  {
+    "codigo": "0211P053",
+    "nome": "Produção multimídia - Tecnológico",
+    "nivel": "Tecnológico",
+    "areaGeral": "02",
+    "areaEspecifica": "021",
+    "areaDetalhada": "0211"
+  },
+  {
+    "codigo": "0211P054",
+    "nome": "Produção multimídia - Sequencial",
+    "nivel": "Sequencial",
+    "areaGeral": "02",
+    "areaEspecifica": "021",
+    "areaDetalhada": "0211"
+  },
+  {
+    "codigo": "0212D012",
+    "nome": "Desenho industrial - Bacharelado",
+    "nivel": "Bacharelado",
+    "areaGeral": "02",
+    "areaEspecifica": "021",
+    "areaDetalhada": "0212"
+  },
+  {
+    "codigo": "0212D022",
+    "nome": "Design - Bacharelado",
+    "nivel": "Bacharelado",
+    "areaGeral": "02",
+    "areaEspecifica": "021",
+    "areaDetalhada": "0212"
+  },
+  {
+    "codigo": "0212D023",
+    "nome": "Design - Tecnológico",
+    "nivel": "Tecnológico",
+    "areaGeral": "02",
+    "areaEspecifica": "021",
+    "areaDetalhada": "0212"
+  },
+  {
+    "codigo": "0212D032",
+    "nome": "Design de interiores - Bacharelado",
+    "nivel": "Bacharelado",
+    "areaGeral": "02",
+    "areaEspecifica": "021",
+    "areaDetalhada": "0212"
+  },
+  {
+    "codigo": "0212D033",
+    "nome": "Design de interiores - Tecnológico",
+    "nivel": "Tecnológico",
+    "areaGeral": "02",
+    "areaEspecifica": "021",
+    "areaDetalhada": "0212"
+  },
+  {
+    "codigo": "0212D034",
+    "nome": "Design de interiores - Sequencial",
+    "nivel": "Sequencial",
+    "areaGeral": "02",
+    "areaEspecifica": "021",
+    "areaDetalhada": "0212"
+  },
+  {
+    "codigo": "0212D042",
+    "nome": "Design de produto - Bacharelado",
+    "nivel": "Bacharelado",
+    "areaGeral": "02",
+    "areaEspecifica": "021",
+    "areaDetalhada": "0212"
+  },
+  {
+    "codigo": "0212D043",
+    "nome": "Design de produto - Tecnológico",
+    "nivel": "Tecnológico",
+    "areaGeral": "02",
+    "areaEspecifica": "021",
+    "areaDetalhada": "0212"
+  },
+  {
+    "codigo": "0212D044",
+    "nome": "Design de produto - Sequencial",
+    "nivel": "Sequencial",
+    "areaGeral": "02",
+    "areaEspecifica": "021",
+    "areaDetalhada": "0212"
+  },
+  {
+    "codigo": "0212M012",
+    "nome": "Moda - Bacharelado",
+    "nivel": "Bacharelado",
+    "areaGeral": "02",
+    "areaEspecifica": "021",
+    "areaDetalhada": "0212"
+  },
+  {
+    "codigo": "0212M013",
+    "nome": "Moda - Tecnológico",
+    "nivel": "Tecnológico",
+    "areaGeral": "02",
+    "areaEspecifica": "021",
+    "areaDetalhada": "0212"
+  },
+  {
+    "codigo": "0212M014",
+    "nome": "Moda - Sequencial",
+    "nivel": "Sequencial",
+    "areaGeral": "02",
+    "areaEspecifica": "021",
+    "areaDetalhada": "0212"
+  },
+  {
+    "codigo": "0213A012",
+    "nome": "Artes - Bacharelado",
+    "nivel": "Bacharelado",
+    "areaGeral": "02",
+    "areaEspecifica": "021",
+    "areaDetalhada": "0213"
+  },
+  {
+    "codigo": "0213A013",
+    "nome": "Artes - Tecnológico",
+    "nivel": "Tecnológico",
+    "areaGeral": "02",
+    "areaEspecifica": "021",
+    "areaDetalhada": "0213"
+  },
+  {
+    "codigo": "0213A014",
+    "nome": "Artes - Sequencial",
+    "nivel": "Sequencial",
+    "areaGeral": "02",
+    "areaEspecifica": "021",
+    "areaDetalhada": "0213"
+  },
+  {
+    "codigo": "0213A022",
+    "nome": "Artes plásticas - Bacharelado",
+    "nivel": "Bacharelado",
+    "areaGeral": "02",
+    "areaEspecifica": "021",
+    "areaDetalhada": "0213"
+  },
+  {
+    "codigo": "0213A023",
+    "nome": "Artes plásticas - Tecnológico",
+    "nivel": "Tecnológico",
+    "areaGeral": "02",
+    "areaEspecifica": "021",
+    "areaDetalhada": "0213"
+  },
+  {
+    "codigo": "0213A024",
+    "nome": "Artes plásticas - Sequencial",
+    "nivel": "Sequencial",
+    "areaGeral": "02",
+    "areaEspecifica": "021",
+    "areaDetalhada": "0213"
+  },
+  {
+    "codigo": "0213A032",
+    "nome": "Artes visuais - Bacharelado",
+    "nivel": "Bacharelado",
+    "areaGeral": "02",
+    "areaEspecifica": "021",
+    "areaDetalhada": "0213"
+  },
+  {
+    "codigo": "0213A033",
+    "nome": "Artes visuais - Tecnológico",
+    "nivel": "Tecnológico",
+    "areaGeral": "02",
+    "areaEspecifica": "021",
+    "areaDetalhada": "0213"
+  },
+  {
+    "codigo": "0213H012",
+    "nome": "História da arte - Bacharelado",
+    "nivel": "Bacharelado",
+    "areaGeral": "02",
+    "areaEspecifica": "021",
+    "areaDetalhada": "0213"
+  },
+  {
+    "codigo": "0214F013",
+    "nome": "Fabricação de instrumentos musicais não industrial - Tecnológico",
+    "nivel": "Tecnológico",
+    "areaGeral": "02",
+    "areaEspecifica": "021",
+    "areaDetalhada": "0214"
+  },
+  {
+    "codigo": "0215A012",
+    "nome": "Artes cênicas - Bacharelado",
+    "nivel": "Bacharelado",
+    "areaGeral": "02",
+    "areaEspecifica": "021",
+    "areaDetalhada": "0215"
+  },
+  {
+    "codigo": "0215A013",
+    "nome": "Artes cênicas - Tecnológico",
+    "nivel": "Tecnológico",
+    "areaGeral": "02",
+    "areaEspecifica": "021",
+    "areaDetalhada": "0215"
+  },
+  {
+    "codigo": "0215D012",
+    "nome": "Dança - Bacharelado",
+    "nivel": "Bacharelado",
+    "areaGeral": "02",
+    "areaEspecifica": "021",
+    "areaDetalhada": "0215"
+  },
+  {
+    "codigo": "0215D013",
+    "nome": "Dança - Tecnológico",
+    "nivel": "Tecnológico",
+    "areaGeral": "02",
+    "areaEspecifica": "021",
+    "areaDetalhada": "0215"
+  },
+  {
+    "codigo": "0215M012",
+    "nome": "Música - Bacharelado",
+    "nivel": "Bacharelado",
+    "areaGeral": "02",
+    "areaEspecifica": "021",
+    "areaDetalhada": "0215"
+  },
+  {
+    "codigo": "0215M013",
+    "nome": "Música  - Tecnológico",
+    "nivel": "Tecnológico",
+    "areaGeral": "02",
+    "areaEspecifica": "021",
+    "areaDetalhada": "0215"
+  },
+  {
+    "codigo": "0215M014",
+    "nome": "Música - Sequencial",
+    "nivel": "Sequencial",
+    "areaGeral": "02",
+    "areaEspecifica": "021",
+    "areaDetalhada": "0215"
+  },
+  {
+    "codigo": "0215T012",
+    "nome": "Teatro - Bacharelado",
+    "nivel": "Bacharelado",
+    "areaGeral": "02",
+    "areaEspecifica": "021",
+    "areaDetalhada": "0215"
+  },
+  {
+    "codigo": "0215T013",
+    "nome": "Teatro - Tecnológico",
+    "nivel": "Tecnológico",
+    "areaGeral": "02",
+    "areaEspecifica": "021",
+    "areaDetalhada": "0215"
+  },
+  {
+    "codigo": "0221C012",
+    "nome": "Ciências da religião - Bacharelado",
+    "nivel": "Bacharelado",
+    "areaGeral": "02",
+    "areaEspecifica": "022",
+    "areaDetalhada": "0221"
+  },
+  {
+    "codigo": "0221T012",
+    "nome": "Teologia - Bacharelado",
+    "nivel": "Bacharelado",
+    "areaGeral": "02",
+    "areaEspecifica": "022",
+    "areaDetalhada": "0221"
+  },
+  {
+    "codigo": "0221T013",
+    "nome": "Teologia - Tecnológico",
+    "nivel": "Tecnológico",
+    "areaGeral": "02",
+    "areaEspecifica": "022",
+    "areaDetalhada": "0221"
+  },
+  {
+    "codigo": "0221T014",
+    "nome": "Teologia - Sequencial",
+    "nivel": "Sequencial",
+    "areaGeral": "02",
+    "areaEspecifica": "022",
+    "areaDetalhada": "0221"
+  },
+  {
+    "codigo": "0222A012",
+    "nome": "Arqueologia - Bacharelado",
+    "nivel": "Bacharelado",
+    "areaGeral": "02",
+    "areaEspecifica": "022",
+    "areaDetalhada": "0222"
+  },
+  {
+    "codigo": "0222A013",
+    "nome": "Arqueologia - Tecnológico",
+    "nivel": "Tecnológico",
+    "areaGeral": "02",
+    "areaEspecifica": "022",
+    "areaDetalhada": "0222"
+  },
+  {
+    "codigo": "0222C012",
+    "nome": "Conservação e restauro - Bacharelado",
+    "nivel": "Bacharelado",
+    "areaGeral": "02",
+    "areaEspecifica": "022",
+    "areaDetalhada": "0222"
+  },
+  {
+    "codigo": "0222C013",
+    "nome": "Conservação e restauro - Tecnológico",
+    "nivel": "Tecnológico",
+    "areaGeral": "02",
+    "areaEspecifica": "022",
+    "areaDetalhada": "0222"
+  },
+  {
+    "codigo": "0222H012",
+    "nome": "História - Bacharelado",
+    "nivel": "Bacharelado",
+    "areaGeral": "02",
+    "areaEspecifica": "022",
+    "areaDetalhada": "0222"
+  },
+  {
+    "codigo": "0222H014",
+    "nome": "História - Sequencial",
+    "nivel": "Sequencial",
+    "areaGeral": "02",
+    "areaEspecifica": "022",
+    "areaDetalhada": "0222"
+  },
+  {
+    "codigo": "0223F012",
+    "nome": "Filosofia - Bacharelado",
+    "nivel": "Bacharelado",
+    "areaGeral": "02",
+    "areaEspecifica": "022",
+    "areaDetalhada": "0223"
+  },
+  {
+    "codigo": "0223F014",
+    "nome": "Filosofia - Sequencial",
+    "nivel": "Sequencial",
+    "areaGeral": "02",
+    "areaEspecifica": "022",
+    "areaDetalhada": "0223"
+  },
+  {
+    "codigo": "0231L012",
+    "nome": "Letras alemão - Bacharelado",
+    "nivel": "Bacharelado",
+    "areaGeral": "02",
+    "areaEspecifica": "023",
+    "areaDetalhada": "0231"
+  },
+  {
+    "codigo": "0231L023",
+    "nome": "Letras escrita criativa - Tecnológico",
+    "nivel": "Tecnológico",
+    "areaGeral": "02",
+    "areaEspecifica": "023",
+    "areaDetalhada": "0231"
+  },
+  {
+    "codigo": "0231L024",
+    "nome": "Letras escrita criativa - Sequencial",
+    "nivel": "Sequencial",
+    "areaGeral": "02",
+    "areaEspecifica": "023",
+    "areaDetalhada": "0231"
+  },
+  {
+    "codigo": "0231L032",
+    "nome": "Letras espanhol - Bacharelado",
+    "nivel": "Bacharelado",
+    "areaGeral": "02",
+    "areaEspecifica": "023",
+    "areaDetalhada": "0231"
+  },
+  {
+    "codigo": "0231L034",
+    "nome": "Letras espanhol - Sequencial",
+    "nivel": "Sequencial",
+    "areaGeral": "02",
+    "areaEspecifica": "023",
+    "areaDetalhada": "0231"
+  },
+  {
+    "codigo": "0231L042",
+    "nome": "Letras francês - Bacharelado",
+    "nivel": "Bacharelado",
+    "areaGeral": "02",
+    "areaEspecifica": "023",
+    "areaDetalhada": "0231"
+  },
+  {
+    "codigo": "0231L052",
+    "nome": "Letras inglês - Bacharelado",
+    "nivel": "Bacharelado",
+    "areaGeral": "02",
+    "areaEspecifica": "023",
+    "areaDetalhada": "0231"
+  },
+  {
+    "codigo": "0231L054",
+    "nome": "Letras inglês - Sequencial",
+    "nivel": "Sequencial",
+    "areaGeral": "02",
+    "areaEspecifica": "023",
+    "areaDetalhada": "0231"
+  },
+  {
+    "codigo": "0231L062",
+    "nome": "Letras italiano - Bacharelado",
+    "nivel": "Bacharelado",
+    "areaGeral": "02",
+    "areaEspecifica": "023",
+    "areaDetalhada": "0231"
+  },
+  {
+    "codigo": "0231L072",
+    "nome": "Letras japonês - Bacharelado",
+    "nivel": "Bacharelado",
+    "areaGeral": "02",
+    "areaEspecifica": "023",
+    "areaDetalhada": "0231"
+  },
+  {
+    "codigo": "0231L082",
+    "nome": "Letras língua brasileira de sinais - Bacharelado",
+    "nivel": "Bacharelado",
+    "areaGeral": "02",
+    "areaEspecifica": "023",
+    "areaDetalhada": "0231"
+  },
+  {
+    "codigo": "0231L083",
+    "nome": "Letras língua brasileira de sinais - Tecnológico",
+    "nivel": "Tecnológico",
+    "areaGeral": "02",
+    "areaEspecifica": "023",
+    "areaDetalhada": "0231"
+  },
+  {
+    "codigo": "0231L084",
+    "nome": "Letras língua brasileira de sinais - Sequencial",
+    "nivel": "Sequencial",
+    "areaGeral": "02",
+    "areaEspecifica": "023",
+    "areaDetalhada": "0231"
+  },
+  {
+    "codigo": "0231L092",
+    "nome": "Letras línguas estrangeiras clássicas  - Bacharelado",
+    "nivel": "Bacharelado",
+    "areaGeral": "02",
+    "areaEspecifica": "023",
+    "areaDetalhada": "0231"
+  },
+  {
+    "codigo": "0231L094",
+    "nome": "Letras línguas estrangeiras clássicas - Sequencial",
+    "nivel": "Sequencial",
+    "areaGeral": "02",
+    "areaEspecifica": "023",
+    "areaDetalhada": "0231"
+  },
+  {
+    "codigo": "0231L102",
+    "nome": "Letras linguística - Bacharelado",
+    "nivel": "Bacharelado",
+    "areaGeral": "02",
+    "areaEspecifica": "023",
+    "areaDetalhada": "0231"
+  },
+  {
+    "codigo": "0231L112",
+    "nome": "Letras outras línguas estrangeiras modernas  - Bacharelado",
+    "nivel": "Bacharelado",
+    "areaGeral": "02",
+    "areaEspecifica": "023",
+    "areaDetalhada": "0231"
+  },
+  {
+    "codigo": "0231L122",
+    "nome": "Letras português - Bacharelado",
+    "nivel": "Bacharelado",
+    "areaGeral": "02",
+    "areaEspecifica": "023",
+    "areaDetalhada": "0231"
+  },
+  {
+    "codigo": "0231L124",
+    "nome": "Letras português - Sequencial",
+    "nivel": "Sequencial",
+    "areaGeral": "02",
+    "areaEspecifica": "023",
+    "areaDetalhada": "0231"
+  },
+  {
+    "codigo": "0231L132",
+    "nome": "Letras português alemão  - Bacharelado",
+    "nivel": "Bacharelado",
+    "areaGeral": "02",
+    "areaEspecifica": "023",
+    "areaDetalhada": "0231"
+  },
+  {
+    "codigo": "0231L142",
+    "nome": "Letras português espanhol - Bacharelado",
+    "nivel": "Bacharelado",
+    "areaGeral": "02",
+    "areaEspecifica": "023",
+    "areaDetalhada": "0231"
+  },
+  {
+    "codigo": "0231L152",
+    "nome": "Letras português francês - Bacharelado",
+    "nivel": "Bacharelado",
+    "areaGeral": "02",
+    "areaEspecifica": "023",
+    "areaDetalhada": "0231"
+  },
+  {
+    "codigo": "0231L162",
+    "nome": "Letras português inglês - Bacharelado",
+    "nivel": "Bacharelado",
+    "areaGeral": "02",
+    "areaEspecifica": "023",
+    "areaDetalhada": "0231"
+  },
+  {
+    "codigo": "0231L172",
+    "nome": "Letras português italiano - Bacharelado",
+    "nivel": "Bacharelado",
+    "areaGeral": "02",
+    "areaEspecifica": "023",
+    "areaDetalhada": "0231"
+  },
+  {
+    "codigo": "0231L182",
+    "nome": "Letras português japonês  - Bacharelado",
+    "nivel": "Bacharelado",
+    "areaGeral": "02",
+    "areaEspecifica": "023",
+    "areaDetalhada": "0231"
+  },
+  {
+    "codigo": "0231L192",
+    "nome": "Letras português língua brasileira de sinais - Bacharelado",
+    "nivel": "Bacharelado",
+    "areaGeral": "02",
+    "areaEspecifica": "023",
+    "areaDetalhada": "0231"
+  },
+  {
+    "codigo": "0231L202",
+    "nome": "Letras português línguas estrangeiras clássicas  - Bacharelado",
+    "nivel": "Bacharelado",
+    "areaGeral": "02",
+    "areaEspecifica": "023",
+    "areaDetalhada": "0231"
+  },
+  {
+    "codigo": "0231L212",
+    "nome": "Letras português outras línguas estrangeiras modernas - Bacharelado",
+    "nivel": "Bacharelado",
+    "areaGeral": "02",
+    "areaEspecifica": "023",
+    "areaDetalhada": "0231"
+  },
+  {
+    "codigo": "0231L222",
+    "nome": "Letras tradutor e intérprete - Bacharelado",
+    "nivel": "Bacharelado",
+    "areaGeral": "02",
+    "areaEspecifica": "023",
+    "areaDetalhada": "0231"
+  },
+  {
+    "codigo": "0231L223",
+    "nome": "Letras tradutor e intérprete - Tecnológico",
+    "nivel": "Tecnológico",
+    "areaGeral": "02",
+    "areaEspecifica": "023",
+    "areaDetalhada": "0231"
+  },
+  {
+    "codigo": "0231L224",
+    "nome": "Letras tradutor e intérprete - Sequencial",
+    "nivel": "Sequencial",
+    "areaGeral": "02",
+    "areaEspecifica": "023",
+    "areaDetalhada": "0231"
+  },
+  {
+    "codigo": "0288P012",
+    "nome": "Programas interdisciplinares abrangendo artes e humanidades - Bacharelado",
+    "nivel": "Bacharelado",
+    "areaGeral": "02",
+    "areaEspecifica": "028",
+    "areaDetalhada": "0288"
+  },
+  {
+    "codigo": "0288P014",
+    "nome": "Programas interdisciplinares abrangendo artes e humanidades - Sequencial",
+    "nivel": "Sequencial",
+    "areaGeral": "02",
+    "areaEspecifica": "028",
+    "areaDetalhada": "0288"
+  },
+  {
+    "codigo": "0311E012",
+    "nome": "Economia - Bacharelado",
+    "nivel": "Bacharelado",
+    "areaGeral": "03",
+    "areaEspecifica": "031",
+    "areaDetalhada": "0311"
+  },
+  {
+    "codigo": "0311E014",
+    "nome": "Economia - Sequencial",
+    "nivel": "Sequencial",
+    "areaGeral": "03",
+    "areaEspecifica": "031",
+    "areaDetalhada": "0311"
+  },
+  {
+    "codigo": "0312A012",
+    "nome": "Antropologia - Bacharelado",
+    "nivel": "Bacharelado",
+    "areaGeral": "03",
+    "areaEspecifica": "031",
+    "areaDetalhada": "0312"
+  },
+  {
+    "codigo": "0312A014",
+    "nome": "Antropologia - Sequencial",
+    "nivel": "Sequencial",
+    "areaGeral": "03",
+    "areaEspecifica": "031",
+    "areaDetalhada": "0312"
+  },
+  {
+    "codigo": "0312C012",
+    "nome": "Ciência política - Bacharelado",
+    "nivel": "Bacharelado",
+    "areaGeral": "03",
+    "areaEspecifica": "031",
+    "areaDetalhada": "0312"
+  },
+  {
+    "codigo": "0312C014",
+    "nome": "Ciência política  - Sequencial",
+    "nivel": "Sequencial",
+    "areaGeral": "03",
+    "areaEspecifica": "031",
+    "areaDetalhada": "0312"
+  },
+  {
+    "codigo": "0312C022",
+    "nome": "Ciências sociais - Bacharelado",
+    "nivel": "Bacharelado",
+    "areaGeral": "03",
+    "areaEspecifica": "031",
+    "areaDetalhada": "0312"
+  },
+  {
+    "codigo": "0312C023",
+    "nome": "Ciências sociais - Tecnológico",
+    "nivel": "Tecnológico",
+    "areaGeral": "03",
+    "areaEspecifica": "031",
+    "areaDetalhada": "0312"
+  },
+  {
+    "codigo": "0312C024",
+    "nome": "Ciências sociais - Sequencial",
+    "nivel": "Sequencial",
+    "areaGeral": "03",
+    "areaEspecifica": "031",
+    "areaDetalhada": "0312"
+  },
+  {
+    "codigo": "0312G012",
+    "nome": "Geografia - Bacharelado",
+    "nivel": "Bacharelado",
+    "areaGeral": "03",
+    "areaEspecifica": "031",
+    "areaDetalhada": "0312"
+  },
+  {
+    "codigo": "0312R012",
+    "nome": "Relações internacionais - Bacharelado",
+    "nivel": "Bacharelado",
+    "areaGeral": "03",
+    "areaEspecifica": "031",
+    "areaDetalhada": "0312"
+  },
+  {
+    "codigo": "0312R014",
+    "nome": "Relações internacionais - Sequencial",
+    "nivel": "Sequencial",
+    "areaGeral": "03",
+    "areaEspecifica": "031",
+    "areaDetalhada": "0312"
+  },
+  {
+    "codigo": "0312S012",
+    "nome": "Sociologia - Bacharelado",
+    "nivel": "Bacharelado",
+    "areaGeral": "03",
+    "areaEspecifica": "031",
+    "areaDetalhada": "0312"
+  },
+  {
+    "codigo": "0312S014",
+    "nome": "Sociologia - Sequencial",
+    "nivel": "Sequencial",
+    "areaGeral": "03",
+    "areaEspecifica": "031",
+    "areaDetalhada": "0312"
+  },
+  {
+    "codigo": "0313P012",
+    "nome": "Psicologia - Bacharelado",
+    "nivel": "Bacharelado",
+    "areaGeral": "03",
+    "areaEspecifica": "031",
+    "areaDetalhada": "0313"
+  },
+  {
+    "codigo": "0313P014",
+    "nome": "Psicologia - Sequencial",
+    "nivel": "Sequencial",
+    "areaGeral": "03",
+    "areaEspecifica": "031",
+    "areaDetalhada": "0313"
+  },
+  {
+    "codigo": "0321C012",
+    "nome": "Comunicação social - Bacharelado",
+    "nivel": "Bacharelado",
+    "areaGeral": "03",
+    "areaEspecifica": "032",
+    "areaDetalhada": "0321"
+  },
+  {
+    "codigo": "0321J012",
+    "nome": "Jornalismo - Bacharelado",
+    "nivel": "Bacharelado",
+    "areaGeral": "03",
+    "areaEspecifica": "032",
+    "areaDetalhada": "0321"
+  },
+  {
+    "codigo": "0321J014",
+    "nome": "Jornalismo - Sequencial",
+    "nivel": "Sequencial",
+    "areaGeral": "03",
+    "areaEspecifica": "032",
+    "areaDetalhada": "0321"
+  },
+  {
+    "codigo": "0321P012",
+    "nome": "Produção editorial - Bacharelado",
+    "nivel": "Bacharelado",
+    "areaGeral": "03",
+    "areaEspecifica": "032",
+    "areaDetalhada": "0321"
+  },
+  {
+    "codigo": "0321P013",
+    "nome": "Produção editorial - Tecnológico",
+    "nivel": "Tecnológico",
+    "areaGeral": "03",
+    "areaEspecifica": "032",
+    "areaDetalhada": "0321"
+  },
+  {
+    "codigo": "0321P014",
+    "nome": "Produção editorial - Sequencial",
+    "nivel": "Sequencial",
+    "areaGeral": "03",
+    "areaEspecifica": "032",
+    "areaDetalhada": "0321"
+  },
+  {
+    "codigo": "0321R012",
+    "nome": "Rádio, TV e internet - Bacharelado",
+    "nivel": "Bacharelado",
+    "areaGeral": "03",
+    "areaEspecifica": "032",
+    "areaDetalhada": "0321"
+  },
+  {
+    "codigo": "0321R013",
+    "nome": "Rádio, TV e internet - Tecnológico",
+    "nivel": "Tecnológico",
+    "areaGeral": "03",
+    "areaEspecifica": "032",
+    "areaDetalhada": "0321"
+  },
+  {
+    "codigo": "0321R014",
+    "nome": "Rádio, TV e internet - Sequencial",
+    "nivel": "Sequencial",
+    "areaGeral": "03",
+    "areaEspecifica": "032",
+    "areaDetalhada": "0321"
+  },
+  {
+    "codigo": "0322A012",
+    "nome": "Arquivologia - Bacharelado",
+    "nivel": "Bacharelado",
+    "areaGeral": "03",
+    "areaEspecifica": "032",
+    "areaDetalhada": "0322"
+  },
+  {
+    "codigo": "0322B012",
+    "nome": "Biblioteconomia - Bacharelado",
+    "nivel": "Bacharelado",
+    "areaGeral": "03",
+    "areaEspecifica": "032",
+    "areaDetalhada": "0322"
+  },
+  {
+    "codigo": "0322G012",
+    "nome": "Gestão da informação - Bacharelado",
+    "nivel": "Bacharelado",
+    "areaGeral": "03",
+    "areaEspecifica": "032",
+    "areaDetalhada": "0322"
+  },
+  {
+    "codigo": "0322G014",
+    "nome": "Gestão da informação - Sequencial",
+    "nivel": "Sequencial",
+    "areaGeral": "03",
+    "areaEspecifica": "032",
+    "areaDetalhada": "0322"
+  },
+  {
+    "codigo": "0322M012",
+    "nome": "Museologia - Bacharelado",
+    "nivel": "Bacharelado",
+    "areaGeral": "03",
+    "areaEspecifica": "032",
+    "areaDetalhada": "0322"
+  },
+  {
+    "codigo": "0322M013",
+    "nome": "Museologia - Tecnológico",
+    "nivel": "Tecnológico",
+    "areaGeral": "03",
+    "areaEspecifica": "032",
+    "areaDetalhada": "0322"
+  },
+  {
+    "codigo": "0322M014",
+    "nome": "Museologia - Sequencial",
+    "nivel": "Sequencial",
+    "areaGeral": "03",
+    "areaEspecifica": "032",
+    "areaDetalhada": "0322"
+  },
+  {
+    "codigo": "0388P012",
+    "nome": "Programas interdisciplinares abrangendo ciências sociais, jornalismo e informação - Bacharelado",
+    "nivel": "Bacharelado",
+    "areaGeral": "03",
+    "areaEspecifica": "038",
+    "areaDetalhada": "0388"
+  },
+  {
+    "codigo": "0388P014",
+    "nome": "Programas interdisciplinares abrangendo ciências sociais, jornalismo e informação - Sequencial",
+    "nivel": "Sequencial",
+    "areaGeral": "03",
+    "areaEspecifica": "038",
+    "areaDetalhada": "0388"
+  },
+  {
+    "codigo": "0411C012",
+    "nome": "Contabilidade - Bacharelado",
+    "nivel": "Bacharelado",
+    "areaGeral": "04",
+    "areaEspecifica": "041",
+    "areaDetalhada": "0411"
+  },
+  {
+    "codigo": "0411C013",
+    "nome": "Contabilidade  - Tecnológico",
+    "nivel": "Tecnológico",
+    "areaGeral": "04",
+    "areaEspecifica": "041",
+    "areaDetalhada": "0411"
+  },
+  {
+    "codigo": "0411C014",
+    "nome": "Contabilidade - Sequencial",
+    "nivel": "Sequencial",
+    "areaGeral": "04",
+    "areaEspecifica": "041",
+    "areaDetalhada": "0411"
+  },
+  {
+    "codigo": "0411G013",
+    "nome": "Gestão fiscal e tributária - Tecnológico",
+    "nivel": "Tecnológico",
+    "areaGeral": "04",
+    "areaEspecifica": "041",
+    "areaDetalhada": "0411"
+  },
+  {
+    "codigo": "0412G012",
+    "nome": "Gestão financeira - Bacharelado",
+    "nivel": "Bacharelado",
+    "areaGeral": "04",
+    "areaEspecifica": "041",
+    "areaDetalhada": "0412"
+  },
+  {
+    "codigo": "0412G013",
+    "nome": "Gestão financeira  - Tecnológico",
+    "nivel": "Tecnológico",
+    "areaGeral": "04",
+    "areaEspecifica": "041",
+    "areaDetalhada": "0412"
+  },
+  {
+    "codigo": "0412G014",
+    "nome": "Gestão financeira - Sequencial",
+    "nivel": "Sequencial",
+    "areaGeral": "04",
+    "areaEspecifica": "041",
+    "areaDetalhada": "0412"
+  },
+  {
+    "codigo": "0412S013",
+    "nome": "Seguros - Tecnológico",
+    "nivel": "Tecnológico",
+    "areaGeral": "04",
+    "areaEspecifica": "041",
+    "areaDetalhada": "0412"
+  },
+  {
+    "codigo": "0412S014",
+    "nome": "Seguros - Sequencial",
+    "nivel": "Sequencial",
+    "areaGeral": "04",
+    "areaEspecifica": "041",
+    "areaDetalhada": "0412"
+  },
+  {
+    "codigo": "0413A012",
+    "nome": "Administração  - Bacharelado",
+    "nivel": "Bacharelado",
+    "areaGeral": "04",
+    "areaEspecifica": "041",
+    "areaDetalhada": "0413"
+  },
+  {
+    "codigo": "0413A014",
+    "nome": "Administração - Sequencial",
+    "nivel": "Sequencial",
+    "areaGeral": "04",
+    "areaEspecifica": "041",
+    "areaDetalhada": "0413"
+  },
+  {
+    "codigo": "0413A022",
+    "nome": "Administração pública - Bacharelado",
+    "nivel": "Bacharelado",
+    "areaGeral": "04",
+    "areaEspecifica": "041",
+    "areaDetalhada": "0413"
+  },
+  {
+    "codigo": "0413A023",
+    "nome": "Administração pública - Tecnológico",
+    "nivel": "Tecnológico",
+    "areaGeral": "04",
+    "areaEspecifica": "041",
+    "areaDetalhada": "0413"
+  },
+  {
+    "codigo": "0413A024",
+    "nome": "Administração pública - Sequencial",
+    "nivel": "Sequencial",
+    "areaGeral": "04",
+    "areaEspecifica": "041",
+    "areaDetalhada": "0413"
+  },
+  {
+    "codigo": "0413C012",
+    "nome": "Comércio exterior - Bacharelado",
+    "nivel": "Bacharelado",
+    "areaGeral": "04",
+    "areaEspecifica": "041",
+    "areaDetalhada": "0413"
+  },
+  {
+    "codigo": "0413C013",
+    "nome": "Comércio exterior - Tecnológico",
+    "nivel": "Tecnológico",
+    "areaGeral": "04",
+    "areaEspecifica": "041",
+    "areaDetalhada": "0413"
+  },
+  {
+    "codigo": "0413C014",
+    "nome": "Comércio exterior - Sequencial",
+    "nivel": "Sequencial",
+    "areaGeral": "04",
+    "areaEspecifica": "041",
+    "areaDetalhada": "0413"
+  },
+  {
+    "codigo": "0413E012",
+    "nome": "Empreendedorismo - Bacharelado",
+    "nivel": "Bacharelado",
+    "areaGeral": "04",
+    "areaEspecifica": "041",
+    "areaDetalhada": "0413"
+  },
+  {
+    "codigo": "0413E013",
+    "nome": "Empreendedorismo - Tecnológico",
+    "nivel": "Tecnológico",
+    "areaGeral": "04",
+    "areaEspecifica": "041",
+    "areaDetalhada": "0413"
+  },
+  {
+    "codigo": "0413E014",
+    "nome": "Empreendedorismo - Sequencial",
+    "nivel": "Sequencial",
+    "areaGeral": "04",
+    "areaEspecifica": "041",
+    "areaDetalhada": "0413"
+  },
+  {
+    "codigo": "0413G013",
+    "nome": "Gestão da produção - Tecnológico",
+    "nivel": "Tecnológico",
+    "areaGeral": "04",
+    "areaEspecifica": "041",
+    "areaDetalhada": "0413"
+  },
+  {
+    "codigo": "0413G014",
+    "nome": "Gestão da produção - Sequencial",
+    "nivel": "Sequencial",
+    "areaGeral": "04",
+    "areaEspecifica": "041",
+    "areaDetalhada": "0413"
+  },
+  {
+    "codigo": "0413G023",
+    "nome": "Gestão da qualidade - Tecnológico",
+    "nivel": "Tecnológico",
+    "areaGeral": "04",
+    "areaEspecifica": "041",
+    "areaDetalhada": "0413"
+  },
+  {
+    "codigo": "0413G024",
+    "nome": "Gestão da qualidade - Sequencial",
+    "nivel": "Sequencial",
+    "areaGeral": "04",
+    "areaEspecifica": "041",
+    "areaDetalhada": "0413"
+  },
+  {
+    "codigo": "0413G032",
+    "nome": "Gestão da saúde - Bacharelado",
+    "nivel": "Bacharelado",
+    "areaGeral": "04",
+    "areaEspecifica": "041",
+    "areaDetalhada": "0413"
+  },
+  {
+    "codigo": "0413G033",
+    "nome": "Gestão da saúde - Tecnológico",
+    "nivel": "Tecnológico",
+    "areaGeral": "04",
+    "areaEspecifica": "041",
+    "areaDetalhada": "0413"
+  },
+  {
+    "codigo": "0413G034",
+    "nome": "Gestão da saúde - Sequencial",
+    "nivel": "Sequencial",
+    "areaGeral": "04",
+    "areaEspecifica": "041",
+    "areaDetalhada": "0413"
+  },
+  {
+    "codigo": "0413G042",
+    "nome": "Gestão de cooperativas - Bacharelado",
+    "nivel": "Bacharelado",
+    "areaGeral": "04",
+    "areaEspecifica": "041",
+    "areaDetalhada": "0413"
+  },
+  {
+    "codigo": "0413G043",
+    "nome": "Gestão de cooperativas - Tecnológico",
+    "nivel": "Tecnológico",
+    "areaGeral": "04",
+    "areaEspecifica": "041",
+    "areaDetalhada": "0413"
+  },
+  {
+    "codigo": "0413G044",
+    "nome": "Gestão de cooperativas - Sequencial",
+    "nivel": "Sequencial",
+    "areaGeral": "04",
+    "areaEspecifica": "041",
+    "areaDetalhada": "0413"
+  },
+  {
+    "codigo": "0413G052",
+    "nome": "Gestão de negócios - Bacharelado",
+    "nivel": "Bacharelado",
+    "areaGeral": "04",
+    "areaEspecifica": "041",
+    "areaDetalhada": "0413"
+  },
+  {
+    "codigo": "0413G053",
+    "nome": "Gestão de negócios - Tecnológico",
+    "nivel": "Tecnológico",
+    "areaGeral": "04",
+    "areaEspecifica": "041",
+    "areaDetalhada": "0413"
+  },
+  {
+    "codigo": "0413G054",
+    "nome": "Gestão de negócios - Sequencial",
+    "nivel": "Sequencial",
+    "areaGeral": "04",
+    "areaEspecifica": "041",
+    "areaDetalhada": "0413"
+  },
+  {
+    "codigo": "0413G062",
+    "nome": "Gestão de negócios internacionais - Bacharelado",
+    "nivel": "Bacharelado",
+    "areaGeral": "04",
+    "areaEspecifica": "041",
+    "areaDetalhada": "0413"
+  },
+  {
+    "codigo": "0413G064",
+    "nome": "Gestão de negócios internacionais - Sequencial",
+    "nivel": "Sequencial",
+    "areaGeral": "04",
+    "areaEspecifica": "041",
+    "areaDetalhada": "0413"
+  },
+  {
+    "codigo": "0413G073",
+    "nome": "Gestão de pessoas - Tecnológico",
+    "nivel": "Tecnológico",
+    "areaGeral": "04",
+    "areaEspecifica": "041",
+    "areaDetalhada": "0413"
+  },
+  {
+    "codigo": "0413G074",
+    "nome": "Gestão de pessoas - Sequencial",
+    "nivel": "Sequencial",
+    "areaGeral": "04",
+    "areaEspecifica": "041",
+    "areaDetalhada": "0413"
+  },
+  {
+    "codigo": "0413G083",
+    "nome": "Gestão de serviços - Tecnológico",
+    "nivel": "Tecnológico",
+    "areaGeral": "04",
+    "areaEspecifica": "041",
+    "areaDetalhada": "0413"
+  },
+  {
+    "codigo": "0413G084",
+    "nome": "Gestão de serviços - Sequencial",
+    "nivel": "Sequencial",
+    "areaGeral": "04",
+    "areaEspecifica": "041",
+    "areaDetalhada": "0413"
+  },
+  {
+    "codigo": "0413G092",
+    "nome": "Gestão do agronegócio - Bacharelado",
+    "nivel": "Bacharelado",
+    "areaGeral": "04",
+    "areaEspecifica": "041",
+    "areaDetalhada": "0413"
+  },
+  {
+    "codigo": "0413G093",
+    "nome": "Gestão do agronegócio - Tecnológico",
+    "nivel": "Tecnológico",
+    "areaGeral": "04",
+    "areaEspecifica": "041",
+    "areaDetalhada": "0413"
+  },
+  {
+    "codigo": "0413G094",
+    "nome": "Gestão do agronegócio - Sequencial",
+    "nivel": "Sequencial",
+    "areaGeral": "04",
+    "areaEspecifica": "041",
+    "areaDetalhada": "0413"
+  },
+  {
+    "codigo": "0413G103",
+    "nome": "Gestão estratégica - Tecnológico",
+    "nivel": "Tecnológico",
+    "areaGeral": "04",
+    "areaEspecifica": "041",
+    "areaDetalhada": "0413"
+  },
+  {
+    "codigo": "0413G104",
+    "nome": "Gestão estratégica - Sequencial",
+    "nivel": "Sequencial",
+    "areaGeral": "04",
+    "areaEspecifica": "041",
+    "areaDetalhada": "0413"
+  },
+  {
+    "codigo": "0413G113",
+    "nome": "Gestão hospitalar - Tecnológico",
+    "nivel": "Tecnológico",
+    "areaGeral": "04",
+    "areaEspecifica": "041",
+    "areaDetalhada": "0413"
+  },
+  {
+    "codigo": "0413G114",
+    "nome": "Gestão hospitalar - Sequencial",
+    "nivel": "Sequencial",
+    "areaGeral": "04",
+    "areaEspecifica": "041",
+    "areaDetalhada": "0413"
+  },
+  {
+    "codigo": "0413G122",
+    "nome": "Gestão pública - Bacharelado",
+    "nivel": "Bacharelado",
+    "areaGeral": "04",
+    "areaEspecifica": "041",
+    "areaDetalhada": "0413"
+  },
+  {
+    "codigo": "0413G123",
+    "nome": "Gestão pública - Tecnológico",
+    "nivel": "Tecnológico",
+    "areaGeral": "04",
+    "areaEspecifica": "041",
+    "areaDetalhada": "0413"
+  },
+  {
+    "codigo": "0413G124",
+    "nome": "Gestão pública - Sequencial",
+    "nivel": "Sequencial",
+    "areaGeral": "04",
+    "areaEspecifica": "041",
+    "areaDetalhada": "0413"
+  },
+  {
+    "codigo": "0413L012",
+    "nome": "Logística - Bacharelado",
+    "nivel": "Bacharelado",
+    "areaGeral": "04",
+    "areaEspecifica": "041",
+    "areaDetalhada": "0413"
+  },
+  {
+    "codigo": "0413L013",
+    "nome": "Logística - Tecnológico",
+    "nivel": "Tecnológico",
+    "areaGeral": "04",
+    "areaEspecifica": "041",
+    "areaDetalhada": "0413"
+  },
+  {
+    "codigo": "0413L014",
+    "nome": "Logística - Sequencial",
+    "nivel": "Sequencial",
+    "areaGeral": "04",
+    "areaEspecifica": "041",
+    "areaDetalhada": "0413"
+  },
+  {
+    "codigo": "0414M012",
+    "nome": "Marketing - Bacharelado",
+    "nivel": "Bacharelado",
+    "areaGeral": "04",
+    "areaEspecifica": "041",
+    "areaDetalhada": "0414"
+  },
+  {
+    "codigo": "0414M013",
+    "nome": "Marketing - Tecnológico",
+    "nivel": "Tecnológico",
+    "areaGeral": "04",
+    "areaEspecifica": "041",
+    "areaDetalhada": "0414"
+  },
+  {
+    "codigo": "0414M014",
+    "nome": "Marketing - Sequencial",
+    "nivel": "Sequencial",
+    "areaGeral": "04",
+    "areaEspecifica": "041",
+    "areaDetalhada": "0414"
+  },
+  {
+    "codigo": "0414P012",
+    "nome": "Publicidade e propaganda - Bacharelado",
+    "nivel": "Bacharelado",
+    "areaGeral": "04",
+    "areaEspecifica": "041",
+    "areaDetalhada": "0414"
+  },
+  {
+    "codigo": "0414P013",
+    "nome": "Publicidade e propaganda - Tecnológico",
+    "nivel": "Tecnológico",
+    "areaGeral": "04",
+    "areaEspecifica": "041",
+    "areaDetalhada": "0414"
+  },
+  {
+    "codigo": "0414P014",
+    "nome": "Publicidade e propaganda - Sequencial",
+    "nivel": "Sequencial",
+    "areaGeral": "04",
+    "areaEspecifica": "041",
+    "areaDetalhada": "0414"
+  },
+  {
+    "codigo": "0414R012",
+    "nome": "Relações públicas - Bacharelado",
+    "nivel": "Bacharelado",
+    "areaGeral": "04",
+    "areaEspecifica": "041",
+    "areaDetalhada": "0414"
+  },
+  {
+    "codigo": "0414R013",
+    "nome": "Relações públicas - Tecnológico",
+    "nivel": "Tecnológico",
+    "areaGeral": "04",
+    "areaEspecifica": "041",
+    "areaDetalhada": "0414"
+  },
+  {
+    "codigo": "0414R014",
+    "nome": "Relações públicas - Sequencial",
+    "nivel": "Sequencial",
+    "areaGeral": "04",
+    "areaEspecifica": "041",
+    "areaDetalhada": "0414"
+  },
+  {
+    "codigo": "0415S012",
+    "nome": "Secretariado - Bacharelado",
+    "nivel": "Bacharelado",
+    "areaGeral": "04",
+    "areaEspecifica": "041",
+    "areaDetalhada": "0415"
+  },
+  {
+    "codigo": "0415S013",
+    "nome": "Secretariado - Tecnológico",
+    "nivel": "Tecnológico",
+    "areaGeral": "04",
+    "areaEspecifica": "041",
+    "areaDetalhada": "0415"
+  },
+  {
+    "codigo": "0415S014",
+    "nome": "Secretariado - Sequencial",
+    "nivel": "Sequencial",
+    "areaGeral": "04",
+    "areaEspecifica": "041",
+    "areaDetalhada": "0415"
+  },
+  {
+    "codigo": "0416G013",
+    "nome": "Gestão comercial - Tecnológico",
+    "nivel": "Tecnológico",
+    "areaGeral": "04",
+    "areaEspecifica": "041",
+    "areaDetalhada": "0416"
+  },
+  {
+    "codigo": "0416G014",
+    "nome": "Gestão comercial - Sequencial",
+    "nivel": "Sequencial",
+    "areaGeral": "04",
+    "areaEspecifica": "041",
+    "areaDetalhada": "0416"
+  },
+  {
+    "codigo": "0416N012",
+    "nome": "Negócios imobiliários - Bacharelado",
+    "nivel": "Bacharelado",
+    "areaGeral": "04",
+    "areaEspecifica": "041",
+    "areaDetalhada": "0416"
+  },
+  {
+    "codigo": "0416N013",
+    "nome": "Negócios imobiliários - Tecnológico",
+    "nivel": "Tecnológico",
+    "areaGeral": "04",
+    "areaEspecifica": "041",
+    "areaDetalhada": "0416"
+  },
+  {
+    "codigo": "0416N014",
+    "nome": "Negócios imobiliários - Sequencial",
+    "nivel": "Sequencial",
+    "areaGeral": "04",
+    "areaEspecifica": "041",
+    "areaDetalhada": "0416"
+  },
+  {
+    "codigo": "0421D012",
+    "nome": "Direito - Bacharelado",
+    "nivel": "Bacharelado",
+    "areaGeral": "04",
+    "areaEspecifica": "042",
+    "areaDetalhada": "0421"
+  },
+  {
+    "codigo": "0421D013",
+    "nome": "Direito - Tecnológico",
+    "nivel": "Tecnológico",
+    "areaGeral": "04",
+    "areaEspecifica": "042",
+    "areaDetalhada": "0421"
+  },
+  {
+    "codigo": "0421D014",
+    "nome": "Direito - Sequencial",
+    "nivel": "Sequencial",
+    "areaGeral": "04",
+    "areaEspecifica": "042",
+    "areaDetalhada": "0421"
+  },
+  {
+    "codigo": "0421M013",
+    "nome": "Mediação - Tecnológico",
+    "nivel": "Tecnológico",
+    "areaGeral": "04",
+    "areaEspecifica": "042",
+    "areaDetalhada": "0421"
+  },
+  {
+    "codigo": "0421S013",
+    "nome": "Serviços jurídicos e cartoriais - Tecnológico",
+    "nivel": "Tecnológico",
+    "areaGeral": "04",
+    "areaEspecifica": "042",
+    "areaDetalhada": "0421"
+  },
+  {
+    "codigo": "0421S014",
+    "nome": "Serviços jurídicos e cartoriais - Sequencial",
+    "nivel": "Sequencial",
+    "areaGeral": "04",
+    "areaEspecifica": "042",
+    "areaDetalhada": "0421"
+  },
+  {
+    "codigo": "0488P012",
+    "nome": "Programas interdisciplinares abrangendo negócios, administração e direito - Bacharelado",
+    "nivel": "Bacharelado",
+    "areaGeral": "04",
+    "areaEspecifica": "048",
+    "areaDetalhada": "0488"
+  },
+  {
+    "codigo": "0488P013",
+    "nome": "Programas interdisciplinares abrangendo negócios, administração e direito - Tecnológico",
+    "nivel": "Tecnológico",
+    "areaGeral": "04",
+    "areaEspecifica": "048",
+    "areaDetalhada": "0488"
+  },
+  {
+    "codigo": "0511B012",
+    "nome": "Biologia - Bacharelado",
+    "nivel": "Bacharelado",
+    "areaGeral": "05",
+    "areaEspecifica": "051",
+    "areaDetalhada": "0511"
+  },
+  {
+    "codigo": "0511B014",
+    "nome": "Biologia - Sequencial",
+    "nivel": "Sequencial",
+    "areaGeral": "05",
+    "areaEspecifica": "051",
+    "areaDetalhada": "0511"
+  },
+  {
+    "codigo": "0512B012",
+    "nome": "Bioquímica - Bacharelado",
+    "nivel": "Bacharelado",
+    "areaGeral": "05",
+    "areaEspecifica": "051",
+    "areaDetalhada": "0512"
+  },
+  {
+    "codigo": "0512B022",
+    "nome": "Biotecnologia - Bacharelado",
+    "nivel": "Bacharelado",
+    "areaGeral": "05",
+    "areaEspecifica": "051",
+    "areaDetalhada": "0512"
+  },
+  {
+    "codigo": "0512B023",
+    "nome": "Biotecnologia - Tecnológico",
+    "nivel": "Tecnológico",
+    "areaGeral": "05",
+    "areaEspecifica": "051",
+    "areaDetalhada": "0512"
+  },
+  {
+    "codigo": "0512B024",
+    "nome": "Biotecnologia - Sequencial",
+    "nivel": "Sequencial",
+    "areaGeral": "05",
+    "areaEspecifica": "051",
+    "areaDetalhada": "0512"
+  },
+  {
+    "codigo": "0512T013",
+    "nome": "Toxicologia - Tecnológico",
+    "nivel": "Tecnológico",
+    "areaGeral": "05",
+    "areaEspecifica": "051",
+    "areaDetalhada": "0512"
+  },
+  {
+    "codigo": "0521C012",
+    "nome": "Ciências ambientais - Bacharelado",
+    "nivel": "Bacharelado",
+    "areaGeral": "05",
+    "areaEspecifica": "052",
+    "areaDetalhada": "0521"
+  },
+  {
+    "codigo": "0521C014",
+    "nome": "Ciências ambientais - Sequencial",
+    "nivel": "Sequencial",
+    "areaGeral": "05",
+    "areaEspecifica": "052",
+    "areaDetalhada": "0521"
+  },
+  {
+    "codigo": "0521E012",
+    "nome": "Ecologia - Bacharelado",
+    "nivel": "Bacharelado",
+    "areaGeral": "05",
+    "areaEspecifica": "052",
+    "areaDetalhada": "0521"
+  },
+  {
+    "codigo": "0531Q012",
+    "nome": "Química - Bacharelado",
+    "nivel": "Bacharelado",
+    "areaGeral": "05",
+    "areaEspecifica": "053",
+    "areaDetalhada": "0531"
+  },
+  {
+    "codigo": "0531Q013",
+    "nome": "Química - Tecnológico",
+    "nivel": "Tecnológico",
+    "areaGeral": "05",
+    "areaEspecifica": "053",
+    "areaDetalhada": "0531"
+  },
+  {
+    "codigo": "0531Q022",
+    "nome": "Química industrial e tecnológica - Bacharelado",
+    "nivel": "Bacharelado",
+    "areaGeral": "05",
+    "areaEspecifica": "053",
+    "areaDetalhada": "0531"
+  },
+  {
+    "codigo": "0531Q023",
+    "nome": "Química industrial e tecnológica - Tecnológico",
+    "nivel": "Tecnológico",
+    "areaGeral": "05",
+    "areaEspecifica": "053",
+    "areaDetalhada": "0531"
+  },
+  {
+    "codigo": "0531Q024",
+    "nome": "Química industrial e tecnológica - Sequencial",
+    "nivel": "Sequencial",
+    "areaGeral": "05",
+    "areaEspecifica": "053",
+    "areaDetalhada": "0531"
+  },
+  {
+    "codigo": "0532G012",
+    "nome": "Geofísica - Bacharelado",
+    "nivel": "Bacharelado",
+    "areaGeral": "05",
+    "areaEspecifica": "053",
+    "areaDetalhada": "0532"
+  },
+  {
+    "codigo": "0532G022",
+    "nome": "Geologia - Bacharelado",
+    "nivel": "Bacharelado",
+    "areaGeral": "05",
+    "areaEspecifica": "053",
+    "areaDetalhada": "0532"
+  },
+  {
+    "codigo": "0532G033",
+    "nome": "Geoprocessamento - Tecnológico",
+    "nivel": "Tecnológico",
+    "areaGeral": "05",
+    "areaEspecifica": "053",
+    "areaDetalhada": "0532"
+  },
+  {
+    "codigo": "0532M012",
+    "nome": "Meteorologia - Bacharelado",
+    "nivel": "Bacharelado",
+    "areaGeral": "05",
+    "areaEspecifica": "053",
+    "areaDetalhada": "0532"
+  },
+  {
+    "codigo": "0532O012",
+    "nome": "Oceanografia - Bacharelado",
+    "nivel": "Bacharelado",
+    "areaGeral": "05",
+    "areaEspecifica": "053",
+    "areaDetalhada": "0532"
+  },
+  {
+    "codigo": "0533A012",
+    "nome": "Astronomia - Bacharelado",
+    "nivel": "Bacharelado",
+    "areaGeral": "05",
+    "areaEspecifica": "053",
+    "areaDetalhada": "0533"
+  },
+  {
+    "codigo": "0533F012",
+    "nome": "Física - Bacharelado",
+    "nivel": "Bacharelado",
+    "areaGeral": "05",
+    "areaEspecifica": "053",
+    "areaDetalhada": "0533"
+  },
+  {
+    "codigo": "0533F022",
+    "nome": "Física aplicada - Bacharelado",
+    "nivel": "Bacharelado",
+    "areaGeral": "05",
+    "areaEspecifica": "053",
+    "areaDetalhada": "0533"
+  },
+  {
+    "codigo": "0533F024",
+    "nome": "Física aplicada - Sequencial",
+    "nivel": "Sequencial",
+    "areaGeral": "05",
+    "areaEspecifica": "053",
+    "areaDetalhada": "0533"
+  },
+  {
+    "codigo": "0533F032",
+    "nome": "Física médica - Bacharelado",
+    "nivel": "Bacharelado",
+    "areaGeral": "05",
+    "areaEspecifica": "053",
+    "areaDetalhada": "0533"
+  },
+  {
+    "codigo": "0541M012",
+    "nome": "Matemática - Bacharelado",
+    "nivel": "Bacharelado",
+    "areaGeral": "05",
+    "areaEspecifica": "054",
+    "areaDetalhada": "0541"
+  },
+  {
+    "codigo": "0541M014",
+    "nome": "Matemática - Sequencial",
+    "nivel": "Sequencial",
+    "areaGeral": "05",
+    "areaEspecifica": "054",
+    "areaDetalhada": "0541"
+  },
+  {
+    "codigo": "0541M022",
+    "nome": "Matemática aplicada e computacional - Bacharelado",
+    "nivel": "Bacharelado",
+    "areaGeral": "05",
+    "areaEspecifica": "054",
+    "areaDetalhada": "0541"
+  },
+  {
+    "codigo": "0542C012",
+    "nome": "Ciências atuariais - Bacharelado",
+    "nivel": "Bacharelado",
+    "areaGeral": "05",
+    "areaEspecifica": "054",
+    "areaDetalhada": "0542"
+  },
+  {
+    "codigo": "0542E012",
+    "nome": "Estatística - Bacharelado",
+    "nivel": "Bacharelado",
+    "areaGeral": "05",
+    "areaEspecifica": "054",
+    "areaDetalhada": "0542"
+  },
+  {
+    "codigo": "0542E014",
+    "nome": "Estatística - Sequencial",
+    "nivel": "Sequencial",
+    "areaGeral": "05",
+    "areaEspecifica": "054",
+    "areaDetalhada": "0542"
+  },
+  {
+    "codigo": "0588P012",
+    "nome": "Programas interdisciplinares abrangendo ciências naturais, matemática e estatística - Bacharelado",
+    "nivel": "Bacharelado",
+    "areaGeral": "05",
+    "areaEspecifica": "058",
+    "areaDetalhada": "0588"
+  },
+  {
+    "codigo": "0588P013",
+    "nome": "Programas interdisciplinares abrangendo ciências naturais, matemática e estatística  - Tecnológico",
+    "nivel": "Tecnológico",
+    "areaGeral": "05",
+    "areaEspecifica": "058",
+    "areaDetalhada": "0588"
+  },
+  {
+    "codigo": "0588P014",
+    "nome": "Programas interdisciplinares abrangendo ciências naturais, matemática e estatística  - Sequencial",
+    "nivel": "Sequencial",
+    "areaGeral": "05",
+    "areaEspecifica": "058",
+    "areaDetalhada": "0588"
+  },
+  {
+    "codigo": "0612B013",
+    "nome": "Banco de dados - Tecnológico",
+    "nivel": "Tecnológico",
+    "areaGeral": "06",
+    "areaEspecifica": "061",
+    "areaDetalhada": "0612"
+  },
+  {
+    "codigo": "0612B014",
+    "nome": "Banco de dados - Sequencial",
+    "nivel": "Sequencial",
+    "areaGeral": "06",
+    "areaEspecifica": "061",
+    "areaDetalhada": "0612"
+  },
+  {
+    "codigo": "0612D012",
+    "nome": "Defesa cibernética - Bacharelado",
+    "nivel": "Bacharelado",
+    "areaGeral": "06",
+    "areaEspecifica": "061",
+    "areaDetalhada": "0612"
+  },
+  {
+    "codigo": "0612D013",
+    "nome": "Defesa cibernética - Tecnológico",
+    "nivel": "Tecnológico",
+    "areaGeral": "06",
+    "areaEspecifica": "061",
+    "areaDetalhada": "0612"
+  },
+  {
+    "codigo": "0612G013",
+    "nome": "Gestão da tecnologia da informação - Tecnológico",
+    "nivel": "Tecnológico",
+    "areaGeral": "06",
+    "areaEspecifica": "061",
+    "areaDetalhada": "0612"
+  },
+  {
+    "codigo": "0612G014",
+    "nome": "Gestão da tecnologia da informação  - Sequencial",
+    "nivel": "Sequencial",
+    "areaGeral": "06",
+    "areaEspecifica": "061",
+    "areaDetalhada": "0612"
+  },
+  {
+    "codigo": "0612R012",
+    "nome": "Redes de computadores - Bacharelado",
+    "nivel": "Bacharelado",
+    "areaGeral": "06",
+    "areaEspecifica": "061",
+    "areaDetalhada": "0612"
+  },
+  {
+    "codigo": "0612R013",
+    "nome": "Redes de computadores - Tecnológico",
+    "nivel": "Tecnológico",
+    "areaGeral": "06",
+    "areaEspecifica": "061",
+    "areaDetalhada": "0612"
+  },
+  {
+    "codigo": "0612R014",
+    "nome": "Redes de computadores - Sequencial",
+    "nivel": "Sequencial",
+    "areaGeral": "06",
+    "areaEspecifica": "061",
+    "areaDetalhada": "0612"
+  },
+  {
+    "codigo": "0613E012",
+    "nome": "Engenharia de software - Bacharelado",
+    "nivel": "Bacharelado",
+    "areaGeral": "06",
+    "areaEspecifica": "061",
+    "areaDetalhada": "0613"
+  },
+  {
+    "codigo": "0613E013",
+    "nome": "Engenharia de software - Tecnológico",
+    "nivel": "Tecnológico",
+    "areaGeral": "06",
+    "areaEspecifica": "061",
+    "areaDetalhada": "0613"
+  },
+  {
+    "codigo": "0613E014",
+    "nome": "Engenharia de software - Sequencial",
+    "nivel": "Sequencial",
+    "areaGeral": "06",
+    "areaEspecifica": "061",
+    "areaDetalhada": "0613"
+  },
+  {
+    "codigo": "0613J012",
+    "nome": "Jogos digitais - Bacharelado",
+    "nivel": "Bacharelado",
+    "areaGeral": "06",
+    "areaEspecifica": "061",
+    "areaDetalhada": "0613"
+  },
+  {
+    "codigo": "0613J013",
+    "nome": "Jogos digitais - Tecnológico",
+    "nivel": "Tecnológico",
+    "areaGeral": "06",
+    "areaEspecifica": "061",
+    "areaDetalhada": "0613"
+  },
+  {
+    "codigo": "0613J014",
+    "nome": "Jogos digitais - Sequencial",
+    "nivel": "Sequencial",
+    "areaGeral": "06",
+    "areaEspecifica": "061",
+    "areaDetalhada": "0613"
+  },
+  {
+    "codigo": "0614C012",
+    "nome": "Ciência da computação - Bacharelado",
+    "nivel": "Bacharelado",
+    "areaGeral": "06",
+    "areaEspecifica": "061",
+    "areaDetalhada": "0614"
+  },
+  {
+    "codigo": "0614C013",
+    "nome": "Ciência da computação - Tecnológico",
+    "nivel": "Tecnológico",
+    "areaGeral": "06",
+    "areaEspecifica": "061",
+    "areaDetalhada": "0614"
+  },
+  {
+    "codigo": "0614C014",
+    "nome": "Ciência da computação - Sequencial",
+    "nivel": "Sequencial",
+    "areaGeral": "06",
+    "areaEspecifica": "061",
+    "areaDetalhada": "0614"
+  },
+  {
+    "codigo": "0614I012",
+    "nome": "Inteligência artificial - Bacharelado",
+    "nivel": "Bacharelado",
+    "areaGeral": "06",
+    "areaEspecifica": "061",
+    "areaDetalhada": "0614"
+  },
+  {
+    "codigo": "0614I013",
+    "nome": "Inteligência artificial - Tecnológico",
+    "nivel": "Tecnológico",
+    "areaGeral": "06",
+    "areaEspecifica": "061",
+    "areaDetalhada": "0614"
+  },
+  {
+    "codigo": "0615S013",
+    "nome": "Segurança da informação - Tecnológico",
+    "nivel": "Tecnológico",
+    "areaGeral": "06",
+    "areaEspecifica": "061",
+    "areaDetalhada": "0615"
+  },
+  {
+    "codigo": "0615S014",
+    "nome": "Segurança da informação - Sequencial",
+    "nivel": "Sequencial",
+    "areaGeral": "06",
+    "areaEspecifica": "061",
+    "areaDetalhada": "0615"
+  },
+  {
+    "codigo": "0615S022",
+    "nome": "Sistemas de informação - Bacharelado",
+    "nivel": "Bacharelado",
+    "areaGeral": "06",
+    "areaEspecifica": "061",
+    "areaDetalhada": "0615"
+  },
+  {
+    "codigo": "0615S023",
+    "nome": "Sistemas de informação - Tecnológico",
+    "nivel": "Tecnológico",
+    "areaGeral": "06",
+    "areaEspecifica": "061",
+    "areaDetalhada": "0615"
+  },
+  {
+    "codigo": "0615S024",
+    "nome": "Sistemas de informação - Sequencial",
+    "nivel": "Sequencial",
+    "areaGeral": "06",
+    "areaEspecifica": "061",
+    "areaDetalhada": "0615"
+  },
+  {
+    "codigo": "0615S032",
+    "nome": "Sistemas para internet - Bacharelado",
+    "nivel": "Bacharelado",
+    "areaGeral": "06",
+    "areaEspecifica": "061",
+    "areaDetalhada": "0615"
+  },
+  {
+    "codigo": "0615S033",
+    "nome": "Sistemas para internet - Tecnológico",
+    "nivel": "Tecnológico",
+    "areaGeral": "06",
+    "areaEspecifica": "061",
+    "areaDetalhada": "0615"
+  },
+  {
+    "codigo": "0615S034",
+    "nome": "Sistemas para internet - Sequencial",
+    "nivel": "Sequencial",
+    "areaGeral": "06",
+    "areaEspecifica": "061",
+    "areaDetalhada": "0615"
+  },
+  {
+    "codigo": "0616I013",
+    "nome": "Internet das coisas - Tecnológico",
+    "nivel": "Tecnológico",
+    "areaGeral": "06",
+    "areaEspecifica": "061",
+    "areaDetalhada": "0616"
+  },
+  {
+    "codigo": "0616S013",
+    "nome": "Sistemas embarcados - Tecnológico",
+    "nivel": "Tecnológico",
+    "areaGeral": "06",
+    "areaEspecifica": "061",
+    "areaDetalhada": "0616"
+  },
+  {
+    "codigo": "0617A013",
+    "nome": "Agrocomputação - Tecnológico",
+    "nivel": "Tecnológico",
+    "areaGeral": "06",
+    "areaEspecifica": "061",
+    "areaDetalhada": "0617"
+  },
+  {
+    "codigo": "0617C012",
+    "nome": "Ciência de dados - Bacharelado",
+    "nivel": "Bacharelado",
+    "areaGeral": "06",
+    "areaEspecifica": "061",
+    "areaDetalhada": "0617"
+  },
+  {
+    "codigo": "0617C013",
+    "nome": "Ciência de dados - Tecnológico",
+    "nivel": "Tecnológico",
+    "areaGeral": "06",
+    "areaEspecifica": "061",
+    "areaDetalhada": "0617"
+  },
+  {
+    "codigo": "0617C022",
+    "nome": "Computação e Tecnologias da Informação e Comunicação (TIC) em biociências e saúde - Bacharelado",
+    "nivel": "Bacharelado",
+    "areaGeral": "06",
+    "areaEspecifica": "061",
+    "areaDetalhada": "0617"
+  },
+  {
+    "codigo": "0617C023",
+    "nome": "Computação e Tecnologias da Informação e Comunicação (TIC) em biociências e saúde - Tecnológico",
+    "nivel": "Tecnológico",
+    "areaGeral": "06",
+    "areaEspecifica": "061",
+    "areaDetalhada": "0617"
+  },
+  {
+    "codigo": "0617C032",
+    "nome": "Criação digital - Bacharelado",
+    "nivel": "Bacharelado",
+    "areaGeral": "06",
+    "areaEspecifica": "061",
+    "areaDetalhada": "0617"
+  },
+  {
+    "codigo": "0617C033",
+    "nome": "Criação digital - Tecnológico",
+    "nivel": "Tecnológico",
+    "areaGeral": "06",
+    "areaEspecifica": "061",
+    "areaDetalhada": "0617"
+  },
+  {
+    "codigo": "0688P012",
+    "nome": "Programas interdisciplinares abrangendo computação e Tecnologias da Informação e Comunicação (TIC) - Bacharelado",
+    "nivel": "Bacharelado",
+    "areaGeral": "06",
+    "areaEspecifica": "068",
+    "areaDetalhada": "0688"
+  },
+  {
+    "codigo": "0688P013",
+    "nome": "Programas interdisciplinares abrangendo computação e Tecnologias da Informação e Comunicação (TIC) - Tecnológico",
+    "nivel": "Tecnológico",
+    "areaGeral": "06",
+    "areaEspecifica": "068",
+    "areaDetalhada": "0688"
+  },
+  {
+    "codigo": "0711B013",
+    "nome": "Biocombustíveis - Tecnológico",
+    "nivel": "Tecnológico",
+    "areaGeral": "07",
+    "areaEspecifica": "071",
+    "areaDetalhada": "0711"
+  },
+  {
+    "codigo": "0711E012",
+    "nome": "Engenharia bioquímica - Bacharelado",
+    "nivel": "Bacharelado",
+    "areaGeral": "07",
+    "areaEspecifica": "071",
+    "areaDetalhada": "0711"
+  },
+  {
+    "codigo": "0711E022",
+    "nome": "Engenharia de bioprocessos - Bacharelado",
+    "nivel": "Bacharelado",
+    "areaGeral": "07",
+    "areaEspecifica": "071",
+    "areaDetalhada": "0711"
+  },
+  {
+    "codigo": "0711E032",
+    "nome": "Engenharia de biotecnologia - Bacharelado",
+    "nivel": "Bacharelado",
+    "areaGeral": "07",
+    "areaEspecifica": "071",
+    "areaDetalhada": "0711"
+  },
+  {
+    "codigo": "0711E042",
+    "nome": "Engenharia de nanotecnologia - Bacharelado",
+    "nivel": "Bacharelado",
+    "areaGeral": "07",
+    "areaEspecifica": "071",
+    "areaDetalhada": "0711"
+  },
+  {
+    "codigo": "0711E052",
+    "nome": "Engenharia química - Bacharelado",
+    "nivel": "Bacharelado",
+    "areaGeral": "07",
+    "areaEspecifica": "071",
+    "areaDetalhada": "0711"
+  },
+  {
+    "codigo": "0712E012",
+    "nome": "Engenharia ambiental - Bacharelado",
+    "nivel": "Bacharelado",
+    "areaGeral": "07",
+    "areaEspecifica": "071",
+    "areaDetalhada": "0712"
+  },
+  {
+    "codigo": "0712E022",
+    "nome": "Engenharia ambiental e sanitária - Bacharelado",
+    "nivel": "Bacharelado",
+    "areaGeral": "07",
+    "areaEspecifica": "071",
+    "areaDetalhada": "0712"
+  },
+  {
+    "codigo": "0712G012",
+    "nome": "Gestão ambiental - Bacharelado",
+    "nivel": "Bacharelado",
+    "areaGeral": "07",
+    "areaEspecifica": "071",
+    "areaDetalhada": "0712"
+  },
+  {
+    "codigo": "0712G013",
+    "nome": "Gestão ambiental - Tecnológico",
+    "nivel": "Tecnológico",
+    "areaGeral": "07",
+    "areaEspecifica": "071",
+    "areaDetalhada": "0712"
+  },
+  {
+    "codigo": "0712G014",
+    "nome": "Gestão ambiental - Sequencial",
+    "nivel": "Sequencial",
+    "areaGeral": "07",
+    "areaEspecifica": "071",
+    "areaDetalhada": "0712"
+  },
+  {
+    "codigo": "0712G023",
+    "nome": "Gestão de resíduos  - Tecnológico",
+    "nivel": "Tecnológico",
+    "areaGeral": "07",
+    "areaEspecifica": "071",
+    "areaDetalhada": "0712"
+  },
+  {
+    "codigo": "0712G024",
+    "nome": "Gestão de resíduos - Sequencial",
+    "nivel": "Sequencial",
+    "areaGeral": "07",
+    "areaEspecifica": "071",
+    "areaDetalhada": "0712"
+  },
+  {
+    "codigo": "0712S013",
+    "nome": "Saneamento ambiental  - Tecnológico",
+    "nivel": "Tecnológico",
+    "areaGeral": "07",
+    "areaEspecifica": "071",
+    "areaDetalhada": "0712"
+  },
+  {
+    "codigo": "0713E013",
+    "nome": "Eletrotécnica industrial  - Tecnológico",
+    "nivel": "Tecnológico",
+    "areaGeral": "07",
+    "areaEspecifica": "071",
+    "areaDetalhada": "0713"
+  },
+  {
+    "codigo": "0713E023",
+    "nome": "Energias renováveis  - Tecnológico",
+    "nivel": "Tecnológico",
+    "areaGeral": "07",
+    "areaEspecifica": "071",
+    "areaDetalhada": "0713"
+  },
+  {
+    "codigo": "0713E032",
+    "nome": "Engenharia bioenergética - Bacharelado",
+    "nivel": "Bacharelado",
+    "areaGeral": "07",
+    "areaEspecifica": "071",
+    "areaDetalhada": "0713"
+  },
+  {
+    "codigo": "0713E042",
+    "nome": "Engenharia de energia - Bacharelado",
+    "nivel": "Bacharelado",
+    "areaGeral": "07",
+    "areaEspecifica": "071",
+    "areaDetalhada": "0713"
+  },
+  {
+    "codigo": "0713E052",
+    "nome": "Engenharia elétrica - Bacharelado",
+    "nivel": "Bacharelado",
+    "areaGeral": "07",
+    "areaEspecifica": "071",
+    "areaDetalhada": "0713"
+  },
+  {
+    "codigo": "0713E062",
+    "nome": "Engenharia nuclear - Bacharelado",
+    "nivel": "Bacharelado",
+    "areaGeral": "07",
+    "areaEspecifica": "071",
+    "areaDetalhada": "0713"
+  },
+  {
+    "codigo": "0713R013",
+    "nome": "Refrigeração e climatização - Tecnológico",
+    "nivel": "Tecnológico",
+    "areaGeral": "07",
+    "areaEspecifica": "071",
+    "areaDetalhada": "0713"
+  },
+  {
+    "codigo": "0713S012",
+    "nome": "Sistemas elétricos - Bacharelado",
+    "nivel": "Bacharelado",
+    "areaGeral": "07",
+    "areaEspecifica": "071",
+    "areaDetalhada": "0713"
+  },
+  {
+    "codigo": "0713S013",
+    "nome": "Sistemas elétricos - Tecnológico",
+    "nivel": "Tecnológico",
+    "areaGeral": "07",
+    "areaEspecifica": "071",
+    "areaDetalhada": "0713"
+  },
+  {
+    "codigo": "0713S014",
+    "nome": "Sistemas elétricos - Sequencial",
+    "nivel": "Sequencial",
+    "areaGeral": "07",
+    "areaEspecifica": "071",
+    "areaDetalhada": "0713"
+  },
+  {
+    "codigo": "0714A013",
+    "nome": "Automação industrial - Tecnológico",
+    "nivel": "Tecnológico",
+    "areaGeral": "07",
+    "areaEspecifica": "071",
+    "areaDetalhada": "0714"
+  },
+  {
+    "codigo": "0714A014",
+    "nome": "Automação industrial - Sequencial",
+    "nivel": "Sequencial",
+    "areaGeral": "07",
+    "areaEspecifica": "071",
+    "areaDetalhada": "0714"
+  },
+  {
+    "codigo": "0714E013",
+    "nome": "Eletrônica industrial - Tecnológico",
+    "nivel": "Tecnológico",
+    "areaGeral": "07",
+    "areaEspecifica": "071",
+    "areaDetalhada": "0714"
+  },
+  {
+    "codigo": "0714E022",
+    "nome": "Engenharia acústica - Bacharelado",
+    "nivel": "Bacharelado",
+    "areaGeral": "07",
+    "areaEspecifica": "071",
+    "areaDetalhada": "0714"
+  },
+  {
+    "codigo": "0714E032",
+    "nome": "Engenharia biomédica - Bacharelado",
+    "nivel": "Bacharelado",
+    "areaGeral": "07",
+    "areaEspecifica": "071",
+    "areaDetalhada": "0714"
+  },
+  {
+    "codigo": "0714E042",
+    "nome": "Engenharia de computação - Bacharelado",
+    "nivel": "Bacharelado",
+    "areaGeral": "07",
+    "areaEspecifica": "071",
+    "areaDetalhada": "0714"
+  },
+  {
+    "codigo": "0714E052",
+    "nome": "Engenharia de controle e automação - Bacharelado",
+    "nivel": "Bacharelado",
+    "areaGeral": "07",
+    "areaEspecifica": "071",
+    "areaDetalhada": "0714"
+  },
+  {
+    "codigo": "0714E062",
+    "nome": "Engenharia de informação - Bacharelado",
+    "nivel": "Bacharelado",
+    "areaGeral": "07",
+    "areaEspecifica": "071",
+    "areaDetalhada": "0714"
+  },
+  {
+    "codigo": "0714E072",
+    "nome": "Engenharia de telecomunicações - Bacharelado",
+    "nivel": "Bacharelado",
+    "areaGeral": "07",
+    "areaEspecifica": "071",
+    "areaDetalhada": "0714"
+  },
+  {
+    "codigo": "0714E082",
+    "nome": "Engenharia eletrônica - Bacharelado",
+    "nivel": "Bacharelado",
+    "areaGeral": "07",
+    "areaEspecifica": "071",
+    "areaDetalhada": "0714"
+  },
+  {
+    "codigo": "0714E092",
+    "nome": "Engenharia mecatrônica - Bacharelado",
+    "nivel": "Bacharelado",
+    "areaGeral": "07",
+    "areaEspecifica": "071",
+    "areaDetalhada": "0714"
+  },
+  {
+    "codigo": "0714G013",
+    "nome": "Gestão de telecomunicações - Tecnológico",
+    "nivel": "Tecnológico",
+    "areaGeral": "07",
+    "areaEspecifica": "071",
+    "areaDetalhada": "0714"
+  },
+  {
+    "codigo": "0714G014",
+    "nome": "Gestão de telecomunicações - Sequencial",
+    "nivel": "Sequencial",
+    "areaGeral": "07",
+    "areaEspecifica": "071",
+    "areaDetalhada": "0714"
+  },
+  {
+    "codigo": "0714M013",
+    "nome": "Mecatrônica industrial - Tecnológico",
+    "nivel": "Tecnológico",
+    "areaGeral": "07",
+    "areaEspecifica": "071",
+    "areaDetalhada": "0714"
+  },
+  {
+    "codigo": "0714M014",
+    "nome": "Mecatrônica industrial - Sequencial",
+    "nivel": "Sequencial",
+    "areaGeral": "07",
+    "areaEspecifica": "071",
+    "areaDetalhada": "0714"
+  },
+  {
+    "codigo": "0714R013",
+    "nome": "Redes de telecomunicações - Tecnológico",
+    "nivel": "Tecnológico",
+    "areaGeral": "07",
+    "areaEspecifica": "071",
+    "areaDetalhada": "0714"
+  },
+  {
+    "codigo": "0714S013",
+    "nome": "Sistemas biomédicos - Tecnológico",
+    "nivel": "Tecnológico",
+    "areaGeral": "07",
+    "areaEspecifica": "071",
+    "areaDetalhada": "0714"
+  },
+  {
+    "codigo": "0714S023",
+    "nome": "Sistemas de telecomunicações - Tecnológico",
+    "nivel": "Tecnológico",
+    "areaGeral": "07",
+    "areaEspecifica": "071",
+    "areaDetalhada": "0714"
+  },
+  {
+    "codigo": "0714S024",
+    "nome": "Sistemas de telecomunicações - Sequencial",
+    "nivel": "Sequencial",
+    "areaGeral": "07",
+    "areaEspecifica": "071",
+    "areaDetalhada": "0714"
+  },
+  {
+    "codigo": "0714T013",
+    "nome": "Telemática - Tecnológico",
+    "nivel": "Tecnológico",
+    "areaGeral": "07",
+    "areaEspecifica": "071",
+    "areaDetalhada": "0714"
+  },
+  {
+    "codigo": "0714T014",
+    "nome": "Telemática - Sequencial",
+    "nivel": "Sequencial",
+    "areaGeral": "07",
+    "areaEspecifica": "071",
+    "areaDetalhada": "0714"
+  },
+  {
+    "codigo": "0715E012",
+    "nome": "Engenharia física - Bacharelado",
+    "nivel": "Bacharelado",
+    "areaGeral": "07",
+    "areaEspecifica": "071",
+    "areaDetalhada": "0715"
+  },
+  {
+    "codigo": "0715E022",
+    "nome": "Engenharia mecânica - Bacharelado",
+    "nivel": "Bacharelado",
+    "areaGeral": "07",
+    "areaEspecifica": "071",
+    "areaDetalhada": "0715"
+  },
+  {
+    "codigo": "0715E032",
+    "nome": "Engenharia metalúrgica - Bacharelado",
+    "nivel": "Bacharelado",
+    "areaGeral": "07",
+    "areaEspecifica": "071",
+    "areaDetalhada": "0715"
+  },
+  {
+    "codigo": "0715F013",
+    "nome": "Fabricação mecânica - Tecnológico",
+    "nivel": "Tecnológico",
+    "areaGeral": "07",
+    "areaEspecifica": "071",
+    "areaDetalhada": "0715"
+  },
+  {
+    "codigo": "0715M013",
+    "nome": "Manutenção industrial - Tecnológico",
+    "nivel": "Tecnológico",
+    "areaGeral": "07",
+    "areaEspecifica": "071",
+    "areaDetalhada": "0715"
+  },
+  {
+    "codigo": "0715M014",
+    "nome": "Manutenção industrial - Sequencial",
+    "nivel": "Sequencial",
+    "areaGeral": "07",
+    "areaEspecifica": "071",
+    "areaDetalhada": "0715"
+  },
+  {
+    "codigo": "0715M023",
+    "nome": "Mecânica de precisão - Tecnológico",
+    "nivel": "Tecnológico",
+    "areaGeral": "07",
+    "areaEspecifica": "071",
+    "areaDetalhada": "0715"
+  },
+  {
+    "codigo": "0715P013",
+    "nome": "Processos metalúrgicos - Tecnológico",
+    "nivel": "Tecnológico",
+    "areaGeral": "07",
+    "areaEspecifica": "071",
+    "areaDetalhada": "0715"
+  },
+  {
+    "codigo": "0715P014",
+    "nome": "Processos metalúrgicos - Sequencial",
+    "nivel": "Sequencial",
+    "areaGeral": "07",
+    "areaEspecifica": "071",
+    "areaDetalhada": "0715"
+  },
+  {
+    "codigo": "0715S013",
+    "nome": "Soldagem - Tecnológico",
+    "nivel": "Tecnológico",
+    "areaGeral": "07",
+    "areaEspecifica": "071",
+    "areaDetalhada": "0715"
+  },
+  {
+    "codigo": "0715S014",
+    "nome": "Soldagem - Sequencial",
+    "nivel": "Sequencial",
+    "areaGeral": "07",
+    "areaEspecifica": "071",
+    "areaDetalhada": "0715"
+  },
+  {
+    "codigo": "0716A013",
+    "nome": "Aeroespacial - Tecnológico",
+    "nivel": "Tecnológico",
+    "areaGeral": "07",
+    "areaEspecifica": "071",
+    "areaDetalhada": "0716"
+  },
+  {
+    "codigo": "0716C013",
+    "nome": "Construção naval - Tecnológico",
+    "nivel": "Tecnológico",
+    "areaGeral": "07",
+    "areaEspecifica": "071",
+    "areaDetalhada": "0716"
+  },
+  {
+    "codigo": "0716E012",
+    "nome": "Engenharia aeroespacial - Bacharelado",
+    "nivel": "Bacharelado",
+    "areaGeral": "07",
+    "areaEspecifica": "071",
+    "areaDetalhada": "0716"
+  },
+  {
+    "codigo": "0716E022",
+    "nome": "Engenharia aeronáutica - Bacharelado",
+    "nivel": "Bacharelado",
+    "areaGeral": "07",
+    "areaEspecifica": "071",
+    "areaDetalhada": "0716"
+  },
+  {
+    "codigo": "0716E023",
+    "nome": "Engenharia aeronáutica - Tecnológico",
+    "nivel": "Tecnológico",
+    "areaGeral": "07",
+    "areaEspecifica": "071",
+    "areaDetalhada": "0716"
+  },
+  {
+    "codigo": "0716E032",
+    "nome": "Engenharia automotiva - Bacharelado",
+    "nivel": "Bacharelado",
+    "areaGeral": "07",
+    "areaEspecifica": "071",
+    "areaDetalhada": "0716"
+  },
+  {
+    "codigo": "0716E042",
+    "nome": "Engenharia ferroviária e metroviária - Bacharelado",
+    "nivel": "Bacharelado",
+    "areaGeral": "07",
+    "areaEspecifica": "071",
+    "areaDetalhada": "0716"
+  },
+  {
+    "codigo": "0716E052",
+    "nome": "Engenharia naval - Bacharelado",
+    "nivel": "Bacharelado",
+    "areaGeral": "07",
+    "areaEspecifica": "071",
+    "areaDetalhada": "0716"
+  },
+  {
+    "codigo": "0716M013",
+    "nome": "Manutenção de aeronaves - Tecnológico",
+    "nivel": "Tecnológico",
+    "areaGeral": "07",
+    "areaEspecifica": "071",
+    "areaDetalhada": "0716"
+  },
+  {
+    "codigo": "0716M014",
+    "nome": "Manutenção de aeronaves - Sequencial",
+    "nivel": "Sequencial",
+    "areaGeral": "07",
+    "areaEspecifica": "071",
+    "areaDetalhada": "0716"
+  },
+  {
+    "codigo": "0716S013",
+    "nome": "Sistemas automotivos - Tecnológico",
+    "nivel": "Tecnológico",
+    "areaGeral": "07",
+    "areaEspecifica": "071",
+    "areaDetalhada": "0716"
+  },
+  {
+    "codigo": "0716S023",
+    "nome": "Sistemas de navegação fluvial - Tecnológico",
+    "nivel": "Tecnológico",
+    "areaGeral": "07",
+    "areaEspecifica": "071",
+    "areaDetalhada": "0716"
+  },
+  {
+    "codigo": "0721A012",
+    "nome": "Alimentos - Bacharelado",
+    "nivel": "Bacharelado",
+    "areaGeral": "07",
+    "areaEspecifica": "072",
+    "areaDetalhada": "0721"
+  },
+  {
+    "codigo": "0721A013",
+    "nome": "Alimentos - Tecnológico",
+    "nivel": "Tecnológico",
+    "areaGeral": "07",
+    "areaEspecifica": "072",
+    "areaDetalhada": "0721"
+  },
+  {
+    "codigo": "0721A014",
+    "nome": "Alimentos - Sequencial",
+    "nivel": "Sequencial",
+    "areaGeral": "07",
+    "areaEspecifica": "072",
+    "areaDetalhada": "0721"
+  },
+  {
+    "codigo": "0721E012",
+    "nome": "Engenharia de alimentos - Bacharelado",
+    "nivel": "Bacharelado",
+    "areaGeral": "07",
+    "areaEspecifica": "072",
+    "areaDetalhada": "0721"
+  },
+  {
+    "codigo": "0721L012",
+    "nome": "Laticínios - Bacharelado",
+    "nivel": "Bacharelado",
+    "areaGeral": "07",
+    "areaEspecifica": "072",
+    "areaDetalhada": "0721"
+  },
+  {
+    "codigo": "0721L013",
+    "nome": "Laticínios - Tecnológico",
+    "nivel": "Tecnológico",
+    "areaGeral": "07",
+    "areaEspecifica": "072",
+    "areaDetalhada": "0721"
+  },
+  {
+    "codigo": "0721P013",
+    "nome": "Processamento de carnes - Tecnológico",
+    "nivel": "Tecnológico",
+    "areaGeral": "07",
+    "areaEspecifica": "072",
+    "areaDetalhada": "0721"
+  },
+  {
+    "codigo": "0721P023",
+    "nome": "Produção de cachaça - Tecnológico",
+    "nivel": "Tecnológico",
+    "areaGeral": "07",
+    "areaEspecifica": "072",
+    "areaDetalhada": "0721"
+  },
+  {
+    "codigo": "0721P033",
+    "nome": "Produção sucroalcooleira - Tecnológico",
+    "nivel": "Tecnológico",
+    "areaGeral": "07",
+    "areaEspecifica": "072",
+    "areaDetalhada": "0721"
+  },
+  {
+    "codigo": "0721P034",
+    "nome": "Produção sucroalcooleira - Sequencial",
+    "nivel": "Sequencial",
+    "areaGeral": "07",
+    "areaEspecifica": "072",
+    "areaDetalhada": "0721"
+  },
+  {
+    "codigo": "0721P043",
+    "nome": "Produção de cerveja - Tecnológico",
+    "nivel": "Tecnológico",
+    "areaGeral": "07",
+    "areaEspecifica": "072",
+    "areaDetalhada": "0721"
+  },
+  {
+    "codigo": "0722C013",
+    "nome": "Cerâmica - Tecnológico",
+    "nivel": "Tecnológico",
+    "areaGeral": "07",
+    "areaEspecifica": "072",
+    "areaDetalhada": "0722"
+  },
+  {
+    "codigo": "0722C023",
+    "nome": "Ciências dos materiais - Tecnológico",
+    "nivel": "Tecnológico",
+    "areaGeral": "07",
+    "areaEspecifica": "072",
+    "areaDetalhada": "0722"
+  },
+  {
+    "codigo": "0722C024",
+    "nome": "Ciências dos materiais - Sequencial",
+    "nivel": "Sequencial",
+    "areaGeral": "07",
+    "areaEspecifica": "072",
+    "areaDetalhada": "0722"
+  },
+  {
+    "codigo": "0722E012",
+    "nome": "Engenharia de materiais - Bacharelado",
+    "nivel": "Bacharelado",
+    "areaGeral": "07",
+    "areaEspecifica": "072",
+    "areaDetalhada": "0722"
+  },
+  {
+    "codigo": "0722P013",
+    "nome": "Papel e celulose - Tecnológico",
+    "nivel": "Tecnológico",
+    "areaGeral": "07",
+    "areaEspecifica": "072",
+    "areaDetalhada": "0722"
+  },
+  {
+    "codigo": "0722P022",
+    "nome": "Polímeros - Bacharelado",
+    "nivel": "Bacharelado",
+    "areaGeral": "07",
+    "areaEspecifica": "072",
+    "areaDetalhada": "0722"
+  },
+  {
+    "codigo": "0722P023",
+    "nome": "Polímeros - Tecnológico",
+    "nivel": "Tecnológico",
+    "areaGeral": "07",
+    "areaEspecifica": "072",
+    "areaDetalhada": "0722"
+  },
+  {
+    "codigo": "0722P033",
+    "nome": "Produção joalheira - Tecnológico",
+    "nivel": "Tecnológico",
+    "areaGeral": "07",
+    "areaEspecifica": "072",
+    "areaDetalhada": "0722"
+  },
+  {
+    "codigo": "0722P043",
+    "nome": "Produção moveleira - Tecnológico",
+    "nivel": "Tecnológico",
+    "areaGeral": "07",
+    "areaEspecifica": "072",
+    "areaDetalhada": "0722"
+  },
+  {
+    "codigo": "0723E012",
+    "nome": "Engenharia têxtil - Bacharelado",
+    "nivel": "Bacharelado",
+    "areaGeral": "07",
+    "areaEspecifica": "072",
+    "areaDetalhada": "0723"
+  },
+  {
+    "codigo": "0723P013",
+    "nome": "Produção de vestuário - Tecnológico",
+    "nivel": "Tecnológico",
+    "areaGeral": "07",
+    "areaEspecifica": "072",
+    "areaDetalhada": "0723"
+  },
+  {
+    "codigo": "0723P022",
+    "nome": "Produção têxtil - Bacharelado",
+    "nivel": "Bacharelado",
+    "areaGeral": "07",
+    "areaEspecifica": "072",
+    "areaDetalhada": "0723"
+  },
+  {
+    "codigo": "0723P023",
+    "nome": "Produção têxtil - Tecnológico",
+    "nivel": "Tecnológico",
+    "areaGeral": "07",
+    "areaEspecifica": "072",
+    "areaDetalhada": "0723"
+  },
+  {
+    "codigo": "0724E012",
+    "nome": "Engenharia de minas - Bacharelado",
+    "nivel": "Bacharelado",
+    "areaGeral": "07",
+    "areaEspecifica": "072",
+    "areaDetalhada": "0724"
+  },
+  {
+    "codigo": "0724E022",
+    "nome": "Engenharia de petróleo - Bacharelado",
+    "nivel": "Bacharelado",
+    "areaGeral": "07",
+    "areaEspecifica": "072",
+    "areaDetalhada": "0724"
+  },
+  {
+    "codigo": "0724E032",
+    "nome": "Engenharia geológica - Bacharelado",
+    "nivel": "Bacharelado",
+    "areaGeral": "07",
+    "areaEspecifica": "072",
+    "areaDetalhada": "0724"
+  },
+  {
+    "codigo": "0724M013",
+    "nome": "Mineração - Tecnológico",
+    "nivel": "Tecnológico",
+    "areaGeral": "07",
+    "areaEspecifica": "072",
+    "areaDetalhada": "0724"
+  },
+  {
+    "codigo": "0724P013",
+    "nome": "Petróleo e gás - Tecnológico",
+    "nivel": "Tecnológico",
+    "areaGeral": "07",
+    "areaEspecifica": "072",
+    "areaDetalhada": "0724"
+  },
+  {
+    "codigo": "0724R013",
+    "nome": "Rochas ornamentais - Tecnológico",
+    "nivel": "Tecnológico",
+    "areaGeral": "07",
+    "areaEspecifica": "072",
+    "areaDetalhada": "0724"
+  },
+  {
+    "codigo": "0725E012",
+    "nome": "Engenharia de manufatura - Bacharelado",
+    "nivel": "Bacharelado",
+    "areaGeral": "07",
+    "areaEspecifica": "072",
+    "areaDetalhada": "0725"
+  },
+  {
+    "codigo": "0725E013",
+    "nome": "Engenharia de manufatura - Tecnológico",
+    "nivel": "Tecnológico",
+    "areaGeral": "07",
+    "areaEspecifica": "072",
+    "areaDetalhada": "0725"
+  },
+  {
+    "codigo": "0725E022",
+    "nome": "Engenharia de produção - Bacharelado",
+    "nivel": "Bacharelado",
+    "areaGeral": "07",
+    "areaEspecifica": "072",
+    "areaDetalhada": "0725"
+  },
+  {
+    "codigo": "0725E032",
+    "nome": "Engenharia industrial - Bacharelado",
+    "nivel": "Bacharelado",
+    "areaGeral": "07",
+    "areaEspecifica": "072",
+    "areaDetalhada": "0725"
+  },
+  {
+    "codigo": "0725P013",
+    "nome": "Produção gráfica - Tecnológico",
+    "nivel": "Tecnológico",
+    "areaGeral": "07",
+    "areaEspecifica": "072",
+    "areaDetalhada": "0725"
+  },
+  {
+    "codigo": "0725P023",
+    "nome": "Produção industrial - Tecnológico",
+    "nivel": "Tecnológico",
+    "areaGeral": "07",
+    "areaEspecifica": "072",
+    "areaDetalhada": "0725"
+  },
+  {
+    "codigo": "0731A013",
+    "nome": "Agrimensura - Tecnológico",
+    "nivel": "Tecnológico",
+    "areaGeral": "07",
+    "areaEspecifica": "073",
+    "areaDetalhada": "0731"
+  },
+  {
+    "codigo": "0731A022",
+    "nome": "Arquitetura e urbanismo - Bacharelado",
+    "nivel": "Bacharelado",
+    "areaGeral": "07",
+    "areaEspecifica": "073",
+    "areaDetalhada": "0731"
+  },
+  {
+    "codigo": "0731A023",
+    "nome": "Arquitetura e urbanismo - Tecnológico",
+    "nivel": "Tecnológico",
+    "areaGeral": "07",
+    "areaEspecifica": "073",
+    "areaDetalhada": "0731"
+  },
+  {
+    "codigo": "0731A024",
+    "nome": "Arquitetura e urbanismo - Sequencial",
+    "nivel": "Sequencial",
+    "areaGeral": "07",
+    "areaEspecifica": "073",
+    "areaDetalhada": "0731"
+  },
+  {
+    "codigo": "0731E012",
+    "nome": "Engenharia cartográfica - Bacharelado",
+    "nivel": "Bacharelado",
+    "areaGeral": "07",
+    "areaEspecifica": "073",
+    "areaDetalhada": "0731"
+  },
+  {
+    "codigo": "0731E022",
+    "nome": "Engenharia de agrimensura - Bacharelado",
+    "nivel": "Bacharelado",
+    "areaGeral": "07",
+    "areaEspecifica": "073",
+    "areaDetalhada": "0731"
+  },
+  {
+    "codigo": "0731E024",
+    "nome": "Engenharia de agrimensura - Sequencial",
+    "nivel": "Sequencial",
+    "areaGeral": "07",
+    "areaEspecifica": "073",
+    "areaDetalhada": "0731"
+  },
+  {
+    "codigo": "0731E032",
+    "nome": "Engenharia de agrimensura e cartográfica - Bacharelado",
+    "nivel": "Bacharelado",
+    "areaGeral": "07",
+    "areaEspecifica": "073",
+    "areaDetalhada": "0731"
+  },
+  {
+    "codigo": "0732C013",
+    "nome": "Construção de edifícios - Tecnológico",
+    "nivel": "Tecnológico",
+    "areaGeral": "07",
+    "areaEspecifica": "073",
+    "areaDetalhada": "0732"
+  },
+  {
+    "codigo": "0732C023",
+    "nome": "Controle de obras - Tecnológico",
+    "nivel": "Tecnológico",
+    "areaGeral": "07",
+    "areaEspecifica": "073",
+    "areaDetalhada": "0732"
+  },
+  {
+    "codigo": "0732C024",
+    "nome": "Controle de obras - Sequencial",
+    "nivel": "Sequencial",
+    "areaGeral": "07",
+    "areaEspecifica": "073",
+    "areaDetalhada": "0732"
+  },
+  {
+    "codigo": "0732E012",
+    "nome": "Engenharia civil - Bacharelado",
+    "nivel": "Bacharelado",
+    "areaGeral": "07",
+    "areaEspecifica": "073",
+    "areaDetalhada": "0732"
+  },
+  {
+    "codigo": "0732E022",
+    "nome": "Engenharia de recursos hídricos - Bacharelado",
+    "nivel": "Bacharelado",
+    "areaGeral": "07",
+    "areaEspecifica": "073",
+    "areaDetalhada": "0732"
+  },
+  {
+    "codigo": "0732E032",
+    "nome": "Engenharia de transportes - Bacharelado",
+    "nivel": "Bacharelado",
+    "areaGeral": "07",
+    "areaEspecifica": "073",
+    "areaDetalhada": "0732"
+  },
+  {
+    "codigo": "0732E042",
+    "nome": "Engenharia portuária - Bacharelado",
+    "nivel": "Bacharelado",
+    "areaGeral": "07",
+    "areaEspecifica": "073",
+    "areaDetalhada": "0732"
+  },
+  {
+    "codigo": "0732E053",
+    "nome": "Estradas - Tecnológico",
+    "nivel": "Tecnológico",
+    "areaGeral": "07",
+    "areaEspecifica": "073",
+    "areaDetalhada": "0732"
+  },
+  {
+    "codigo": "0732G013",
+    "nome": "Gestão de recursos hídricos - Tecnológico",
+    "nivel": "Tecnológico",
+    "areaGeral": "07",
+    "areaEspecifica": "073",
+    "areaDetalhada": "0732"
+  },
+  {
+    "codigo": "0732M013",
+    "nome": "Material de construção - Tecnológico",
+    "nivel": "Tecnológico",
+    "areaGeral": "07",
+    "areaEspecifica": "073",
+    "areaDetalhada": "0732"
+  },
+  {
+    "codigo": "0788P012",
+    "nome": "Programas interdisciplinares abrangendo engenharia, produção e construção - Bacharelado",
+    "nivel": "Bacharelado",
+    "areaGeral": "07",
+    "areaEspecifica": "078",
+    "areaDetalhada": "0788"
+  },
+  {
+    "codigo": "0811A012",
+    "nome": "Agroecologia - Bacharelado",
+    "nivel": "Bacharelado",
+    "areaGeral": "08",
+    "areaEspecifica": "081",
+    "areaDetalhada": "0811"
+  },
+  {
+    "codigo": "0811A013",
+    "nome": "Agroecologia - Tecnológico",
+    "nivel": "Tecnológico",
+    "areaGeral": "08",
+    "areaEspecifica": "081",
+    "areaDetalhada": "0811"
+  },
+  {
+    "codigo": "0811A022",
+    "nome": "Agroindústria - Bacharelado",
+    "nivel": "Bacharelado",
+    "areaGeral": "08",
+    "areaEspecifica": "081",
+    "areaDetalhada": "0811"
+  },
+  {
+    "codigo": "0811A023",
+    "nome": "Agroindústria - Tecnológico",
+    "nivel": "Tecnológico",
+    "areaGeral": "08",
+    "areaEspecifica": "081",
+    "areaDetalhada": "0811"
+  },
+  {
+    "codigo": "0811A024",
+    "nome": "Agroindústria - Sequencial",
+    "nivel": "Sequencial",
+    "areaGeral": "08",
+    "areaEspecifica": "081",
+    "areaDetalhada": "0811"
+  },
+  {
+    "codigo": "0811A032",
+    "nome": "Agronegócio - Bacharelado",
+    "nivel": "Bacharelado",
+    "areaGeral": "08",
+    "areaEspecifica": "081",
+    "areaDetalhada": "0811"
+  },
+  {
+    "codigo": "0811A033",
+    "nome": "Agronegócio - Tecnológico",
+    "nivel": "Tecnológico",
+    "areaGeral": "08",
+    "areaEspecifica": "081",
+    "areaDetalhada": "0811"
+  },
+  {
+    "codigo": "0811A042",
+    "nome": "Agronomia - Bacharelado",
+    "nivel": "Bacharelado",
+    "areaGeral": "08",
+    "areaEspecifica": "081",
+    "areaDetalhada": "0811"
+  },
+  {
+    "codigo": "0811A043",
+    "nome": "Agronomia - Tecnológico",
+    "nivel": "Tecnológico",
+    "areaGeral": "08",
+    "areaEspecifica": "081",
+    "areaDetalhada": "0811"
+  },
+  {
+    "codigo": "0811A053",
+    "nome": "Agropecuária - Tecnológico",
+    "nivel": "Tecnológico",
+    "areaGeral": "08",
+    "areaEspecifica": "081",
+    "areaDetalhada": "0811"
+  },
+  {
+    "codigo": "0811C013",
+    "nome": "Cafeicultura - Tecnológico",
+    "nivel": "Tecnológico",
+    "areaGeral": "08",
+    "areaEspecifica": "081",
+    "areaDetalhada": "0811"
+  },
+  {
+    "codigo": "0811E012",
+    "nome": "Engenharia agrícola - Bacharelado",
+    "nivel": "Bacharelado",
+    "areaGeral": "08",
+    "areaEspecifica": "081",
+    "areaDetalhada": "0811"
+  },
+  {
+    "codigo": "0811E013",
+    "nome": "Engenharia agrícola - Tecnológico",
+    "nivel": "Tecnológico",
+    "areaGeral": "08",
+    "areaEspecifica": "081",
+    "areaDetalhada": "0811"
+  },
+  {
+    "codigo": "0811E022",
+    "nome": "Engenharia de biossistemas - Bacharelado",
+    "nivel": "Bacharelado",
+    "areaGeral": "08",
+    "areaEspecifica": "081",
+    "areaDetalhada": "0811"
+  },
+  {
+    "codigo": "0811F013",
+    "nome": "Fruticultura - Tecnológico",
+    "nivel": "Tecnológico",
+    "areaGeral": "08",
+    "areaEspecifica": "081",
+    "areaDetalhada": "0811"
+  },
+  {
+    "codigo": "0811F014",
+    "nome": "Fruticultura - Sequencial",
+    "nivel": "Sequencial",
+    "areaGeral": "08",
+    "areaEspecifica": "081",
+    "areaDetalhada": "0811"
+  },
+  {
+    "codigo": "0811I013",
+    "nome": "Irrigação e drenagem - Tecnológico",
+    "nivel": "Tecnológico",
+    "areaGeral": "08",
+    "areaEspecifica": "081",
+    "areaDetalhada": "0811"
+  },
+  {
+    "codigo": "0811M013",
+    "nome": "Manejo da produção agrícola - Tecnológico",
+    "nivel": "Tecnológico",
+    "areaGeral": "08",
+    "areaEspecifica": "081",
+    "areaDetalhada": "0811"
+  },
+  {
+    "codigo": "0811V012",
+    "nome": "Viticultura e enologia - Bacharelado",
+    "nivel": "Bacharelado",
+    "areaGeral": "08",
+    "areaEspecifica": "081",
+    "areaDetalhada": "0811"
+  },
+  {
+    "codigo": "0811V013",
+    "nome": "Viticultura e enologia - Tecnológico",
+    "nivel": "Tecnológico",
+    "areaGeral": "08",
+    "areaEspecifica": "081",
+    "areaDetalhada": "0811"
+  },
+  {
+    "codigo": "0811Z012",
+    "nome": "Zootecnia - Bacharelado",
+    "nivel": "Bacharelado",
+    "areaGeral": "08",
+    "areaEspecifica": "081",
+    "areaDetalhada": "0811"
+  },
+  {
+    "codigo": "0811Z013",
+    "nome": "Zootecnia - Tecnológico",
+    "nivel": "Tecnológico",
+    "areaGeral": "08",
+    "areaEspecifica": "081",
+    "areaDetalhada": "0811"
+  },
+  {
+    "codigo": "0811Z014",
+    "nome": "Zootecnia - Sequencial",
+    "nivel": "Sequencial",
+    "areaGeral": "08",
+    "areaEspecifica": "081",
+    "areaDetalhada": "0811"
+  },
+  {
+    "codigo": "0812H013",
+    "nome": "Horticultura - Tecnológico",
+    "nivel": "Tecnológico",
+    "areaGeral": "08",
+    "areaEspecifica": "081",
+    "areaDetalhada": "0812"
+  },
+  {
+    "codigo": "0821E012",
+    "nome": "Engenharia florestal - Bacharelado",
+    "nivel": "Bacharelado",
+    "areaGeral": "08",
+    "areaEspecifica": "082",
+    "areaDetalhada": "0821"
+  },
+  {
+    "codigo": "0821E013",
+    "nome": "Engenharia florestal - Tecnológico",
+    "nivel": "Tecnológico",
+    "areaGeral": "08",
+    "areaEspecifica": "082",
+    "areaDetalhada": "0821"
+  },
+  {
+    "codigo": "0821S013",
+    "nome": "Silvicultura - Tecnológico",
+    "nivel": "Tecnológico",
+    "areaGeral": "08",
+    "areaEspecifica": "082",
+    "areaDetalhada": "0821"
+  },
+  {
+    "codigo": "0831A012",
+    "nome": "Aquicultura - Bacharelado",
+    "nivel": "Bacharelado",
+    "areaGeral": "08",
+    "areaEspecifica": "083",
+    "areaDetalhada": "0831"
+  },
+  {
+    "codigo": "0831A013",
+    "nome": "Aquicultura - Tecnológico",
+    "nivel": "Tecnológico",
+    "areaGeral": "08",
+    "areaEspecifica": "083",
+    "areaDetalhada": "0831"
+  },
+  {
+    "codigo": "0831A014",
+    "nome": "Aquicultura - Sequencial",
+    "nivel": "Sequencial",
+    "areaGeral": "08",
+    "areaEspecifica": "083",
+    "areaDetalhada": "0831"
+  },
+  {
+    "codigo": "0831E012",
+    "nome": "Engenharia de pesca - Bacharelado",
+    "nivel": "Bacharelado",
+    "areaGeral": "08",
+    "areaEspecifica": "083",
+    "areaDetalhada": "0831"
+  },
+  {
+    "codigo": "0831P013",
+    "nome": "Produção pesqueira - Tecnológico",
+    "nivel": "Tecnológico",
+    "areaGeral": "08",
+    "areaEspecifica": "083",
+    "areaDetalhada": "0831"
+  },
+  {
+    "codigo": "0841M012",
+    "nome": "Medicina veterinária - Bacharelado",
+    "nivel": "Bacharelado",
+    "areaGeral": "08",
+    "areaEspecifica": "084",
+    "areaDetalhada": "0841"
+  },
+  {
+    "codigo": "0841M013",
+    "nome": "Medicina veterinária - Tecnológico",
+    "nivel": "Tecnológico",
+    "areaGeral": "08",
+    "areaEspecifica": "084",
+    "areaDetalhada": "0841"
+  },
+  {
+    "codigo": "0841M014",
+    "nome": "Medicina veterinária - Sequencial",
+    "nivel": "Sequencial",
+    "areaGeral": "08",
+    "areaEspecifica": "084",
+    "areaDetalhada": "0841"
+  },
+  {
+    "codigo": "0888P012",
+    "nome": "Programas interdisciplinares abrangendo agricultura, silvicultura, pesca e veterinária - Bacharelado",
+    "nivel": "Bacharelado",
+    "areaGeral": "08",
+    "areaEspecifica": "088",
+    "areaDetalhada": "0888"
+  },
+  {
+    "codigo": "0911O012",
+    "nome": "Odontologia - Bacharelado",
+    "nivel": "Bacharelado",
+    "areaGeral": "09",
+    "areaEspecifica": "091",
+    "areaDetalhada": "0911"
+  },
+  {
+    "codigo": "0911O014",
+    "nome": "Odontologia - Sequencial",
+    "nivel": "Sequencial",
+    "areaGeral": "09",
+    "areaEspecifica": "091",
+    "areaDetalhada": "0911"
+  },
+  {
+    "codigo": "0912M012",
+    "nome": "Medicina - Bacharelado",
+    "nivel": "Bacharelado",
+    "areaGeral": "09",
+    "areaEspecifica": "091",
+    "areaDetalhada": "0912"
+  },
+  {
+    "codigo": "0912M013",
+    "nome": "Medicina - Tecnológico",
+    "nivel": "Tecnológico",
+    "areaGeral": "09",
+    "areaEspecifica": "091",
+    "areaDetalhada": "0912"
+  },
+  {
+    "codigo": "0912M014",
+    "nome": "Medicina - Sequencial",
+    "nivel": "Sequencial",
+    "areaGeral": "09",
+    "areaEspecifica": "091",
+    "areaDetalhada": "0912"
+  },
+  {
+    "codigo": "0913E012",
+    "nome": "Enfermagem - Bacharelado",
+    "nivel": "Bacharelado",
+    "areaGeral": "09",
+    "areaEspecifica": "091",
+    "areaDetalhada": "0913"
+  },
+  {
+    "codigo": "0913E013",
+    "nome": "Enfermagem - Tecnológico",
+    "nivel": "Tecnológico",
+    "areaGeral": "09",
+    "areaEspecifica": "091",
+    "areaDetalhada": "0913"
+  },
+  {
+    "codigo": "0913E014",
+    "nome": "Enfermagem - Sequencial",
+    "nivel": "Sequencial",
+    "areaGeral": "09",
+    "areaEspecifica": "091",
+    "areaDetalhada": "0913"
+  },
+  {
+    "codigo": "0914A013",
+    "nome": "Análises clínicas e toxicológicas - Tecnológico",
+    "nivel": "Tecnológico",
+    "areaGeral": "09",
+    "areaEspecifica": "091",
+    "areaDetalhada": "0914"
+  },
+  {
+    "codigo": "0914A014",
+    "nome": "Análises clínicas e toxicológicas - Sequencial",
+    "nivel": "Sequencial",
+    "areaGeral": "09",
+    "areaEspecifica": "091",
+    "areaDetalhada": "0914"
+  },
+  {
+    "codigo": "0914B012",
+    "nome": "Biomedicina - Bacharelado",
+    "nivel": "Bacharelado",
+    "areaGeral": "09",
+    "areaEspecifica": "091",
+    "areaDetalhada": "0914"
+  },
+  {
+    "codigo": "0914B014",
+    "nome": "Biomedicina - Sequencial",
+    "nivel": "Sequencial",
+    "areaGeral": "09",
+    "areaEspecifica": "091",
+    "areaDetalhada": "0914"
+  },
+  {
+    "codigo": "0914O013",
+    "nome": "Oftálmica - Tecnológico",
+    "nivel": "Tecnológico",
+    "areaGeral": "09",
+    "areaEspecifica": "091",
+    "areaDetalhada": "0914"
+  },
+  {
+    "codigo": "0914O022",
+    "nome": "Optometria - Bacharelado",
+    "nivel": "Bacharelado",
+    "areaGeral": "09",
+    "areaEspecifica": "091",
+    "areaDetalhada": "0914"
+  },
+  {
+    "codigo": "0914O023",
+    "nome": "Optometria - Tecnológico",
+    "nivel": "Tecnológico",
+    "areaGeral": "09",
+    "areaEspecifica": "091",
+    "areaDetalhada": "0914"
+  },
+  {
+    "codigo": "0914P013",
+    "nome": "Prótese e órtese - Tecnológico",
+    "nivel": "Tecnológico",
+    "areaGeral": "09",
+    "areaEspecifica": "091",
+    "areaDetalhada": "0914"
+  },
+  {
+    "codigo": "0914P014",
+    "nome": "Prótese e órtese - Sequencial",
+    "nivel": "Sequencial",
+    "areaGeral": "09",
+    "areaEspecifica": "091",
+    "areaDetalhada": "0914"
+  },
+  {
+    "codigo": "0914R013",
+    "nome": "Radiologia - Tecnológico",
+    "nivel": "Tecnológico",
+    "areaGeral": "09",
+    "areaEspecifica": "091",
+    "areaDetalhada": "0914"
+  },
+  {
+    "codigo": "0914R014",
+    "nome": "Radiologia - Sequencial",
+    "nivel": "Sequencial",
+    "areaGeral": "09",
+    "areaEspecifica": "091",
+    "areaDetalhada": "0914"
+  },
+  {
+    "codigo": "0915E012",
+    "nome": "Educação física - Bacharelado",
+    "nivel": "Bacharelado",
+    "areaGeral": "09",
+    "areaEspecifica": "091",
+    "areaDetalhada": "0915"
+  },
+  {
+    "codigo": "0915E014",
+    "nome": "Educação física  - Sequencial",
+    "nivel": "Sequencial",
+    "areaGeral": "09",
+    "areaEspecifica": "091",
+    "areaDetalhada": "0915"
+  },
+  {
+    "codigo": "0915F012",
+    "nome": "Fisioterapia - Bacharelado",
+    "nivel": "Bacharelado",
+    "areaGeral": "09",
+    "areaEspecifica": "091",
+    "areaDetalhada": "0915"
+  },
+  {
+    "codigo": "0915F022",
+    "nome": "Fonoaudiologia - Bacharelado",
+    "nivel": "Bacharelado",
+    "areaGeral": "09",
+    "areaEspecifica": "091",
+    "areaDetalhada": "0915"
+  },
+  {
+    "codigo": "0915N012",
+    "nome": "Nutrição - Bacharelado",
+    "nivel": "Bacharelado",
+    "areaGeral": "09",
+    "areaEspecifica": "091",
+    "areaDetalhada": "0915"
+  },
+  {
+    "codigo": "0915N013",
+    "nome": "Nutrição - Tecnológico",
+    "nivel": "Tecnológico",
+    "areaGeral": "09",
+    "areaEspecifica": "091",
+    "areaDetalhada": "0915"
+  },
+  {
+    "codigo": "0915N014",
+    "nome": "Nutrição - Sequencial",
+    "nivel": "Sequencial",
+    "areaGeral": "09",
+    "areaEspecifica": "091",
+    "areaDetalhada": "0915"
+  },
+  {
+    "codigo": "0915P012",
+    "nome": "Podologia - Bacharelado",
+    "nivel": "Bacharelado",
+    "areaGeral": "09",
+    "areaEspecifica": "091",
+    "areaDetalhada": "0915"
+  },
+  {
+    "codigo": "0915P013",
+    "nome": "Podologia - Tecnológico",
+    "nivel": "Tecnológico",
+    "areaGeral": "09",
+    "areaEspecifica": "091",
+    "areaDetalhada": "0915"
+  },
+  {
+    "codigo": "0915T012",
+    "nome": "Terapia ocupacional - Bacharelado",
+    "nivel": "Bacharelado",
+    "areaGeral": "09",
+    "areaEspecifica": "091",
+    "areaDetalhada": "0915"
+  },
+  {
+    "codigo": "0916F012",
+    "nome": "Farmácia - Bacharelado",
+    "nivel": "Bacharelado",
+    "areaGeral": "09",
+    "areaEspecifica": "091",
+    "areaDetalhada": "0916"
+  },
+  {
+    "codigo": "0916F013",
+    "nome": "Farmácia - Tecnológico",
+    "nivel": "Tecnológico",
+    "areaGeral": "09",
+    "areaEspecifica": "091",
+    "areaDetalhada": "0916"
+  },
+  {
+    "codigo": "0916F014",
+    "nome": "Farmácia - Sequencial",
+    "nivel": "Sequencial",
+    "areaGeral": "09",
+    "areaEspecifica": "091",
+    "areaDetalhada": "0916"
+  },
+  {
+    "codigo": "0917M012",
+    "nome": "Musicoterapia - Bacharelado",
+    "nivel": "Bacharelado",
+    "areaGeral": "09",
+    "areaEspecifica": "091",
+    "areaDetalhada": "0917"
+  },
+  {
+    "codigo": "0917P012",
+    "nome": "Práticas integrativas - Bacharelado",
+    "nivel": "Bacharelado",
+    "areaGeral": "09",
+    "areaEspecifica": "091",
+    "areaDetalhada": "0917"
+  },
+  {
+    "codigo": "0917P013",
+    "nome": "Práticas integrativas - Tecnológico",
+    "nivel": "Tecnológico",
+    "areaGeral": "09",
+    "areaEspecifica": "091",
+    "areaDetalhada": "0917"
+  },
+  {
+    "codigo": "0917P014",
+    "nome": "Práticas integrativas - Sequencial",
+    "nivel": "Sequencial",
+    "areaGeral": "09",
+    "areaEspecifica": "091",
+    "areaDetalhada": "0917"
+  },
+  {
+    "codigo": "0918S012",
+    "nome": "Saúde coletiva - Bacharelado",
+    "nivel": "Bacharelado",
+    "areaGeral": "09",
+    "areaEspecifica": "091",
+    "areaDetalhada": "0918"
+  },
+  {
+    "codigo": "0918S013",
+    "nome": "Saúde coletiva - Tecnológico",
+    "nivel": "Tecnológico",
+    "areaGeral": "09",
+    "areaEspecifica": "091",
+    "areaDetalhada": "0918"
+  },
+  {
+    "codigo": "0918S014",
+    "nome": "Saúde coletiva - Sequencial",
+    "nivel": "Sequencial",
+    "areaGeral": "09",
+    "areaEspecifica": "091",
+    "areaDetalhada": "0918"
+  },
+  {
+    "codigo": "0918S022",
+    "nome": "Saúde pública - Bacharelado",
+    "nivel": "Bacharelado",
+    "areaGeral": "09",
+    "areaEspecifica": "091",
+    "areaDetalhada": "0918"
+  },
+  {
+    "codigo": "0918S023",
+    "nome": "Saúde pública - Tecnológico",
+    "nivel": "Tecnológico",
+    "areaGeral": "09",
+    "areaEspecifica": "091",
+    "areaDetalhada": "0918"
+  },
+  {
+    "codigo": "0918S024",
+    "nome": "Saúde pública - Sequencial",
+    "nivel": "Sequencial",
+    "areaGeral": "09",
+    "areaEspecifica": "091",
+    "areaDetalhada": "0918"
+  },
+  {
+    "codigo": "0921A014",
+    "nome": "Assistência a idosos e a deficientes - Sequencial",
+    "nivel": "Sequencial",
+    "areaGeral": "09",
+    "areaEspecifica": "092",
+    "areaDetalhada": "0921"
+  },
+  {
+    "codigo": "0921G012",
+    "nome": "Gerontologia - Bacharelado",
+    "nivel": "Bacharelado",
+    "areaGeral": "09",
+    "areaEspecifica": "092",
+    "areaDetalhada": "0921"
+  },
+  {
+    "codigo": "0921G013",
+    "nome": "Gerontologia - Tecnológico",
+    "nivel": "Tecnológico",
+    "areaGeral": "09",
+    "areaEspecifica": "092",
+    "areaDetalhada": "0921"
+  },
+  {
+    "codigo": "0921G014",
+    "nome": "Gerontologia - Sequencial",
+    "nivel": "Sequencial",
+    "areaGeral": "09",
+    "areaEspecifica": "092",
+    "areaDetalhada": "0921"
+  },
+  {
+    "codigo": "0923S012",
+    "nome": "Serviço social - Bacharelado",
+    "nivel": "Bacharelado",
+    "areaGeral": "09",
+    "areaEspecifica": "092",
+    "areaDetalhada": "0923"
+  },
+  {
+    "codigo": "0923S013",
+    "nome": "Serviço social - Tecnológico",
+    "nivel": "Tecnológico",
+    "areaGeral": "09",
+    "areaEspecifica": "092",
+    "areaDetalhada": "0923"
+  },
+  {
+    "codigo": "0923S014",
+    "nome": "Serviço social - Sequencial",
+    "nivel": "Sequencial",
+    "areaGeral": "09",
+    "areaEspecifica": "092",
+    "areaDetalhada": "0923"
+  },
+  {
+    "codigo": "0988P012",
+    "nome": "Programas interdisciplinares abrangendo saúde e bem-estar - Bacharelado",
+    "nivel": "Bacharelado",
+    "areaGeral": "09",
+    "areaEspecifica": "098",
+    "areaDetalhada": "0988"
+  },
+  {
+    "codigo": "0988P013",
+    "nome": "Programas interdisciplinares abrangendo saúde e bem-estar - Tecnológico",
+    "nivel": "Tecnológico",
+    "areaGeral": "09",
+    "areaEspecifica": "098",
+    "areaDetalhada": "0988"
+  },
+  {
+    "codigo": "0988P014",
+    "nome": "Programas interdisciplinares abrangendo saúde e bem-estar - Sequencial",
+    "nivel": "Sequencial",
+    "areaGeral": "09",
+    "areaEspecifica": "098",
+    "areaDetalhada": "0988"
+  },
+  {
+    "codigo": "1011E012",
+    "nome": "Economia doméstica - Bacharelado",
+    "nivel": "Bacharelado",
+    "areaGeral": "10",
+    "areaEspecifica": "101",
+    "areaDetalhada": "1011"
+  },
+  {
+    "codigo": "1012E012",
+    "nome": "Estética e cosmética - Bacharelado",
+    "nivel": "Bacharelado",
+    "areaGeral": "10",
+    "areaEspecifica": "101",
+    "areaDetalhada": "1012"
+  },
+  {
+    "codigo": "1012E013",
+    "nome": "Estética e cosmética - Tecnológico",
+    "nivel": "Tecnológico",
+    "areaGeral": "10",
+    "areaEspecifica": "101",
+    "areaDetalhada": "1012"
+  },
+  {
+    "codigo": "1012E014",
+    "nome": "Estética e cosmética - Sequencial",
+    "nivel": "Sequencial",
+    "areaGeral": "10",
+    "areaEspecifica": "101",
+    "areaDetalhada": "1012"
+  },
+  {
+    "codigo": "1013G012",
+    "nome": "Gastronomia - Bacharelado",
+    "nivel": "Bacharelado",
+    "areaGeral": "10",
+    "areaEspecifica": "101",
+    "areaDetalhada": "1013"
+  },
+  {
+    "codigo": "1013G013",
+    "nome": "Gastronomia - Tecnológico",
+    "nivel": "Tecnológico",
+    "areaGeral": "10",
+    "areaEspecifica": "101",
+    "areaDetalhada": "1013"
+  },
+  {
+    "codigo": "1013G014",
+    "nome": "Gastronomia - Sequencial",
+    "nivel": "Sequencial",
+    "areaGeral": "10",
+    "areaEspecifica": "101",
+    "areaDetalhada": "1013"
+  },
+  {
+    "codigo": "1014F013",
+    "nome": "Formação de técnicos e treinadores esportivos - Tecnológico",
+    "nivel": "Tecnológico",
+    "areaGeral": "10",
+    "areaEspecifica": "101",
+    "areaDetalhada": "1014"
+  },
+  {
+    "codigo": "1014F014",
+    "nome": "Formação de técnicos e treinadores esportivos - Sequencial",
+    "nivel": "Sequencial",
+    "areaGeral": "10",
+    "areaEspecifica": "101",
+    "areaDetalhada": "1014"
+  },
+  {
+    "codigo": "1014G012",
+    "nome": "Gestão desportiva e de lazer - Bacharelado",
+    "nivel": "Bacharelado",
+    "areaGeral": "10",
+    "areaEspecifica": "101",
+    "areaDetalhada": "1014"
+  },
+  {
+    "codigo": "1014G013",
+    "nome": "Gestão desportiva e de lazer - Tecnológico",
+    "nivel": "Tecnológico",
+    "areaGeral": "10",
+    "areaEspecifica": "101",
+    "areaDetalhada": "1014"
+  },
+  {
+    "codigo": "1014G014",
+    "nome": "Gestão desportiva e de lazer - Sequencial",
+    "nivel": "Sequencial",
+    "areaGeral": "10",
+    "areaEspecifica": "101",
+    "areaDetalhada": "1014"
+  },
+  {
+    "codigo": "1015E013",
+    "nome": "Eventos - Tecnológico",
+    "nivel": "Tecnológico",
+    "areaGeral": "10",
+    "areaEspecifica": "101",
+    "areaDetalhada": "1015"
+  },
+  {
+    "codigo": "1015E014",
+    "nome": "Eventos - Sequencial",
+    "nivel": "Sequencial",
+    "areaGeral": "10",
+    "areaEspecifica": "101",
+    "areaDetalhada": "1015"
+  },
+  {
+    "codigo": "1015H012",
+    "nome": "Hotelaria - Bacharelado",
+    "nivel": "Bacharelado",
+    "areaGeral": "10",
+    "areaEspecifica": "101",
+    "areaDetalhada": "1015"
+  },
+  {
+    "codigo": "1015H013",
+    "nome": "Hotelaria - Tecnológico",
+    "nivel": "Tecnológico",
+    "areaGeral": "10",
+    "areaEspecifica": "101",
+    "areaDetalhada": "1015"
+  },
+  {
+    "codigo": "1015H014",
+    "nome": "Hotelaria - Sequencial",
+    "nivel": "Sequencial",
+    "areaGeral": "10",
+    "areaEspecifica": "101",
+    "areaDetalhada": "1015"
+  },
+  {
+    "codigo": "1015T012",
+    "nome": "Turismo - Bacharelado",
+    "nivel": "Bacharelado",
+    "areaGeral": "10",
+    "areaEspecifica": "101",
+    "areaDetalhada": "1015"
+  },
+  {
+    "codigo": "1015T013",
+    "nome": "Turismo - Tecnológico",
+    "nivel": "Tecnológico",
+    "areaGeral": "10",
+    "areaEspecifica": "101",
+    "areaDetalhada": "1015"
+  },
+  {
+    "codigo": "1015T014",
+    "nome": "Turismo - Sequencial",
+    "nivel": "Sequencial",
+    "areaGeral": "10",
+    "areaEspecifica": "101",
+    "areaDetalhada": "1015"
+  },
+  {
+    "codigo": "1022S012",
+    "nome": "Segurança no trabalho - Bacharelado",
+    "nivel": "Bacharelado",
+    "areaGeral": "10",
+    "areaEspecifica": "102",
+    "areaDetalhada": "1022"
+  },
+  {
+    "codigo": "1022S013",
+    "nome": "Segurança no trabalho - Tecnológico",
+    "nivel": "Tecnológico",
+    "areaGeral": "10",
+    "areaEspecifica": "102",
+    "areaDetalhada": "1022"
+  },
+  {
+    "codigo": "1022S014",
+    "nome": "Segurança no trabalho - Sequencial",
+    "nivel": "Sequencial",
+    "areaGeral": "10",
+    "areaEspecifica": "102",
+    "areaDetalhada": "1022"
+  },
+  {
+    "codigo": "1031C012",
+    "nome": "Ciências militares - Bacharelado",
+    "nivel": "Bacharelado",
+    "areaGeral": "10",
+    "areaEspecifica": "103",
+    "areaDetalhada": "1031"
+  },
+  {
+    "codigo": "1031C013",
+    "nome": "Ciências militares - Tecnológico",
+    "nivel": "Tecnológico",
+    "areaGeral": "10",
+    "areaEspecifica": "103",
+    "areaDetalhada": "1031"
+  },
+  {
+    "codigo": "1032I013",
+    "nome": "Investigação e perícia - Tecnológico",
+    "nivel": "Tecnológico",
+    "areaGeral": "10",
+    "areaEspecifica": "103",
+    "areaDetalhada": "1032"
+  },
+  {
+    "codigo": "1032I014",
+    "nome": "Investigação e perícia - Sequencial",
+    "nivel": "Sequencial",
+    "areaGeral": "10",
+    "areaEspecifica": "103",
+    "areaDetalhada": "1032"
+  },
+  {
+    "codigo": "1032S013",
+    "nome": "Segurança no trânsito - Tecnológico",
+    "nivel": "Tecnológico",
+    "areaGeral": "10",
+    "areaEspecifica": "103",
+    "areaDetalhada": "1032"
+  },
+  {
+    "codigo": "1032S014",
+    "nome": "Segurança no trânsito - Sequencial",
+    "nivel": "Sequencial",
+    "areaGeral": "10",
+    "areaEspecifica": "103",
+    "areaDetalhada": "1032"
+  },
+  {
+    "codigo": "1032S023",
+    "nome": "Segurança privada - Tecnológico",
+    "nivel": "Tecnológico",
+    "areaGeral": "10",
+    "areaEspecifica": "103",
+    "areaDetalhada": "1032"
+  },
+  {
+    "codigo": "1032S024",
+    "nome": "Segurança privada - Sequencial",
+    "nivel": "Sequencial",
+    "areaGeral": "10",
+    "areaEspecifica": "103",
+    "areaDetalhada": "1032"
+  },
+  {
+    "codigo": "1032S032",
+    "nome": "Segurança pública - Bacharelado",
+    "nivel": "Bacharelado",
+    "areaGeral": "10",
+    "areaEspecifica": "103",
+    "areaDetalhada": "1032"
+  },
+  {
+    "codigo": "1032S033",
+    "nome": "Segurança pública - Tecnológico",
+    "nivel": "Tecnológico",
+    "areaGeral": "10",
+    "areaEspecifica": "103",
+    "areaDetalhada": "1032"
+  },
+  {
+    "codigo": "1032S034",
+    "nome": "Segurança pública - Sequencial",
+    "nivel": "Sequencial",
+    "areaGeral": "10",
+    "areaEspecifica": "103",
+    "areaDetalhada": "1032"
+  },
+  {
+    "codigo": "1032S043",
+    "nome": "Serviços penais - Tecnológico",
+    "nivel": "Tecnológico",
+    "areaGeral": "10",
+    "areaEspecifica": "103",
+    "areaDetalhada": "1032"
+  },
+  {
+    "codigo": "1032S044",
+    "nome": "Serviços penais - Sequencial",
+    "nivel": "Sequencial",
+    "areaGeral": "10",
+    "areaEspecifica": "103",
+    "areaDetalhada": "1032"
+  },
+  {
+    "codigo": "1041C012",
+    "nome": "Ciências aeronáuticas - Bacharelado",
+    "nivel": "Bacharelado",
+    "areaGeral": "10",
+    "areaEspecifica": "104",
+    "areaDetalhada": "1041"
+  },
+  {
+    "codigo": "1041C013",
+    "nome": "Ciências aeronáuticas - Tecnológico",
+    "nivel": "Tecnológico",
+    "areaGeral": "10",
+    "areaEspecifica": "104",
+    "areaDetalhada": "1041"
+  },
+  {
+    "codigo": "1041C014",
+    "nome": "Ciências aeronáuticas - Sequencial",
+    "nivel": "Sequencial",
+    "areaGeral": "10",
+    "areaEspecifica": "104",
+    "areaDetalhada": "1041"
+  },
+  {
+    "codigo": "1041G013",
+    "nome": "Gestão portuária - Tecnológico",
+    "nivel": "Tecnológico",
+    "areaGeral": "10",
+    "areaEspecifica": "104",
+    "areaDetalhada": "1041"
+  },
+  {
+    "codigo": "1041G014",
+    "nome": "Gestão portuária - Sequencial",
+    "nivel": "Sequencial",
+    "areaGeral": "10",
+    "areaEspecifica": "104",
+    "areaDetalhada": "1041"
+  },
+  {
+    "codigo": "1041T013",
+    "nome": "Transporte aéreo - Tecnológico",
+    "nivel": "Tecnológico",
+    "areaGeral": "10",
+    "areaEspecifica": "104",
+    "areaDetalhada": "1041"
+  },
+  {
+    "codigo": "1041T023",
+    "nome": "Transporte terrestre - Tecnológico",
+    "nivel": "Tecnológico",
+    "areaGeral": "10",
+    "areaEspecifica": "104",
+    "areaDetalhada": "1041"
+  },
+  {
+    "codigo": "1041T024",
+    "nome": "Transporte terrestre  - Sequencial",
+    "nivel": "Sequencial",
+    "areaGeral": "10",
+    "areaEspecifica": "104",
+    "areaDetalhada": "1041"
+  },
+  {
+    "codigo": "1088P013",
+    "nome": "Programas interdisciplinares abrangendo serviços - Tecnológico",
+    "nivel": "Tecnológico",
+    "areaGeral": "10",
+    "areaEspecifica": "108",
+    "areaDetalhada": "1088"
+  }
+]

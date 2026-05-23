@@ -11,6 +11,7 @@ import {
   GraduationCap,
   DoorOpen,
   UserCheck,
+  Building2,
   BookOpen,
   LogOut,
   Menu,
@@ -40,14 +41,31 @@ const modules = [
     icon: Users,
   },
   {
-    title: 'Turmas',
-    href: '/turmas',
-    icon: GraduationCap,
+    title: 'Gestão de Usuários',
+    icon: Users,
+    submenu: [
+      {
+        title: 'Usuários',
+        href: '/gestao-usuarios/usuarios',
+        icon: UserCheck,
+      },
+      {
+        title: 'Funções',
+        href: '/gestao-usuarios/funcoes',
+        icon: Building2,
+      },
+    ],
   },
   {
-    title: 'Pessoas',
-    href: '/pessoas',
-    icon: UserCheck,
+    title: 'Gestão de Turmas',
+    icon: GraduationCap,
+    submenu: [
+      {
+        title: 'Turmas',
+        href: '/gestao-turmas/turmas',
+        icon: GraduationCap,
+      },
+    ],
   },
   {
     title: 'Matrículas',

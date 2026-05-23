@@ -1,0 +1,133 @@
+[
+  {
+    "codigo": "Linguagens"
+  },
+  {
+    "codigo": 6,
+    "nome": "Língua /Literatura Portuguesa "
+  },
+  {
+    "codigo": 7,
+    "nome": "Língua /Literatura estrangeira - Inglês "
+  },
+  {
+    "codigo": 8,
+    "nome": "Língua /Literatura estrangeira - Espanhol"
+  },
+  {
+    "codigo": 30,
+    "nome": "Língua/Literatura estrangeira - Francês"
+  },
+  {
+    "codigo": 9,
+    "nome": "Língua /Literatura estrangeira - outra"
+  },
+  {
+    "codigo": 27,
+    "nome": "Língua indígena"
+  },
+  {
+    "codigo": 23,
+    "nome": "Libras"
+  },
+  {
+    "codigo": 31,
+    "nome": "  Língua Portuguesa como Segunda Língua"
+  },
+  {
+    "codigo": 10,
+    "nome": "Arte (Educação Artística, Teatro, Dança, Música, Artes Plásticas e outras)"
+  },
+  {
+    "codigo": 11,
+    "nome": "Educação Física"
+  },
+  {
+    "codigo": "Matemática"
+  },
+  {
+    "codigo": 3,
+    "nome": "Matemática"
+  },
+  {
+    "codigo": "Ciências da Natureza"
+  },
+  {
+    "codigo": 1,
+    "nome": "Química"
+  },
+  {
+    "codigo": 2,
+    "nome": "Física"
+  },
+  {
+    "codigo": 4,
+    "nome": "Biologia"
+  },
+  {
+    "codigo": 5,
+    "nome": "Ciências"
+  },
+  {
+    "codigo": "Ciências Humanas e Sociais"
+  },
+  {
+    "codigo": 12,
+    "nome": "História"
+  },
+  {
+    "codigo": 13,
+    "nome": "Geografia"
+  },
+  {
+    "codigo": 14,
+    "nome": "Filosofia"
+  },
+  {
+    "codigo": 28,
+    "nome": "Estudos Sociais"
+  },
+  {
+    "codigo": 29,
+    "nome": "Sociologia"
+  },
+  {
+    "codigo": "Outras áreas"
+  },
+  {
+    "codigo": 16,
+    "nome": "Informática/Computação"
+  },
+  {
+    "codigo": 17,
+    "nome": "Áreas do conhecimento profissionalizantes "
+  },
+  {
+    "codigo": 20,
+    "nome": "Disciplinas voltadas ao atendimento às necessidades educacionais específicas dos alunos que são público alvo da educação especial e às práticas educacionais inclusivas."
+  },
+  {
+    "codigo": 21,
+    "nome": "Disciplinas voltadas à diversidade sociocultural (disciplinas pedagógicas)"
+  },
+  {
+    "codigo": 25,
+    "nome": "Áreas do conhecimento pedagógicas "
+  },
+  {
+    "codigo": 26,
+    "nome": "Ensino religioso"
+  },
+  {
+    "codigo": 32,
+    "nome": "  Estágio curricular supervisionado"
+  },
+  {
+    "codigo": 33,
+    "nome": "  Projeto de vida"
+  },
+  {
+    "codigo": 99,
+    "nome": "Outras áreas do conhecimento"
+  }
+]
