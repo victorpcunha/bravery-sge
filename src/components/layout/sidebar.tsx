@@ -92,6 +92,11 @@ const modules = [
             href: '/gestao-academica/metodos',
             icon: ClipboardList,
           },
+          {
+            title: 'Alunos Matriculados',
+            href: '/gestao-academica/matriculas',
+            icon: DoorOpen,
+          },
         ],
       },
       {
