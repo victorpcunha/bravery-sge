@@ -135,6 +135,7 @@ export type Person = {
   form_outros: boolean | null
   sem_formacao: boolean | null
   recebeu_formacao: boolean | null
+  perfil_id: string | null
   created_at: string
   updated_at: string
 }
@@ -343,4 +344,66 @@ export async function buscarAlunos(schoolId: string, search?: string) {
   const { data, error } = await query.limit(20)
   if (error) throw error
   return data as { id: string; nome_completo: string; codigo_pessoa: number }[]
+}
+
+export async function getPessoaPorEmail(email: string, schoolId: string) {
+  const { data, error } = await supabase
+    .from('people')
+    .select('id, nome_completo, perfil_id')
+    .eq('email', email)
+    .eq('school_id', schoolId)
+    .maybeSingle()
+
+  if (error) throw error
+  return data
+}
+
+export async function getPessoaPorCpf(cpf: string) {
+  const { data, error } = await supabase
+    .from('people')
+    .select('id, nome_completo, email')
+    .eq('cpf', cpf)
+    .maybeSingle()
+
+  if (error) throw error
+  return data
+}
+
+function validarSenha(senha: string): string | null {
+  if (senha.length < 10) return 'Senha deve ter no mínimo 10 caracteres'
+  if (!/[A-Z]/.test(senha)) return 'Senha deve conter pelo menos uma letra maiúscula'
+  if (!/[a-z]/.test(senha)) return 'Senha deve conter pelo menos uma letra minúscula'
+  if (!/[0-9]/.test(senha)) return 'Senha deve conter pelo menos um número'
+  if (!/[^A-Za-z0-9]/.test(senha)) return 'Senha deve conter pelo menos um caractere especial'
+  return null
+}
+
+export async function criarAuthUser(params: {
+  email: string
+  password: string
+  personId: string
+  schoolId: string
+}) {
+  const erroSenha = validarSenha(params.password)
+  if (erroSenha) throw new Error(erroSenha)
+
+  const { data, error } = await supabase.auth.admin.createUser({
+    email: params.email,
+    password: params.password,
+    email_confirm: true,
+    user_metadata: { person_id: params.personId },
+  })
+
+  if (error) throw error
+  if (!data.user) throw new Error('Erro ao criar usuário de autenticação')
+
+  const userId = data.user.id
+
+  const { error: linkError } = await supabase
+    .from('user_schools')
+    .insert({ user_id: userId, school_id: params.schoolId })
+
+  if (linkError) throw linkError
+
+  return data.user
 }

@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useForm } from 'react-hook-form'
 import { z } from 'zod'
-import { School, Lock, Mail, Loader2 } from 'lucide-react'
+import { School, Lock, Mail, User, Loader2 } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -14,8 +14,8 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { useAuth } from '@/components/providers/auth-provider'
 
 const loginSchema = z.object({
-  email: z.string().email('Email inválido'),
-  password: z.string().min(6, 'Senha deve ter pelo menos 6 caracteres'),
+  email: z.string().min(1, 'Informe CPF ou e-mail'),
+  password: z.string().min(1, 'Informe a senha'),
 })
 
 type LoginFormValues = z.infer<typeof loginSchema>
@@ -41,10 +41,9 @@ export default function LoginPage() {
 
     try {
       const { error: authError } = await signIn(data.email, data.password)
-      console.log('Resultado do login:', authError)
 
       if (authError) {
-        setError(authError.message)
+        setError('Usuário ou senha inválidos')
         setIsSubmitting(false)
         return
       }
@@ -96,13 +95,12 @@ export default function LoginPage() {
                   name="email"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="text-[#334155]">Email</FormLabel>
+                      <FormLabel className="text-[#334155]">CPF ou E-mail</FormLabel>
                       <FormControl>
                         <div className="relative">
-                          <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[#64748b]" />
+                          <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[#64748b]" />
                           <Input
-                            type="email"
-                            placeholder="seu@email.com"
+                            placeholder="000.000.000-00 ou email@exemplo.com"
                             className="pl-10 bg-white/80 border-[#e2e8f0] focus:border-[#1D3557] focus:ring-[#1D3557]/20"
                             {...field}
                           />

@@ -41,8 +41,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const signIn = async (email: string, password: string) => {
     const supabase = getSupabaseClient()
+
+    // Se o input tem 11 dígitos, busca por CPF
+    let emailFinal = email
+    if (/^\d{11}$/.test(email.replace(/\D/g, ''))) {
+      const cpf = email.replace(/\D/g, '')
+      const { getPessoaPorCpf } = await import('@/lib/actions/people')
+      const pessoa = await getPessoaPorCpf(cpf)
+      if (pessoa?.email) {
+        emailFinal = pessoa.email
+      }
+    }
+
     const { error } = await supabase.auth.signInWithPassword({
-      email,
+      email: emailFinal,
       password,
     })
     return { error: error as Error | null }

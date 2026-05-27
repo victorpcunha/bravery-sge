@@ -55,6 +55,11 @@ const modules = [
         href: '/gestao-usuarios/funcoes',
         icon: Building2,
       },
+      {
+        title: 'Perfis e Permissões',
+        href: '/gestao-usuarios/perfis',
+        icon: Settings,
+      },
     ],
   },
   {

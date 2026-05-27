@@ -1,0 +1,174 @@
+'use client'
+
+import { useState, useEffect, use } from 'react'
+import { useRouter } from 'next/navigation'
+import { useAuth } from '@/components/providers/auth-provider'
+import { Sidebar } from '@/components/layout/sidebar'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { ChevronLeft, Shield } from 'lucide-react'
+import { Button } from '@/components/ui/button'
+import { getFirstSchool } from '@/lib/actions/schools'
+import {
+  buscarPerfil,
+  criarPerfil,
+  editarPerfil,
+  listarPermissoes,
+  salvarPermissoes,
+  type Perfil,
+  type RecursoComPermissao,
+} from '@/lib/actions/perfis'
+import { PerfilForm } from '@/components/perfis/perfil-form'
+import { usePermissoes } from '@/hooks/use-permissoes'
+import { toast } from 'sonner'
+
+type PageProps = {
+  params: Promise<{ id: string }>
+}
+
+export default function PerfilCadastroPage({ params }: PageProps) {
+  const { id } = use(params)
+  const isNew = id === 'novo'
+
+  const { user, loading: authLoading } = useAuth()
+  const router = useRouter()
+  const [schoolId, setSchoolId] = useState('')
+  const [perfil, setPerfil] = useState<Perfil | null>(null)
+  const [recursos, setRecursos] = useState<RecursoComPermissao[]>([])
+  const [loading, setLoading] = useState(true)
+  const [saving, setSaving] = useState(false)
+  const { loaded: permLoaded, pode, isSetup, pessoaId } = usePermissoes(schoolId)
+
+  useEffect(() => {
+    if (!authLoading && !user) router.push('/login')
+  }, [user, authLoading, router])
+
+  useEffect(() => {
+    if (!user) return
+    getFirstSchool().then(s => setSchoolId(s.id)).catch(() => {})
+  }, [user])
+
+  useEffect(() => {
+    if (!schoolId) return
+    loadData()
+  }, [schoolId])
+
+  useEffect(() => {
+    if (permLoaded && !isSetup) {
+      if (isNew && !pode.criar('gestao-usuarios.perfis')) {
+        toast.error('Você não tem permissão para criar perfis')
+        router.push('/gestao-usuarios/perfis')
+      }
+      if (!isNew && !pode.editar('gestao-usuarios.perfis')) {
+        toast.error('Você não tem permissão para editar perfis')
+        router.push('/gestao-usuarios/perfis')
+      }
+    }
+  }, [permLoaded, schoolId, isSetup])
+
+  const loadData = async () => {
+    setLoading(true)
+    try {
+      const recursosData = await listarPermissoes(schoolId, id === 'novo' ? '' : id)
+
+      if (!isNew) {
+        const perfilData = await buscarPerfil(id)
+        setPerfil(perfilData)
+      }
+
+      setRecursos(recursosData)
+    } catch (e: any) {
+      toast.error('Erro ao carregar dados: ' + (e?.message || 'desconhecido'))
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleSave = async (data: {
+    nome: string
+    descricao: string
+    ativo: boolean
+    permissoes: { recurso_id: string; visualizar: boolean; criar: boolean; editar: boolean; excluir: boolean }[]
+  }) => {
+    setSaving(true)
+    try {
+      if (isNew) {
+        const created = await criarPerfil({
+          school_id: schoolId,
+          nome: data.nome,
+          descricao: data.descricao,
+          ativo: data.ativo,
+          created_by: pessoaId || undefined,
+        })
+
+        await salvarPermissoes(schoolId, created.id, data.permissoes, pessoaId || undefined)
+        toast.success('Perfil criado com sucesso!')
+      } else {
+        await editarPerfil(id, {
+          nome: data.nome,
+          descricao: data.descricao,
+          ativo: data.ativo,
+          updated_by: pessoaId || undefined,
+        })
+
+        await salvarPermissoes(schoolId, id, data.permissoes, pessoaId || undefined)
+        toast.success('Perfil atualizado com sucesso!')
+      }
+
+      router.push('/gestao-usuarios/perfis')
+    } catch (e: any) {
+      toast.error('Erro: ' + (e?.message || 'desconhecido'))
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  if (authLoading || !schoolId || loading || !permLoaded) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4" />
+          <p className="text-muted-foreground">Carregando...</p>
+        </div>
+      </div>
+    )
+  }
+
+  return (
+    <>
+      <Sidebar />
+      <div className="md:pl-64 container mx-auto py-8 px-4 max-w-5xl">
+        <div className="flex items-center gap-3 mb-8">
+          <Button variant="ghost" size="icon" onClick={() => router.push('/gestao-usuarios/perfis')} className="hover:bg-slate-100">
+            <ChevronLeft className="h-5 w-5" />
+          </Button>
+          <div>
+            <h1 className="text-3xl font-bold text-foreground">
+              {isNew ? 'Novo Perfil' : 'Editar Perfil'}
+            </h1>
+            <p className="text-muted-foreground mt-1">
+              {isNew ? 'Crie um novo perfil de acesso' : `Editando: ${perfil?.nome || ''}`}
+            </p>
+          </div>
+        </div>
+
+        <Card className="border-[#cbd5e1] shadow-[0_2px_8px_rgba(0,0,0,0.06)]">
+          <CardHeader>
+            <CardTitle className="text-lg flex items-center gap-2">
+              <Shield className="h-5 w-5 text-primary" />
+              {isNew ? 'Configurar novo perfil' : 'Editar configurações do perfil'}
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <PerfilForm
+              perfil={perfil}
+              recursos={recursos}
+              onSave={handleSave}
+              onCancel={() => router.push('/gestao-usuarios/perfis')}
+              saving={saving}
+            />
+          </CardContent>
+        </Card>
+      </div>
+    </>
+  )
+}

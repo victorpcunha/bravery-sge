@@ -20,9 +20,10 @@ import { areasConhecimento } from '@/data/areas-conhecimento'
 import { areasPosGraduacao } from '@/data/areas-pos-graduacao'
 import { Plus, Trash2 } from 'lucide-react'
 import { toast } from 'sonner'
-import { createPerson, updatePerson, Person, getVinculosResponsavel, vincularResponsavel, desvincularResponsavel, buscarAlunos } from '@/lib/actions/people'
+import { createPerson, updatePerson, Person, getVinculosResponsavel, vincularResponsavel, desvincularResponsavel, buscarAlunos, criarAuthUser } from '@/lib/actions/people'
 import { getVinculosProfissionais, createVinculoProfissional, updateVinculoProfissional, deleteVinculoProfissional, type VinculoProfissionalWithFuncao } from '@/lib/actions/vinculos-profissionais'
 import { getFuncoes, type FuncaoProfissional } from '@/lib/actions/funcoes-profissionais'
+import { listarPerfis, type Perfil } from '@/lib/actions/perfis'
 
 const DEFICIENCIA_CAMPOS = [
   { key: 'cegueira', label: 'Cegueira' },
@@ -215,6 +216,10 @@ const defaultForm: FormData = {
   // Vinculos responsável
   vinculos: [] as any[],
   alunosBusca: [] as { id: string; nome_completo: string }[],
+  perfil_id: null,
+  permitir_acesso: false,
+  senha: '',
+  confirmacao_senha: '',
 }
 
 export function PessoaForm({ schoolId, person, onSaved, onCancel }: Props) {
@@ -227,6 +232,7 @@ export function PessoaForm({ schoolId, person, onSaved, onCancel }: Props) {
   const [posCount, setPosCount] = useState(1)
   const [vinculosProfissionais, setVinculosProfissionais] = useState<VinculoProfissionalWithFuncao[]>([])
   const [funcoesOptions, setFuncoesOptions] = useState<FuncaoProfissional[]>([])
+  const [perfisAcesso, setPerfisAcesso] = useState<Perfil[]>([])
 
   const set = (field: string, value: any) => setForm(prev => ({ ...prev, [field]: value }))
 
@@ -234,6 +240,7 @@ export function PessoaForm({ schoolId, person, onSaved, onCancel }: Props) {
   useEffect(() => {
     if (!schoolId) return
     getFuncoes(schoolId).then(setFuncoesOptions).catch(() => {})
+    listarPerfis(schoolId, { ativo: true }).then(setPerfisAcesso).catch(() => {})
   }, [schoolId])
 
   useEffect(() => {
@@ -377,6 +384,16 @@ export function PessoaForm({ schoolId, person, onSaved, onCancel }: Props) {
       if (!algumaDef) { toast.error('Selecione ao menos um tipo de deficiência, TEA ou Altas Habilidades'); return }
     }
 
+    if (form.permitir_acesso) {
+      if (!form.email?.trim()) { toast.error('Informe o nome de acesso (e-mail)'); return }
+      if (!form.senha || form.senha.length < 10) { toast.error('Senha deve ter no mínimo 10 caracteres'); return }
+      if (!/[A-Z]/.test(form.senha)) { toast.error('Senha deve conter pelo menos uma letra maiúscula'); return }
+      if (!/[a-z]/.test(form.senha)) { toast.error('Senha deve conter pelo menos uma letra minúscula'); return }
+      if (!/[0-9]/.test(form.senha)) { toast.error('Senha deve conter pelo menos um número'); return }
+      if (!/[^A-Za-z0-9]/.test(form.senha)) { toast.error('Senha deve conter pelo menos um caractere especial'); return }
+      if (form.senha !== form.confirmacao_senha) { toast.error('Senhas não conferem'); return }
+    }
+
     setSaving(true)
     try {
       const payload: any = { ...form, school_id: schoolId }
@@ -388,9 +405,15 @@ export function PessoaForm({ schoolId, person, onSaved, onCancel }: Props) {
 
       delete payload.vinculos
       delete payload.alunosBusca
+      delete payload.permitir_acesso
+      delete payload.senha
+      delete payload.confirmacao_senha
+
+      let personId: string | undefined
 
       if (person) {
         await updatePerson(person.id, payload)
+        personId = person.id
         // Salvar vínculos profissionais (edição)
         for (const v of vinculosProfissionais) {
           if (v.id) {
@@ -423,6 +446,7 @@ export function PessoaForm({ schoolId, person, onSaved, onCancel }: Props) {
         }
       } else {
         const created = await createPerson(payload)
+        personId = created.id
         for (const v of form.vinculos) {
           if (v._new && created) {
             await vincularResponsavel(created.id, v.aluno_id, v)
@@ -445,6 +469,16 @@ export function PessoaForm({ schoolId, person, onSaved, onCancel }: Props) {
           })
         }
       }
+
+      if (form.permitir_acesso && form.senha && personId) {
+        await criarAuthUser({
+          email: form.email,
+          password: form.senha,
+          personId,
+          schoolId,
+        })
+      }
+
       toast.success(person ? 'Usuário atualizado!' : 'Usuário criado!')
       onSaved()
     } catch (err: any) {
@@ -749,6 +783,54 @@ export function PessoaForm({ schoolId, person, onSaved, onCancel }: Props) {
                 </div>
               )}
             </div>
+          )}
+
+          {!isAluno && !apenasResponsavel && (
+            <>
+              <div className="border-t pt-4 space-y-3">
+                <div className="flex items-center gap-2">
+                  <Checkbox
+                    id="permitir-acesso"
+                    checked={form.permitir_acesso}
+                    onCheckedChange={(v) => set('permitir_acesso', v === true)}
+                  />
+                  <Label htmlFor="permitir-acesso" className="font-medium cursor-pointer">Permitir acesso ao sistema</Label>
+                </div>
+                <p className="text-xs text-muted-foreground ml-6">Cria um usuário para login no sistema</p>
+              </div>
+
+              {form.permitir_acesso && (
+                <div className="ml-6 space-y-4 p-4 border rounded-lg bg-slate-50">
+                  <div className="space-y-2">
+                    <Label>Nome de acesso</Label>
+                    <Input value={form.email} onChange={(e) => set('email', e.target.value)} placeholder="email@exemplo.com" />
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label>Senha</Label>
+                      <Input type="password" value={form.senha} onChange={(e) => set('senha', e.target.value)} placeholder="Mínimo 10 caracteres + maiúscula, minúscula, número, especial" />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Confirmação de senha</Label>
+                      <Input type="password" value={form.confirmacao_senha} onChange={(e) => set('confirmacao_senha', e.target.value)} placeholder="Repita a senha" />
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Perfil de acesso</Label>
+                    <p className="text-xs text-muted-foreground">Define as permissões do usuário no sistema (configurado em Perfis e Permissões)</p>
+                    <Select value={form.perfil_id || '__none__'} onValueChange={(v) => set('perfil_id', v === '__none__' ? null : v)}>
+                      <SelectTrigger className="border-slate-300"><SelectValue placeholder="Selecione um perfil de acesso" /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="__none__">Sem perfil de acesso</SelectItem>
+                        {perfisAcesso.map(p => (
+                          <SelectItem key={p.id} value={p.id}>{p.nome}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+              )}
+            </>
           )}
 
           {isAluno && (

@@ -1,36 +1,39 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Bravery SGE
 
-## Getting Started
+Sistema de Gestão Escolar SaaS multi-tenant com conformidade total ao Censo Escolar INEP.
 
-First, run the development server:
+## Stack
+
+- **Frontend**: Next.js 16+ (App Router), TypeScript, Tailwind CSS v4
+- **UI**: shadcn/ui, Lucide React, Sonner
+- **Backend**: Supabase (PostgreSQL), Server Actions
+- **Auth**: Supabase Auth + RBAC dinâmico (Perfis e Permissões)
+
+## Módulos
+
+- Escolas, Turmas, Quadro de Aulas
+- Matrículas (transporte, dispensas, movimentações)
+- Indicadores de Avaliação e BNCC
+- Gestão de Usuários (Pessoas, Perfis, Permissões, Funções)
+- Estrutura Acadêmica, Métodos de Avaliação, Disciplinas
+- Censo Escolar (validação e exportação)
+
+## Desenvolvimento
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm install
+npx next dev -p 3001
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Build: `npx next build`
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Estrutura
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
-
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+```
+src/
+├── app/          # Rotas e páginas
+├── components/   # UI components
+├── hooks/        # Custom hooks (use-permissoes)
+├── lib/actions/  # Server Actions
+└── data/         # Dicionários estáticos
+```
