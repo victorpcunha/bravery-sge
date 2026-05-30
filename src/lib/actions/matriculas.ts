@@ -382,18 +382,6 @@ export async function getDisciplinasDaTurma(turmaId: string) {
   })) as any[]
 }
 
-export async function getEtapasEnsino(schoolId: string) {
-  const { data, error } = await supabase
-    .from('academico_etapas_ensino')
-    .select('*')
-    .eq('school_id', schoolId)
-    .eq('ativa', true)
-    .order('etapa_nome')
-
-  if (error) throw error
-  return data as any[]
-}
-
 export async function getAnoLetivoAtivo(schoolId: string) {
   const { data, error } = await supabase
     .from('academico_anos_letivos')

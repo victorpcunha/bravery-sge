@@ -16,11 +16,12 @@ import { toast } from 'sonner'
 import { Plus, BookOpen, Calendar, GraduationCap, Clock, Users, Trash2, Pencil, ChevronDown, ChevronRight, Copy, X } from 'lucide-react'
 import { getAnosLetivos, AnoLetivo } from '@/lib/actions/calendarios'
 import {
-  getEtapasEnsino, getMatrizes, getDisciplinas, toggleMatrizAtiva, deleteMatriz, getMetodosAvaliacao,
-  getSubetapas, getPeriodos, getDisciplinasPorPeriodo, createDisciplinaMatriz, deleteDisciplinaMatriz,
+  getMatrizes, getDisciplinas, toggleMatrizAtiva, deleteMatriz, getMetodosAvaliacao,
+  getPeriodos, getDisciplinasPorPeriodo, createDisciplinaMatriz, deleteDisciplinaMatriz,
   replicarDisciplinas, getHabilidadesBNCCSistema, addHabilidadeBNCC, addHabilidadeManual,
-  EtapaEnsino, MatrizCurricular, PeriodoMatriz,
+  MatrizCurricular, PeriodoMatriz,
 } from '@/lib/actions/matrizes'
+import { getEtapasEnsino, getSubetapas, type EtapaEnsino } from '@/lib/actions/etapas-ensino'
 import { MatrizForm } from './MatrizForm'
 
 interface Props { schoolId: string }

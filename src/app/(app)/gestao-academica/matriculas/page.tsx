@@ -13,7 +13,8 @@ import { toast } from 'sonner'
 import { Plus, Search, DoorOpen } from 'lucide-react'
 import { getFirstSchool } from '@/lib/actions/schools'
 import { getAnosLetivosAtivos } from '@/lib/actions/quadro-aulas'
-import { getMatriculas, getEtapasEnsino, getTurmasAtivas, type FiltrosMatriculas } from '@/lib/actions/matriculas'
+import { getMatriculas, getTurmasAtivas, type FiltrosMatriculas } from '@/lib/actions/matriculas'
+import { getEtapasEnsino } from '@/lib/actions/etapas-ensino'
 
 function formatData(data: string) {
   if (!data) return ''

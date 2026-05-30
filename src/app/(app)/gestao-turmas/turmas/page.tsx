@@ -17,11 +17,12 @@ import { Separator } from '@/components/ui/separator'
 import { TooltipProvider, Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip'
 import { Plus, Pencil, Trash2, GraduationCap, Search, ChevronLeft, X, UserPlus, AlertCircle, Clock, Calendar, BookOpen } from 'lucide-react'
 import { getFirstSchool } from '@/lib/actions/schools'
+import { getEtapasEnsino } from '@/lib/actions/etapas-ensino'
 import {
   getTurmas, getTurma, createTurma, updateTurma, deleteTurma, toggleTurmaAtiva,
   addProfissionalTurma, updateProfissionalTurma, removeProfissionalTurma,
   getDisciplinasPorMatriz, getProfissionaisAtivos, getVinculosAtivosProfissional,
-  getAnoLetivoAtivo, getEtapasEnsinoAdmin, getAnosLetivosAdmin,
+  getAnoLetivoAtivo, getAnosLetivosAdmin,
   type Turma, type Turno, type TurmaProfissional, type TurmaDisciplina, type TurmaMultietapa,
 } from '@/lib/actions/turmas'
 import { toast } from 'sonner'
@@ -124,7 +125,7 @@ export default function TurmasPage() {
       setSchoolId(s.id)
       const [ano, e] = await Promise.all([
         getAnoLetivoAtivo(s.id),
-        getEtapasEnsinoAdmin(s.id),
+        getEtapasEnsino(s.id),
       ])
       if (ano) setAnoLetivo(ano)
       setEtapas(e)

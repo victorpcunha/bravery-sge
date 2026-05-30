@@ -324,18 +324,6 @@ export async function getDisciplinasPorMatriz(etapaEnsinoId: string, schoolId: s
   return unicas as any[]
 }
 
-export async function getEtapasEnsinoAdmin(schoolId: string) {
-  const { data, error } = await supabase
-    .from('academico_etapas_ensino')
-    .select('*')
-    .eq('school_id', schoolId)
-    .eq('ativa', true)
-    .order('etapa_codigo')
-
-  if (error) throw error
-  return data as any[]
-}
-
 export async function getAnosLetivosAdmin(schoolId: string) {
   const { data, error } = await supabase
     .from('academico_anos_letivos')

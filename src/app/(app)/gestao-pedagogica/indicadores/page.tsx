@@ -20,10 +20,11 @@ import { getFirstSchool } from '@/lib/actions/schools'
 import {
   getIndicadores, createIndicador, updateIndicador, deleteIndicador,
   importarIndicadoresDaMatriz, salvarNiveisIndicador, getIndicadorNiveis, deleteIndicadorNivel,
-  getCamposExperiencia, getSubetapas, getPeriodosMatriz,
-  getOpcoesRegistro, getDisciplinasMatriz, getEtapasEnsino,
+  getCamposExperiencia, getPeriodosMatriz,
+  getOpcoesRegistro, getDisciplinasMatriz,
   type FiltrosIndicadores,
 } from '@/lib/actions/indicadores'
+import { getEtapasEnsino, getSubetapas } from '@/lib/actions/etapas-ensino'
 import { getAnosLetivosAtivos } from '@/lib/actions/quadro-aulas'
 
 function formatNome(nome: string) {

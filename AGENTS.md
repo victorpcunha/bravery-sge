@@ -22,7 +22,6 @@ Sistema de Gestão Escolar completo: turmas, quadro de aulas, indicadores de ava
 - **Sidebar**: Quadro de Aulas, Indicadores, Alunos Matriculados, Perfis e Permissões
 
 ## Known Issues
-- `getEtapasEnsino` exists in both `matriculas.ts` and `indicadores.ts` (added to `matriculas.ts` for import resolution)
 - Migrations `indicadores_niveis.sql` and `academico_matriculas.sql` pending execution in Supabase SQL Editor
 - All server actions use `'use server'` + `getSupabaseAdmin()` (service_role, bypass RLS)
 

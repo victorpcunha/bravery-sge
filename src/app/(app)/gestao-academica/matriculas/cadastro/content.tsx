@@ -322,7 +322,7 @@ export default function MatriculaCadastroContent({ searchParams }: { searchParam
       })
     }
     // Carregar etapas posteriores
-    const { getEtapasEnsino } = await import('@/lib/actions/matriculas')
+    const { getEtapasEnsino } = await import('@/lib/actions/etapas-ensino')
     const todas = await getEtapasEnsino(schoolId)
     const etapaAtualIdx = todas.findIndex((e: any) => e.id === form.etapa_ensino_id)
     if (etapaAtualIdx >= 0) {

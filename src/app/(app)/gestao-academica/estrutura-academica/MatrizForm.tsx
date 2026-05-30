@@ -17,15 +17,16 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import { Info } from 'lucide-react'
 import { getAnosLetivos, AnoLetivo } from '@/lib/actions/calendarios'
 import {
-  getEtapasEnsino, getSubetapas, getMetodosAvaliacao, createMatriz, updateMatriz,
+  getMetodosAvaliacao, createMatriz, updateMatriz,
   getMatriz, getPeriodos, getDisciplinasPorPeriodo, createDisciplinaMatriz, deleteDisciplinaMatriz,
   addHabilidadeBNCC, addHabilidadeManual, getDisciplinas,
   getHabilidadesBNCCPorDisciplinaEtapa,
   getHabilidadesBNCC, getHabilidadesManuais,
   removeHabilidadeBNCC, removeHabilidadeManual,
   createPeriodos, replicarDisciplinas, updateDisciplinaMatriz, substituirHabilidades,
-  EtapaEnsino, MetodoAvaliacao, PeriodoMatriz, MatrizCurricular,
+  MetodoAvaliacao, PeriodoMatriz, MatrizCurricular,
 } from '@/lib/actions/matrizes'
+import { getEtapasEnsino, getSubetapas, type EtapaEnsino } from '@/lib/actions/etapas-ensino'
 
 function LabelWithTooltip({ label, tooltip }: { label: string; tooltip: string }) {
   return (

@@ -386,16 +386,6 @@ export async function getCamposExperiencia() {
   return campos
 }
 
-export async function getSubetapas(etapaEnsinoId: string) {
-  const { data, error } = await supabase
-    .from('academico_subetapas')
-    .select('id, nome')
-    .eq('etapa_ensino_id', etapaEnsinoId)
-    .order('nome')
-
-  if (error) throw error
-  return data as any[]
-}
 
 export async function getPeriodosMatriz(schoolId: string, anoLetivoId: string, etapaEnsinoId: string) {
   const { data: matriz } = await supabase
@@ -476,16 +466,4 @@ export async function getDisciplinasMatriz(schoolId: string, anoLetivoId: string
   })
 
   return unicas as any[]
-}
-
-export async function getEtapasEnsino(schoolId: string) {
-  const { data, error } = await supabase
-    .from('academico_etapas_ensino')
-    .select('*')
-    .eq('school_id', schoolId)
-    .eq('ativa', true)
-    .order('etapa_nome')
-
-  if (error) throw error
-  return data as any[]
 }
