@@ -118,6 +118,11 @@ const modules = [
             href: '/gestao-pedagogica/indicadores',
             icon: ClipboardList,
           },
+          {
+            title: 'Diário de Classe',
+            href: '/gestao-pedagogica/diario-classe',
+            icon: ClipboardList,
+          },
         ],
       },
   {

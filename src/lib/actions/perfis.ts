@@ -10,6 +10,7 @@ export type Perfil = {
   nome: string
   descricao: string | null
   ativo: boolean
+  usa_vinculo_turma: boolean
   created_by: string | null
   updated_by: string | null
   created_at: string
@@ -82,6 +83,7 @@ export async function criarPerfil(data: {
   nome: string
   descricao?: string
   ativo?: boolean
+  usa_vinculo_turma?: boolean
   created_by?: string
 }) {
   if (data.created_by) {
@@ -95,6 +97,7 @@ export async function criarPerfil(data: {
       nome: data.nome,
       descricao: data.descricao || null,
       ativo: data.ativo ?? true,
+      usa_vinculo_turma: data.usa_vinculo_turma ?? false,
       created_by: data.created_by || null,
     })
     .select()
@@ -121,6 +124,7 @@ export async function editarPerfil(id: string, data: {
   nome?: string
   descricao?: string
   ativo?: boolean
+  usa_vinculo_turma?: boolean
   updated_by?: string
 }) {
   if (data.updated_by) {

@@ -1,7 +1,7 @@
 'use client'
 
 import { Button } from '@/components/ui/button'
-import { Pencil, Trash2 } from 'lucide-react'
+import { Pencil, Trash2, GraduationCap, Shield } from 'lucide-react'
 import type { Perfil } from '@/lib/actions/perfis'
 
 type PerfilGridProps = {
@@ -35,6 +35,7 @@ export function PerfilGrid({ perfis, loading, onEdit, onDelete, podeEditar = tru
           <tr className="border-b border-slate-200 text-xs text-muted-foreground uppercase tracking-wider">
             <th className="text-left px-6 py-3 font-medium">Nome</th>
             <th className="text-left px-6 py-3 font-medium">Descrição</th>
+            <th className="text-left px-6 py-3 font-medium">Tipo</th>
             <th className="text-left px-6 py-3 font-medium">Situação</th>
             <th className="text-left px-6 py-3 font-medium">Data Cadastro</th>
             {temAcoes && <th className="text-right px-6 py-3 font-medium">Ações</th>}
@@ -46,6 +47,14 @@ export function PerfilGrid({ perfis, loading, onEdit, onDelete, podeEditar = tru
               <td className="px-6 py-4 text-sm font-medium">{p.nome}</td>
               <td className="px-6 py-4 text-sm text-muted-foreground max-w-xs truncate">
                 {p.descricao || '-'}
+              </td>
+              <td className="px-6 py-4">
+                <span className={`inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full ${
+                  p.usa_vinculo_turma ? 'bg-blue-100 text-blue-700' : 'bg-purple-100 text-purple-700'
+                }`}>
+                  {p.usa_vinculo_turma ? <GraduationCap className="h-3 w-3" /> : <Shield className="h-3 w-3" />}
+                  {p.usa_vinculo_turma ? 'Professor' : 'Administrativo'}
+                </span>
               </td>
               <td className="px-6 py-4">
                 <span className={`text-xs px-2 py-0.5 rounded-full ${

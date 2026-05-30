@@ -87,6 +87,7 @@ export default function PerfilCadastroPage({ params }: PageProps) {
     nome: string
     descricao: string
     ativo: boolean
+    usa_vinculo_turma: boolean
     permissoes: { recurso_id: string; visualizar: boolean; criar: boolean; editar: boolean; excluir: boolean }[]
   }) => {
     setSaving(true)
@@ -97,6 +98,7 @@ export default function PerfilCadastroPage({ params }: PageProps) {
           nome: data.nome,
           descricao: data.descricao,
           ativo: data.ativo,
+          usa_vinculo_turma: data.usa_vinculo_turma,
           created_by: pessoaId || undefined,
         })
 
@@ -107,6 +109,7 @@ export default function PerfilCadastroPage({ params }: PageProps) {
           nome: data.nome,
           descricao: data.descricao,
           ativo: data.ativo,
+          usa_vinculo_turma: data.usa_vinculo_turma,
           updated_by: pessoaId || undefined,
         })
 

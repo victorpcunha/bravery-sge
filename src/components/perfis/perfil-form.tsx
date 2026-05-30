@@ -8,12 +8,12 @@ import { Switch } from '@/components/ui/switch'
 import { Separator } from '@/components/ui/separator'
 import { MatrizPermissoes } from './matriz-permissoes'
 import type { Perfil, RecursoComPermissao } from '@/lib/actions/perfis'
-import { Shield } from 'lucide-react'
+import { Shield, GraduationCap } from 'lucide-react'
 
 type PerfilFormProps = {
   perfil?: Perfil | null
   recursos: RecursoComPermissao[]
-  onSave: (data: { nome: string; descricao: string; ativo: boolean; permissoes: { recurso_id: string; visualizar: boolean; criar: boolean; editar: boolean; excluir: boolean }[] }) => void
+  onSave: (data: { nome: string; descricao: string; ativo: boolean; usa_vinculo_turma: boolean; permissoes: { recurso_id: string; visualizar: boolean; criar: boolean; editar: boolean; excluir: boolean }[] }) => void
   onCancel: () => void
   saving: boolean
 }
@@ -22,6 +22,7 @@ export function PerfilForm({ perfil, recursos, onSave, onCancel, saving }: Perfi
   const [nome, setNome] = useState(perfil?.nome || '')
   const [descricao, setDescricao] = useState(perfil?.descricao || '')
   const [ativo, setAtivo] = useState(perfil?.ativo ?? true)
+  const [usaVinculoTurma, setUsaVinculoTurma] = useState(perfil?.usa_vinculo_turma ?? false)
 
   const initialPerms = (rid: string) => {
     const r = recursos.find(r => r.id === rid)
@@ -63,6 +64,7 @@ export function PerfilForm({ perfil, recursos, onSave, onCancel, saving }: Perfi
       nome: nome.trim(),
       descricao,
       ativo,
+      usa_vinculo_turma: usaVinculoTurma,
       permissoes: Object.entries(permissoes).map(([recursoId, perms]) => ({
         recurso_id: recursoId,
         ...perms,
@@ -105,6 +107,24 @@ export function PerfilForm({ perfil, recursos, onSave, onCancel, saving }: Perfi
         {!ativo && (
           <p className="text-xs text-amber-600">
             Perfis inativos não podem ser vinculados a usuários.
+          </p>
+        )}
+
+        <div className="flex items-center gap-3 pt-2">
+          <Switch id="usa_vinculo_turma" checked={usaVinculoTurma} onCheckedChange={setUsaVinculoTurma} />
+          <Label htmlFor="usa_vinculo_turma" className="cursor-pointer flex items-center gap-2">
+            <GraduationCap className="h-4 w-4 text-muted-foreground" />
+            <span>Perfil com vínculo em turma (professor)</span>
+          </Label>
+        </div>
+        {usaVinculoTurma && (
+          <p className="text-xs text-muted-foreground">
+            Este perfil terá acesso apenas às turmas vinculadas em <code>turmas_profissionais</code>.
+          </p>
+        )}
+        {!usaVinculoTurma && (
+          <p className="text-xs text-muted-foreground">
+            Acesso administrativo global a todas as turmas da escola.
           </p>
         )}
       </div>
