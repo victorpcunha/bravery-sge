@@ -96,6 +96,13 @@ export async function getQuadroAula(id: string) {
   }
 }
 
+async function validarPermWrite(recurso: string, acao: 'criar' | 'editar' | 'excluir', pessoaId?: string | null) {
+  if (pessoaId) {
+    const { validarPermissaoServer } = await import('./perfis')
+    await validarPermissaoServer(pessoaId, recurso, acao)
+  }
+}
+
 // ------- CRUD -------
 
 export async function createQuadroAula(data: {
@@ -108,7 +115,8 @@ export async function createQuadroAula(data: {
   intervalos?: Intervalo[]
   status?: string
   horarios?: HorarioRow[]
-}) {
+}, pessoaId?: string | null) {
+  await validarPermWrite('gestao-turmas.quadro-aulas', 'criar', pessoaId)
   const { horarios, ...quadroData } = data
 
   const { data: quadro, error } = await supabase
@@ -147,7 +155,8 @@ export async function updateQuadroAula(id: string, data: {
   status?: string
   ativo?: boolean
   horarios?: HorarioRow[]
-}) {
+}, pessoaId?: string | null) {
+  await validarPermWrite('gestao-turmas.quadro-aulas', 'editar', pessoaId)
   const { horarios, ...updateData } = data
 
   if (Object.keys(updateData).length > 0) {
@@ -173,12 +182,14 @@ export async function updateQuadroAula(id: string, data: {
   }
 }
 
-export async function deleteQuadroAula(id: string) {
+export async function deleteQuadroAula(id: string, pessoaId?: string | null) {
+  await validarPermWrite('gestao-turmas.quadro-aulas', 'excluir', pessoaId)
   const { error } = await supabase.from('quadro_aulas').delete().eq('id', id)
   if (error) throw error
 }
 
-export async function toggleQuadroAulaAtivo(id: string, ativo: boolean) {
+export async function toggleQuadroAulaAtivo(id: string, ativo: boolean, pessoaId?: string | null) {
+  await validarPermWrite('gestao-turmas.quadro-aulas', 'editar', pessoaId)
   const { error } = await supabase.from('quadro_aulas').update({ ativo }).eq('id', id)
   if (error) throw error
 }

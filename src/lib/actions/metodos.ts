@@ -32,6 +32,8 @@ export interface MetodoNumerico {
   recuperacao_substitutiva: boolean
   recuperacao_periodo_substitutiva: boolean
   realizava_avaliacao_reclassificacao: boolean
+  limitar_avaliacoes?: boolean
+  avaliacoes_list?: { nome: string; peso: number }[]
 }
 
 export interface MetodoAprovacao {

@@ -20,9 +20,11 @@ Sistema de Gestão Escolar completo: turmas, quadro de aulas, indicadores de ava
 - **Login**: CPF ou Email; mensagem genérica "Usuário ou senha inválidos"
 - **Auth**: `criarAuthUser` via `supabase.auth.admin.createUser()`, link via `user_schools`
 - **Sidebar**: Quadro de Aulas, Indicadores, Alunos Matriculados, Perfis e Permissões
+- **Diário de Classe**: Frequência por Dia / por Aula (com validação de período ativo), Parecer Descritivo, Avaliação por Indicadores, Avaliações Numéricas (com recuperação)
+- **Período Ativo do Aluno**: Coluna `data_saida` na `academico_matriculas`. Atualizada automaticamente ao criar movimentação. Células fora do período são desabilitadas com tooltip. Percentual de frequência calculado individualmente por aluno (presenças / dias válidos no período ativo).
 
 ## Known Issues
-- Migrations `indicadores_niveis.sql` and `academico_matriculas.sql` pending execution in Supabase SQL Editor
+- Migrations `indicadores_niveis.sql`, `academico_matriculas.sql` e `patch_add_data_saida_matriculas.sql` pendentes no Supabase SQL Editor
 - All server actions use `'use server'` + `getSupabaseAdmin()` (service_role, bypass RLS)
 
 ## Commands

@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/components/providers/auth-provider'
+import { usePermissoes } from '@/hooks/use-permissoes'
 import { Button } from '@/components/ui/button'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -33,6 +34,7 @@ export default function QuadrosAulasPage() {
   const router = useRouter()
 
   const [schoolId, setSchoolId] = useState('')
+  const { pessoaId } = usePermissoes(schoolId)
   const [quadros, setQuadros] = useState<any[]>([])
   const [anosLetivos, setAnosLetivos] = useState<any[]>([])
   const [anoFiltro, setAnoFiltro] = useState('')
@@ -81,21 +83,21 @@ export default function QuadrosAulasPage() {
   const handleDelete = async (id: string) => {
     if (!confirm('Tem certeza que deseja excluir este quadro de aulas?')) return
     try {
-      await deleteQuadroAula(id)
+      await deleteQuadroAula(id, pessoaId)
       toast.success('Quadro excluído')
       loadQuadros()
-    } catch {
-      toast.error('Erro ao excluir quadro')
+    } catch (e: any) {
+      toast.error(e?.message || 'Erro ao excluir quadro')
     }
   }
 
   const handleToggleAtivo = async (id: string, ativo: boolean) => {
     try {
-      await toggleQuadroAulaAtivo(id, ativo)
+      await toggleQuadroAulaAtivo(id, ativo, pessoaId)
       toast.success(ativo ? 'Quadro reativado' : 'Quadro inativado')
       loadQuadros()
-    } catch {
-      toast.error('Erro ao alterar status')
+    } catch (e: any) {
+      toast.error(e?.message || 'Erro ao alterar status')
     }
   }
 

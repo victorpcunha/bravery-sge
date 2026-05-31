@@ -3,6 +3,7 @@
 import { Suspense, useState, useEffect } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useAuth } from '@/components/providers/auth-provider'
+import { usePermissoes } from '@/hooks/use-permissoes'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -60,9 +61,10 @@ function CadastroForm() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const editId = searchParams.get('id')
-  const { user, loading: authLoading } = useAuth()
-
   const [schoolId, setSchoolId] = useState('')
+  const { user, loading: authLoading } = useAuth()
+  const { pessoaId } = usePermissoes(schoolId)
+
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
 
@@ -425,7 +427,7 @@ function CadastroForm() {
           tempo_aula_minutos: parseInt(tempoAula),
           intervalos,
           horarios,
-        })
+        }, pessoaId)
         toast.success('Quadro de aulas atualizado')
       } else {
         await createQuadroAula({
@@ -437,7 +439,7 @@ function CadastroForm() {
           tempo_aula_minutos: parseInt(tempoAula),
           intervalos,
           horarios,
-        })
+        }, pessoaId)
         toast.success('Quadro de aulas criado')
       }
       router.push('/gestao-turmas/quadro-aulas')

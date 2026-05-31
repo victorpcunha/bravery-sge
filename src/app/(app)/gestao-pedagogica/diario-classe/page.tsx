@@ -32,7 +32,7 @@ export default function DiarioClassePage() {
   const { loaded: permLoaded, pessoaId: pid } = usePermissoes(schoolId || '')
 
   useEffect(() => {
-    if (pid) setPessoaId(pid)
+    if (pid !== undefined) setPessoaId(pid)
   }, [pid])
 
   useEffect(() => {
@@ -41,13 +41,13 @@ export default function DiarioClassePage() {
   }, [schoolId])
 
   useEffect(() => {
-    if (!schoolId || !pessoaId || !anoLetivoId) return
+    if (!schoolId || !permLoaded || !anoLetivoId) return
     setLoading(true)
     listarTurmasDiario(schoolId, pessoaId, anoLetivoId)
       .then(setTurmas)
       .catch(() => {})
       .finally(() => setLoading(false))
-  }, [schoolId, pessoaId, anoLetivoId])
+  }, [schoolId, pessoaId, anoLetivoId, permLoaded])
 
   return (
     <>

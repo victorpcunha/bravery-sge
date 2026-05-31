@@ -204,9 +204,15 @@ export async function salvarMovimentacoes(
     }
   }
 
-  // Atualizar situação da matrícula baseada no último tipo de movimentação
-  const ultimo = pendentes.length > 0 ? pendentes[pendentes.length - 1] : null
-  if (ultimo) {
+  // Atualizar situação da matrícula e data_saida baseada nas movimentações
+  if (pendentes.length === 0) {
+    // Todas as movimentações removidas — aluno volta a ficar ativo
+    await supabase
+      .from('academico_matriculas')
+      .update({ situacao: 'Ativo', data_saida: null })
+      .eq('id', matriculaId)
+  } else {
+    const ultimo = pendentes[pendentes.length - 1]
     const situacaoMap: Record<string, string> = {
       Transferencia: 'Transferido',
       Reclassificacao: 'Reclassificado',
@@ -219,7 +225,10 @@ export async function salvarMovimentacoes(
     if (novaSituacao) {
       await supabase
         .from('academico_matriculas')
-        .update({ situacao: novaSituacao })
+        .update({
+          situacao: novaSituacao,
+          data_saida: ultimo.data_movimentacao,
+        })
         .eq('id', matriculaId)
     }
   }

@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/components/providers/auth-provider'
+import { usePermissoes } from '@/hooks/use-permissoes'
 import { Sidebar } from '@/components/layout/sidebar'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -82,6 +83,7 @@ export default function TurmasPage() {
   const router = useRouter()
 
   const [schoolId, setSchoolId] = useState('')
+  const { pessoaId } = usePermissoes(schoolId)
   const [anoLetivo, setAnoLetivo] = useState<{ id: string; descricao: string } | null>(null)
   const [turmas, setTurmas] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
@@ -220,7 +222,7 @@ export default function TurmasPage() {
           ...form,
           disciplinas: form.tipos_turma.includes('Curricular') ? selectedDisciplinas : [],
           multietapa_etapas: form.multietapa ? multietapaEtapas : [],
-        })
+        }, pessoaId)
         toast.success('Turma atualizada!')
       } else {
         if (!anoLetivo) { toast.error('Ano letivo ativo não encontrado'); return }
@@ -230,7 +232,7 @@ export default function TurmasPage() {
           ...form,
           disciplinas: form.tipos_turma.includes('Curricular') ? selectedDisciplinas : [],
           multietapa_etapas: form.multietapa ? multietapaEtapas : [],
-        })
+        }, pessoaId)
         // Persistir profissionais adicionados durante a criação
         for (const p of profissionais) {
           if (!p.id.startsWith('temp_')) continue
@@ -240,7 +242,7 @@ export default function TurmasPage() {
             vinculo_profissional_id: p.vinculo_profissional_id,
             data_inicio: p.data_inicio,
             disciplinas_ids: p.disciplinas_ids,
-          })
+          }, pessoaId)
         }
         toast.success('Turma criada!')
       }
@@ -254,18 +256,18 @@ export default function TurmasPage() {
   const handleDelete = async (id: string) => {
     if (!confirm('Excluir esta turma permanentemente?')) return
     try {
-      await deleteTurma(id)
+      await deleteTurma(id, pessoaId)
       toast.success('Turma excluída')
       loadTurmas()
-    } catch { toast.error('Erro ao excluir') }
+    } catch (e: any) { toast.error(e?.message || 'Erro ao excluir') }
   }
 
   const handleToggleAtiva = async (id: string, ativo: boolean) => {
     try {
-      await toggleTurmaAtiva(id, ativo)
+      await toggleTurmaAtiva(id, ativo, pessoaId)
       toast.success(ativo ? 'Turma ativada' : 'Turma inativada')
       loadTurmas()
-    } catch { toast.error('Erro ao alterar status') }
+    } catch (e: any) { toast.error(e?.message || 'Erro ao alterar status') }
   }
 
   // Helpers
@@ -410,7 +412,7 @@ export default function TurmasPage() {
           vinculo_profissional_id: profFormVinculoId || null,
           data_inicio: profFormDataInicio,
           disciplinas_ids: profFormDisciplinas,
-        })
+        }, pessoaId)
         if (editId) {
           const result = await getTurma(editId)
           setProfissionais(result.profissionais)
@@ -422,7 +424,7 @@ export default function TurmasPage() {
           vinculo_profissional_id: profFormVinculoId || null,
           data_inicio: profFormDataInicio,
           disciplinas_ids: profFormDisciplinas,
-        })
+        }, pessoaId)
         const result = await getTurma(editId)
         setProfissionais(result.profissionais)
       } else {
@@ -450,7 +452,7 @@ export default function TurmasPage() {
   const handleRemoveProfissional = async (id: string) => {
     if (!confirm('Remover este profissional da turma?')) return
     try {
-      await removeProfissionalTurma(id)
+      await removeProfissionalTurma(id, pessoaId)
       toast.success('Profissional removido')
       if (editId) {
         const result = await getTurma(editId)

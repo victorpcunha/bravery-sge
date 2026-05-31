@@ -4,6 +4,13 @@ import { getSupabaseAdmin } from '@/lib/auth'
 
 const supabase = getSupabaseAdmin()
 
+async function validarPermWrite(recurso: string, acao: 'criar' | 'editar' | 'excluir', pessoaId?: string | null) {
+  if (pessoaId) {
+    const { validarPermissaoServer } = await import('./perfis')
+    await validarPermissaoServer(pessoaId, recurso, acao)
+  }
+}
+
 export type Turma = {
   id: string
   school_id: string
@@ -134,7 +141,8 @@ export async function createTurma(data: {
   forma_organizacao?: string | null
   disciplinas?: string[]
   multietapa_etapas?: string[]
-}) {
+}, pessoaId?: string | null) {
+  await validarPermWrite('gestao-turmas.turmas', 'criar', pessoaId)
   const { disciplinas, multietapa_etapas, ...turmaData } = data
 
   const { data: turma, error } = await supabase
@@ -200,7 +208,8 @@ export async function updateTurma(id: string, data: {
   forma_organizacao?: string | null
   disciplinas?: string[]
   multietapa_etapas?: string[]
-}) {
+}, pessoaId?: string | null) {
+  await validarPermWrite('gestao-turmas.turmas', 'editar', pessoaId)
   const { disciplinas, multietapa_etapas, ...updateData } = data
 
   if (updateData.turnos) {
@@ -233,7 +242,8 @@ export async function updateTurma(id: string, data: {
   }
 }
 
-export async function deleteTurma(id: string) {
+export async function deleteTurma(id: string, pessoaId?: string | null) {
+  await validarPermWrite('gestao-turmas.turmas', 'excluir', pessoaId)
   await Promise.all([
     supabase.from('turmas_disciplinas').delete().eq('turma_id', id),
     supabase.from('turmas_profissionais').delete().eq('turma_id', id),
@@ -243,7 +253,8 @@ export async function deleteTurma(id: string) {
   if (error) throw error
 }
 
-export async function toggleTurmaAtiva(id: string, ativo: boolean) {
+export async function toggleTurmaAtiva(id: string, ativo: boolean, pessoaId?: string | null) {
+  await validarPermWrite('gestao-turmas.turmas', 'editar', pessoaId)
   const { error } = await supabase.from('turmas').update({ ativo }).eq('id', id)
   if (error) throw error
 }
@@ -254,7 +265,8 @@ export async function addProfissionalTurma(data: {
   vinculo_profissional_id?: string | null
   data_inicio: string
   disciplinas_ids?: string[]
-}) {
+}, pessoaId?: string | null) {
+  await validarPermWrite('gestao-turmas.turmas', 'editar', pessoaId)
   const { error } = await supabase.from('turmas_profissionais').insert({
     turma_id: data.turma_id,
     person_id: data.person_id,
@@ -263,6 +275,28 @@ export async function addProfissionalTurma(data: {
     disciplinas_ids: data.disciplinas_ids || [],
   })
   if (error) throw error
+
+  if (data.disciplinas_ids?.length) {
+    await sincronizarProfessorQuadro(data.turma_id, data.person_id, data.disciplinas_ids)
+  }
+}
+
+async function sincronizarProfessorQuadro(turmaId: string, professorId: string, disciplinasIds: string[]) {
+  const { data: quadro } = await supabase
+    .from('quadro_aulas')
+    .select('id')
+    .eq('turma_id', turmaId)
+    .eq('ativo', true)
+    .maybeSingle()
+
+  if (!quadro) return
+
+  await supabase
+    .from('quadro_aulas_horarios')
+    .update({ professor_id: professorId })
+    .eq('quadro_aula_id', quadro.id)
+    .in('disciplina_id', disciplinasIds)
+    .eq('ativo', true)
 }
 
 export async function updateProfissionalTurma(id: string, data: {
@@ -271,14 +305,81 @@ export async function updateProfissionalTurma(id: string, data: {
   data_encerramento?: string | null
   ativo?: boolean
   disciplinas_ids?: string[]
-}) {
+}, pessoaId?: string | null) {
+  await validarPermWrite('gestao-turmas.turmas', 'editar', pessoaId)
+
+  const { data: vinculoAtual } = await supabase
+    .from('turmas_profissionais')
+    .select('turma_id, person_id, disciplinas_ids')
+    .eq('id', id)
+    .maybeSingle()
+
   const { error } = await supabase.from('turmas_profissionais').update(data).eq('id', id)
   if (error) throw error
+
+  if (data.disciplinas_ids && vinculoAtual) {
+    const idsAntigos = (vinculoAtual.disciplinas_ids || []) as string[]
+    const idsNovos = data.disciplinas_ids
+    const idsRemover = idsAntigos.filter(d => !idsNovos.includes(d))
+    const idsAdicionar = idsNovos.filter(d => !idsAntigos.includes(d))
+
+    const { data: quadro } = await supabase
+      .from('quadro_aulas')
+      .select('id')
+      .eq('turma_id', vinculoAtual.turma_id)
+      .eq('ativo', true)
+      .maybeSingle()
+
+    if (quadro) {
+      if (idsRemover.length > 0) {
+        await supabase
+          .from('quadro_aulas_horarios')
+          .update({ professor_id: null })
+          .eq('quadro_aula_id', quadro.id)
+          .in('disciplina_id', idsRemover)
+          .eq('ativo', true)
+      }
+      if (idsAdicionar.length > 0) {
+        await supabase
+          .from('quadro_aulas_horarios')
+          .update({ professor_id: vinculoAtual.person_id })
+          .eq('quadro_aula_id', quadro.id)
+          .in('disciplina_id', idsAdicionar)
+          .eq('ativo', true)
+      }
+    }
+  }
 }
 
-export async function removeProfissionalTurma(id: string) {
+export async function removeProfissionalTurma(id: string, pessoaId?: string | null) {
+  await validarPermWrite('gestao-turmas.turmas', 'editar', pessoaId)
+
+  const { data: vinculo } = await supabase
+    .from('turmas_profissionais')
+    .select('turma_id, disciplinas_ids')
+    .eq('id', id)
+    .maybeSingle()
+
   const { error } = await supabase.from('turmas_profissionais').delete().eq('id', id)
   if (error) throw error
+
+  if (vinculo?.disciplinas_ids?.length) {
+    const { data: quadro } = await supabase
+      .from('quadro_aulas')
+      .select('id')
+      .eq('turma_id', vinculo.turma_id)
+      .eq('ativo', true)
+      .maybeSingle()
+
+    if (quadro) {
+      await supabase
+        .from('quadro_aulas_horarios')
+        .update({ professor_id: null })
+        .eq('quadro_aula_id', quadro.id)
+        .in('disciplina_id', vinculo.disciplinas_ids)
+        .eq('ativo', true)
+    }
+  }
 }
 
 export async function getDisciplinasPorMatriz(etapaEnsinoId: string, schoolId: string, anoLetivoId: string) {

@@ -74,6 +74,8 @@ type FormData = {
   recuperacao_substitutiva: boolean
   recuperacao_periodo_substitutiva: boolean
   realizava_avaliacao_reclassificacao: boolean
+  limitar_avaliacoes: boolean
+  avaliacoes_list: { nome: string; peso: number }[]
 
   aprovacao_automatica: boolean
   media_minima: number
@@ -120,6 +122,8 @@ const defaultForm: FormData = {
   recuperacao_substitutiva: false,
   recuperacao_periodo_substitutiva: false,
   realizava_avaliacao_reclassificacao: false,
+  limitar_avaliacoes: false,
+  avaliacoes_list: [],
 
   aprovacao_automatica: false,
   media_minima: 7,
@@ -240,6 +244,8 @@ export function MetodosForm({ schoolId, editId, onSaved, onCancel }: Props) {
           recuperacao_substitutiva: n?.recuperacao_substitutiva ?? false,
           recuperacao_periodo_substitutiva: n?.recuperacao_periodo_substitutiva ?? false,
           realizava_avaliacao_reclassificacao: n?.realizava_avaliacao_reclassificacao ?? false,
+          limitar_avaliacoes: (n as any)?.limitar_avaliacoes ?? false,
+          avaliacoes_list: (n as any)?.avaliacoes_list ?? [],
 
           aprovacao_automatica: a?.aprovacao_automatica ?? false,
           media_minima: a?.media_minima ?? 7,
@@ -309,6 +315,8 @@ export function MetodosForm({ schoolId, editId, onSaved, onCancel }: Props) {
               recuperacao_substitutiva: form.recuperacao_substitutiva,
               recuperacao_periodo_substitutiva: form.recuperacao_periodo_substitutiva,
               realizava_avaliacao_reclassificacao: form.realizava_avaliacao_reclassificacao,
+              limitar_avaliacoes: form.limitar_avaliacoes,
+              avaliacoes_list: form.avaliacoes_list,
             }
           : null,
         aprovacao: form.tipos_avaliacao.numerico
@@ -550,9 +558,63 @@ export function MetodosForm({ schoolId, editId, onSaved, onCancel }: Props) {
                   <CheckboxWithTooltip id="rec_periodo_substitutiva" checked={form.recuperacao_periodo_substitutiva} onCheckedChange={(v) => set('recuperacao_periodo_substitutiva', v)} label="A recuperação por período é substitutiva" tooltipKey="recuperacao_periodo_substitutiva" />
                 )}
                 <CheckboxWithTooltip id="reclassificacao" checked={form.realizava_avaliacao_reclassificacao} onCheckedChange={(v) => set('realizava_avaliacao_reclassificacao', v)} label="Realiza avaliação de reclassificação" tooltipKey="realizava_avaliacao_reclassificacao" />
+
+                <div className="flex items-center gap-2 pt-2">
+                  <Checkbox id="limitar_avaliacoes" checked={form.limitar_avaliacoes} onCheckedChange={(v) => set('limitar_avaliacoes', !!v)} />
+                  <Label htmlFor="limitar_avaliacoes" className="cursor-pointer">Limitar quantidade de avaliações</Label>
+                </div>
               </div>
             </CardContent>
           </Card>
+
+          {form.limitar_avaliacoes && (
+            <Card className="border-[#cbd5e1] shadow-[0_2px_8px_rgba(0,0,0,0.06)]">
+              <CardHeader className="border-b border-slate-100 pb-4"><CardTitle className="text-base font-semibold text-slate-800">Avaliações</CardTitle></CardHeader>
+              <CardContent className="space-y-4 px-6 pb-6 pt-0">
+                {form.avaliacoes_list.map((av, i) => (
+                  <div key={i} className="flex items-end gap-3 p-3 border border-slate-200 rounded-lg bg-slate-50/40">
+                    <div className="flex-1 space-y-1">
+                      <Label className="text-xs">Nome da Avaliação</Label>
+                      <Input
+                        value={av.nome}
+                        onChange={(e) => {
+                          const next = [...form.avaliacoes_list]
+                          next[i] = { ...next[i], nome: e.target.value }
+                          set('avaliacoes_list', next)
+                        }}
+                        placeholder="Ex: Prova 1"
+                      />
+                    </div>
+                    <div className="w-24 space-y-1">
+                      <Label className="text-xs">Peso</Label>
+                      <Input
+                        type="number"
+                        step="0.1"
+                        min={0}
+                        value={av.peso}
+                        onChange={(e) => {
+                          const next = [...form.avaliacoes_list]
+                          next[i] = { ...next[i], peso: Number(e.target.value) || 0 }
+                          set('avaliacoes_list', next)
+                        }}
+                      />
+                    </div>
+                    <Button variant="ghost" size="icon-sm" onClick={() => {
+                      set('avaliacoes_list', form.avaliacoes_list.filter((_, idx) => idx !== i))
+                    }}>
+                      <Trash2 className="h-4 w-4 text-destructive" />
+                    </Button>
+                  </div>
+                ))}
+                <Button variant="outline" size="sm" onClick={() => {
+                  set('avaliacoes_list', [...form.avaliacoes_list, { nome: '', peso: 1 }])
+                }} className="border-slate-300 hover:bg-primary/5 hover:text-primary hover:border-primary">
+                  <Plus className="mr-1 h-3.5 w-3.5" />
+                  Adicionar Avaliação
+                </Button>
+              </CardContent>
+            </Card>
+          )}
 
           <Card className="border-[#cbd5e1] shadow-[0_2px_8px_rgba(0,0,0,0.06)]">
             <CardHeader className="border-b border-slate-100 pb-4"><CardTitle className="text-base font-semibold text-slate-800">Aprovações</CardTitle></CardHeader>
