@@ -25,11 +25,19 @@ Sistema de Gestão Escolar completo: turmas, quadro de aulas, indicadores de ava
 - **Plano de Ensino (FASE 1–5)**:
   - Migration `plano_ensino.sql`: tables `planos_ensino`, `planos_ensino_disciplinas`, `planos_aula`
   - Migration `patch_planos_aula_periodos.sql`: `periodo` → `periodos INT[]`, `bncc_fields JSONB`
-  - Server actions: CRUD planos/aula, `listarPeriodosPlanoEnsino`, `buscarBNCCBase`
+  - Server actions: CRUD planos/aula, `listarPeriodosPlanoEnsino`, `buscarBNCCBase`, `listarPlanoAulaPorMes`
   - Pages: list (`/plano-ensino`), create (`/plano-ensino/criar`), detail (`/plano-ensino/[id]`) with period tabs, multi-period checkboxes, BNCC fields per etapa (EI: campos experiência + objetivos; EF: unidades temáticas + objetos conhecimento + habilidades; EM: áreas conhecimento + competências + habilidades)
+- **FASE 6 – Plano de Aula no Diário de Classe**: Nova aba "Plano de Aula" com:
+  - Tabela `academico_diario_planos_aplicados` (link `plano_aula` → `data_aula`, sem duplicar dados)
+  - Server actions em `diario-planos.ts`: `listarDiasComAula`, `listarPlanosAplicados`, `listarPlanosDisponiveis`, `aplicarPlanoAula`, `removerPlanoAulaAplicado`
+  - Grade mensal restrita a dias com aula (filtra pelo Quadro de Horários)
+  - Planos são criados **apenas** no Plano de Ensino; no diário o profissional seleciona qual aplicar ao dia
+  - Remover aplicação não afeta o plano original (`planos_aula`)
+  - Indicador visual BookOpen no Frequência por Aula preservado (removeu diálogo antigo)
+  - Componente `plano-aula-diario.tsx`, ação `diario-planos.ts`
 
 ## Known Issues
-- Migrations `indicadores_niveis.sql`, `academico_matriculas.sql` e `patch_add_data_saida_matriculas.sql` pendentes no Supabase SQL Editor
+- Migrations `indicadores_niveis.sql`, `academico_matriculas.sql`, `patch_add_data_saida_matriculas.sql` e `patch_diario_planos_aplicados.sql` pendentes no Supabase SQL Editor
 - All server actions use `'use server'` + `getSupabaseAdmin()` (service_role, bypass RLS)
 
 ## Commands
