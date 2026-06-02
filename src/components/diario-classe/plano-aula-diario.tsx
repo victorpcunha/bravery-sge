@@ -72,8 +72,6 @@ export default function PlanoAulaDiario({ turmaId, disciplinas, pessoaId }: Prop
   const [aplicando, setAplicando] = useState<string | null>(null)
   const [removendo, setRemovendo] = useState<string | null>(null)
 
-  const disciplinaSelecionada = disciplinas.find(d => d.matriz_disciplina_id === disciplinaId)
-
   // Load days with class for the discipline
   useEffect(() => {
     if (!disciplinaId) return
