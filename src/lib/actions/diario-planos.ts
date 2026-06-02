@@ -1,0 +1,199 @@
+'use server'
+
+import { getSupabaseAdmin } from '@/lib/auth'
+import { type PlanoAula } from './plano-ensino'
+
+const RESOURCE = 'gestao-pedagogica.diario-classe'
+const supabase = getSupabaseAdmin()
+
+async function validarPermRead(pessoaId?: string | null) {
+  if (pessoaId) {
+    const { validarPermissaoServer } = await import('./perfis')
+    await validarPermissaoServer(pessoaId, RESOURCE, 'visualizar')
+  }
+}
+
+async function validarPermWrite(pessoaId?: string | null) {
+  if (pessoaId) {
+    const { validarPermissaoServer } = await import('./perfis')
+    await validarPermissaoServer(pessoaId, RESOURCE, 'editar')
+  }
+}
+
+type PlanoAplicado = {
+  id: string
+  turma_id: string
+  matriz_disciplina_id: string
+  data_aula: string
+  horario_id: string | null
+  plano_aula_id: string
+  created_by: string | null
+  created_at: string
+  plano_aula: PlanoAula
+}
+
+export async function listarDiasComAula(
+  turmaId: string,
+  matrizDisciplinaId: string,
+  ano: number,
+  mes: number,
+  pessoaId?: string | null
+): Promise<string[]> {
+  await validarPermRead(pessoaId)
+
+  const { data: quadro } = await supabase
+    .from('quadro_aulas')
+    .select('id, data_inicial, data_final')
+    .eq('turma_id', turmaId)
+    .eq('ativo', true)
+    .maybeSingle()
+
+  if (!quadro) return []
+
+  const { data: horarios } = await supabase
+    .from('quadro_aulas_horarios')
+    .select('dia_semana')
+    .eq('quadro_aula_id', quadro.id)
+    .eq('disciplina_id', matrizDisciplinaId)
+    .eq('ativo', true)
+
+  if (!horarios?.length) return []
+
+  const diasSemana = new Set(horarios.map(h => h.dia_semana))
+  const dataInicial = new Date(quadro.data_inicial)
+  const dataFinal = new Date(quadro.data_final)
+  const primeiroDia = new Date(ano, mes - 1, 1)
+  const ultimoDia = new Date(ano, mes, 0)
+  const dias: string[] = []
+
+  for (let d = new Date(primeiroDia); d <= ultimoDia; d.setDate(d.getDate() + 1)) {
+    if (!diasSemana.has(d.getDay())) continue
+    if (d < dataInicial || d > dataFinal) continue
+    const y = d.getFullYear()
+    const m = String(d.getMonth() + 1).padStart(2, '0')
+    const day = String(d.getDate()).padStart(2, '0')
+    dias.push(`${y}-${m}-${day}`)
+  }
+
+  return dias
+}
+
+export async function listarPlanosAplicados(
+  turmaId: string,
+  matrizDisciplinaId: string,
+  dataAula: string,
+  pessoaId?: string | null
+): Promise<PlanoAplicado[]> {
+  await validarPermRead(pessoaId)
+
+  const { data } = await supabase
+    .from('academico_diario_planos_aplicados')
+    .select('*, plano_aula:plano_aula_id(*)')
+    .eq('turma_id', turmaId)
+    .eq('matriz_disciplina_id', matrizDisciplinaId)
+    .eq('data_aula', dataAula)
+
+  return (data || []) as unknown as PlanoAplicado[]
+}
+
+export async function listarPlanosDisponiveis(
+  turmaId: string,
+  matrizDisciplinaId: string,
+  pessoaId?: string | null
+): Promise<PlanoAula[]> {
+  await validarPermRead(pessoaId)
+
+  const { data: vinculos } = await supabase
+    .from('planos_ensino_disciplinas')
+    .select('plano_ensino_id')
+    .eq('matriz_disciplina_id', matrizDisciplinaId)
+
+  if (!vinculos?.length) return []
+
+  const ids = [...new Set(vinculos.map(v => v.plano_ensino_id))]
+
+  const { data: planosEnsino } = await supabase
+    .from('planos_ensino')
+    .select('id')
+    .in('id', ids)
+    .eq('turma_id', turmaId)
+
+  if (!planosEnsino?.length) return []
+
+  const validIds = planosEnsino.map(p => p.id)
+
+  const { data: aulas } = await supabase
+    .from('planos_aula')
+    .select('*')
+    .in('plano_ensino_id', validIds)
+    .order('data_inicio', { ascending: false, nullsFirst: false })
+
+  return (aulas || []) as PlanoAula[]
+}
+
+export async function aplicarPlanoAula(
+  turmaId: string,
+  matrizDisciplinaId: string,
+  dataAula: string,
+  planoAulaId: string,
+  horarioId?: string | null,
+  pessoaId?: string | null
+) {
+  await validarPermWrite(pessoaId)
+
+  const { error } = await supabase
+    .from('academico_diario_planos_aplicados')
+    .insert({
+      turma_id: turmaId,
+      matriz_disciplina_id: matrizDisciplinaId,
+      data_aula: dataAula,
+      plano_aula_id: planoAulaId,
+      horario_id: horarioId || null,
+      created_by: pessoaId,
+    })
+
+  if (error) {
+    if (error.code === '23505') {
+      throw new Error('Este plano de aula já está aplicado nesta data/horário.')
+    }
+    throw error
+  }
+}
+
+export async function removerPlanoAulaAplicado(
+  id: string,
+  pessoaId?: string | null
+) {
+  await validarPermWrite(pessoaId)
+
+  const { error } = await supabase
+    .from('academico_diario_planos_aplicados')
+    .delete()
+    .eq('id', id)
+
+  if (error) throw error
+}
+
+export async function listarDiasComPlanoAplicado(
+  turmaId: string,
+  matrizDisciplinaId: string,
+  ano: number,
+  mes: number,
+  pessoaId?: string | null
+): Promise<string[]> {
+  await validarPermRead(pessoaId)
+
+  const primeiroDia = `${ano}-${String(mes).padStart(2, '0')}-01`
+  const ultimoDia = `${ano}-${String(mes).padStart(2, '0')}-${new Date(ano, mes, 0).getDate()}`
+
+  const { data } = await supabase
+    .from('academico_diario_planos_aplicados')
+    .select('data_aula')
+    .eq('turma_id', turmaId)
+    .eq('matriz_disciplina_id', matrizDisciplinaId)
+    .gte('data_aula', primeiroDia)
+    .lte('data_aula', ultimoDia)
+
+  if (!data) return []
+  return [...new Set(data.map(d => d.data_aula))]
+}

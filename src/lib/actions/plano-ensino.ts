@@ -491,3 +491,131 @@ export async function buscarBNCCBase(etapaTipo: string, disciplinaNome?: string)
 
   return resultado
 }
+
+// ─── FASE 6: Integração com Diário de Classe ───
+
+export async function listarPlanoAulaPorMes(
+  turmaId: string,
+  matrizDisciplinaId: string,
+) {
+  const { data: planos } = await supabase
+    .from('planos_ensino_disciplinas')
+    .select('plano_ensino_id')
+    .eq('matriz_disciplina_id', matrizDisciplinaId)
+
+  if (!planos || planos.length === 0) return []
+
+  const planoIds = planos.map(p => p.plano_ensino_id)
+
+  const { data: planosEnsino } = await supabase
+    .from('planos_ensino')
+    .select('id')
+    .in('id', planoIds)
+    .eq('turma_id', turmaId)
+
+  if (!planosEnsino || planosEnsino.length === 0) return []
+
+  const validIds = planosEnsino.map(p => p.id)
+
+  const { data: aulas } = await supabase
+    .from('planos_aula')
+    .select('*')
+    .in('plano_ensino_id', validIds)
+    .order('data_inicio', { ascending: true })
+
+  return (aulas || []) as PlanoAula[]
+}
+
+export async function criarPlanoAulaDoDiario(
+  data: {
+    turma_id: string
+    matriz_disciplina_id: string
+    data_aula: string
+    tema: string
+    conteudo?: string | null
+    recursos_didaticos?: string | null
+    metodologia?: string | null
+    avaliacao?: string | null
+    referencias?: string | null
+  },
+  pessoaId?: string | null
+) {
+  await validarPermWrite(RESOURCE, pessoaId)
+
+  if (!data.tema.trim()) throw new Error('Tema é obrigatório')
+
+  // Find existing plano_ensino for this turma + disciplina
+  const { data: vinculos } = await supabase
+    .from('planos_ensino_disciplinas')
+    .select('plano_ensino_id')
+    .eq('matriz_disciplina_id', data.matriz_disciplina_id)
+
+  let planoEnsinoId: string | null = null
+
+  if (vinculos && vinculos.length > 0) {
+    const ids = vinculos.map(v => v.plano_ensino_id)
+    const { data: found } = await supabase
+      .from('planos_ensino')
+      .select('id')
+      .in('id', ids)
+      .eq('turma_id', data.turma_id)
+      .maybeSingle()
+    if (found) planoEnsinoId = found.id
+  }
+
+  // Auto-create plano_ensino if none exists
+  if (!planoEnsinoId) {
+    const { data: turma } = await supabase
+      .from('turmas')
+      .select('school_id, ano_letivo_id, etapa_ensino_id')
+      .eq('id', data.turma_id)
+      .single()
+
+    if (!turma) throw new Error('Turma não encontrada')
+
+    const { data: plano, error: errPlano } = await supabase
+      .from('planos_ensino')
+      .insert({
+        school_id: turma.school_id,
+        turma_id: data.turma_id,
+        ano_letivo_id: turma.ano_letivo_id,
+        etapa_id: turma.etapa_ensino_id,
+        is_interdisciplinar: false,
+        created_by: pessoaId,
+        updated_by: pessoaId,
+      })
+      .select()
+      .single()
+
+    if (errPlano || !plano) throw new Error('Erro ao criar plano de ensino')
+
+    await supabase.from('planos_ensino_disciplinas').insert({
+      plano_ensino_id: plano.id,
+      matriz_disciplina_id: data.matriz_disciplina_id,
+    })
+
+    planoEnsinoId = plano.id
+  }
+
+  const { data: aula, error } = await supabase
+    .from('planos_aula')
+    .insert({
+      plano_ensino_id: planoEnsinoId,
+      periodos: [1],
+      tema: data.tema.trim(),
+      conteudo: data.conteudo || null,
+      data_inicio: data.data_aula,
+      data_fim: data.data_aula,
+      recursos_didaticos: data.recursos_didaticos || null,
+      metodologia: data.metodologia || null,
+      avaliacao: data.avaliacao || null,
+      referencias: data.referencias || null,
+      created_by: pessoaId,
+      updated_by: pessoaId,
+    })
+    .select()
+    .single()
+
+  if (error) throw error
+  return aula as PlanoAula
+}

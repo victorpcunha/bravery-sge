@@ -12,6 +12,7 @@ import FrequenciaPorAula from '@/components/diario-classe/frequencia-por-aula'
 import ParecerDescritivo from '@/components/diario-classe/parecer-descritivo'
 import AvaliacaoIndicadores from '@/components/diario-classe/avaliacao-indicadores'
 import AvaliacoesNumericas from '@/components/diario-classe/avaliacoes-numericas'
+import PlanoAulaDiario from '@/components/diario-classe/plano-aula-diario'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -227,6 +228,10 @@ export default function TurmaDiarioPage() {
                     Notas
                   </TabsTrigger>
                 )}
+                <TabsTrigger value="plano-aula" className="flex items-center gap-2">
+                  <BookOpen className="h-4 w-4" />
+                  Plano de Aula
+                </TabsTrigger>
               </TabsList>
 
               <TabsContent value="alunos">
@@ -317,6 +322,16 @@ export default function TurmaDiarioPage() {
                       quantidadePeriodosNumerico={quantidadePeriodosNumerico}
                       metodoId={metodo?.id}
                     />
+                  </CardContent>
+                </Card>
+              </TabsContent>
+              <TabsContent value="plano-aula">
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-lg">Plano de Aula</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <PlanoAulaDiario turmaId={turmaId} disciplinas={disciplinas} pessoaId={pessoaId} />
                   </CardContent>
                 </Card>
               </TabsContent>

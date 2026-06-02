@@ -12,9 +12,10 @@ import {
   type AulaQuadro,
   type FrequenciaAula,
 } from '@/lib/actions/diario-classe'
+import { listarPlanoAulaPorMes, type PlanoAula } from '@/lib/actions/plano-ensino'
 import { getFirstSchool } from '@/lib/actions/schools'
 import { Button } from '@/components/ui/button'
-import { ChevronLeft, ChevronRight, Check, X, AlertTriangle } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Check, X, AlertTriangle, BookOpen } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { toast } from 'sonner'
 
@@ -53,6 +54,9 @@ export default function FrequenciaPorAula({ turmaId, alunos, disciplinas }: Prop
   const [schoolId, setSchoolId] = useState<string | null>(null)
   const [salvando, setSalvando] = useState<Set<string>>(new Set())
 
+  // Plano de Ensino — indicator only
+  const [planos, setPlanos] = useState<PlanoAula[]>([])
+
   useEffect(() => {
     getFirstSchool().then(s => {
       if (s) setSchoolId(s.id)
@@ -67,6 +71,7 @@ export default function FrequenciaPorAula({ turmaId, alunos, disciplinas }: Prop
     if (!disciplinaId || !turmaId) {
       setAulas([])
       setFrequencias(new Map())
+      setPlanos([])
       return
     }
     setLoading(true)
@@ -85,6 +90,9 @@ export default function FrequenciaPorAula({ turmaId, alunos, disciplinas }: Prop
       } else {
         setFrequencias(new Map())
       }
+
+      const planosData = await listarPlanoAulaPorMes(turmaId, disciplinaId)
+      setPlanos(planosData)
     } catch {
       toast.error('Erro ao carregar aulas')
     } finally {
@@ -114,6 +122,13 @@ export default function FrequenciaPorAula({ turmaId, alunos, disciplinas }: Prop
       .then(setEstatisticas)
       .catch(() => {})
   }, [disciplinaId, turmaId, pessoaId])
+
+  const getPlanoDaData = (data: string): PlanoAula | undefined => {
+    return planos.find(p => {
+      if (!p.data_inicio || !p.data_fim) return false
+      return data >= p.data_inicio && data <= p.data_fim
+    })
+  }
 
   const handleToggle = async (alunoId: string, horarioId: string, dataAula: string) => {
     const key = `${alunoId}_${horarioId}_${dataAula}`
@@ -357,6 +372,7 @@ export default function FrequenciaPorAula({ turmaId, alunos, disciplinas }: Prop
                         return frequencias.get(k) === 'P'
                       })
                       const isFuture = aula.data > hojeStr
+                      const hasPlano = !!getPlanoDaData(aula.data)
 
                       return (
                         <th
@@ -365,14 +381,19 @@ export default function FrequenciaPorAula({ turmaId, alunos, disciplinas }: Prop
                             "py-1.5 px-1 text-center font-normal text-muted-foreground border-l border-slate-200 min-w-[64px] transition-colors group relative",
                             isFuture ? "cursor-default opacity-50" : "cursor-pointer hover:bg-primary/10"
                           )}
-                          onClick={() => !isFuture && handleMarcarTodos(aula.horario_id, aula.data, !allPresent)}
-                          title={isFuture ? 'Data futura' : (allPresent ? 'Clique para limpar todos' : 'Clique para marcar todos como presente')}
                         >
                           <div className="text-[10px] font-semibold">{aula.numero_aula}ª Aula</div>
                           <div className="text-[10px]">{aula.horario_inicial}</div>
-                          <div className="absolute -top-1 -right-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                            <div className="w-2 h-2 rounded-full bg-primary" />
-                          </div>
+                          {hasPlano && (
+                            <div className="mt-0.5">
+                              <BookOpen className="h-3 w-3 text-emerald-500 inline" />
+                            </div>
+                          )}
+                          <div
+                            className="absolute inset-0 z-10"
+                            onClick={() => !isFuture && handleMarcarTodos(aula.horario_id, aula.data, !allPresent)}
+                            title={isFuture ? 'Data futura' : (allPresent ? 'Clique para limpar todos' : 'Clique para marcar todos como presente')}
+                          />
                         </th>
                       )
                     })
@@ -462,6 +483,10 @@ export default function FrequenciaPorAula({ turmaId, alunos, disciplinas }: Prop
             <span className="text-muted-foreground/60">Clique no cabeçalho da aula para marcar todos</span>
             <span className="text-muted-foreground/40">|</span>
             <span className="text-muted-foreground/60 italic">Células apagadas = fora do período ativo do aluno</span>
+            <span className="text-muted-foreground/40">|</span>
+            <span className="flex items-center gap-1">
+              <BookOpen className="h-3 w-3 text-emerald-500" /> Plano de Aula
+            </span>
           </div>
         </>
       )}
