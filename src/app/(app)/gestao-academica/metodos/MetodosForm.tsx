@@ -75,7 +75,7 @@ type FormData = {
   recuperacao_periodo_substitutiva: boolean
   realizava_avaliacao_reclassificacao: boolean
   limitar_avaliacoes: boolean
-  avaliacoes_list: { nome: string; peso: number }[]
+  avaliacoes_list: { nome: string; peso: number; nota_maxima: number }[]
 
   aprovacao_automatica: boolean
   media_minima: number
@@ -599,6 +599,20 @@ export function MetodosForm({ schoolId, editId, onSaved, onCancel }: Props) {
                         }}
                       />
                     </div>
+                    <div className="w-24 space-y-1">
+                      <Label className="text-xs">Nota Máx</Label>
+                      <Input
+                        type="number"
+                        step="0.1"
+                        min={1}
+                        value={av.nota_maxima}
+                        onChange={(e) => {
+                          const next = [...form.avaliacoes_list]
+                          next[i] = { ...next[i], nota_maxima: Number(e.target.value) || 10 }
+                          set('avaliacoes_list', next)
+                        }}
+                      />
+                    </div>
                     <Button variant="ghost" size="icon-sm" onClick={() => {
                       set('avaliacoes_list', form.avaliacoes_list.filter((_, idx) => idx !== i))
                     }}>
@@ -607,7 +621,7 @@ export function MetodosForm({ schoolId, editId, onSaved, onCancel }: Props) {
                   </div>
                 ))}
                 <Button variant="outline" size="sm" onClick={() => {
-                  set('avaliacoes_list', [...form.avaliacoes_list, { nome: '', peso: 1 }])
+                  set('avaliacoes_list', [...form.avaliacoes_list, { nome: '', peso: 1, nota_maxima: 10 }])
                 }} className="border-slate-300 hover:bg-primary/5 hover:text-primary hover:border-primary">
                   <Plus className="mr-1 h-3.5 w-3.5" />
                   Adicionar Avaliação

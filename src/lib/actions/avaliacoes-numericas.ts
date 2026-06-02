@@ -63,6 +63,9 @@ async function getConfigNumerica(metodoId: string) {
     permite_recuperacao: (numerico as any)?.permite_recuperacao || 'nenhum',
     recuperacao_substitutiva: (numerico as any)?.recuperacao_substitutiva || false,
     recuperacao_periodo_substitutiva: (numerico as any)?.recuperacao_periodo_substitutiva || false,
+    limitar_avaliacoes: (numerico as any)?.limitar_avaliacoes ?? false,
+    avaliacoes_list: ((numerico as any)?.avaliacoes_list || []) as { nome: string; peso: number; nota_maxima: number }[],
+    aprovacao_automatica: (aprovacao as any)?.aprovacao_automatica ?? false,
     media_minima: Number((aprovacao as any)?.media_minima || 7),
     pesos_periodos: (aprovacao as any)?.pesos_periodos as number[] || [1],
     permite_recuperacao_final: (aprovacao as any)?.permite_recuperacao_final || false,
@@ -81,7 +84,7 @@ export async function getNumericoConfig(metodoId: string) {
     .maybeSingle()
   return {
     limitar_avaliacoes: (data as any)?.limitar_avaliacoes ?? false,
-    avaliacoes_list: ((data as any)?.avaliacoes_list || []) as { nome: string; peso: number }[],
+    avaliacoes_list: ((data as any)?.avaliacoes_list || []) as { nome: string; peso: number; nota_maxima: number }[],
   }
 }
 
@@ -258,6 +261,9 @@ export async function calcularDesempenhoAluno(
         permite_recuperacao: 'nenhum',
         recuperacao_substitutiva: false,
         recuperacao_periodo_substitutiva: false,
+        limitar_avaliacoes: false,
+        avaliacoes_list: [] as { nome: string; peso: number; nota_maxima: number }[],
+        aprovacao_automatica: false,
         media_minima: 7,
         pesos_periodos: Array(quantidadePeriodos).fill(1),
         permite_recuperacao_final: false,
@@ -272,7 +278,7 @@ export async function calcularDesempenhoAluno(
   const [notasData, recuperacoesData] = await Promise.all([
     supabase
       .from('academico_notas')
-      .select('periodo, valor')
+      .select('periodo, valor, descricao')
       .eq('aluno_id', alunoId)
       .eq('disciplina_id', disciplinaId)
       .then(r => r.data || []),
@@ -284,21 +290,33 @@ export async function calcularDesempenhoAluno(
       .then(r => r.data || []),
   ])
 
+  const pesoMap = new Map<string, number>()
+  for (const av of config.avaliacoes_list) {
+    pesoMap.set(av.nome, av.peso)
+  }
+
   // Calcular média de cada período
   const mediasPeriodo: (number | null)[] = periodos.map(p => {
     const notasDoPeriodo = notasData
       .filter((n: any) => n.periodo === p && n.valor !== null)
-      .map((n: any) => Number(n.valor))
 
     if (notasDoPeriodo.length === 0) return null
 
     if (config.tipo_media_periodo === 'somatoria') {
-      return Math.min(notasDoPeriodo.reduce((a: number, b: number) => a + b, 0), config.media_maxima_periodo)
+      const soma = notasDoPeriodo.reduce((a: number, n: any) => a + Number(n.valor), 0)
+      return Math.min(soma, config.media_maxima_periodo)
     }
 
-    // ponderada (média simples)
-    const media = notasDoPeriodo.reduce((a: number, b: number) => a + b, 0) / notasDoPeriodo.length
-    return Math.round(media * 100) / 100
+    let somaPonderada = 0
+    let somaPesos = 0
+    for (const n of notasDoPeriodo) {
+      const peso = pesoMap.get(n.descricao) ?? 1
+      somaPonderada += Number(n.valor) * peso
+      somaPesos += peso
+    }
+    const media = somaPesos > 0 ? somaPonderada / somaPesos : 0
+    const capped = Math.min(media, config.media_maxima_periodo)
+    return Math.round(capped * 100) / 100
   })
 
   // Aplicar recuperação por período (se recuperacao_periodo_substitutiva)
@@ -315,21 +333,29 @@ export async function calcularDesempenhoAluno(
   }
 
   // Calcular média anual
-  const mediasValidas = mediasPeriodo.filter((m): m is number => m !== null)
   let mediaAnual: number | null = null
 
-  if (mediasValidas.length > 0) {
+  if (mediasPeriodo.some(m => m !== null)) {
     const pesos = config.pesos_periodos.slice(0, mediasPeriodo.length)
     if (config.tipo_resultado_final === 'somatoria') {
-      mediaAnual = Math.min(mediasValidas.reduce((a, b) => a + b, 0), config.media_maxima_periodo)
-    } else {
-      const pesoTotal = pesos.reduce((a, b) => a + b, 0)
-      if (pesoTotal > 0) {
-        mediaAnual = mediasValidas.reduce((acc, m, i) => acc + m * (pesos[i] || 1), 0) / pesoTotal
-      } else {
-        mediaAnual = mediasValidas.reduce((a, b) => a + b, 0) / mediasValidas.length
+      let soma = 0
+      for (const m of mediasPeriodo) {
+        if (m !== null) soma += m
       }
-      mediaAnual = Math.round(mediaAnual * 100) / 100
+      mediaAnual = Math.min(soma, config.media_maxima_periodo)
+    } else {
+      let somaPonderada = 0
+      let somaPesos = 0
+      for (let i = 0; i < mediasPeriodo.length; i++) {
+        if (mediasPeriodo[i] !== null) {
+          somaPonderada += mediasPeriodo[i]! * (pesos[i] || 1)
+          somaPesos += pesos[i] || 1
+        }
+      }
+      mediaAnual = somaPesos > 0 ? somaPonderada / somaPesos : null
+      if (mediaAnual !== null) {
+        mediaAnual = Math.round(mediaAnual * 100) / 100
+      }
     }
   }
 
@@ -343,7 +369,10 @@ export async function calcularDesempenhoAluno(
   let status: DesempenhoAluno['status'] = null
 
   if (mediaAnual !== null) {
-    if (mediaAnual >= config.media_minima) {
+    if (config.aprovacao_automatica) {
+      mediaFinal = mediaAnual
+      status = 'aprovado'
+    } else if (mediaAnual >= config.media_minima) {
       mediaFinal = mediaAnual
       status = 'aprovado'
     } else if (config.permite_recuperacao_final && valorRecFinal !== null) {

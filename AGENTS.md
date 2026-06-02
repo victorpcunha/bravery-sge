@@ -19,9 +19,14 @@ Sistema de Gestão Escolar completo: turmas, quadro de aulas, indicadores de ava
 - **Funções Profissionais**: CRUD page
 - **Login**: CPF ou Email; mensagem genérica "Usuário ou senha inválidos"
 - **Auth**: `criarAuthUser` via `supabase.auth.admin.createUser()`, link via `user_schools`
-- **Sidebar**: Quadro de Aulas, Indicadores, Alunos Matriculados, Perfis e Permissões
+- **Sidebar**: Quadro de Aulas, Indicadores, Alunos Matriculados, Perfis e Permissões, Plano de Ensino
 - **Diário de Classe**: Frequência por Dia / por Aula (com validação de período ativo), Parecer Descritivo, Avaliação por Indicadores, Avaliações Numéricas (com recuperação)
 - **Período Ativo do Aluno**: Coluna `data_saida` na `academico_matriculas`. Atualizada automaticamente ao criar movimentação. Células fora do período são desabilitadas com tooltip. Percentual de frequência calculado individualmente por aluno (presenças / dias válidos no período ativo).
+- **Plano de Ensino (FASE 1–5)**:
+  - Migration `plano_ensino.sql`: tables `planos_ensino`, `planos_ensino_disciplinas`, `planos_aula`
+  - Migration `patch_planos_aula_periodos.sql`: `periodo` → `periodos INT[]`, `bncc_fields JSONB`
+  - Server actions: CRUD planos/aula, `listarPeriodosPlanoEnsino`, `buscarBNCCBase`
+  - Pages: list (`/plano-ensino`), create (`/plano-ensino/criar`), detail (`/plano-ensino/[id]`) with period tabs, multi-period checkboxes, BNCC fields per etapa (EI: campos experiência + objetivos; EF: unidades temáticas + objetos conhecimento + habilidades; EM: áreas conhecimento + competências + habilidades)
 
 ## Known Issues
 - Migrations `indicadores_niveis.sql`, `academico_matriculas.sql` e `patch_add_data_saida_matriculas.sql` pendentes no Supabase SQL Editor

@@ -54,7 +54,7 @@ export default function AvaliacoesNumericas({
   const [recuperacoes, setRecuperacoes] = useState<Recuperacao[]>([])
   const [descricoes, setDescricoes] = useState<string[]>([])
   const [limitarAvaliacoes, setLimitarAvaliacoes] = useState(false)
-  const [avaliacoesPredefinidas, setAvaliacoesPredefinidas] = useState<{ nome: string; peso: number }[]>([])
+  const [avaliacoesPredefinidas, setAvaliacoesPredefinidas] = useState<{ nome: string; peso: number; nota_maxima: number }[]>([])
   const [desempenhos, setDesempenhos] = useState<DesempenhoAluno[]>([])
   const [loading, setLoading] = useState(true)
   const [calculando, setCalculando] = useState(false)
@@ -85,7 +85,7 @@ export default function AvaliacoesNumericas({
       setRecuperacoes(recsData)
 
       const limitar = numericoConfig?.limitar_avaliacoes ?? false
-      const predefs = (numericoConfig?.avaliacoes_list || []) as { nome: string; peso: number }[]
+      const predefs = (numericoConfig?.avaliacoes_list || []) as { nome: string; peso: number; nota_maxima: number }[]
       setLimitarAvaliacoes(limitar)
       setAvaliacoesPredefinidas(predefs)
 
@@ -102,6 +102,14 @@ export default function AvaliacoesNumericas({
         }
       })
       setDatasAvaliacoes(datas)
+
+      // Auto-calcular desempenho
+      try {
+        const resultados = await recalcularTurma(turmaId, disciplinaId, quantidadePeriodosNumerico, pessoaId)
+        setDesempenhos(resultados)
+      } catch {
+        // falha silenciosa no auto-cálculo
+      }
     } catch {
       toast.error('Erro ao carregar dados')
     } finally {
@@ -114,6 +122,14 @@ export default function AvaliacoesNumericas({
     else setLoading(false)
   }, [carregar, disciplinaId])
 
+  const getNotaMaxima = (descricao: string) => {
+    return avaliacoesPredefinidas.find(a => a.nome === descricao)?.nota_maxima ?? 10
+  }
+
+  const getPeso = (descricao: string) => {
+    return avaliacoesPredefinidas.find(a => a.nome === descricao)?.peso ?? 1
+  }
+
   const getNota = (alunoId: string, descricao: string) => {
     return notas.find(n => n.aluno_id === alunoId && n.descricao === descricao)
   }
@@ -124,7 +140,9 @@ export default function AvaliacoesNumericas({
     valor: string
   ) => {
     if (!schoolId) return
-    const numValor = valor === '' ? null : parseFloat(valor)
+    const max = getNotaMaxima(descricao)
+    const rawValor = valor === '' ? null : parseFloat(valor)
+    const numValor = rawValor !== null ? Math.min(rawValor, max) : null
     const existing = getNota(alunoId, descricao)
     const dataAplicacao = datasAvaliacoes.get(descricao) || null
 
@@ -262,6 +280,7 @@ export default function AvaliacoesNumericas({
             onChange={e => {
               setDisciplinaId(e.target.value)
               setSubAba('registro')
+              setDesempenhos([])
             }}
             className="h-9 px-3 rounded-lg border border-slate-300 bg-white text-sm min-w-[180px]"
           >
@@ -274,16 +293,7 @@ export default function AvaliacoesNumericas({
           </select>
         </div>
         <div className="flex-1" />
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={handleCalcular}
-          disabled={calculando || !disciplinaId}
-        >
-          <Calculator className="h-4 w-4 mr-1" />
-          {calculando ? 'Calculando...' : 'Calcular Desempenho'}
-        </Button>
-      </div>
+        </div>
 
       {!disciplinaId ? (
         <div className="py-8 text-center text-muted-foreground">
@@ -382,12 +392,13 @@ export default function AvaliacoesNumericas({
                       .map(d => getNota(aluno.id, d))
                       .filter(Boolean) as Nota[]
                     const valores = notasAluno
-                      .map(n => n.valor)
-                      .filter((v): v is number => v !== null)
+                      .map(n => ({ valor: n.valor, peso: getPeso(n.descricao!) }))
+                      .filter((v): v is { valor: number; peso: number } => v.valor !== null)
+                    const somaPesos = valores.reduce((a, v) => a + v.peso, 0)
                     const media =
-                      valores.length > 0
+                      valores.length > 0 && somaPesos > 0
                         ? Math.round(
-                            (valores.reduce((a, b) => a + b, 0) / valores.length) * 100
+                            (valores.reduce((a, v) => a + v.valor * v.peso, 0) / somaPesos) * 100
                           ) / 100
                         : null
 
@@ -411,7 +422,7 @@ export default function AvaliacoesNumericas({
                                 type="number"
                                 step="0.01"
                                 min="0"
-                                max="10"
+                                max={getNotaMaxima(d)}
                                 value={nota?.valor ?? ''}
                                 onChange={e =>
                                   handleNotaChange(aluno.id, d, e.target.value)
@@ -448,6 +459,18 @@ export default function AvaliacoesNumericas({
         </TabsContent>
 
         <TabsContent value="resumo">
+          <div className="flex items-center justify-between mb-4">
+            <span className="text-sm text-muted-foreground">Médias por período, anual e status final.</span>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleCalcular}
+              disabled={calculando || !disciplinaId}
+            >
+              <Calculator className="h-4 w-4 mr-1" />
+              {calculando ? 'Calculando...' : 'Calcular Desempenho'}
+            </Button>
+          </div>
           <div className="overflow-x-auto border rounded-lg">
             <table className="w-full min-w-max text-sm">
               <thead>

@@ -123,6 +123,11 @@ const modules = [
             href: '/gestao-pedagogica/diario-classe',
             icon: ClipboardList,
           },
+          {
+            title: 'Plano de Ensino',
+            href: '/gestao-pedagogica/plano-ensino',
+            icon: BookOpen,
+          },
         ],
       },
   {
