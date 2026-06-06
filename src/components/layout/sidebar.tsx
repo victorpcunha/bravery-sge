@@ -21,7 +21,8 @@ import {
   ClipboardList,
   ChevronDown,
   ChevronRight,
-  Table2
+  Table2,
+  UserCircle,
 } from 'lucide-react'
 import { useState } from 'react'
 
@@ -59,6 +60,11 @@ const modules = [
         title: 'Perfis e Permissões',
         href: '/gestao-usuarios/perfis',
         icon: Settings,
+      },
+      {
+        title: 'Painel do Aluno',
+        href: '/gestao-usuarios/painel-aluno',
+        icon: UserCircle,
       },
     ],
   },
@@ -127,6 +133,11 @@ const modules = [
             title: 'Plano de Ensino',
             href: '/gestao-pedagogica/plano-ensino',
             icon: BookOpen,
+          },
+          {
+            title: 'Conselho de Classe',
+            href: '/gestao-pedagogica/conselho-classe',
+            icon: ClipboardList,
           },
         ],
       },

@@ -14,8 +14,10 @@ Sistema de Gestão Escolar SaaS multi-tenant com conformidade total ao Censo Esc
 - Escolas, Turmas, Quadro de Aulas
 - Matrículas (transporte, dispensas, movimentações)
 - Indicadores de Avaliação e BNCC
-- Gestão de Usuários (Pessoas, Perfis, Permissões, Funções)
+- Gestão de Usuários (Pessoas, Perfis, Permissões, Funções, Painel do Aluno)
 - Estrutura Acadêmica, Métodos de Avaliação, Disciplinas
+- Plano de Ensino (planos, aulas, BNCC por etapa)
+- Diário de Classe (frequência, avaliações, pareceres, plano de aula)
 - Censo Escolar (validação e exportação)
 
 ## Desenvolvimento

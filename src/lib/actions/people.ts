@@ -407,3 +407,51 @@ export async function criarAuthUser(params: {
 
   return data.user
 }
+
+export async function salvarSaudeEstudante(
+  personId: string,
+  schoolId: string,
+  data: { medicamentos?: string | null }
+) {
+  // Tenta atualizar registro existente
+  const { data: existing } = await supabase
+    .from('saude_estudantes')
+    .select('id')
+    .eq('person_id', personId)
+    .eq('school_id', schoolId)
+    .maybeSingle()
+
+  if (existing) {
+    const { error } = await supabase
+      .from('saude_estudantes')
+      .update({
+        medicamentos: data.medicamentos || null,
+        updated_at: new Date().toISOString(),
+      })
+      .eq('id', existing.id)
+    if (error) throw error
+  } else {
+    const { error } = await supabase
+      .from('saude_estudantes')
+      .insert({
+        person_id: personId,
+        school_id: schoolId,
+        medicamentos: data.medicamentos || null,
+      })
+    if (error) throw error
+  }
+}
+
+export async function buscarSaudeEstudante(
+  personId: string,
+  schoolId: string
+): Promise<{ medicamentos: string | null } | null> {
+  const { data } = await supabase
+    .from('saude_estudantes')
+    .select('medicamentos')
+    .eq('person_id', personId)
+    .eq('school_id', schoolId)
+    .maybeSingle()
+
+  return data as { medicamentos: string | null } | null
+}

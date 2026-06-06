@@ -147,7 +147,7 @@ export default function AvaliacoesNumericas({
     const dataAplicacao = datasAvaliacoes.get(descricao) || null
 
     try {
-      await salvarNota(
+      const result = await salvarNota(
         schoolId,
         turmaId,
         alunoId,
@@ -159,14 +159,18 @@ export default function AvaliacoesNumericas({
         existing?.id || null,
         pessoaId
       )
+      if (!result.success) {
+        toast.error('Erro ao salvar nota: ' + result.error)
+        return
+      }
       setNotas(prev => {
         const next = [...prev]
         if (existing) {
           const idx = next.findIndex(n => n.id === existing.id)
           if (idx >= 0) next[idx] = { ...next[idx], valor: numValor }
-        } else {
+        } else if (result.id) {
           next.push({
-            id: Math.random().toString(),
+            id: result.id,
             aluno_id: alunoId,
             disciplina_id: disciplinaId,
             periodo,
@@ -226,7 +230,7 @@ export default function AvaliacoesNumericas({
     const existing = getRecuperacaoAluno(alunoId)
 
     try {
-      await salvarRecuperacao(
+      const result = await salvarRecuperacao(
         schoolId,
         turmaId,
         alunoId,
@@ -237,14 +241,18 @@ export default function AvaliacoesNumericas({
         existing?.id || null,
         pessoaId
       )
+      if (!result.success) {
+        toast.error('Erro ao salvar recuperação: ' + result.error)
+        return
+      }
       setRecuperacoes(prev => {
         const next = [...prev]
         if (existing) {
           const idx = next.findIndex(r => r.id === existing.id)
           if (idx >= 0) next[idx] = { ...next[idx], valor: numValor }
-        } else {
+        } else if (result.id) {
           next.push({
-            id: Math.random().toString(),
+            id: result.id,
             aluno_id: alunoId,
             disciplina_id: disciplinaId,
             periodo: null,

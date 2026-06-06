@@ -121,36 +121,44 @@ export async function salvarNota(
   notaId: string | null,
   pessoaId: string | null
 ) {
-  if (pessoaId) {
-    const { validarPermissaoServer } = await import('./perfis')
-    await validarPermissaoServer(pessoaId, 'gestao-pedagogica.diario-classe', 'editar')
-  }
+  try {
+    if (pessoaId) {
+      const { validarPermissaoServer } = await import('./perfis')
+      await validarPermissaoServer(pessoaId, 'gestao-pedagogica.diario-classe', 'editar')
+    }
 
-  if (notaId) {
-    const { error } = await supabase
-      .from('academico_notas')
-      .update({ valor, descricao, data_aplicacao: dataAplicacao, updated_by: pessoaId })
-      .eq('id', notaId)
-    if (error) throw error
-  } else {
-    const { error } = await supabase
-      .from('academico_notas')
-      .insert({
-        school_id: schoolId,
-        turma_id: turmaId,
-        aluno_id: alunoId,
-        disciplina_id: disciplinaId,
-        periodo,
-        valor,
-        descricao,
-        data_aplicacao: dataAplicacao,
-        created_by: pessoaId,
-        updated_by: pessoaId,
-      })
-    if (error) throw error
+    if (notaId) {
+      const { data, error } = await supabase
+        .from('academico_notas')
+        .update({ valor, descricao, data_aplicacao: dataAplicacao, updated_by: pessoaId })
+        .eq('id', notaId)
+        .select('id')
+        .maybeSingle()
+      if (error) return { success: false, error: error.message }
+      return { success: true, id: data?.id || notaId }
+    } else {
+      const { data, error } = await supabase
+        .from('academico_notas')
+        .insert({
+          school_id: schoolId,
+          turma_id: turmaId,
+          aluno_id: alunoId,
+          disciplina_id: disciplinaId,
+          periodo,
+          valor,
+          descricao,
+          data_aplicacao: dataAplicacao,
+          created_by: pessoaId,
+          updated_by: pessoaId,
+        })
+        .select('id')
+        .maybeSingle()
+      if (error) return { success: false, error: error.message }
+      return { success: true, id: data?.id }
+    }
+  } catch (e: any) {
+    return { success: false, error: e?.message || 'Erro interno ao salvar nota' }
   }
-
-  return { success: true }
 }
 
 export async function listarNotas(turmaId: string, periodo: number, disciplinaId: string, pessoaId?: string | null) {
@@ -178,35 +186,43 @@ export async function salvarRecuperacao(
   recId: string | null,
   pessoaId: string | null
 ) {
-  if (pessoaId) {
-    const { validarPermissaoServer } = await import('./perfis')
-    await validarPermissaoServer(pessoaId, 'gestao-pedagogica.diario-classe', 'editar')
-  }
+  try {
+    if (pessoaId) {
+      const { validarPermissaoServer } = await import('./perfis')
+      await validarPermissaoServer(pessoaId, 'gestao-pedagogica.diario-classe', 'editar')
+    }
 
-  if (recId) {
-    const { error } = await supabase
-      .from('academico_recuperacoes')
-      .update({ valor, updated_by: pessoaId })
-      .eq('id', recId)
-    if (error) throw error
-  } else {
-    const { error } = await supabase
-      .from('academico_recuperacoes')
-      .insert({
-        school_id: schoolId,
-        turma_id: turmaId,
-        aluno_id: alunoId,
-        disciplina_id: disciplinaId,
-        tipo,
-        periodo,
-        valor,
-        created_by: pessoaId,
-        updated_by: pessoaId,
-      })
-    if (error) throw error
+    if (recId) {
+      const { data, error } = await supabase
+        .from('academico_recuperacoes')
+        .update({ valor, updated_by: pessoaId })
+        .eq('id', recId)
+        .select('id')
+        .maybeSingle()
+      if (error) return { success: false, error: error.message }
+      return { success: true, id: data?.id || recId }
+    } else {
+      const { data, error } = await supabase
+        .from('academico_recuperacoes')
+        .insert({
+          school_id: schoolId,
+          turma_id: turmaId,
+          aluno_id: alunoId,
+          disciplina_id: disciplinaId,
+          tipo,
+          periodo,
+          valor,
+          created_by: pessoaId,
+          updated_by: pessoaId,
+        })
+        .select('id')
+        .maybeSingle()
+      if (error) return { success: false, error: error.message }
+      return { success: true, id: data?.id }
+    }
+  } catch (e: any) {
+    return { success: false, error: e?.message || 'Erro interno ao salvar recuperação' }
   }
-
-  return { success: true }
 }
 
 export async function listarRecuperacoes(turmaId: string, disciplinaId: string, pessoaId?: string | null) {

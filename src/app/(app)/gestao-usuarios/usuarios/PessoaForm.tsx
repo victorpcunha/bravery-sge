@@ -20,7 +20,7 @@ import { areasConhecimento } from '@/data/areas-conhecimento'
 import { areasPosGraduacao } from '@/data/areas-pos-graduacao'
 import { Plus, Trash2 } from 'lucide-react'
 import { toast } from 'sonner'
-import { createPerson, updatePerson, Person, getVinculosResponsavel, vincularResponsavel, desvincularResponsavel, buscarAlunos, criarAuthUser } from '@/lib/actions/people'
+import { createPerson, updatePerson, Person, getVinculosResponsavel, vincularResponsavel, desvincularResponsavel, buscarAlunos, criarAuthUser, salvarSaudeEstudante } from '@/lib/actions/people'
 import { getVinculosProfissionais, createVinculoProfissional, updateVinculoProfissional, deleteVinculoProfissional, type VinculoProfissionalWithFuncao } from '@/lib/actions/vinculos-profissionais'
 import { getFuncoes, type FuncaoProfissional } from '@/lib/actions/funcoes-profissionais'
 import { listarPerfis, type Perfil } from '@/lib/actions/perfis'
@@ -186,6 +186,8 @@ const defaultForm: FormData = {
   prova_superampliada: false, cd_audio: false, prova_libras: false,
   prova_video_libras: false, material_braille: false, prova_braille: false,
   tempo_adicional: false, nenhum_recurso: false,
+  // Condições de Saúde
+  medicamentos: '',
   // Endereço
   pais_residencia: '', cep: '',
   municipio_residencia: '', zona_residencia: '', localizacao_diferenciada: '',
@@ -278,6 +280,15 @@ export function PessoaForm({ schoolId, person, onSaved, onCancel }: Props) {
         getVinculosResponsavel(person.id).then((vinculos: any[]) => {
           setForm(prev => ({ ...prev, vinculos: vinculos || [] }))
         }).catch(() => {})
+      }
+
+      // Carregar informações de saúde
+      if (schoolId) {
+        import('@/lib/actions/people').then(({ buscarSaudeEstudante }) => {
+          buscarSaudeEstudante(person.id, schoolId).then(saude => {
+            if (saude?.medicamentos) setForm(prev => ({ ...prev, medicamentos: saude.medicamentos }))
+          }).catch(() => {})
+        })
       }
     }
   }, [person])
@@ -409,6 +420,9 @@ export function PessoaForm({ schoolId, person, onSaved, onCancel }: Props) {
       delete payload.senha
       delete payload.confirmacao_senha
 
+      const healthMedicamentos = payload.medicamentos
+      delete payload.medicamentos
+
       let personId: string | undefined
 
       if (person) {
@@ -476,6 +490,13 @@ export function PessoaForm({ schoolId, person, onSaved, onCancel }: Props) {
           password: form.senha,
           personId,
           schoolId,
+        })
+      }
+
+      // Salvar informações de saúde
+      if (personId && healthMedicamentos) {
+        await salvarSaudeEstudante(personId, schoolId, {
+          medicamentos: healthMedicamentos,
         })
       }
 
@@ -604,7 +625,7 @@ export function PessoaForm({ schoolId, person, onSaved, onCancel }: Props) {
         <div className="px-6 shrink-0">
           <TabsList className="w-full flex-wrap h-auto">
           <TabsTrigger value="identificacao">Identificação</TabsTrigger>
-          {isAluno && <TabsTrigger value="acessibilidade">Acessibilidade/SAEB</TabsTrigger>}
+          {isAluno && <TabsTrigger value="acessibilidade">Condições de Saúde</TabsTrigger>}
           {!isResponsavel && <TabsTrigger value="endereco">Endereço</TabsTrigger>}
           {isProfissionalOuGestor && <TabsTrigger value="escolaridade">Escolaridade</TabsTrigger>}
           {isProfissionalOuGestor && <TabsTrigger value="posgraduacao">Pós-Graduação</TabsTrigger>}
@@ -905,7 +926,7 @@ export function PessoaForm({ schoolId, person, onSaved, onCancel }: Props) {
               {(hasDeficiencia || hasTranstorno) && recursosDisponiveis.length > 0 && (
                 <Card>
                   <CardContent className="pt-3 space-y-3">
-                    <Label>Recursos SAEB</Label>
+                    <Label>Recursos de Acessibilidade</Label>
                     <p className="text-xs text-muted-foreground">Recursos disponíveis conforme a(s) deficiência(s) selecionada(s) (Tabela INEP 2025)</p>
                     <div className="grid grid-cols-2 gap-2">
                       {recursosDisponiveis.map(c => (
@@ -918,6 +939,18 @@ export function PessoaForm({ schoolId, person, onSaved, onCancel }: Props) {
                   </CardContent>
                 </Card>
               )}
+            </div>
+
+            {/* Outras informações de saúde */}
+            <div className="space-y-2">
+              <Label>Outras informações de saúde</Label>
+              <textarea
+                value={form.medicamentos || ''}
+                onChange={(e) => set('medicamentos', e.target.value)}
+                rows={2}
+                className="w-full px-3 py-2 rounded-lg border border-slate-300 bg-white text-sm resize-y"
+                placeholder="Medicamentos de uso contínuo, alergias, condições relevantes para o ambiente escolar"
+              />
             </div>
           </TabsContent>
         )}
