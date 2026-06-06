@@ -209,12 +209,12 @@ export default function ObjetosConhecimentoPage() {
       <div className="mb-8 animate-fade-in-up">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold text-[#0f172a]">Objetos de Conhecimento</h1>
-            <p className="text-[#64748b] mt-1">
+            <h1 className="text-3xl font-bold text-foreground">Objetos de Conhecimento</h1>
+            <p className="text-muted-foreground mt-1">
               Objetos de Conhecimento do Ensino Fundamental e Médio conforme BNCC
             </p>
           </div>
-          <Button className="bg-[#1D3557] hover:bg-[#457B9D]" disabled>
+          <Button className="bg-primary hover:bg-secondary" disabled>
             <Plus className="w-4 h-4 mr-2" />
             Novo Objeto
           </Button>
@@ -225,9 +225,9 @@ export default function ObjetosConhecimentoPage() {
         <CardContent className="pt-6">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             <div>
-              <label className="text-sm font-medium mb-2 block text-[#334155]">Disciplina</label>
+              <label className="text-sm font-medium mb-2 block text-foreground">Disciplina</label>
               <Select value={disciplina} onValueChange={setDisciplina}>
-                <SelectTrigger className="border-2 border-[#e2e8f0] focus:border-[#1D3557] [&_svg:not([class*='rotate'])]:rotate-0">
+                <SelectTrigger className="border-2 border-border focus:border-primary [&_svg:not([class*='rotate'])]:rotate-0">
                   <SelectValue placeholder="Selecione" />
                 </SelectTrigger>
                 <SelectContent position="popper" side="bottom" sideOffset={5}>
@@ -240,9 +240,9 @@ export default function ObjetosConhecimentoPage() {
             </div>
 
             <div>
-              <label className="text-sm font-medium mb-2 block text-[#334155]">Etapa de Ensino</label>
+              <label className="text-sm font-medium mb-2 block text-foreground">Etapa de Ensino</label>
               <Select value={etapa} onValueChange={setEtapa}>
-                <SelectTrigger className="border-2 border-[#e2e8f0] focus:border-[#1D3557] [&_svg:not([class*='rotate'])]:rotate-0">
+                <SelectTrigger className="border-2 border-border focus:border-primary [&_svg:not([class*='rotate'])]:rotate-0">
                   <SelectValue placeholder="Selecione" />
                 </SelectTrigger>
                 <SelectContent position="popper" side="bottom" sideOffset={5}>
@@ -255,15 +255,15 @@ export default function ObjetosConhecimentoPage() {
             </div>
 
             <div className="md:col-span-2">
-              <label className="text-sm font-medium mb-2 block text-[#334155]">Buscar</label>
+              <label className="text-sm font-medium mb-2 block text-foreground">Buscar</label>
               <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[#64748b]" />
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <input
                   type="text"
                   placeholder="Buscar objeto de conhecimento..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2 bg-white/80 border border-[#e2e8f0] rounded-lg focus:border-[#1D3557] focus:ring-[#1D3557]/20 outline-none"
+                  className="w-full pl-10 pr-4 py-2 bg-card/80 border border-border rounded-lg focus:border-primary focus:ring-primary/20 outline-none"
                 />
               </div>
             </div>
@@ -272,27 +272,27 @@ export default function ObjetosConhecimentoPage() {
       </Card>
 
       <div className="flex gap-4 mb-6">
-        <Badge className="bg-[#1D3557]/10 text-[#1D3557] hover:bg-[#1D3557]/20 text-lg px-4 py-2">
+        <Badge className="bg-primary/10 text-primary hover:bg-primary/20 text-lg px-4 py-2">
           {totalObjetos} Objetos de Conhecimento
         </Badge>
-        <Badge className="bg-[#457B9D]/10 text-[#457B9D] hover:bg-[#457B9D]/20 text-lg px-4 py-2">
+        <Badge className="bg-secondary/10 text-secondary hover:bg-secondary/20 text-lg px-4 py-2">
           {totalHabilidades} Habilidades linkedas
         </Badge>
       </div>
 
       {loading ? (
         <div className="text-center py-12">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#1D3557] mx-auto mb-4"></div>
-          <p className="text-[#64748b]">Carregando...</p>
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+          <p className="text-muted-foreground">Carregando...</p>
         </div>
       ) : objetos.length === 0 ? (
         <Card className="border-0 shadow-lg card-glass animate-fade-in-up delay-150">
           <CardContent className="flex flex-col items-center justify-center py-16">
-            <div className="w-20 h-20 bg-gradient-to-br from-[#1D3557]/10 to-[#457B9D]/10 rounded-2xl flex items-center justify-center mb-6">
-              <BookOpen className="h-10 w-10 text-[#1D3557]" />
+            <div className="w-20 h-20 bg-gradient-to-br from-primary/10 to-secondary/10 rounded-2xl flex items-center justify-center mb-6">
+              <BookOpen className="h-10 w-10 text-primary" />
             </div>
-            <h3 className="text-xl font-semibold text-[#0f172a] mb-2">Nenhum objeto de conhecimento encontrado</h3>
-            <p className="text-[#64748b] text-center">
+            <h3 className="text-xl font-semibold text-foreground mb-2">Nenhum objeto de conhecimento encontrado</h3>
+            <p className="text-muted-foreground text-center">
               Não há objetos de conhecimento cadastrados para os filtros selecionados.
             </p>
           </CardContent>
@@ -306,24 +306,24 @@ export default function ObjetosConhecimentoPage() {
               style={{ animationDelay: `${index * 50}ms` }}
             >
               <CardHeader 
-                className="cursor-pointer hover:bg-[#f8fafc]/80 transition-all duration-200 bg-[#f8fafc]/50"
+                className="cursor-pointer hover:bg-primary-foreground/80 transition-all duration-200 bg-primary-foreground/50"
                 onClick={() => setExpandedUnidade(expandedUnidade === unidade ? null : unidade)}
               >
                 <div className="flex items-center justify-between">
                   <div>
-                    <CardTitle className="text-lg font-semibold text-[#0f172a]">{unidade}</CardTitle>
-                    <p className="text-sm text-[#64748b] mt-1">
+                    <CardTitle className="text-lg font-semibold text-foreground">{unidade}</CardTitle>
+                    <p className="text-sm text-muted-foreground mt-1">
                       {data.disciplina} • {data.etapa === 'anos_iniciais' ? 'Anos Iniciais' : 'Anos Finais'}
                     </p>
                   </div>
                   <div className="flex items-center gap-2">
-                    <Badge className="bg-[#457B9D]/10 text-[#457B9D] hover:bg-[#457B9D]/20 border-0">
+                    <Badge className="bg-secondary/10 text-secondary hover:bg-secondary/20 border-0">
                       {data.objetos.length} objeto(s)
                     </Badge>
                     {expandedUnidade === unidade ? (
-                      <ChevronDown className="h-5 w-5 text-[#64748b]" />
+                      <ChevronDown className="h-5 w-5 text-muted-foreground" />
                     ) : (
-                      <ChevronRight className="h-5 w-5 text-[#64748b]" />
+                      <ChevronRight className="h-5 w-5 text-muted-foreground" />
                     )}
                   </div>
                 </div>
@@ -334,10 +334,10 @@ export default function ObjetosConhecimentoPage() {
                   {data.objetos.map(obj => (
                     <div 
                       key={obj.id}
-                      className="p-4 rounded-xl border border-[#e2e8f0]/50 bg-white/50 hover:bg-[#f8fafc]/80 transition-all duration-200"
+                      className="p-4 rounded-xl border border-border/50 bg-card/50 hover:bg-primary-foreground/80 transition-all duration-200"
                     >
                       <div className="flex items-center justify-between">
-                        <p className="text-sm font-medium text-[#334155]">{obj.objeto_conhecimento}</p>
+                        <p className="text-sm font-medium text-foreground">{obj.objeto_conhecimento}</p>
                         <Badge variant="outline" className="text-xs">
                           {obj.habilidades_count} habilidade(s)
                         </Badge>
@@ -351,8 +351,8 @@ export default function ObjetosConhecimentoPage() {
         </div>
       )}
 
-      <div className="mt-8 p-5 bg-white/60 backdrop-blur-sm rounded-2xl border border-[#e2e8f0]/50 shadow-sm animate-fade-in-up delay-300">
-        <p className="text-sm text-[#64748b]">
+      <div className="mt-8 p-5 bg-card/60 backdrop-blur-sm rounded-2xl border border-border/50 shadow-sm animate-fade-in-up delay-300">
+        <p className="text-sm text-muted-foreground">
           Fonte: Base Nacional Comum Curricular (BNCC) - 2018
         </p>
       </div>

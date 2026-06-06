@@ -232,7 +232,7 @@ export default function BNCCConsultaPage() {
             <div>
               <label className="text-sm font-medium mb-2 block text-foreground">Etapa de Ensino</label>
               <Select value={etapa} onValueChange={setEtapa}>
-                <SelectTrigger className="border-2 border-[#e2e8f0] focus:border-[#1D3557] [&_svg:not([class*='rotate'])]:rotate-0">
+                <SelectTrigger className="border-2 border-border focus:border-primary [&_svg:not([class*='rotate'])]:rotate-0">
                   <SelectValue placeholder="Selecione" />
                 </SelectTrigger>
                 <SelectContent position="popper" side="bottom" sideOffset={5}>
@@ -267,7 +267,7 @@ export default function BNCCConsultaPage() {
               <div>
                 <label className="text-sm font-medium mb-2 block text-foreground">Faixa Etária</label>
                 <Select value={faixaEtaria} onValueChange={setFaixaEtaria}>
-                  <SelectTrigger className="border-2 border-[#e2e8f0] focus:border-[#1D3557] [&_svg:not([class*='rotate'])]:rotate-0">
+                  <SelectTrigger className="border-2 border-border focus:border-primary [&_svg:not([class*='rotate'])]:rotate-0">
                     <SelectValue placeholder="Todas" />
                   </SelectTrigger>
                   <SelectContent position="popper" side="bottom" sideOffset={5}>
@@ -284,7 +284,7 @@ export default function BNCCConsultaPage() {
               <div>
                 <label className="text-sm font-medium mb-2 block text-foreground">Disciplina</label>
                 <Select value={disciplina} onValueChange={setDisciplina}>
-                  <SelectTrigger className="border-2 border-[#e2e8f0] focus:border-[#1D3557] [&_svg:not([class*='rotate'])]:rotate-0">
+                  <SelectTrigger className="border-2 border-border focus:border-primary [&_svg:not([class*='rotate'])]:rotate-0">
                     <SelectValue placeholder="Todas" />
                   </SelectTrigger>
                   <SelectContent position="popper" side="bottom" sideOffset={5}>
@@ -301,7 +301,7 @@ export default function BNCCConsultaPage() {
               <div>
                 <label className="text-sm font-medium mb-2 block text-foreground">Área do Conhecimento</label>
                 <Select value={areaId} onValueChange={setAreaId}>
-                  <SelectTrigger className="border-2 border-[#e2e8f0] focus:border-[#1D3557] [&_svg:not([class*='rotate'])]:rotate-0">
+                  <SelectTrigger className="border-2 border-border focus:border-primary [&_svg:not([class*='rotate'])]:rotate-0">
                     <SelectValue placeholder="Todas" />
                   </SelectTrigger>
                   <SelectContent position="popper" side="bottom" sideOffset={5}>

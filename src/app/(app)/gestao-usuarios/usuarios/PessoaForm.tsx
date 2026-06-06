@@ -1204,7 +1204,7 @@ export function PessoaForm({ schoolId, person, onSaved, onCancel }: Props) {
             )}
 
             {vinculosProfissionais.map((v, idx) => (
-              <Card key={idx} className="border-[#cbd5e1] shadow-[0_2px_8px_rgba(0,0,0,0.06)]">
+              <Card key={idx} className="border-border shadow-[0_2px_8px_rgba(0,0,0,0.06)]">
                 <CardContent className="pt-4 space-y-4">
                   <div className="flex items-center justify-between">
                     <span className="text-sm font-semibold text-primary">Vínculo #{idx + 1}</span>

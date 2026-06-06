@@ -130,7 +130,7 @@ export default function MetodosAvaliacaoPage() {
         </div>
 
         {loading ? (
-          <Card className="border-[#cbd5e1] shadow-[0_2px_8px_rgba(0,0,0,0.06)] animate-fade-in-up">
+          <Card className="border-border shadow-[0_2px_8px_rgba(0,0,0,0.06)] animate-fade-in-up">
             <CardContent className="py-12">
               <div className="space-y-3">
                 {[1, 2, 3].map((i) => (
@@ -156,7 +156,7 @@ export default function MetodosAvaliacaoPage() {
             </CardContent>
           </Card>
         ) : (
-          <Card className="border-[#cbd5e1] shadow-[0_2px_8px_rgba(0,0,0,0.06)] animate-fade-in-up">
+          <Card className="border-border shadow-[0_2px_8px_rgba(0,0,0,0.06)] animate-fade-in-up">
             <CardContent className="p-0">
               <Table>
                 <TableHeader>

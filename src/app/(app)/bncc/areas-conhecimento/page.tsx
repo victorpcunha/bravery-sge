@@ -86,7 +86,7 @@ export default function AreasConhecimentoPage() {
             <div>
               <label className="text-sm font-medium mb-2 block text-foreground">Tipo de Ensino</label>
               <Select value={tipoEnsino} onValueChange={(v) => { setTipoEnsino(v); setSelectedArea(null) }}>
-                <SelectTrigger className="border-2 border-[#e2e8f0] focus:border-[#1D3557] [&_svg:not([class*='rotate'])]:rotate-0">
+                <SelectTrigger className="border-2 border-border focus:border-primary [&_svg:not([class*='rotate'])]:rotate-0">
                   <SelectValue placeholder="Selecione" />
                 </SelectTrigger>
                 <SelectContent position="popper" side="bottom" sideOffset={5}>
@@ -98,7 +98,7 @@ export default function AreasConhecimentoPage() {
             <div>
               <label className="text-sm font-medium mb-2 block text-foreground">Área do Conhecimento</label>
               <Select value={selectedArea || ''} onValueChange={setSelectedArea}>
-                <SelectTrigger className="border-2 border-[#e2e8f0] focus:border-[#1D3557] [&_svg:not([class*='rotate'])]:rotate-0">
+                <SelectTrigger className="border-2 border-border focus:border-primary [&_svg:not([class*='rotate'])]:rotate-0">
                   <SelectValue placeholder="Selecione" />
                 </SelectTrigger>
                 <SelectContent position="popper" side="bottom" sideOffset={5}>

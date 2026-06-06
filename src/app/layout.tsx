@@ -1,11 +1,16 @@
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
+import { Plus_Jakarta_Sans } from "next/font/google";
 import "./globals.css";
 import { cn } from "@/lib/utils";
 import { AuthProvider } from "@/components/providers/auth-provider";
 import { Toaster } from "@/components/ui/sonner";
+import { ThemeProvider } from "next-themes";
 
-const inter = Inter({subsets:['latin'],variable:'--font-sans'});
+const plusJakarta = Plus_Jakarta_Sans({
+  subsets: ['latin'],
+  variable: '--font-sans',
+  weight: ['400', '500', '600', '700'],
+});
 
 export const metadata: Metadata = {
   title: "Bravery SGE - Sistema de Gestão Escolar",
@@ -20,13 +25,16 @@ export default function RootLayout({
   return (
     <html
       lang="pt-BR"
-      className={cn("h-full", "antialiased", "font-sans", inter.variable)}
+      className={cn("h-full", "antialiased", plusJakarta.variable)}
+      suppressHydrationWarning
     >
-      <body className="min-h-full flex flex-col" suppressHydrationWarning>
-        <AuthProvider>
-          {children}
-          <Toaster position="top-center" richColors />
-        </AuthProvider>
+      <body className="min-h-full flex flex-col">
+        <ThemeProvider attribute="class" defaultTheme="light" enableSystem={false}>
+          <AuthProvider>
+            {children}
+            <Toaster position="top-center" richColors />
+          </AuthProvider>
+        </ThemeProvider>
       </body>
     </html>
   );

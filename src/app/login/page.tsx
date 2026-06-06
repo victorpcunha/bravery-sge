@@ -65,19 +65,19 @@ export default function LoginPage() {
       <div className="w-full max-w-md animate-scale-in">
         <div className="text-center mb-8">
           <div className="flex items-center justify-center gap-2 mb-4">
-            <div className="w-14 h-14 bg-gradient-to-br from-[#1D3557] to-[#457B9D] rounded-2xl flex items-center justify-center shadow-lg shadow-blue-500/20">
+            <div className="w-14 h-14 bg-gradient-to-br from-primary to-accent rounded-2xl flex items-center justify-center shadow-lg shadow-blue-500/20">
               <School className="w-8 h-8 text-white" />
             </div>
           </div>
-          <h1 className="text-2xl font-bold text-[#0f172a]">Bravery SGE</h1>
-          <p className="text-[#64748b]">Sistema de Gestão Escolar</p>
+          <h1 className="text-2xl font-bold text-foreground">Bravery SGE</h1>
+          <p className="text-muted-foreground">Sistema de Gestão Escolar</p>
         </div>
 
         <Card className="border-0 shadow-xl card-glass">
-          <div className="h-1.5 bg-gradient-to-r from-[#1D3557] via-[#457B9D] to-[#4FB3BF] rounded-t-lg" />
+          <div className="h-1.5 bg-gradient-to-r from-primary via-accent to-ring rounded-t-lg" />
           <CardHeader className="pb-2">
-            <CardTitle className="text-xl font-semibold text-[#0f172a]">Acessar Sistema</CardTitle>
-            <CardDescription className="text-[#64748b]">
+            <CardTitle className="text-xl font-semibold text-foreground">Acessar Sistema</CardTitle>
+            <CardDescription className="text-muted-foreground">
               Informe suas credenciais para entrar
             </CardDescription>
           </CardHeader>
@@ -85,7 +85,7 @@ export default function LoginPage() {
             <Form {...form}>
               <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
                 {error && (
-                  <div className="p-3 text-sm text-[#dc2626] bg-red-50 border border-red-100 rounded-lg">
+                  <div className="p-3 text-sm text-destructive bg-red-50 border border-red-100 rounded-lg">
                     {error}
                   </div>
                 )}
@@ -95,13 +95,13 @@ export default function LoginPage() {
                   name="email"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="text-[#334155]">CPF ou E-mail</FormLabel>
+                      <FormLabel className="text-foreground">CPF ou E-mail</FormLabel>
                       <FormControl>
                         <div className="relative">
-                          <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[#64748b]" />
+                          <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                           <Input
                             placeholder="000.000.000-00 ou email@exemplo.com"
-                            className="pl-10 bg-white/80 border-[#e2e8f0] focus:border-[#1D3557] focus:ring-[#1D3557]/20"
+                            className="pl-10 bg-white/80 border-border focus:border-primary focus:ring-primary/20"
                             {...field}
                           />
                         </div>
@@ -116,14 +116,14 @@ export default function LoginPage() {
                   name="password"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="text-[#334155]">Senha</FormLabel>
+                      <FormLabel className="text-foreground">Senha</FormLabel>
                       <FormControl>
                         <div className="relative">
-                          <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[#64748b]" />
+                          <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                           <Input
                             type="password"
                             placeholder="••••••"
-                            className="pl-10 bg-white/80 border-[#e2e8f0] focus:border-[#1D3557] focus:ring-[#1D3557]/20"
+                            className="pl-10 bg-white/80 border-border focus:border-primary focus:ring-primary/20"
                             {...field}
                           />
                         </div>
@@ -135,7 +135,7 @@ export default function LoginPage() {
 
                 <Button 
                   type="submit" 
-                  className="w-full bg-gradient-to-r from-[#1D3557] to-[#16304a] hover:from-[#16304a] hover:to-[#1D3557] shadow-lg shadow-blue-500/20 hover:shadow-xl hover:shadow-blue-500/30 transition-all duration-200" 
+                  className="w-full bg-gradient-to-r from-primary to-primary/80 hover:from-primary/80 hover:to-primary shadow-lg shadow-blue-500/20 hover:shadow-xl hover:shadow-blue-500/30 transition-all duration-200" 
                   disabled={isSubmitting}
                 >
                   {isSubmitting ? (
@@ -152,7 +152,7 @@ export default function LoginPage() {
           </CardContent>
         </Card>
 
-        <p className="text-center text-sm text-[#64748b] mt-6">
+        <p className="text-center text-sm text-muted-foreground mt-6">
           Acesso restrito a usuários autorizados
         </p>
       </div>

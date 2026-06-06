@@ -487,7 +487,7 @@ function MatrizCard({ matriz, onToggle, onDelete, onEdit, disabled }: {
   const fmt = (d: string) => new Date(d).toLocaleDateString('pt-BR')
 
   return (
-    <div className="p-4 rounded-xl border transition-all border-border bg-white hover:border-[#cbd5e1]">
+    <div className="p-4 rounded-xl border transition-all border-border bg-card hover:border-border">
       <div className="flex items-start justify-between">
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-2">

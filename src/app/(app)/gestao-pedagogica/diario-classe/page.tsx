@@ -10,6 +10,7 @@ import { getAnosLetivosAtivos } from '@/lib/actions/quadro-aulas'
 import { getFirstSchool } from '@/lib/actions/schools'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { BookOpen, Users, GraduationCap, ChevronRight, Search } from 'lucide-react'
 import { Skeleton } from '@/components/ui/skeleton'
 
@@ -60,16 +61,16 @@ export default function DiarioClassePage() {
 
         <div className="mb-6">
           <label className="text-sm font-medium text-foreground block mb-2">Ano Letivo</label>
-          <select
-            value={anoLetivoId}
-            onChange={e => setAnoLetivoId(e.target.value)}
-            className="w-full max-w-xs h-10 px-3 rounded-lg border border-slate-300 bg-white text-sm"
-          >
-            <option value="">Selecione o ano letivo</option>
-            {anosLetivos.map((a: any) => (
-              <option key={a.id} value={a.id}>{a.descricao || a.ano}</option>
-            ))}
-          </select>
+          <Select value={anoLetivoId} onValueChange={setAnoLetivoId}>
+            <SelectTrigger className="w-full max-w-xs">
+              <SelectValue placeholder="Selecione o ano letivo" />
+            </SelectTrigger>
+            <SelectContent>
+              {anosLetivos.map((a: any) => (
+                <SelectItem key={a.id} value={a.id}>{a.descricao || a.ano}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
 
         {!anoLetivoId && !loading && (
@@ -99,7 +100,7 @@ export default function DiarioClassePage() {
             {turmas.map(turma => (
               <Card
                 key={turma.id}
-                className="cursor-pointer hover:shadow-md transition-all border-slate-200 hover:border-primary/30"
+                className="cursor-pointer hover:shadow-md transition-all border-border hover:border-primary/30"
                 onClick={() => router.push(`/gestao-pedagogica/diario-classe/${turma.id}`)}
               >
                 <CardContent className="p-4 flex items-center justify-between">

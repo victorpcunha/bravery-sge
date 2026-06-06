@@ -75,7 +75,7 @@ export function PerfilForm({ perfil, recursos, onSave, onCancel, saving }: Perfi
   return (
     <div className="space-y-6 py-4">
       {/* Card Identificação */}
-      <div className="border border-[#cbd5e1] rounded-lg p-5 bg-slate-50/40 space-y-4">
+      <div className="border border-border rounded-lg p-5 bg-slate-50/40 space-y-4">
         <h3 className="text-sm font-semibold text-foreground uppercase tracking-wider flex items-center gap-2">
           <Shield className="h-4 w-4 text-primary" />
           Identificação
@@ -132,7 +132,7 @@ export function PerfilForm({ perfil, recursos, onSave, onCancel, saving }: Perfi
       <Separator />
 
       {/* Card Permissões */}
-      <div className="border border-[#cbd5e1] rounded-lg p-5 bg-slate-50/40 space-y-4">
+      <div className="border border-border rounded-lg p-5 bg-slate-50/40 space-y-4">
         <h3 className="text-sm font-semibold text-foreground uppercase tracking-wider flex items-center gap-2">
           <Shield className="h-4 w-4 text-primary" />
           Permissões de Acesso

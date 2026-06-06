@@ -38,10 +38,10 @@ export default function GestaoAcademicaPage() {
 
   if (loading || !schoolId) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-[#f8fafc]">
+      <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#1D3557] mx-auto mb-4"></div>
-          <p className="text-[#64748b]">Carregando...</p>
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+          <p className="text-muted-foreground">Carregando...</p>
         </div>
       </div>
     )
@@ -52,8 +52,8 @@ export default function GestaoAcademicaPage() {
       <Sidebar />
       <div className="md:pl-64 container mx-auto py-8 px-4">
         <div className="mb-8 animate-fade-in-up">
-          <h1 className="text-3xl font-bold text-[#0f172a]">Gestão Acadêmica</h1>
-          <p className="text-[#64748b] mt-1">
+          <h1 className="text-3xl font-bold text-foreground">Gestão Acadêmica</h1>
+          <p className="text-muted-foreground mt-1">
             Configure a estrutura acadêmica da escola
           </p>
         </div>

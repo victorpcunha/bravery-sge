@@ -384,7 +384,7 @@ export function MetodosForm({ schoolId, editId, onSaved, onCancel }: Props) {
 
   return (
     <div className="space-y-6 [&_[data-slot='input']]:border-slate-300 [&_[data-slot='input']]:focus-visible:border-primary [&_[data-slot='input']]:focus-visible:ring-2 [&_[data-slot='input']]:focus-visible:ring-primary/20 [&_[data-slot='checkbox']]:border-slate-300 [&_[data-slot='checkbox']]:data-[state=checked]:border-primary">
-      <Card className="border-[#cbd5e1] shadow-[0_2px_8px_rgba(0,0,0,0.06)]">
+      <Card className="border-border shadow-[0_2px_8px_rgba(0,0,0,0.06)]">
         <CardHeader className="border-b border-slate-100 pb-4"><CardTitle className="text-base font-semibold text-slate-800">Identificação</CardTitle></CardHeader>
         <CardContent className="space-y-5 px-6 pb-6 pt-0">
           <div className="space-y-2">
@@ -469,7 +469,7 @@ export function MetodosForm({ schoolId, editId, onSaved, onCancel }: Props) {
 
       {form.tipos_avaliacao.numerico && (
         <>
-          <Card className="border-[#cbd5e1] shadow-[0_2px_8px_rgba(0,0,0,0.06)]">
+          <Card className="border-border shadow-[0_2px_8px_rgba(0,0,0,0.06)]">
             <CardHeader className="border-b border-slate-100 pb-4"><CardTitle className="text-base font-semibold text-slate-800">Configuração de Avaliações Numéricas</CardTitle></CardHeader>
             <CardContent className="space-y-5 px-6 pb-6 pt-0">
               <div className="grid grid-cols-2 gap-4">
@@ -568,7 +568,7 @@ export function MetodosForm({ schoolId, editId, onSaved, onCancel }: Props) {
           </Card>
 
           {form.limitar_avaliacoes && (
-            <Card className="border-[#cbd5e1] shadow-[0_2px_8px_rgba(0,0,0,0.06)]">
+            <Card className="border-border shadow-[0_2px_8px_rgba(0,0,0,0.06)]">
               <CardHeader className="border-b border-slate-100 pb-4"><CardTitle className="text-base font-semibold text-slate-800">Avaliações</CardTitle></CardHeader>
               <CardContent className="space-y-4 px-6 pb-6 pt-0">
                 {form.avaliacoes_list.map((av, i) => (
@@ -630,7 +630,7 @@ export function MetodosForm({ schoolId, editId, onSaved, onCancel }: Props) {
             </Card>
           )}
 
-          <Card className="border-[#cbd5e1] shadow-[0_2px_8px_rgba(0,0,0,0.06)]">
+          <Card className="border-border shadow-[0_2px_8px_rgba(0,0,0,0.06)]">
             <CardHeader className="border-b border-slate-100 pb-4"><CardTitle className="text-base font-semibold text-slate-800">Aprovações</CardTitle></CardHeader>
             <CardContent className="space-y-5 px-6 pb-6 pt-0">
               <div>
@@ -707,7 +707,7 @@ export function MetodosForm({ schoolId, editId, onSaved, onCancel }: Props) {
             </CardContent>
           </Card>
 
-          <Card className="border-[#cbd5e1] shadow-[0_2px_8px_rgba(0,0,0,0.06)]">
+          <Card className="border-border shadow-[0_2px_8px_rgba(0,0,0,0.06)]">
             <CardHeader className="border-b border-slate-100 pb-4"><CardTitle className="text-base font-semibold text-slate-800">Configuração de Arredondamento</CardTitle></CardHeader>
             <CardContent className="space-y-5 px-6 pb-6 pt-0">
               <div className="w-1/3 space-y-2">
@@ -770,7 +770,7 @@ export function MetodosForm({ schoolId, editId, onSaved, onCancel }: Props) {
       )}
 
       {form.tipos_avaliacao.parecer && (
-        <Card className="border-[#cbd5e1] shadow-[0_2px_8px_rgba(0,0,0,0.06)]">
+        <Card className="border-border shadow-[0_2px_8px_rgba(0,0,0,0.06)]">
           <CardHeader className="border-b border-slate-100 pb-4"><CardTitle className="text-base font-semibold text-slate-800">Configuração de Pareceres Descritivos</CardTitle></CardHeader>
           <CardContent>
             <div className="flex items-center gap-2">
@@ -785,7 +785,7 @@ export function MetodosForm({ schoolId, editId, onSaved, onCancel }: Props) {
       )}
 
       {form.tipos_avaliacao.conceito && (
-        <Card className="border-[#cbd5e1] shadow-[0_2px_8px_rgba(0,0,0,0.06)]">
+        <Card className="border-border shadow-[0_2px_8px_rgba(0,0,0,0.06)]">
           <CardHeader className="flex flex-row items-center justify-between border-b border-slate-100 pb-4">
             <CardTitle className="text-base font-semibold text-slate-800">Configurações de Conceitos</CardTitle>
           </CardHeader>
@@ -837,7 +837,7 @@ export function MetodosForm({ schoolId, editId, onSaved, onCancel }: Props) {
       )}
 
       {form.tipos_avaliacao.nivel && (
-        <Card className="border-[#cbd5e1] shadow-[0_2px_8px_rgba(0,0,0,0.06)]">
+        <Card className="border-border shadow-[0_2px_8px_rgba(0,0,0,0.06)]">
           <CardHeader className="border-b border-slate-100 pb-4"><CardTitle className="text-base font-semibold text-slate-800">Configuração de Níveis de Desenvolvimento</CardTitle></CardHeader>
           <CardContent>
             <CardNiveisList
@@ -849,7 +849,7 @@ export function MetodosForm({ schoolId, editId, onSaved, onCancel }: Props) {
         </Card>
       )}
 
-      <div className="flex justify-end gap-3 sticky bottom-0 bg-white py-4 px-2 -mx-4 -mb-4 border-t border-slate-200 shadow-[0_-4px_12px_rgba(0,0,0,0.04)]">
+      <div className="flex justify-end gap-3 sticky bottom-0 bg-card py-4 px-2 -mx-4 -mb-4 border-t border-border shadow-[0_-4px_12px_rgba(0,0,0,0.04)]">
         <Button variant="outline" onClick={onCancel} className="border-slate-300 hover:bg-slate-50">Cancelar</Button>
         <Button onClick={handleSave} disabled={saving} className="bg-primary hover:bg-primary/90 min-w-[140px] shadow-sm shadow-primary/20">
           {saving ? 'Salvando...' : form.id ? 'Atualizar' : 'Salvar'}

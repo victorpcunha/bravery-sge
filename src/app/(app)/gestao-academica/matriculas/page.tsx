@@ -132,7 +132,7 @@ export default function MatriculasPage() {
           </p>
         </div>
         <Link href="/gestao-academica/matriculas/cadastro">
-          <Button className="bg-[#1D3557] hover:bg-[#2d4a6f] text-white">
+          <Button className="bg-primary hover:bg-primary/90 text-white">
             <Plus className="h-4 w-4 mr-1.5" />
             Nova Matrícula
           </Button>
@@ -140,7 +140,7 @@ export default function MatriculasPage() {
       </div>
 
       {/* Filtros */}
-      <Card className="border-[#cbd5e1] shadow-[0_2px_8px_rgba(0,0,0,0.06)] mb-6">
+      <Card className="border-border shadow-[0_2px_8px_rgba(0,0,0,0.06)] mb-6">
         <CardHeader className="bg-slate-50/40 border-b border-slate-200 py-3">
           <CardTitle className="text-sm font-medium text-slate-600">Filtros</CardTitle>
         </CardHeader>
@@ -192,7 +192,7 @@ export default function MatriculasPage() {
       </Card>
 
       {/* Listagem */}
-      <Card className="border-[#cbd5e1] shadow-[0_2px_8px_rgba(0,0,0,0.06)]">
+      <Card className="border-border shadow-[0_2px_8px_rgba(0,0,0,0.06)]">
         <CardHeader className="bg-slate-50/40 border-b border-slate-200 py-3">
           <CardTitle className="text-sm font-medium text-slate-600">
             {matriculas.length} matrícula{matriculas.length !== 1 ? 's' : ''} encontrada{matriculas.length !== 1 ? 's' : ''}

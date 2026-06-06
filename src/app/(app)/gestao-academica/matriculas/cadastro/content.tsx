@@ -555,7 +555,7 @@ export default function MatriculaCadastroContent({ searchParams }: { searchParam
 
       <div className="space-y-6 pb-20">
         {/* Card Principal */}
-        <Card className="border-[#cbd5e1] shadow-[0_2px_8px_rgba(0,0,0,0.06)]">
+        <Card className="border-border shadow-[0_2px_8px_rgba(0,0,0,0.06)]">
           <CardHeader className="bg-slate-50/40 border-b border-slate-200 py-3">
             <CardTitle className="text-sm font-medium text-slate-600">Dados da Matrícula</CardTitle>
           </CardHeader>
@@ -679,7 +679,7 @@ export default function MatriculaCadastroContent({ searchParams }: { searchParam
         </Card>
 
         {/* Card Transporte Escolar */}
-        <Card className="border-[#cbd5e1] shadow-[0_2px_8px_rgba(0,0,0,0.06)]">
+        <Card className="border-border shadow-[0_2px_8px_rgba(0,0,0,0.06)]">
           <CardHeader className="bg-slate-50/40 border-b border-slate-200 py-3">
             <CardTitle className="text-sm font-medium text-slate-600 flex items-center gap-2">
               <Bus className="h-4 w-4 text-slate-400" />
@@ -738,7 +738,7 @@ export default function MatriculaCadastroContent({ searchParams }: { searchParam
         </Card>
 
         {/* Card Disciplinas */}
-        <Card className="border-[#cbd5e1] shadow-[0_2px_8px_rgba(0,0,0,0.06)]">
+        <Card className="border-border shadow-[0_2px_8px_rgba(0,0,0,0.06)]">
           <CardHeader className="bg-slate-50/40 border-b border-slate-200 py-3">
             <CardTitle className="text-sm font-medium text-slate-600 flex items-center gap-2">
               <BookOpen className="h-4 w-4 text-slate-400" />
@@ -811,7 +811,7 @@ export default function MatriculaCadastroContent({ searchParams }: { searchParam
 
         {/* Card Movimentações (apenas edição) */}
         {isEditing && (
-          <Card className="border-[#cbd5e1] shadow-[0_2px_8px_rgba(0,0,0,0.06)]">
+          <Card className="border-border shadow-[0_2px_8px_rgba(0,0,0,0.06)]">
             <CardHeader className="bg-slate-50/40 border-b border-slate-200 py-3">
               <CardTitle className="text-sm font-medium text-slate-600 flex items-center gap-2">
                 <History className="h-4 w-4 text-slate-400" />
@@ -892,7 +892,7 @@ export default function MatriculaCadastroContent({ searchParams }: { searchParam
       {/* Botão Salvar fixo */}
       <div className="fixed bottom-6 right-6 z-10">
         <Button onClick={handleSave} disabled={saving}
-          className="bg-[#1D3557] hover:bg-[#2d4a6f] text-white shadow-lg rounded-full px-6">
+          className="bg-primary hover:bg-primary/90 text-white shadow-lg rounded-full px-6">
           <Save className="h-4 w-4 mr-2" />
           {saving ? 'Salvando...' : 'Salvar'}
         </Button>
@@ -920,7 +920,7 @@ export default function MatriculaCadastroContent({ searchParams }: { searchParam
           </div>
           <DialogFooter className="gap-2">
             <Button variant="outline" onClick={() => { setModalTransferencia(false); resetMovForm() }} className="border-slate-300">Cancelar</Button>
-            <Button onClick={confirmarTransferencia} className="bg-[#1D3557] hover:bg-[#2d4a6f] text-white">Confirmar</Button>
+            <Button onClick={confirmarTransferencia} className="bg-primary hover:bg-primary/90 text-white">Confirmar</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -973,7 +973,7 @@ export default function MatriculaCadastroContent({ searchParams }: { searchParam
           </div>
           <DialogFooter className="gap-2">
             <Button variant="outline" onClick={() => { setModalReclassificar(false); resetMovForm() }} className="border-slate-300">Cancelar</Button>
-            <Button onClick={confirmarReclassificacao} className="bg-[#1D3557] hover:bg-[#2d4a6f] text-white">Confirmar</Button>
+            <Button onClick={confirmarReclassificacao} className="bg-primary hover:bg-primary/90 text-white">Confirmar</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -1013,7 +1013,7 @@ export default function MatriculaCadastroContent({ searchParams }: { searchParam
           </div>
           <DialogFooter className="gap-2">
             <Button variant="outline" onClick={() => { setModalRemanejar(false); resetMovForm() }} className="border-slate-300">Cancelar</Button>
-            <Button onClick={confirmarRemanejamento} className="bg-[#1D3557] hover:bg-[#2d4a6f] text-white">Confirmar</Button>
+            <Button onClick={confirmarRemanejamento} className="bg-primary hover:bg-primary/90 text-white">Confirmar</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -1053,7 +1053,7 @@ export default function MatriculaCadastroContent({ searchParams }: { searchParam
           </div>
           <DialogFooter className="gap-2">
             <Button variant="outline" onClick={() => { setModalDesistencia(false); resetMovForm() }} className="border-slate-300">Cancelar</Button>
-            <Button onClick={confirmarDesistencia} className="bg-[#1D3557] hover:bg-[#2d4a6f] text-white">Confirmar</Button>
+            <Button onClick={confirmarDesistencia} className="bg-primary hover:bg-primary/90 text-white">Confirmar</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

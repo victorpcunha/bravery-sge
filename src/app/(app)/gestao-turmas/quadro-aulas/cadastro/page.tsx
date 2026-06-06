@@ -476,7 +476,7 @@ function CadastroForm() {
       </div>
 
       {/* Card Identificação */}
-      <Card className="border-[#cbd5e1] shadow-[0_2px_8px_rgba(0,0,0,0.06)] mb-6">
+      <Card className="border-border shadow-[0_2px_8px_rgba(0,0,0,0.06)] mb-6">
         <CardHeader className="bg-slate-50/40 border-b border-slate-200">
           <CardTitle className="text-base font-medium text-slate-700 flex items-center gap-2">
             <Calendar className="h-4 w-4" />
@@ -604,7 +604,7 @@ function CadastroForm() {
           {/* Botão Gerar */}
           <div className="mt-5 pt-4 border-t border-slate-200">
             <Button
-              className="bg-[#1D3557] hover:bg-[#2d4a6f] text-white"
+              className="bg-primary hover:bg-primary/90 text-white"
               onClick={handleGerarGrade}
               disabled={!turmaId}
             >
@@ -620,7 +620,7 @@ function CadastroForm() {
 
       {/* Card Quadro de Aulas */}
       {gradeGerada && slots.length > 0 && (
-        <Card className="border-[#cbd5e1] shadow-[0_2px_8px_rgba(0,0,0,0.06)] mb-6">
+<Card className="border-border shadow-[0_2px_8px_rgba(0,0,0,0.06)] mb-6">
           <CardHeader className="bg-slate-50/40 border-b border-slate-200">
             <CardTitle className="text-base font-medium text-slate-700 flex items-center gap-2">
               <Clock className="h-4 w-4" />
@@ -742,7 +742,7 @@ function CadastroForm() {
             Cancelar
           </Button>
           <Button
-            className="bg-[#1D3557] hover:bg-[#2d4a6f] text-white"
+            className="bg-primary hover:bg-primary/90 text-white"
             onClick={handleSalvar}
             disabled={saving}
           >

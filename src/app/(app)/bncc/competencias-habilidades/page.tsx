@@ -142,7 +142,7 @@ export default function CompetenciasHabilidadesPage() {
             <div>
               <label className="text-sm font-medium mb-2 block text-foreground">Área do Conhecimento</label>
               <Select value={selectedArea} onValueChange={setSelectedArea}>
-                <SelectTrigger className="border-2 border-[#e2e8f0] focus:border-[#1D3557] [&_svg:not([class*='rotate'])]:rotate-0"><SelectValue placeholder="Selecione" /></SelectTrigger>
+                <SelectTrigger className="border-2 border-border focus:border-primary [&_svg:not([class*='rotate'])]:rotate-0"><SelectValue placeholder="Selecione" /></SelectTrigger>
                 <SelectContent position="popper" side="bottom" sideOffset={5}>
                   {areas.map((a: any) => <SelectItem key={a.id} value={a.id}>{a.nome}</SelectItem>)}
                 </SelectContent>
@@ -152,7 +152,7 @@ export default function CompetenciasHabilidadesPage() {
               <div>
                 <label className="text-sm font-medium mb-2 block text-foreground">Componente</label>
                 <Select value={componente} onValueChange={setComponente}>
-                  <SelectTrigger className="border-2 border-[#e2e8f0] focus:border-[#1D3557] [&_svg:not([class*='rotate'])]:rotate-0"><SelectValue /></SelectTrigger>
+                  <SelectTrigger className="border-2 border-border focus:border-primary [&_svg:not([class*='rotate'])]:rotate-0"><SelectValue /></SelectTrigger>
                   <SelectContent position="popper" side="bottom" sideOffset={5}>
                     <SelectItem value="geral">Geral</SelectItem>
                     <SelectItem value="lingua_portuguesa">Língua Portuguesa</SelectItem>

@@ -237,7 +237,7 @@ export default function DisciplinasPage() {
   if (authLoading || loadingPage) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#1D3557]"></div>
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
       </div>
     )
   }
@@ -245,39 +245,39 @@ export default function DisciplinasPage() {
   if (!user) return null
 
   return (
-    <div className="min-h-screen bg-[#f8fafc]">
+    <div className="min-h-screen bg-background">
       <Sidebar />
       
       <div className="ml-64 p-8">
         <div className="max-w-6xl mx-auto">
           {/* Header */}
           <div className="mb-8">
-            <div className="flex items-center gap-2 text-sm text-[#64748b] mb-2">
-              <button onClick={() => router.push('/gestao-pedagogica')} className="hover:text-[#1D3557]">
+            <div className="flex items-center gap-2 text-sm text-muted-foreground mb-2">
+              <button onClick={() => router.push('/gestao-pedagogica')} className="hover:text-primary">
                 Gestão Pedagógica
               </button>
               <span>/</span>
-              <span className="text-[#1D3557] font-medium">Disciplinas</span>
+              <span className="text-primary font-medium">Disciplinas</span>
             </div>
-            <h1 className="text-2xl font-bold text-[#1D3557]">Disciplinas</h1>
-            <p className="text-[#64748b]">Gerencie as disciplinas ofertadas pela escola</p>
+            <h1 className="text-2xl font-bold text-primary">Disciplinas</h1>
+            <p className="text-muted-foreground">Gerencie as disciplinas ofertadas pela escola</p>
           </div>
 
           {/* Barra de busca e filtros */}
-          <div className="bg-white rounded-lg shadow-sm border border-[#e2e8f0] p-4 mb-6">
+          <div className="bg-card rounded-lg shadow-sm border border-border p-4 mb-6">
             <div className="flex items-center gap-4">
               <div className="flex-1 relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#94a3b8]" />
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                 <Input
                   placeholder="Buscar por nome ou sigla..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10 border-2 border-[#cbd5e1] focus:border-[#1D3557]"
+                  className="pl-10 border-2 border-border focus:border-primary"
                 />
               </div>
               
               <Select value={filtroAtivo} onValueChange={(v: any) => setFiltroAtivo(v)}>
-                <SelectTrigger className="w-40 border-2 border-[#cbd5e1]">
+                <SelectTrigger className="w-40 border-2 border-border">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -289,7 +289,7 @@ export default function DisciplinasPage() {
 
               <Button 
                 onClick={openCreateModal}
-                className="bg-[#1D3557] hover:bg-[#163454]"
+                className="bg-primary hover:bg-primary/90"
               >
                 <Plus className="w-4 h-4 mr-2" />
                 Nova Disciplina
@@ -298,43 +298,43 @@ export default function DisciplinasPage() {
           </div>
 
           {/* Lista de Disciplinas */}
-          <div className="bg-white rounded-lg shadow-sm border border-[#e2e8f0] overflow-hidden">
+          <div className="bg-card rounded-lg shadow-sm border border-border overflow-hidden">
             <table className="w-full">
-              <thead className="bg-[#f8fafc] border-b border-[#e2e8f0]">
+              <thead className="bg-muted border-b border-border">
                 <tr>
-                  <th className="text-left p-4 text-sm font-semibold text-[#334155]">Nome</th>
-                  <th className="text-left p-4 text-sm font-semibold text-[#334155]">Sigla</th>
-                  <th className="text-left p-4 text-sm font-semibold text-[#334155]">Área</th>
-                  <th className="text-left p-4 text-sm font-semibold text-[#334155]">Código INEP</th>
-                  <th className="text-left p-4 text-sm font-semibold text-[#334155]">Diretriz</th>
-                  <th className="text-center p-4 text-sm font-semibold text-[#334155]">Status</th>
-                  <th className="text-center p-4 text-sm font-semibold text-[#334155]">Ações</th>
+                  <th className="text-left p-4 text-sm font-semibold text-foreground/80">Nome</th>
+                  <th className="text-left p-4 text-sm font-semibold text-foreground/80">Sigla</th>
+                  <th className="text-left p-4 text-sm font-semibold text-foreground/80">Área</th>
+                  <th className="text-left p-4 text-sm font-semibold text-foreground/80">Código INEP</th>
+                  <th className="text-left p-4 text-sm font-semibold text-foreground/80">Diretriz</th>
+                  <th className="text-center p-4 text-sm font-semibold text-foreground/80">Status</th>
+                  <th className="text-center p-4 text-sm font-semibold text-foreground/80">Ações</th>
                 </tr>
               </thead>
               <tbody>
                 {filteredDisciplinas.length === 0 ? (
                   <tr>
-                    <td colSpan={7} className="p-8 text-center text-[#64748b]">
+                    <td colSpan={7} className="p-8 text-center text-muted-foreground">
                       Nenhuma disciplina encontrada
                     </td>
                   </tr>
                 ) : (
                   filteredDisciplinas.map((disciplina) => (
-                    <tr key={disciplina.id} className="border-b border-[#e2e8f0] hover:bg-[#f8fafc]">
+                    <tr key={disciplina.id} className="border-b border-border hover:bg-muted">
                       <td className="p-4">
                         <div className="flex items-center gap-2">
                           {disciplina.is_padrao_mec && (
-                            <span className="text-xs bg-[#457B9D] text-white px-2 py-0.5 rounded">MEC</span>
+                            <span className="text-xs bg-accent text-accent-foreground px-2 py-0.5 rounded">MEC</span>
                           )}
-                          <span className="text-[#334155] font-medium">{disciplina.nome}</span>
+                          <span className="text-foreground/80 font-medium">{disciplina.nome}</span>
                         </div>
                       </td>
-                      <td className="p-4 text-[#64748b]">{disciplina.sigla || '-'}</td>
-                      <td className="p-4 text-[#64748b]">
+                      <td className="p-4 text-muted-foreground">{disciplina.sigla || '-'}</td>
+                      <td className="p-4 text-muted-foreground">
                         {areas.find(a => a.id === Number(disciplina.area_codigo))?.nome || '-'}
                       </td>
-                      <td className="p-4 text-[#64748b]">{disciplina.codigo_inep || '-'}</td>
-                      <td className="p-4 text-[#64748b]">
+                      <td className="p-4 text-muted-foreground">{disciplina.codigo_inep || '-'}</td>
+                      <td className="p-4 text-muted-foreground">
                         {disciplina.diretriz_curricular === 'bncc' && 'BNCC'}
                         {disciplina.diretriz_curricular === 'parte_diversificada' && 'Parte Diversificada'}
                         {disciplina.diretriz_curricular === 'nenhuma' && '-'}
@@ -353,7 +353,7 @@ export default function DisciplinasPage() {
                           <Button
                             variant="ghost"
                             size="icon-sm"
-                            className="h-8 w-8 text-[#64748b] hover:text-[#1D3557]"
+                            className="h-8 w-8 text-muted-foreground hover:text-primary"
                             onClick={() => openEditModal(disciplina)}
                           >
                             <Pencil className="w-4 h-4" />
@@ -363,7 +363,7 @@ export default function DisciplinasPage() {
                               <Button
                                 variant="ghost"
                                 size="icon-sm"
-                                className="h-8 w-8 text-[#64748b] hover:text-red-600"
+                                className="h-8 w-8 text-muted-foreground hover:text-destructive"
                                 onClick={() => handleInativar(disciplina)}
                               >
                                 <Trash2 className="w-4 h-4" />
@@ -372,7 +372,7 @@ export default function DisciplinasPage() {
                               <Button
                                 variant="ghost"
                                 size="icon-sm"
-                                className="h-8 w-8 text-[#64748b] hover:text-green-600"
+                                className="h-8 w-8 text-muted-foreground hover:text-success"
                                 onClick={() => openAtivarModal(disciplina)}
                               >
                                 <Plus className="w-4 h-4" />
@@ -394,27 +394,27 @@ export default function DisciplinasPage() {
       <Dialog open={showModal} onOpenChange={(open) => !open && setShowModal(false)}>
         <DialogContent className="max-w-lg">
           <DialogHeader>
-            <DialogTitle className="text-lg font-semibold text-[#0f172a]">
+            <DialogTitle className="text-lg font-semibold text-foreground">
               {editando ? 'Editar Disciplina' : 'Nova Disciplina'}
             </DialogTitle>
           </DialogHeader>
 
           <div className="space-y-4 py-4">
             <div>
-              <Label className="text-[#334155] font-medium block mb-2">
-                Nome <span className="text-red-500">*</span>
+              <Label className="text-foreground font-medium block mb-2">
+                Nome <span className="text-destructive">*</span>
               </Label>
               <Input
                 placeholder="Ex: Matemática, Português..."
                 value={formData.nome}
                 onChange={(e) => setFormData(prev => ({ ...prev, nome: e.target.value }))}
-                className="border-2 border-[#cbd5e1] focus:border-[#1D3557]"
+                className="border-2 border-border focus:border-primary"
               />
             </div>
 
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <Label className="text-[#334155] font-medium block mb-2">
+                <Label className="text-foreground font-medium block mb-2">
                   Sigla
                 </Label>
                 <Input
@@ -422,19 +422,19 @@ export default function DisciplinasPage() {
                   value={formData.sigla}
                   maxLength={10}
                   onChange={(e) => setFormData(prev => ({ ...prev, sigla: e.target.value.toUpperCase() }))}
-                  className="border-2 border-[#cbd5e1] focus:border-[#1D3557]"
+                  className="border-2 border-border focus:border-primary"
                 />
               </div>
 
               <div>
-                <Label className="text-[#334155] font-medium block mb-2">
+                <Label className="text-foreground font-medium block mb-2">
                   Área do Conhecimento
                 </Label>
                 <Select 
                   value={formData.area_codigo} 
                   onValueChange={(value) => setFormData(prev => ({ ...prev, area_codigo: value, codigo_inep: '' }))}
                 >
-                  <SelectTrigger className="border-2 border-[#cbd5e1]">
+                  <SelectTrigger className="border-2 border-border">
                     <SelectValue placeholder="Selecione a área" />
                   </SelectTrigger>
                   <SelectContent position="popper" sideOffset={5} className="max-h-80 overflow-y-auto">
@@ -450,7 +450,7 @@ export default function DisciplinasPage() {
 
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <Label className="text-[#334155] font-medium block mb-2">
+                <Label className="text-foreground font-medium block mb-2">
                   Código INEP
                 </Label>
                 <Select 
@@ -458,7 +458,7 @@ export default function DisciplinasPage() {
                   onValueChange={(value) => setFormData(prev => ({ ...prev, codigo_inep: value }))}
                   disabled={!formData.area_codigo}
                 >
-                  <SelectTrigger className="border-2 border-[#cbd5e1]">
+                  <SelectTrigger className="border-2 border-border">
                     <SelectValue placeholder={formData.area_codigo ? "Selecione" : "Selecione a área primeiro"} />
                   </SelectTrigger>
                   <SelectContent position="popper" sideOffset={5} className="max-h-80 overflow-y-auto">
@@ -472,14 +472,14 @@ export default function DisciplinasPage() {
               </div>
 
               <div>
-                <Label className="text-[#334155] font-medium block mb-2">
+                <Label className="text-foreground font-medium block mb-2">
                   Diretriz Curricular
                 </Label>
                 <Select 
                   value={formData.diretriz_curricular} 
                   onValueChange={(value) => setFormData(prev => ({ ...prev, diretriz_curricular: value }))}
                 >
-                  <SelectTrigger className="border-2 border-[#cbd5e1]">
+                  <SelectTrigger className="border-2 border-border">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -499,7 +499,7 @@ export default function DisciplinasPage() {
             <Button 
               onClick={handleSave}
               disabled={saving}
-              className="bg-[#1D3557] hover:bg-[#163454]"
+              className="bg-primary hover:bg-primary/90"
             >
               {saving ? 'Salvando...' : 'Salvar'}
             </Button>
@@ -511,13 +511,13 @@ export default function DisciplinasPage() {
       <Dialog open={showAtivarModal} onOpenChange={(open) => !open && setShowAtivarModal(false)}>
         <DialogContent className="max-w-md">
           <DialogHeader>
-            <DialogTitle className="text-lg font-semibold text-[#0f172a]">
+            <DialogTitle className="text-lg font-semibold text-foreground">
               Ativar Disciplina
             </DialogTitle>
           </DialogHeader>
 
           <div className="py-4">
-            <p className="text-[#334155]">
+            <p className="text-foreground">
               Tem certeza que deseja ativar a disciplina <strong>{disciplinaParaAtivar?.nome}</strong>?
             </p>
           </div>

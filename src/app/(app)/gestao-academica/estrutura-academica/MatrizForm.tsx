@@ -511,7 +511,7 @@ export function MatrizForm({ schoolId, matrizId, onSaved, onCancel }: Props) {
   return (
     <div className="space-y-6 [&_[data-slot='input']]:border-slate-300 [&_[data-slot='input']]:focus-visible:border-primary [&_[data-slot='input']]:focus-visible:ring-2 [&_[data-slot='input']]:focus-visible:ring-primary/20 [&_[data-slot='checkbox']]:border-slate-300 [&_[data-slot='checkbox']]:data-[state=checked]:border-primary">
       {/* Identificação */}
-      <Card className="border-[#cbd5e1] shadow-[0_2px_8px_rgba(0,0,0,0.06)]">
+      <Card className="border-border shadow-[0_2px_8px_rgba(0,0,0,0.06)]">
         <CardHeader className="border-b border-slate-100 pb-4">
           <CardTitle className="text-base font-semibold text-slate-800">Identificação</CardTitle>
         </CardHeader>
@@ -632,7 +632,7 @@ export function MatrizForm({ schoolId, matrizId, onSaved, onCancel }: Props) {
 
       {/* Aulas */}
       {form.tipoTurma.includes('regular') && (
-        <Card className="border-[#cbd5e1] shadow-[0_2px_8px_rgba(0,0,0,0.06)]">
+        <Card className="border-border shadow-[0_2px_8px_rgba(0,0,0,0.06)]">
           <CardHeader className="border-b border-slate-100 pb-4">
             <CardTitle className="text-base font-semibold text-slate-800">Configuração - Turno Regular</CardTitle>
           </CardHeader>
@@ -660,7 +660,7 @@ export function MatrizForm({ schoolId, matrizId, onSaved, onCancel }: Props) {
       )}
 
       {form.tipoTurma.includes('integral') && (
-        <Card className="border-[#cbd5e1] shadow-[0_2px_8px_rgba(0,0,0,0.06)]">
+        <Card className="border-border shadow-[0_2px_8px_rgba(0,0,0,0.06)]">
           <CardHeader className="border-b border-slate-100 pb-4">
             <CardTitle className="text-base font-semibold text-slate-800">Configuração - Turno Integral</CardTitle>
           </CardHeader>
@@ -689,7 +689,7 @@ export function MatrizForm({ schoolId, matrizId, onSaved, onCancel }: Props) {
 
       {/* Períodos */}
       {periodos.length > 0 && (
-        <Card className="border-[#cbd5e1] shadow-[0_2px_8px_rgba(0,0,0,0.06)]">
+        <Card className="border-border shadow-[0_2px_8px_rgba(0,0,0,0.06)]">
           <CardHeader className="border-b border-slate-100 pb-4">
             <div className="flex items-center justify-between">
               <CardTitle className="text-base font-semibold text-slate-800">Períodos</CardTitle>
@@ -705,7 +705,7 @@ export function MatrizForm({ schoolId, matrizId, onSaved, onCancel }: Props) {
               const isOpen = expandedPeriodoId === periodo.id
               const disciplinas = disciplinasPorPeriodo[periodo.id]
               return (
-                <div key={periodo.id} className="border border-[#cbd5e1] rounded-lg overflow-hidden">
+                <div key={periodo.id} className="border border-border rounded-lg overflow-hidden">
                   <div
                     className="flex items-center justify-between px-4 py-3 bg-slate-50/40 cursor-pointer hover:bg-slate-100/60 transition-colors"
                     onClick={() => toggleExpandPeriodo(periodo.id)}
@@ -722,7 +722,7 @@ export function MatrizForm({ schoolId, matrizId, onSaved, onCancel }: Props) {
                   </div>
 
                   {isOpen && (
-                    <div className="border-t border-[#cbd5e1] px-4 py-3 space-y-2">
+                    <div className="border-t border-border px-4 py-3 space-y-2">
                       {!disciplinas || disciplinas.length === 0 ? (
                         <p className="text-xs text-muted-foreground">Nenhuma disciplina neste período.</p>
                       ) : (

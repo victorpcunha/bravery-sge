@@ -176,12 +176,12 @@ export default function UnidadesTematicasPage() {
       <div className="mb-8 animate-fade-in-up">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold text-[#0f172a]">Unidades Temáticas e Práticas de Linguagem</h1>
-            <p className="text-[#64748b] mt-1">
+            <h1 className="text-3xl font-bold text-foreground">Unidades Temáticas e Práticas de Linguagem</h1>
+            <p className="text-muted-foreground mt-1">
               Unidades Temáticas do Ensino Fundamental e Médio conforme BNCC
             </p>
           </div>
-          <Button className="bg-[#1D3557] hover:bg-[#457B9D]" disabled>
+          <Button className="bg-primary hover:bg-secondary" disabled>
             <Plus className="w-4 h-4 mr-2" />
             Nova Unidade
           </Button>
@@ -192,9 +192,9 @@ export default function UnidadesTematicasPage() {
         <CardContent className="pt-6">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
-              <label className="text-sm font-medium mb-2 block text-[#334155]">Disciplina</label>
+              <label className="text-sm font-medium mb-2 block text-foreground">Disciplina</label>
               <Select value={disciplina} onValueChange={setDisciplina}>
-                <SelectTrigger className="border-2 border-[#e2e8f0] focus:border-[#1D3557] [&_svg:not([class*='rotate'])]:rotate-0">
+                <SelectTrigger className="border-2 border-border focus:border-primary [&_svg:not([class*='rotate'])]:rotate-0">
                   <SelectValue placeholder="Selecione" />
                 </SelectTrigger>
                 <SelectContent position="popper" side="bottom" sideOffset={5}>
@@ -207,9 +207,9 @@ export default function UnidadesTematicasPage() {
             </div>
 
             <div>
-              <label className="text-sm font-medium mb-2 block text-[#334155]">Etapa de Ensino</label>
+              <label className="text-sm font-medium mb-2 block text-foreground">Etapa de Ensino</label>
               <Select value={etapa} onValueChange={setEtapa}>
-                <SelectTrigger className="border-2 border-[#e2e8f0] focus:border-[#1D3557] [&_svg:not([class*='rotate'])]:rotate-0">
+                <SelectTrigger className="border-2 border-border focus:border-primary [&_svg:not([class*='rotate'])]:rotate-0">
                   <SelectValue placeholder="Selecione" />
                 </SelectTrigger>
                 <SelectContent position="popper" side="bottom" sideOffset={5}>
@@ -223,13 +223,13 @@ export default function UnidadesTematicasPage() {
 
             <div className="flex items-end">
               <div className="flex gap-2">
-                <Badge className="bg-[#1D3557]/10 text-[#1D3557] hover:bg-[#1D3557]/20 text-sm px-3 py-1">
+                <Badge className="bg-primary/10 text-primary hover:bg-primary/20 text-sm px-3 py-1">
                   {totalUnidades} Unidades
                 </Badge>
-                <Badge className="bg-[#457B9D]/10 text-[#457B9D] hover:bg-[#457B9D]/20 text-sm px-3 py-1">
+                <Badge className="bg-secondary/10 text-secondary hover:bg-secondary/20 text-sm px-3 py-1">
                   {totalObjetos} Objetos
                 </Badge>
-                <Badge className="bg-[#4FB3BF]/10 text-[#4FB3BF] hover:bg-[#4FB3BF]/20 text-sm px-3 py-1">
+                <Badge className="bg-ring/10 text-ring hover:bg-ring/20 text-sm px-3 py-1">
                   {totalHabilidades} Habilidades
                 </Badge>
               </div>
@@ -240,17 +240,17 @@ export default function UnidadesTematicasPage() {
 
       {loading ? (
         <div className="text-center py-12">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#1D3557] mx-auto mb-4"></div>
-          <p className="text-[#64748b]">Carregando...</p>
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+          <p className="text-muted-foreground">Carregando...</p>
         </div>
       ) : unidades.length === 0 ? (
         <Card className="border-0 shadow-lg card-glass animate-fade-in-up delay-150">
           <CardContent className="flex flex-col items-center justify-center py-16">
-            <div className="w-20 h-20 bg-gradient-to-br from-[#1D3557]/10 to-[#457B9D]/10 rounded-2xl flex items-center justify-center mb-6">
-              <BookOpen className="h-10 w-10 text-[#1D3557]" />
+            <div className="w-20 h-20 bg-gradient-to-br from-primary/10 to-secondary/10 rounded-2xl flex items-center justify-center mb-6">
+              <BookOpen className="h-10 w-10 text-primary" />
             </div>
-            <h3 className="text-xl font-semibold text-[#0f172a] mb-2">Nenhuma unidade temática encontrada</h3>
-            <p className="text-[#64748b] text-center">
+            <h3 className="text-xl font-semibold text-foreground mb-2">Nenhuma unidade temática encontrada</h3>
+            <p className="text-muted-foreground text-center">
               Não há unidades temáticas cadastradas para os filtros selecionados.
             </p>
           </CardContent>
@@ -266,18 +266,18 @@ export default function UnidadesTematicasPage() {
               <CardHeader className="pb-3">
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
-                    <CardTitle className="text-lg font-semibold text-[#0f172a]">
+                    <CardTitle className="text-lg font-semibold text-foreground">
                       {unidade.unidade_tematica}
                     </CardTitle>
-                    <p className="text-sm text-[#64748b] mt-1">
+                    <p className="text-sm text-muted-foreground mt-1">
                       {unidade.disciplina} • {unidade.etapa_ensino === 'anos_iniciais' ? 'Anos Iniciais' : 'Anos Finais'}
                     </p>
                   </div>
                   <Badge 
                     className="ml-2"
                     style={{ 
-                      backgroundColor: unidade.etapa_ensino === 'anos_iniciais' ? '#1D355720' : '#457B9D20',
-                      color: unidade.etapa_ensino === 'anos_iniciais' ? '#1D3557' : '#457B9D'
+                      backgroundColor: unidade.etapa_ensino === 'anos_iniciais' ? 'color-mix(in srgb, var(--primary) 12%, transparent)' : 'color-mix(in srgb, var(--secondary) 12%, transparent)',
+                      color: unidade.etapa_ensino === 'anos_iniciais' ? 'var(--primary)' : 'var(--secondary)'
                     }}
                   >
                     {unidade.etapa_ensino === 'anos_iniciais' ? '1º-5º' : '6º-9º'}
@@ -287,16 +287,16 @@ export default function UnidadesTematicasPage() {
               <CardContent>
                 <div className="flex gap-4">
                   <div className="flex items-center gap-2">
-                    <div className="w-8 h-8 rounded-lg bg-[#1D3557]/10 flex items-center justify-center">
-                      <span className="text-xs font-bold text-[#1D3557]">{unidade.objetos_count}</span>
+                    <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
+                      <span className="text-xs font-bold text-primary">{unidade.objetos_count}</span>
                     </div>
-                    <span className="text-sm text-[#64748b]">Objetos</span>
+                    <span className="text-sm text-muted-foreground">Objetos</span>
                   </div>
                   <div className="flex items-center gap-2">
-                    <div className="w-8 h-8 rounded-lg bg-[#457B9D]/10 flex items-center justify-center">
-                      <span className="text-xs font-bold text-[#457B9D]">{unidade.habilidades_count}</span>
+                    <div className="w-8 h-8 rounded-lg bg-secondary/10 flex items-center justify-center">
+                      <span className="text-xs font-bold text-secondary">{unidade.habilidades_count}</span>
                     </div>
-                    <span className="text-sm text-[#64748b]">Habilidades</span>
+                    <span className="text-sm text-muted-foreground">Habilidades</span>
                   </div>
                 </div>
               </CardContent>
@@ -305,8 +305,8 @@ export default function UnidadesTematicasPage() {
         </div>
       )}
 
-      <div className="mt-8 p-5 bg-white/60 backdrop-blur-sm rounded-2xl border border-[#e2e8f0]/50 shadow-sm animate-fade-in-up delay-300">
-        <p className="text-sm text-[#64748b]">
+      <div className="mt-8 p-5 bg-card/60 backdrop-blur-sm rounded-2xl border border-border/50 shadow-sm animate-fade-in-up delay-300">
+        <p className="text-sm text-muted-foreground">
           Fonte: Base Nacional Comum Curricular (BNCC) - 2018
         </p>
       </div>

@@ -408,7 +408,7 @@ export default function IndicadoresPage() {
               Importar da Matriz
             </Button>
           )}
-          <Button className="bg-[#1D3557] hover:bg-[#2d4a6f] text-white"
+          <Button className="bg-primary hover:bg-primary/90 text-white"
             onClick={openNewDialog}
             disabled={!filtroAno || !filtroEtapa}>
             <Plus className="h-4 w-4 mr-1.5" />
@@ -418,7 +418,7 @@ export default function IndicadoresPage() {
       </div>
 
       {/* Filtros */}
-      <Card className="border-[#cbd5e1] shadow-[0_2px_8px_rgba(0,0,0,0.06)] mb-6">
+      <Card className="border-border shadow-[0_2px_8px_rgba(0,0,0,0.06)] mb-6">
         <CardHeader className="bg-slate-50/40 border-b border-slate-200 py-3">
           <CardTitle className="text-sm font-medium text-slate-600">Filtros</CardTitle>
         </CardHeader>
@@ -514,7 +514,7 @@ export default function IndicadoresPage() {
       </Card>
 
       {/* Listagem hierárquica */}
-      <Card className="border-[#cbd5e1] shadow-[0_2px_8px_rgba(0,0,0,0.06)]">
+      <Card className="border-border shadow-[0_2px_8px_rgba(0,0,0,0.06)]">
         <CardHeader className="bg-slate-50/40 border-b border-slate-200 py-3">
           <CardTitle className="text-sm font-medium text-slate-600">
             {indicadores.length} indicador{indicadores.length !== 1 ? 'es' : ''} encontrado{indicadores.length !== 1 ? 's' : ''}
@@ -809,7 +809,7 @@ export default function IndicadoresPage() {
           </div>
           <DialogFooter className="gap-2">
             <Button variant="outline" onClick={() => setDialogOpen(false)} className="border-slate-300">Cancelar</Button>
-            <Button onClick={handleSave} className="bg-[#1D3557] hover:bg-[#2d4a6f] text-white">
+            <Button onClick={handleSave} className="bg-primary hover:bg-primary/90 text-white">
               {editId ? 'Salvar' : 'Salvar'}
             </Button>
           </DialogFooter>

@@ -35,12 +35,12 @@ export default function DocentesPage() {
       <div className="container mx-auto py-8 px-4 md:pl-64">
         <div className="flex items-center justify-between mb-8">
           <div className="animate-fade-in-up">
-            <h1 className="text-3xl font-bold text-[#0f172a]">Docentes</h1>
-            <p className="text-[#64748b] mt-1">
+            <h1 className="text-3xl font-bold text-foreground">Docentes</h1>
+            <p className="text-muted-foreground mt-1">
               Gerencie os professores da escola (Registro 10)
             </p>
           </div>
-          <Button asChild className="bg-[#1D3557] hover:bg-[#16304a]">
+          <Button asChild className="bg-primary hover:bg-primary">
             <Link href="/docentes/novo">
               <Plus className="mr-2 h-4 w-4" />
               Novo Docente
@@ -53,10 +53,10 @@ export default function DocentesPage() {
           <CardContent className="pt-6">
             <div className="flex gap-4">
               <div className="relative flex-1">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[#64748b]" />
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input 
                   placeholder="Buscar por nome ou CPF..." 
-                  className="pl-10 bg-white/80 border-[#e2e8f0] focus:border-[#1D3557] focus:ring-[#1D3557]/20"
+                  className="pl-10 bg-input/80 border-border focus:border-primary focus:ring-primary/20"
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                 />
@@ -69,14 +69,14 @@ export default function DocentesPage() {
         {mockDocentes.length === 0 ? (
           <Card className="border-0 shadow-md card-glass animate-fade-in-up delay-150">
             <CardContent className="flex flex-col items-center justify-center py-16">
-              <div className="w-20 h-20 bg-[#f1f5f9] rounded-2xl flex items-center justify-center mb-6">
-                <Users className="h-10 w-10 text-[#457B9D]" />
+              <div className="w-20 h-20 bg-muted rounded-2xl flex items-center justify-center mb-6">
+                <Users className="h-10 w-10 text-info" />
               </div>
-              <h3 className="text-xl font-semibold text-[#0f172a] mb-2">Nenhum docente cadastrado</h3>
-              <p className="text-[#64748b] text-center mb-6 max-w-md">
+              <h3 className="text-xl font-semibold text-foreground mb-2">Nenhum docente cadastrado</h3>
+              <p className="text-muted-foreground text-center mb-6 max-w-md">
                 Comece cadastrando os professores da sua escola.
               </p>
-              <Button asChild className="bg-[#1D3557] hover:bg-[#16304a]">
+          <Button asChild className="bg-primary hover:bg-primary">
                 <Link href="/docentes/novo">Cadastrar Primeiro Docente</Link>
               </Button>
             </CardContent>
@@ -87,14 +87,14 @@ export default function DocentesPage() {
               <Card key={docente.id} className="border-0 shadow-sm hover:shadow-md transition-all duration-200 card-glass group animate-fade-in-up cursor-pointer" style={{ animationDelay: `${index * 75 + 150}ms` }}>
                 <CardHeader className="pb-3">
                   <div className="flex items-center justify-between">
-                    <CardTitle className="text-lg font-semibold text-[#0f172a]">{docente.nome}</CardTitle>
-                    <Badge className="bg-[#e0f2fe] text-[#457B9D] hover:bg-[#e0f2fe] border-0">
+                    <CardTitle className="text-lg font-semibold text-foreground">{docente.nome}</CardTitle>
+                    <Badge className="bg-info-light text-info hover:bg-info-light border-0">
                       {tipoVinculo[docente.tipo_vinculo as keyof typeof tipoVinculo]}
                     </Badge>
                   </div>
                 </CardHeader>
                 <CardContent>
-                  <div className="text-sm text-[#64748b] space-y-1">
+                  <div className="text-sm text-muted-foreground space-y-1">
                     <p><span className="font-medium">CPF:</span> {docente.cpf}</p>
                     <p><span className="font-medium">Formação:</span> {formacao[docente.formacao as keyof typeof formacao]}</p>
                   </div>
@@ -104,16 +104,16 @@ export default function DocentesPage() {
           </div>
         )}
 
-        <div className="mt-8 p-5 bg-white/60 backdrop-blur-sm rounded-2xl border border-[#e2e8f0]/50 shadow-sm animate-fade-in-up delay-300">
+        <div className="mt-8 p-5 bg-card/60 backdrop-blur-sm rounded-2xl border border-border/50 shadow-sm animate-fade-in-up delay-300">
           <div className="flex items-center justify-between">
             <div>
-              <h4 className="font-semibold text-[#0f172a]">Total: {mockDocentes.length} docente(s)</h4>
-              <p className="text-sm text-[#64748b]">
+              <h4 className="font-semibold text-foreground">Total: {mockDocentes.length} docente(s)</h4>
+              <p className="text-sm text-muted-foreground">
                 Estes dados serão enviados ao Censo INEP 2026 (Registro 10 - 187 campos)
               </p>
             </div>
-            <div className="w-10 h-10 bg-[#f1f5f9] rounded-lg flex items-center justify-center">
-              <Users className="w-5 h-5 text-[#457B9D]" />
+            <div className="w-10 h-10 bg-muted rounded-lg flex items-center justify-center">
+              <Users className="w-5 h-5 text-info" />
             </div>
           </div>
         </div>

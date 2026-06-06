@@ -526,7 +526,7 @@ export default function TurmasPage() {
         </div>
 
         {/* Listing */}
-        <Card className="border-[#cbd5e1] shadow-[0_2px_8px_rgba(0,0,0,0.06)]">
+        <Card className="border-border shadow-[0_2px_8px_rgba(0,0,0,0.06)]">
           <CardHeader>
             <CardTitle className="text-lg flex items-center gap-2">
               <GraduationCap className="h-5 w-5 text-primary" />
@@ -613,7 +613,7 @@ export default function TurmasPage() {
             </div>
 
             {/* Card: Identificação */}
-            <div className="border border-[#cbd5e1] rounded-lg p-5 bg-slate-50/40 space-y-4">
+            <div className="border border-border rounded-lg p-5 bg-muted/40 space-y-4">
               <h3 className="font-semibold text-base flex items-center gap-2">
                 <GraduationCap className="h-4 w-4 text-primary" />
                 Identificação
@@ -737,7 +737,7 @@ export default function TurmasPage() {
             </div>
 
             {/* Subcard: Turnos */}
-            <div className="border border-[#cbd5e1] rounded-lg p-5 bg-slate-50/40 space-y-4">
+            <div className="border border-border rounded-lg p-5 bg-muted/40 space-y-4">
               <h3 className="font-semibold text-base flex items-center gap-2">
                 <Clock className="h-4 w-4 text-primary" />
                 Turnos da Turma
@@ -782,7 +782,7 @@ export default function TurmasPage() {
             </div>
 
             {/* Subcard: Dias de Funcionamento */}
-            <div className="border border-[#cbd5e1] rounded-lg p-5 bg-slate-50/40 space-y-3">
+            <div className="border border-border rounded-lg p-5 bg-muted/40 space-y-3">
               <h3 className="font-semibold text-base flex items-center gap-2">
                 <Calendar className="h-4 w-4 text-primary" />
                 Dias de Funcionamento *
@@ -800,7 +800,7 @@ export default function TurmasPage() {
             </div>
 
             {/* Subcard: Tipo da Turma */}
-            <div className="border border-[#cbd5e1] rounded-lg p-5 bg-slate-50/40 space-y-3">
+            <div className="border border-border rounded-lg p-5 bg-muted/40 space-y-3">
               <h3 className="font-semibold text-base flex items-center gap-2">
                 <BookOpen className="h-4 w-4 text-primary" />
                 Tipo da Turma *
@@ -833,7 +833,7 @@ export default function TurmasPage() {
 
             {/* Organização Curricular (conditional) */}
             {showOrganizacaoCurricular && (
-              <div className="border border-[#cbd5e1] rounded-lg p-5 bg-slate-50/40 space-y-3">
+              <div className="border border-border rounded-lg p-5 bg-muted/40 space-y-3">
                 <h3 className="font-semibold text-base">Organização Curricular da Turma</h3>
                 <div className="flex flex-wrap gap-4">
                   {ORGANIZACAO_CURRICULAR.map(item => (
@@ -893,7 +893,7 @@ export default function TurmasPage() {
             )}
 
             {/* Formas de Organização */}
-            <div className="border border-[#cbd5e1] rounded-lg p-5 bg-slate-50/40 space-y-3">
+            <div className="border border-border rounded-lg p-5 bg-muted/40 space-y-3">
               <h3 className="font-semibold text-base">Formas de Organização da Turma</h3>
               <RadioGroup
                 value={form.forma_organizacao || ''}
@@ -912,7 +912,7 @@ export default function TurmasPage() {
 
             {/* Multietapa Config (conditional) */}
             {showMultietapaConfig && (
-              <div className="border border-[#cbd5e1] rounded-lg p-5 bg-slate-50/40 space-y-3">
+              <div className="border border-border rounded-lg p-5 bg-muted/40 space-y-3">
                 <h3 className="font-semibold text-base">Etapas de Ensino da Turma Multietapa</h3>
                 <p className="text-xs text-muted-foreground">
                   Selecione as etapas específicas para esta turma multietapa.
@@ -935,7 +935,7 @@ export default function TurmasPage() {
 
             {/* Card: Disciplinas (conditional) */}
             {showDisciplinas && (
-              <div className="border border-[#cbd5e1] rounded-lg p-5 bg-slate-50/40 space-y-3">
+              <div className="border border-border rounded-lg p-5 bg-muted/40 space-y-3">
                 <h3 className="font-semibold text-base flex items-center gap-2">
                   <BookOpen className="h-4 w-4 text-primary" />
                   Disciplinas
@@ -962,7 +962,7 @@ export default function TurmasPage() {
             )}
 
             {/* Card: Profissionais */}
-            <div className="border border-[#cbd5e1] rounded-lg p-5 bg-slate-50/40 space-y-4">
+            <div className="border border-border rounded-lg p-5 bg-muted/40 space-y-4">
               <div className="flex items-center justify-between">
                 <h3 className="font-semibold text-base flex items-center gap-2">
                   <UserPlus className="h-4 w-4 text-primary" />

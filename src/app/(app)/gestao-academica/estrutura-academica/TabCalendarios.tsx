@@ -563,16 +563,16 @@ export function TabCalendarios({ schoolId }: TabCalendariosProps) {
       <div className="mt-4">
         <div className="mb-4 flex items-center gap-6 text-sm">
           <div className="flex items-center gap-2">
-            <div className="w-4 h-4 bg-[#5f8b6f] rounded"></div>
-            <span className="text-[#64748b]">Dia Letivo</span>
+            <div className="w-4 h-4 bg-success rounded"></div>
+            <span className="text-muted-foreground">Dia Letivo</span>
           </div>
           <div className="flex items-center gap-2">
             <div className="w-4 h-4 bg-gray-100 rounded"></div>
-            <span className="text-[#64748b]">Não Letivo</span>
+            <span className="text-muted-foreground">Não Letivo</span>
           </div>
           <div className="flex items-center gap-2">
-            <div className="w-4 h-4 bg-[#b5624b] rounded"></div>
-            <span className="text-[#64748b]">Recesso</span>
+            <div className="w-4 h-4 bg-destructive rounded"></div>
+            <span className="text-muted-foreground">Recesso</span>
           </div>
         </div>
         
@@ -600,9 +600,9 @@ export function TabCalendarios({ schoolId }: TabCalendariosProps) {
                   onClick={() => handleDayClick(dayDate)}
                   className={`h-7 flex items-center justify-center text-xs rounded transition-all duration-150 cursor-pointer ${
                     dayData?.isRecesso 
-                      ? 'bg-[#b5624b] text-white hover:opacity-80' 
+                      ? 'bg-destructive text-white hover:opacity-80' 
                       : dayData?.isLetivo 
-                        ? 'bg-[#5f8b6f] text-white hover:opacity-80' 
+                        ? 'bg-success text-white hover:opacity-80' 
                         : 'bg-gray-100 text-gray-400 hover:bg-gray-200'
                   }`}
                 >
@@ -612,11 +612,11 @@ export function TabCalendarios({ schoolId }: TabCalendariosProps) {
             }
             
             return (
-              <div key={monthKey} className="border border-[#e2e8f0] rounded-lg p-3">
-                <div className="text-sm font-semibold text-[#1D3557] mb-2 text-center">
+              <div key={monthKey} className="border border-border rounded-lg p-3">
+                <div className="text-sm font-semibold text-primary mb-2 text-center">
                   {monthNames[month - 1]} {year}
                 </div>
-                <div className="grid grid-cols-7 gap-0.5 text-[10px] text-center text-[#64748b] mb-1">
+                <div className="grid grid-cols-7 gap-0.5 text-[10px] text-center text-muted-foreground mb-1">
                   <div>D</div>
                   <div>S</div>
                   <div>T</div>
@@ -628,7 +628,7 @@ export function TabCalendarios({ schoolId }: TabCalendariosProps) {
                 <div className="grid grid-cols-7 gap-0.5">
                   {daysArray}
                 </div>
-                <div className="mt-2 text-xs text-[#64748b] text-center">
+                <div className="mt-2 text-xs text-muted-foreground text-center">
                   {mesData.totalLetivos} dias letivos
                 </div>
               </div>
@@ -643,8 +643,8 @@ export function TabCalendarios({ schoolId }: TabCalendariosProps) {
     return (
       <div className="flex items-center justify-center h-64">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#1D3557] mx-auto mb-4"></div>
-          <p className="text-[#64748b]">Carregando...</p>
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+          <p className="text-muted-foreground">Carregando...</p>
         </div>
       </div>
     )
@@ -656,7 +656,7 @@ export function TabCalendarios({ schoolId }: TabCalendariosProps) {
         {/* Card: Anos Letivos */}
         <Card className="border-0 shadow-md card-glass">
           <CardHeader className="pb-3 flex flex-row items-center justify-between">
-            <CardTitle className="text-lg font-semibold text-[#0f172a]">
+            <CardTitle className="text-lg font-semibold text-foreground">
               Anos Letivos
             </CardTitle>
             <Button 
@@ -676,15 +676,15 @@ export function TabCalendarios({ schoolId }: TabCalendariosProps) {
                   key={ano.id}
                   className={`p-3 rounded-lg border cursor-pointer transition-all ${
                     selectedAno?.id === ano.id 
-                      ? 'border-[#1D3557] bg-[#1D3557]/5' 
-                      : 'border-[#e2e8f0] hover:border-[#1D3557]/30'
+                      ? 'border-primary bg-primary/5' 
+                      : 'border-border hover:border-primary/30'
                   }`}
                   onClick={() => handleSelectAno(ano)}
                 >
                   <div className="flex items-start justify-between">
                       <div>
-                        <p className="font-medium text-[#0f172a]">{ano.descricao}</p>
-                        <p className="text-xs text-[#64748b]">
+                        <p className="font-medium text-foreground">{ano.descricao}</p>
+                        <p className="text-xs text-muted-foreground">
                           {formatarData(ano.data_inicio)} - {formatarData(ano.data_termino)}
                         </p>
                       </div>
@@ -746,7 +746,7 @@ export function TabCalendarios({ schoolId }: TabCalendariosProps) {
               ))}
               
               {anosLetivos.length === 0 && (
-                <p className="text-[#64748b] text-center py-4 text-sm">
+                <p className="text-muted-foreground text-center py-4 text-sm">
                   Nenhum ano letivo cadastrado
                 </p>
               )}
@@ -757,7 +757,7 @@ export function TabCalendarios({ schoolId }: TabCalendariosProps) {
         {/* Card: Calendários */}
         <Card className="border-0 shadow-md card-glass">
           <CardHeader className="pb-3 flex flex-row items-center justify-between">
-            <CardTitle className="text-lg font-semibold text-[#0f172a]">
+            <CardTitle className="text-lg font-semibold text-foreground">
               Calendários
             </CardTitle>
             <Button 
@@ -779,15 +779,15 @@ export function TabCalendarios({ schoolId }: TabCalendariosProps) {
                     key={cal.id}
                     className={`p-3 rounded-lg border cursor-pointer transition-all ${
                       selectedCalendario?.id === cal.id 
-                        ? 'border-[#457B9D] bg-[#457B9D]/5' 
-                        : 'border-[#e2e8f0] hover:border-[#457B9D]/30'
+                      ? 'border-info bg-info/5' 
+                      : 'border-border hover:border-info/30'
                     }`}
                     onClick={() => handleSelectCalendario(cal)}
                   >
                     <div className="flex items-start justify-between">
                       <div>
-                        <p className="font-medium text-[#0f172a]">{cal.descricao}</p>
-                        <p className="text-xs text-[#64748b]">
+                        <p className="font-medium text-foreground">{cal.descricao}</p>
+                        <p className="text-xs text-muted-foreground">
                           {formatarData(cal.data_inicio)} - {formatarData(cal.data_termino)}
                         </p>
                       </div>
@@ -805,13 +805,13 @@ export function TabCalendarios({ schoolId }: TabCalendariosProps) {
                 ))}
                 
                 {calendarios.length === 0 && (
-                  <p className="text-[#64748b] text-center py-4 text-sm">
+                  <p className="text-muted-foreground text-center py-4 text-sm">
                     Nenhum calendário cadastrado
                   </p>
                 )}
               </div>
             ) : (
-              <p className="text-[#64748b] text-center py-4 text-sm">
+              <p className="text-muted-foreground text-center py-4 text-sm">
                 Selecione um ano letivo primeiro
               </p>
             )}
@@ -821,7 +821,7 @@ export function TabCalendarios({ schoolId }: TabCalendariosProps) {
         {/* Card: Visualização */}
         <Card className="border-0 shadow-md card-glass md:col-span-2">
           <CardHeader className="pb-3 flex flex-row items-center justify-between">
-            <CardTitle className="text-lg font-semibold text-[#0f172a]">
+            <CardTitle className="text-lg font-semibold text-foreground">
               Visualização
             </CardTitle>
             <Button 
@@ -843,10 +843,10 @@ export function TabCalendarios({ schoolId }: TabCalendariosProps) {
               renderCalendarGrid()
             ) : (
               <div className="text-center py-12">
-                <div className="w-12 h-12 bg-[#f1f5f9] rounded-full flex items-center justify-center mx-auto mb-3">
-                  <Calendar className="w-6 h-6 text-[#64748b]" />
+                <div className="w-12 h-12 bg-muted rounded-full flex items-center justify-center mx-auto mb-3">
+                  <Calendar className="w-6 h-6 text-muted-foreground" />
                 </div>
-                <p className="text-[#64748b] text-sm">
+                <p className="text-muted-foreground text-sm">
                   Selecione um calendário para visualizar
                 </p>
               </div>
@@ -863,11 +863,11 @@ export function TabCalendarios({ schoolId }: TabCalendariosProps) {
           </DialogHeader>
           <div className="space-y-5">
             <div>
-              <Label className="text-[#334155] font-medium block mb-2">
+              <Label className="text-foreground font-medium block mb-2">
                 Descrição <span className="text-red-500">*</span>
               </Label>
               <Input 
-                className="border-2 border-[#cbd5e1] focus:border-[#1D3557] focus:ring-[#1D3557]/20 bg-white"
+                className="border-2 border-border focus:border-primary focus:ring-primary/20 bg-input"
                 placeholder="Ex: 2026" 
                 value={anoForm.descricao}
                 onChange={e => setAnoForm({...anoForm, descricao: e.target.value})}
@@ -875,17 +875,17 @@ export function TabCalendarios({ schoolId }: TabCalendariosProps) {
               />
             </div>
             <div>
-              <Label className="text-[#334155] font-medium block mb-2">
+              <Label className="text-foreground font-medium block mb-2">
                 Situação <span className="text-red-500">*</span>
               </Label>
               <Select 
                 value={anoForm.status || ""}
                 onValueChange={(v) => setAnoForm({...anoForm, status: v})}
               >
-                <SelectTrigger className="border-2 border-[#cbd5e1] focus:border-[#1D3557] hover:border-[#1D3557]/30 bg-white w-full">
+                <SelectTrigger className="border-2 border-border focus:border-primary hover:border-primary/30 bg-input w-full">
                   <SelectValue placeholder="Selecione uma situação" />
                 </SelectTrigger>
-                <SelectContent className="bg-white border-2 border-[#e2e8f0]">
+                <SelectContent className="bg-popover border-2 border-border">
                   <SelectItem value="planejamento">Planejamento</SelectItem>
                   <SelectItem value="ativo">Ativo</SelectItem>
                   <SelectItem value="encerramento">Encerramento</SelectItem>
@@ -921,11 +921,11 @@ export function TabCalendarios({ schoolId }: TabCalendariosProps) {
           </DialogHeader>
           <div className="space-y-5">
             <div>
-              <Label className="text-[#334155] font-medium block mb-2">
+              <Label className="text-foreground font-medium block mb-2">
                 Descrição <span className="text-red-500">*</span>
               </Label>
               <Input 
-                className="border-2 border-[#cbd5e1] focus:border-[#457B9D] focus:ring-[#457B9D]/20 bg-white"
+                className="border-2 border-border focus:border-info focus:ring-info/20 bg-input"
                 placeholder="Ex: Calendário Ensino Fundamental" 
                 value={calendarioForm.descricao}
                 onChange={e => setCalendarioForm({...calendarioForm, descricao: e.target.value})}
@@ -966,11 +966,11 @@ export function TabCalendarios({ schoolId }: TabCalendariosProps) {
           </DialogHeader>
           <div className="space-y-5">
             <div>
-              <Label className="text-[#334155] font-medium block mb-2">
+              <Label className="text-foreground font-medium block mb-2">
                 Descrição <span className="text-red-500">*</span>
               </Label>
               <Input 
-                className="border-2 border-[#cbd5e1] focus:border-[#4FB3BF] focus:ring-[#4FB3BF]/20 bg-white"
+                className="border-2 border-border focus:border-ring focus:ring-ring/20 bg-input"
                 placeholder="Ex: Feriado de Páscoa" 
                 value={eventoForm.descricao}
                 onChange={e => setEventoForm({...eventoForm, descricao: e.target.value})}
@@ -978,7 +978,7 @@ export function TabCalendarios({ schoolId }: TabCalendariosProps) {
               />
             </div>
             <div>
-              <Label className="text-[#334155] font-medium block mb-2">Tipo</Label>
+              <Label className="text-foreground font-medium block mb-2">Tipo</Label>
               <div className="flex gap-6 mt-2">
                 <label className="flex items-center gap-2 cursor-pointer">
                   <input 
@@ -987,9 +987,9 @@ export function TabCalendarios({ schoolId }: TabCalendariosProps) {
                     value="recesso"
                     checked={eventoForm.tipo === 'recesso'}
                     onChange={() => setEventoForm({...eventoForm, tipo: 'recesso'})}
-                    className="w-4 h-4 text-[#4FB3BF]"
+                    className="w-4 h-4 text-ring"
                   />
-                  <span className="text-sm text-[#334155]">Recesso</span>
+                  <span className="text-sm text-foreground">Recesso</span>
                 </label>
                 <label className="flex items-center gap-2 cursor-pointer">
                   <input 
@@ -998,9 +998,9 @@ export function TabCalendarios({ schoolId }: TabCalendariosProps) {
                     value="dia_letivo"
                     checked={eventoForm.tipo === 'dia_letivo'}
                     onChange={() => setEventoForm({...eventoForm, tipo: 'dia_letivo'})}
-                    className="w-4 h-4 text-[#4FB3BF]"
+                    className="w-4 h-4 text-ring"
                   />
-                  <span className="text-sm text-[#334155]">Dia Letivo</span>
+                  <span className="text-sm text-foreground/80">Dia Letivo</span>
                 </label>
               </div>
             </div>
@@ -1038,8 +1038,8 @@ export function TabCalendarios({ schoolId }: TabCalendariosProps) {
       <AlertDialog open={!!anoToEncerrar} onOpenChange={() => setAnoToEncerrar(null)}>
         <AlertDialogContent className="max-w-md">
           <AlertDialogHeader>
-            <AlertDialogTitle className="text-[#0f172a]">Encerrar Ano Letivo?</AlertDialogTitle>
-            <AlertDialogDescription className="text-[#64748b]">
+            <AlertDialogTitle className="text-foreground">Encerrar Ano Letivo?</AlertDialogTitle>
+            <AlertDialogDescription className="text-muted-foreground">
               Esta ação não pode ser desfeita. O ano letivo será encerrado e não poderá mais ser alterado.
             </AlertDialogDescription>
           </AlertDialogHeader>

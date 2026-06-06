@@ -303,25 +303,25 @@ export function TabEtapas({ schoolId }: TabEtapasProps) {
     <>
       <Card className="border-0 shadow-md card-glass">
         <CardHeader className="pb-3">
-          <CardTitle className="text-lg font-semibold text-[#0f172a]">
+          <CardTitle className="text-lg font-semibold text-foreground">
             Etapas de Ensino
           </CardTitle>
         </CardHeader>
         {loading ? (
           <CardContent>
             <div className="flex items-center justify-center py-8">
-              <span className="text-sm text-[#64748b]">Carregando...</span>
+              <span className="text-sm text-muted-foreground">Carregando...</span>
             </div>
           </CardContent>
         ) : (
         <CardContent>
           <div className="space-y-3">
             {gruposEtapas.map((grupo) => (
-              <div key={grupo.titulo} className="rounded-lg border border-[#e2e8f0] bg-white overflow-hidden">
+              <div key={grupo.titulo} className="rounded-lg border border-border bg-white overflow-hidden">
                 <button
                   type="button"
                   onClick={() => toggleGroup(grupo.titulo)}
-                  className="w-full flex items-center gap-2 text-[#1D3557] font-medium px-4 py-3 hover:bg-[#f1f5f9] transition-colors"
+                  className="w-full flex items-center gap-2 text-primary font-medium px-4 py-3 hover:bg-muted transition-colors"
                 >
                   {openGroups.includes(grupo.titulo) ? (
                     <ChevronDown className="w-4 h-4" />
@@ -340,7 +340,7 @@ export function TabEtapas({ schoolId }: TabEtapasProps) {
                     {grupo.etapas.map((etapa) => (
                       <div
                         key={etapa.codigo}
-                        className="p-3 rounded-lg border border-[#e2e8f0] bg-white"
+                        className="p-3 rounded-lg border border-border bg-white"
                       >
                         <div className="flex items-center justify-between">
                           <div className="flex items-center gap-3">
@@ -348,16 +348,16 @@ export function TabEtapas({ schoolId }: TabEtapasProps) {
                               <Switch
                                 checked={etapasAtivas[etapa.codigo] === true}
                                 onCheckedChange={() => toggleEtapa(etapa.codigo)}
-                                className="data-[state=checked]:bg-[#1D3557] data-[state=unchecked]:bg-[#cbd5e1]"
+                                className="data-[state=checked]:bg-primary data-[state=unchecked]:bg-border"
                               />
-                              <span className="text-sm font-medium text-[#1D3557]">
+                              <span className="text-sm font-medium text-primary">
                                 {etapasAtivas[etapa.codigo] ? 'Ativo' : 'Inativo'}
                               </span>
                             </div>
-                            <span className="font-medium text-[#0f172a]">
+                            <span className="font-medium text-foreground">
                               {etapa.nome}
                             </span>
-                            <span className="text-xs text-[#94a3b8] bg-[#f1f5f9] px-2 py-0.5 rounded">
+                            <span className="text-xs text-muted-foreground bg-muted px-2 py-0.5 rounded">
                               INEP: {etapa.codigo}
                             </span>
                           </div>
@@ -376,20 +376,20 @@ export function TabEtapas({ schoolId }: TabEtapasProps) {
 
                         {/* Subetapas */}
                         {subetapas[etapa.codigo] && subetapas[etapa.codigo].length > 0 && (
-                          <div className="mt-3 border-t border-[#e2e8f0] pt-3">
-                            <div className="text-xs text-[#64748b] font-medium mb-2">
+                          <div className="mt-3 border-t border-border pt-3">
+                            <div className="text-xs text-muted-foreground font-medium mb-2">
                               Subetapas ({subetapas[etapa.codigo].length})
                             </div>
                             <div className="space-y-2">
                               {subetapas[etapa.codigo].map((sub) => (
                                 <div
                                   key={sub.id}
-                                  className="flex items-center justify-between p-2 bg-[#f8fafc] rounded border border-[#e2e8f0]"
+                                  className="flex items-center justify-between p-2 bg-muted rounded border border-border"
                                 >
-                                  <span className="text-sm text-[#334155]">{sub.nome}</span>
+                                  <span className="text-sm text-foreground">{sub.nome}</span>
                                   <button
                                     onClick={() => removeSubetapa(etapa.codigo, sub.id)}
-                                    className="text-[#dc2626] text-xs hover:underline"
+                                    className="text-destructive text-xs hover:underline"
                                   >
                                     Remover
                                   </button>
@@ -417,11 +417,11 @@ export function TabEtapas({ schoolId }: TabEtapasProps) {
           </DialogHeader>
           <div className="space-y-4">
             <div>
-              <Label className="text-[#334155] font-medium block mb-2">
+              <Label className="text-foreground font-medium block mb-2">
                 Nome da Subetapa <span className="text-red-500">*</span>
               </Label>
               <Input 
-                className="border-2 border-[#cbd5e1] focus:border-[#1D3557] focus:ring-[#1D3557]/20 bg-white"
+                className="border-2 border-border focus:border-primary focus:ring-primary/20 bg-white"
                 placeholder="Ex: Maternal, 1º Ano, etc."
                 value={novaSubetapaNome}
                 onChange={e => setNovaSubetapaNome(e.target.value)}
@@ -433,14 +433,14 @@ export function TabEtapas({ schoolId }: TabEtapasProps) {
             <button
               type="button"
               onClick={() => setShowSubetapaModal(false)}
-              className="px-4 py-2 rounded-lg border-2 border-[#e2e8f0] bg-white text-[#334155] font-medium text-sm transition-all duration-200 cursor-pointer hover:bg-[#f1f5f9] hover:text-[#0f172a]"
+              className="px-4 py-2 rounded-lg border-2 border-border bg-white text-foreground font-medium text-sm transition-all duration-200 cursor-pointer hover:bg-muted hover:text-foreground"
             >
               Cancelar
             </button>
             <button
               type="button"
               onClick={confirmAddSubetapa}
-              className="px-4 py-2 rounded-lg bg-gradient-to-r from-[#1D3557] to-[#16304a] text-white font-medium text-sm transition-all duration-200 cursor-pointer hover:shadow-lg"
+              className="px-4 py-2 rounded-lg bg-gradient-to-r from-primary to-primary/80 text-white font-medium text-sm transition-all duration-200 cursor-pointer hover:shadow-lg"
             >
               Adicionar
             </button>

@@ -120,7 +120,7 @@ export default function PerfisPage() {
           onSituacaoChange={setSituacao}
         />
 
-        <Card className="border-[#cbd5e1] shadow-[0_2px_8px_rgba(0,0,0,0.06)]">
+        <Card className="border-border shadow-[0_2px_8px_rgba(0,0,0,0.06)]">
           <CardHeader>
             <CardTitle className="text-lg flex items-center gap-2">
               <Shield className="h-5 w-5 text-primary" />

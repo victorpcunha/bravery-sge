@@ -23,10 +23,10 @@ const perfilLabels: Record<string, string> = {
 }
 
 const perfilColors: Record<string, string> = {
-  aluno: 'bg-[#E9A23B]/10 text-[#E9A23B]',
-  profissional: 'bg-[#1D3557]/10 text-[#1D3557]',
-  gestor: 'bg-[#457B9D]/10 text-[#457B9D]',
-  responsavel: 'bg-[#2BAE66]/10 text-[#2BAE66]',
+  aluno: 'bg-warning/10 text-warning',
+  profissional: 'bg-primary/10 text-primary',
+  gestor: 'bg-accent/10 text-accent',
+  responsavel: 'bg-success/10 text-success',
 }
 
 const PERFIS = [
@@ -161,7 +161,7 @@ export default function UsuariosPage() {
         </div>
 
         {/* Filtros */}
-        <Card className="mb-6 border-[#cbd5e1] shadow-[0_2px_8px_rgba(0,0,0,0.06)] animate-fade-in-up">
+        <Card className="mb-6 border-border shadow-[0_2px_8px_rgba(0,0,0,0.06)] animate-fade-in-up">
           <CardContent className="pt-6 space-y-4">
             <div className="relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -201,7 +201,7 @@ export default function UsuariosPage() {
 
         {/* Lista */}
         {loading ? (
-          <Card className="border-[#cbd5e1] shadow-[0_2px_8px_rgba(0,0,0,0.06)] animate-fade-in-up">
+          <Card className="border-border shadow-[0_2px_8px_rgba(0,0,0,0.06)] animate-fade-in-up">
             <CardContent className="py-12">
               <div className="space-y-3">
                 {[1, 2, 3].map(i => (
@@ -211,7 +211,7 @@ export default function UsuariosPage() {
             </CardContent>
           </Card>
         ) : pessoas.length === 0 ? (
-          <Card className="border-[#cbd5e1] shadow-[0_2px_8px_rgba(0,0,0,0.06)] animate-fade-in-up">
+          <Card className="border-border shadow-[0_2px_8px_rgba(0,0,0,0.06)] animate-fade-in-up">
             <CardContent className="flex flex-col items-center justify-center py-16">
               <div className="w-20 h-20 bg-muted rounded-2xl flex items-center justify-center mb-6">
                 <Users className="h-10 w-10 text-muted-foreground" />
@@ -231,7 +231,7 @@ export default function UsuariosPage() {
             {pessoas.map((pessoa, index) => (
               <Card
                 key={pessoa.id}
-                className="border-[#cbd5e1] shadow-[0_2px_8px_rgba(0,0,0,0.06)] hover:shadow-md transition-all duration-200 animate-fade-in-up cursor-pointer group"
+                className="border-border shadow-[0_2px_8px_rgba(0,0,0,0.06)] hover:shadow-md transition-all duration-200 animate-fade-in-up cursor-pointer group"
                 style={{ animationDelay: `${index * 50}ms` }}
               >
                 <CardHeader className="pb-3">
@@ -288,7 +288,7 @@ export default function UsuariosPage() {
           </div>
         )}
 
-        <div className="mt-6 p-5 bg-white/60 backdrop-blur-sm rounded-2xl border border-[#e2e8f0]/50 shadow-sm animate-fade-in-up">
+        <div className="mt-6 p-5 bg-card/60 backdrop-blur-sm rounded-2xl border border-border/50 shadow-sm animate-fade-in-up">
           <div className="flex items-center justify-between">
             <div>
               <h4 className="font-semibold text-foreground">Total: {pessoas.length} usuário(s)</h4>

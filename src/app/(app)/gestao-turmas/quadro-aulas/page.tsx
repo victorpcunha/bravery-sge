@@ -109,7 +109,7 @@ export default function QuadrosAulasPage() {
           <p className="text-sm text-slate-500 mt-0.5">Grade horária das turmas</p>
         </div>
         <Button
-          className="bg-[#1D3557] hover:bg-[#2d4a6f] text-white"
+          className="bg-primary hover:bg-primary/90 text-white"
           onClick={() => router.push('/gestao-turmas/quadro-aulas/cadastro')}
         >
           <Plus className="h-4 w-4 mr-1.5" />
@@ -117,7 +117,7 @@ export default function QuadrosAulasPage() {
         </Button>
       </div>
 
-      <Card className="border-[#cbd5e1] shadow-[0_2px_8px_rgba(0,0,0,0.06)]">
+      <Card className="border-border shadow-[0_2px_8px_rgba(0,0,0,0.06)]">
         <CardHeader className="bg-slate-50/40 border-b border-slate-200">
           <div className="flex items-center gap-3">
             <Select value={anoFiltro} onValueChange={setAnoFiltro}>

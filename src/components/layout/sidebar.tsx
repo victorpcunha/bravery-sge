@@ -216,16 +216,16 @@ export function Sidebar() {
       <Button
         variant="ghost"
         size="icon"
-        className="fixed top-4 left-4 z-50 md:hidden bg-white/80 backdrop-blur-md shadow-sm hover:bg-white"
+        className="fixed top-4 left-4 z-50 md:hidden bg-background/80 backdrop-blur-md border border-border shadow-sm hover:bg-muted"
         onClick={() => setIsOpen(!isOpen)}
       >
-        <Menu className="h-5 w-5 text-slate-700" />
+        <Menu className="h-5 w-5 text-foreground" />
       </Button>
 
       {/* Overlay mobile */}
       {isOpen && (
         <div 
-          className="fixed inset-0 bg-slate-900/20 backdrop-blur-sm z-30 md:hidden"
+          className="fixed inset-0 bg-foreground/20 backdrop-blur-sm z-30 md:hidden"
           onClick={() => setIsOpen(false)}
         />
       )}
@@ -235,24 +235,24 @@ export function Sidebar() {
         "fixed inset-y-0 left-0 z-40 w-64 transform transition-transform duration-300",
         isOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"
       )}>
-        <div className="flex flex-col h-full bg-[#1D3557]">
+        <div className="flex flex-col h-full bg-sidebar">
           {/* Logo */}
-          <div className="p-5 border-b border-white/10">
+          <div className="p-5 border-b border-sidebar-border">
             <div className="flex items-center gap-3">
-              <div className="w-11 h-11 bg-[#1D3557] rounded-xl flex items-center justify-center">
-                <School className="w-5 h-5 text-white" />
+              <div className="w-10 h-10 bg-gradient-to-br from-sidebar-primary to-sidebar-accent rounded-xl flex items-center justify-center shadow-lg shadow-sidebar-primary/20">
+                <School className="w-5 h-5 text-sidebar-primary-foreground" />
               </div>
               <div>
-                <span className="font-bold text-lg text-white">Bravery</span>
-                <p className="text-xs text-white/50">Gestão Escolar</p>
+                <span className="font-heading font-bold text-lg text-sidebar-foreground tracking-tight">Bravery</span>
+                <p className="text-xs text-sidebar-foreground/40 font-medium">Gestão Escolar</p>
               </div>
             </div>
           </div>
 
           {/* Navigation */}
-          <nav className="flex-1 p-3 space-y-1 overflow-y-auto">
-            <div className="text-xs font-medium text-white/40 uppercase tracking-wider px-3 mb-3">
-              Menu Principal
+          <nav className="flex-1 py-2 px-3 space-y-0.5 overflow-y-auto">
+            <div className="text-xs font-semibold text-sidebar-foreground/30 uppercase tracking-wider px-3 py-2">
+              Menu
             </div>
             {modules.map((module, index) => {
               const isActive = module.href ? (pathname === module.href ||
@@ -261,7 +261,6 @@ export function Sidebar() {
               const hasSubmenu = module.submenu && module.submenu.length > 0
               const submenuOpen = isSubmenuOpen(module.title)
 
-              // Verificar se algum item do submenu está ativo
               const isSubmenuActive = hasSubmenu && module.submenu.some(sub =>
                 pathname === sub.href || (sub.href !== '/' && pathname.startsWith(sub.href))
               )
@@ -269,78 +268,72 @@ export function Sidebar() {
               const effectiveActive = isActive || isSubmenuActive
 
               return (
-                <div key={module.title} style={{ animationDelay: `${index * 50}ms` }}>
+                <div key={module.title} style={{ animationDelay: `${index * 40}ms` }}>
                   {hasSubmenu ? (
-                    // Módulo com submenu - usa div com onClick
                     <div
                       className={cn(
-                        "flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 group cursor-pointer",
+                        "relative flex items-center gap-3 px-3 py-3 rounded-xl text-sm font-medium transition-all duration-200 group cursor-pointer",
                         effectiveActive
-                          ? "bg-white/15 text-white shadow-lg shadow-black/10"
-                          : "text-white/60 hover:bg-white/10 hover:text-white"
+                          ? "bg-sidebar-accent/15 text-sidebar-foreground"
+                          : "text-sidebar-foreground/60 hover:bg-sidebar-accent/10 hover:text-sidebar-foreground"
                       )}
                       onClick={() => toggleSubmenu(module.title)}
                     >
+                      {effectiveActive && (
+                        <span className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-5 bg-sidebar-primary rounded-full" />
+                      )}
                       <div className={cn(
                         "p-2 rounded-lg transition-all duration-200",
                         effectiveActive
-                          ? "bg-[#457B9D]"
-                          : "bg-white/10 group-hover:bg-white/15"
+                          ? "bg-sidebar-accent"
+                          : "bg-sidebar-accent/10 group-hover:bg-sidebar-accent/15"
                       )}>
                         <module.icon className={cn(
                           "h-4 w-4 transition-transform duration-200",
-                          effectiveActive ? "text-white" : "text-white/60 group-hover:text-white"
+                          effectiveActive ? "text-sidebar-foreground" : "text-sidebar-foreground/60 group-hover:text-sidebar-foreground"
                         )} />
                       </div>
-                      <span className="relative flex-1">
-                        {module.title}
-                        {effectiveActive && (
-                          <span className="absolute -bottom-1 left-0 right-0 h-0.5 bg-[#4FB3BF] rounded-full" />
-                        )}
-                      </span>
+                      <span className="flex-1">{module.title}</span>
                       <div className="transition-transform duration-200">
                         {submenuOpen ? (
-                          <ChevronDown className="h-4 w-4 text-white/60" />
+                          <ChevronDown className="h-4 w-4 text-sidebar-foreground/50" />
                         ) : (
-                          <ChevronRight className="h-4 w-4 text-white/60" />
+                          <ChevronRight className="h-4 w-4 text-sidebar-foreground/50" />
                         )}
                       </div>
                     </div>
                   ) : (
-                    // Módulo normal - usa Link
                     <Link
                       href={module.href || '#'}
                       onClick={() => setIsOpen(false)}
                       className={cn(
-                        "flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 group",
+                        "relative flex items-center gap-3 px-3 py-3 rounded-xl text-sm font-medium transition-all duration-200 group",
                         effectiveActive
-                          ? "bg-white/15 text-white shadow-lg shadow-black/10"
-                          : "text-white/60 hover:bg-white/10 hover:text-white"
+                          ? "bg-sidebar-accent/15 text-sidebar-foreground"
+                          : "text-sidebar-foreground/60 hover:bg-sidebar-accent/10 hover:text-sidebar-foreground"
                       )}
                     >
+                      {effectiveActive && (
+                        <span className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-5 bg-sidebar-primary rounded-full" />
+                      )}
                       <div className={cn(
                         "p-2 rounded-lg transition-all duration-200",
                         effectiveActive
-                          ? "bg-[#457B9D]"
-                          : "bg-white/10 group-hover:bg-white/15"
+                          ? "bg-sidebar-accent"
+                          : "bg-sidebar-accent/10 group-hover:bg-sidebar-accent/15"
                       )}>
                         <module.icon className={cn(
                           "h-4 w-4 transition-transform duration-200",
-                          effectiveActive ? "text-white" : "text-white/60 group-hover:text-white"
+                          effectiveActive ? "text-sidebar-foreground" : "text-sidebar-foreground/60 group-hover:text-sidebar-foreground"
                         )} />
                       </div>
-                      <span className="relative flex-1">
-                        {module.title}
-                        {effectiveActive && (
-                          <span className="absolute -bottom-1 left-0 right-0 h-0.5 bg-[#4FB3BF] rounded-full" />
-                        )}
-                      </span>
+                      <span className="flex-1">{module.title}</span>
                     </Link>
                   )}
 
                   {/* Submenu */}
                   {hasSubmenu && submenuOpen && (
-                    <div className="ml-6 mt-1 space-y-1">
+                    <div className="ml-4 mt-0.5 space-y-0.5">
                       {module.submenu.map((submenuItem, subIndex) => {
                         const isSubActive = pathname === submenuItem.href ||
                           (submenuItem.href !== '/' && pathname.startsWith(submenuItem.href))
@@ -351,30 +344,28 @@ export function Sidebar() {
                             href={submenuItem.href}
                             onClick={() => setIsOpen(false)}
                             className={cn(
-                              "flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 group",
+                              "relative flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 group",
                               isSubActive
-                                ? "bg-white/10 text-white"
-                                : "text-white/50 hover:bg-white/5 hover:text-white/80"
+                                ? "text-sidebar-foreground"
+                                : "text-sidebar-foreground/50 hover:bg-sidebar-accent/5 hover:text-sidebar-foreground/80"
                             )}
-                            style={{ animationDelay: `${(index * 50) + (subIndex * 25)}ms` }}
+                            style={{ animationDelay: `${(index * 40) + (subIndex * 25)}ms` }}
                           >
+                            {isSubActive && (
+                              <span className="absolute left-0 top-1/2 -translate-y-1/2 w-0.5 h-4 bg-sidebar-primary rounded-full" />
+                            )}
                             <div className={cn(
-                              "p-1.5 rounded-lg transition-all duration-200",
+                              "p-1.5 rounded-md transition-all duration-200",
                               isSubActive
-                                ? "bg-[#457B9D]/80"
-                                : "bg-white/5 group-hover:bg-white/10"
+                                ? "bg-sidebar-accent/80"
+                                : "bg-sidebar-accent/5 group-hover:bg-sidebar-accent/10"
                             )}>
                               <submenuItem.icon className={cn(
                                 "h-3 w-3 transition-transform duration-200",
-                                isSubActive ? "text-white" : "text-white/50 group-hover:text-white/80"
+                                isSubActive ? "text-sidebar-foreground" : "text-sidebar-foreground/50 group-hover:text-sidebar-foreground/80"
                               )} />
                             </div>
-                            <span className="relative">
-                              {submenuItem.title}
-                              {isSubActive && (
-                                <span className="absolute -bottom-0.5 left-0 right-0 h-0.5 bg-[#4FB3BF] rounded-full" />
-                              )}
-                            </span>
+                            <span>{submenuItem.title}</span>
                           </Link>
                         )
                       })}
@@ -386,21 +377,20 @@ export function Sidebar() {
           </nav>
 
           {/* User & Logout */}
-          <div className="p-4 border-t border-white/10 bg-white/5">
-            <div className="flex items-center gap-3 mb-3 p-3 rounded-xl bg-white/10 backdrop-blur-sm">
-              <div className="w-10 h-10 bg-[#4FB3BF] rounded-full flex items-center justify-center">
-                <span className="text-sm font-bold text-white">
-                  {user?.email?.charAt(0).toUpperCase()}
-                </span>
+          <div className="p-3 border-t border-sidebar-border">
+            <div className="flex items-center gap-3 mb-2 p-3 rounded-xl bg-sidebar-accent/10">
+              <div className="w-9 h-9 bg-gradient-to-br from-sidebar-primary to-sidebar-accent rounded-full flex items-center justify-center text-xs font-bold text-sidebar-primary-foreground shadow-sm">
+                {user?.email?.charAt(0).toUpperCase()}
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-white truncate">{user?.email?.split('@')[0]}</p>
-                <p className="text-xs text-white/40 truncate">{user?.email}</p>
+                <p className="text-sm font-medium text-sidebar-foreground truncate">{user?.email?.split('@')[0]}</p>
+                <p className="text-xs text-sidebar-foreground/40 truncate">{user?.email}</p>
               </div>
             </div>
             <Button 
               variant="ghost" 
-              className="w-full justify-start text-white/60 hover:text-white hover:bg-white/10 transition-all duration-200"
+              size="sm"
+              className="w-full justify-start text-sidebar-foreground/60 hover:text-sidebar-foreground hover:bg-sidebar-accent/10 transition-all duration-200"
               onClick={handleSignOut}
             >
               <LogOut className="mr-2 h-4 w-4" />
@@ -409,7 +399,6 @@ export function Sidebar() {
           </div>
         </div>
       </aside>
-
-      </>
+    </>
   )
 }
