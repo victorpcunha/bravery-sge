@@ -317,7 +317,7 @@ export function TabEtapas({ schoolId }: TabEtapasProps) {
         <CardContent>
           <div className="space-y-3">
             {gruposEtapas.map((grupo) => (
-              <div key={grupo.titulo} className="rounded-lg border border-border bg-white overflow-hidden">
+              <div key={grupo.titulo} className="rounded-lg border border-border bg-card overflow-hidden">
                 <button
                   type="button"
                   onClick={() => toggleGroup(grupo.titulo)}
@@ -340,7 +340,7 @@ export function TabEtapas({ schoolId }: TabEtapasProps) {
                     {grupo.etapas.map((etapa) => (
                       <div
                         key={etapa.codigo}
-                        className="p-3 rounded-lg border border-border bg-white"
+                        className="p-3 rounded-lg border border-border bg-card"
                       >
                         <div className="flex items-center justify-between">
                           <div className="flex items-center gap-3">
@@ -418,10 +418,10 @@ export function TabEtapas({ schoolId }: TabEtapasProps) {
           <div className="space-y-4">
             <div>
               <Label className="text-foreground font-medium block mb-2">
-                Nome da Subetapa <span className="text-red-500">*</span>
+                Nome da Subetapa <span className="text-destructive">*</span>
               </Label>
               <Input 
-                className="border-2 border-border focus:border-primary focus:ring-primary/20 bg-white"
+                className="border-2 border-border focus:border-primary focus:ring-primary/20 bg-card"
                 placeholder="Ex: Maternal, 1º Ano, etc."
                 value={novaSubetapaNome}
                 onChange={e => setNovaSubetapaNome(e.target.value)}
@@ -433,7 +433,7 @@ export function TabEtapas({ schoolId }: TabEtapasProps) {
             <button
               type="button"
               onClick={() => setShowSubetapaModal(false)}
-              className="px-4 py-2 rounded-lg border-2 border-border bg-white text-foreground font-medium text-sm transition-all duration-200 cursor-pointer hover:bg-muted hover:text-foreground"
+              className="px-4 py-2 rounded-lg border-2 border-border bg-card text-foreground font-medium text-sm transition-all duration-200 cursor-pointer hover:bg-muted hover:text-foreground"
             >
               Cancelar
             </button>

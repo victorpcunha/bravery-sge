@@ -229,7 +229,7 @@ export default function PlanoAulaDiario({ turmaId, disciplinas, pessoaId }: Prop
                       "relative flex items-center justify-center w-10 h-10 rounded-lg text-sm font-medium transition-colors",
                       isSelected
                         ? "bg-primary text-primary-foreground shadow-sm"
-                        : "bg-card border border-slate-200 hover:border-primary/40 hover:bg-accent text-foreground"
+                        : "bg-card border border-border hover:border-primary/40 hover:bg-accent text-foreground"
                     )}
                     title={new Date(d + 'T12:00:00').toLocaleDateString('pt-BR')}
                   >
@@ -237,7 +237,7 @@ export default function PlanoAulaDiario({ turmaId, disciplinas, pessoaId }: Prop
                     {temPlanos && (
                       <span className={cn(
                         "absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full border-2 border-background",
-                        isSelected ? "bg-primary-foreground" : "bg-emerald-500"
+                        isSelected ? "bg-primary-foreground" : "bg-success"
                       )} />
                     )}
                   </button>
@@ -250,7 +250,7 @@ export default function PlanoAulaDiario({ turmaId, disciplinas, pessoaId }: Prop
             {/* Applied plans for this day */}
             <div>
               <h3 className="text-sm font-medium mb-3 flex items-center gap-2">
-                <CheckCircle2 className="h-4 w-4 text-emerald-500" />
+                <CheckCircle2 className="h-4 w-4 text-success" />
                 Planos Aplicados em {new Date(dataSelecionada + 'T12:00:00').toLocaleDateString('pt-BR')}
                 {loadingAplicados && <Loader2 className="h-3 w-3 animate-spin ml-1" />}
               </h3>
@@ -258,7 +258,7 @@ export default function PlanoAulaDiario({ turmaId, disciplinas, pessoaId }: Prop
               {loadingAplicados ? (
                 <p className="text-xs text-muted-foreground py-4">Carregando...</p>
               ) : planosAplicados.length === 0 ? (
-                <div className="text-center py-8 border border-dashed border-slate-200 rounded-lg">
+                <div className="text-center py-8 border border-dashed border-border rounded-lg">
                   <BookOpen className="h-6 w-6 mx-auto text-muted-foreground/30 mb-2" />
                   <p className="text-sm text-muted-foreground">Nenhum plano aplicado nesta data.</p>
                   <p className="text-xs text-muted-foreground/60 mt-1">Selecione um plano disponível ao lado.</p>
@@ -266,7 +266,7 @@ export default function PlanoAulaDiario({ turmaId, disciplinas, pessoaId }: Prop
               ) : (
                 <div className="space-y-2">
                   {planosAplicados.map(pa => (
-                    <Card key={pa.id} className="border-l-4 border-l-emerald-400">
+                    <Card key={pa.id} className="border-l-4 border-l-success/60">
                       <CardContent className="py-3 px-4">
                         <div className="flex items-start justify-between gap-2">
                           <div className="flex-1 min-w-0">
@@ -305,7 +305,7 @@ export default function PlanoAulaDiario({ turmaId, disciplinas, pessoaId }: Prop
                               <Eye className="h-3.5 w-3.5" />
                             </Button>
                             <Button
-                              variant="ghost" size="icon" className="h-7 w-7 text-red-500 hover:text-red-600"
+                              variant="ghost" size="icon" className="h-7 w-7 text-destructive hover:text-destructive"
                               onClick={() => handleRemover(pa.id)} disabled={removendo === pa.id} title="Remover aplicação"
                             >
                               {removendo === pa.id ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <XCircle className="h-3.5 w-3.5" />}
@@ -322,7 +322,7 @@ export default function PlanoAulaDiario({ turmaId, disciplinas, pessoaId }: Prop
             {/* Available plans */}
             <div>
               <h3 className="text-sm font-medium mb-3 flex items-center gap-2">
-                <BookOpen className="h-4 w-4 text-blue-500" />
+                <BookOpen className="h-4 w-4 text-info" />
                 Planos Disponíveis
                 {loadingDisponiveis && <Loader2 className="h-3 w-3 animate-spin ml-1" />}
                 {!loadingDisponiveis && (
@@ -335,7 +335,7 @@ export default function PlanoAulaDiario({ turmaId, disciplinas, pessoaId }: Prop
               {loadingDisponiveis ? (
                 <p className="text-xs text-muted-foreground py-4">Carregando...</p>
               ) : planosDisponiveis.length === 0 ? (
-                <div className="text-center py-8 border border-dashed border-slate-200 rounded-lg">
+                <div className="text-center py-8 border border-dashed border-border rounded-lg">
                   <BookOpen className="h-6 w-6 mx-auto text-muted-foreground/30 mb-2" />
                   <p className="text-sm text-muted-foreground">Nenhum plano de ensino encontrado.</p>
                   <p className="text-xs text-muted-foreground/60 mt-1">
@@ -347,14 +347,14 @@ export default function PlanoAulaDiario({ turmaId, disciplinas, pessoaId }: Prop
                   </p>
                 </div>
               ) : planosNaoAplicados.length === 0 ? (
-                <div className="text-center py-8 border border-dashed border-slate-200 rounded-lg">
-                  <CheckCircle2 className="h-6 w-6 mx-auto text-emerald-400 mb-2" />
+                <div className="text-center py-8 border border-dashed border-border rounded-lg">
+                  <CheckCircle2 className="h-6 w-6 mx-auto text-success mb-2" />
                   <p className="text-sm text-muted-foreground">Todos os planos já foram aplicados nesta data.</p>
                 </div>
               ) : (
                 <div className="space-y-2 max-h-[480px] overflow-y-auto pr-1">
                   {planosNaoAplicados.map(plano => (
-                    <Card key={plano.id} className="border-l-4 border-l-blue-300 hover:border-l-blue-500 transition-colors">
+                    <Card key={plano.id} className="border-l-4 border-l-info/50 hover:border-l-info transition-colors">
                       <CardContent className="py-2.5 px-3">
                         <div className="flex items-start justify-between gap-2">
                           <div className="flex-1 min-w-0">

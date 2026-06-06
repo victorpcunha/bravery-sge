@@ -186,8 +186,8 @@ Dark mode: **Fase separada** (light mode primeiro)
 ## FASE 6 — Dark Mode (fase separada)
 
 ### 6.1 Toggle
-- [ ] Criar `src/components/layout/theme-toggle.tsx` (Sun/Moon icon)
-- [ ] Adicionar toggle no footer da sidebar
+- [x] Criar `src/components/layout/theme-toggle.tsx` (Sun/Moon icon)
+- [x] Adicionar toggle no footer da sidebar
 
 ### 6.2 Testes
 - [ ] Verificar todas as 26 páginas em dark mode
@@ -195,7 +195,7 @@ Dark mode: **Fase separada** (light mode primeiro)
 - [ ] Verificar sidebar em dark mode
 
 ### 6.3 Verificação
-- [ ] `npx next build` sem erros
+- [x] `npx next build` sem erros ✓
 - [ ] Toggle claro/escuro funcional
 - [ ] Persistência de preferência (localStorage via next-themes)
 

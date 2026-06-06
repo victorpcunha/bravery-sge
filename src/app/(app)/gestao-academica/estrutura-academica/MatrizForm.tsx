@@ -35,7 +35,7 @@ function LabelWithTooltip({ label, tooltip }: { label: string; tooltip: string }
       <TooltipProvider delayDuration={200}>
         <Tooltip>
           <TooltipTrigger asChild>
-            <Info className="h-3.5 w-3.5 text-slate-400 hover:text-slate-600 cursor-help transition-colors shrink-0" />
+            <Info className="h-3.5 w-3.5 text-muted-foreground hover:text-foreground cursor-help transition-colors shrink-0" />
           </TooltipTrigger>
           <TooltipContent className="max-w-xs">
             <p>{tooltip}</p>
@@ -509,11 +509,11 @@ export function MatrizForm({ schoolId, matrizId, onSaved, onCancel }: Props) {
 
   /* --- Render --- */
   return (
-    <div className="space-y-6 [&_[data-slot='input']]:border-slate-300 [&_[data-slot='input']]:focus-visible:border-primary [&_[data-slot='input']]:focus-visible:ring-2 [&_[data-slot='input']]:focus-visible:ring-primary/20 [&_[data-slot='checkbox']]:border-slate-300 [&_[data-slot='checkbox']]:data-[state=checked]:border-primary">
+    <div className="space-y-6 [&_[data-slot='input']]:border-border [&_[data-slot='input']]:focus-visible:border-primary [&_[data-slot='input']]:focus-visible:ring-2 [&_[data-slot='input']]:focus-visible:ring-primary/20 [&_[data-slot='checkbox']]:border-border [&_[data-slot='checkbox']]:data-[state=checked]:border-primary">
       {/* Identificação */}
       <Card className="border-border shadow-[0_2px_8px_rgba(0,0,0,0.06)]">
-        <CardHeader className="border-b border-slate-100 pb-4">
-          <CardTitle className="text-base font-semibold text-slate-800">Identificação</CardTitle>
+        <CardHeader className="border-b border-border pb-4">
+          <CardTitle className="text-base font-semibold text-foreground">Identificação</CardTitle>
         </CardHeader>
         <CardContent className="space-y-5 px-6 pb-6 pt-0">
           <div className="space-y-2">
@@ -600,7 +600,7 @@ export function MatrizForm({ schoolId, matrizId, onSaved, onCancel }: Props) {
             </div>
           </div>
 
-          <Separator className="bg-slate-200" />
+          <Separator className="bg-muted" />
 
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
@@ -633,8 +633,8 @@ export function MatrizForm({ schoolId, matrizId, onSaved, onCancel }: Props) {
       {/* Aulas */}
       {form.tipoTurma.includes('regular') && (
         <Card className="border-border shadow-[0_2px_8px_rgba(0,0,0,0.06)]">
-          <CardHeader className="border-b border-slate-100 pb-4">
-            <CardTitle className="text-base font-semibold text-slate-800">Configuração - Turno Regular</CardTitle>
+          <CardHeader className="border-b border-border pb-4">
+            <CardTitle className="text-base font-semibold text-foreground">Configuração - Turno Regular</CardTitle>
           </CardHeader>
           <CardContent className="space-y-5 px-6 pb-6 pt-0">
             <div className="grid grid-cols-3 gap-4">
@@ -653,7 +653,7 @@ export function MatrizForm({ schoolId, matrizId, onSaved, onCancel }: Props) {
             </div>
             <div className="space-y-2 w-40">
               <Label>Aulas Anuais (estimado)</Label>
-              <Input type="number" disabled value={aulasAnuais(form.aulasDiariasRegular, form.aulasSemanaisRegular)} className="bg-slate-50" />
+              <Input type="number" disabled value={aulasAnuais(form.aulasDiariasRegular, form.aulasSemanaisRegular)} className="bg-muted" />
             </div>
           </CardContent>
         </Card>
@@ -661,8 +661,8 @@ export function MatrizForm({ schoolId, matrizId, onSaved, onCancel }: Props) {
 
       {form.tipoTurma.includes('integral') && (
         <Card className="border-border shadow-[0_2px_8px_rgba(0,0,0,0.06)]">
-          <CardHeader className="border-b border-slate-100 pb-4">
-            <CardTitle className="text-base font-semibold text-slate-800">Configuração - Turno Integral</CardTitle>
+          <CardHeader className="border-b border-border pb-4">
+            <CardTitle className="text-base font-semibold text-foreground">Configuração - Turno Integral</CardTitle>
           </CardHeader>
           <CardContent className="space-y-5 px-6 pb-6 pt-0">
             <div className="grid grid-cols-3 gap-4">
@@ -681,7 +681,7 @@ export function MatrizForm({ schoolId, matrizId, onSaved, onCancel }: Props) {
             </div>
             <div className="space-y-2 w-40">
               <Label>Aulas Anuais (estimado)</Label>
-              <Input type="number" disabled value={aulasAnuais(form.aulasDiariasIntegral, form.aulasSemanaisIntegral)} className="bg-slate-50" />
+              <Input type="number" disabled value={aulasAnuais(form.aulasDiariasIntegral, form.aulasSemanaisIntegral)} className="bg-muted" />
             </div>
           </CardContent>
         </Card>
@@ -690,11 +690,11 @@ export function MatrizForm({ schoolId, matrizId, onSaved, onCancel }: Props) {
       {/* Períodos */}
       {periodos.length > 0 && (
         <Card className="border-border shadow-[0_2px_8px_rgba(0,0,0,0.06)]">
-          <CardHeader className="border-b border-slate-100 pb-4">
+          <CardHeader className="border-b border-border pb-4">
             <div className="flex items-center justify-between">
-              <CardTitle className="text-base font-semibold text-slate-800">Períodos</CardTitle>
+              <CardTitle className="text-base font-semibold text-foreground">Períodos</CardTitle>
               {periodos.length > 1 && (
-              <Button variant="outline" size="sm" onClick={() => setShowReplicarConfirm(true)} disabled={replicarLoading} className="border-slate-300">
+              <Button variant="outline" size="sm" onClick={() => setShowReplicarConfirm(true)} disabled={replicarLoading} className="border-border">
                 <Copy className="w-4 h-4 mr-1" /> {replicarLoading ? 'Replicando...' : 'Replicar para demais períodos'}
               </Button>
               )}
@@ -707,7 +707,7 @@ export function MatrizForm({ schoolId, matrizId, onSaved, onCancel }: Props) {
               return (
                 <div key={periodo.id} className="border border-border rounded-lg overflow-hidden">
                   <div
-                    className="flex items-center justify-between px-4 py-3 bg-slate-50/40 cursor-pointer hover:bg-slate-100/60 transition-colors"
+                    className="flex items-center justify-between px-4 py-3 bg-muted/40 cursor-pointer hover:bg-muted/60 transition-colors"
                     onClick={() => toggleExpandPeriodo(periodo.id)}
                   >
                     <div className="flex items-center gap-2">
@@ -727,7 +727,7 @@ export function MatrizForm({ schoolId, matrizId, onSaved, onCancel }: Props) {
                         <p className="text-xs text-muted-foreground">Nenhuma disciplina neste período.</p>
                       ) : (
                         disciplinas.map((disc: any) => (
-                          <div key={disc.id} className="flex items-center justify-between p-2 bg-white rounded border border-slate-200">
+                          <div key={disc.id} className="flex items-center justify-between p-2 bg-card rounded border border-border">
                             <div className="flex items-center gap-2 text-sm">
                               <BookOpen className="w-4 h-4 text-primary/60" />
                               <span>{disc.academico_disciplinas?.nome || disc.disciplina_id}</span>
@@ -735,7 +735,7 @@ export function MatrizForm({ schoolId, matrizId, onSaved, onCancel }: Props) {
                               {disc.carga_horaria_integral_minutos && <span className="text-xs text-muted-foreground">Integral: {disc.carga_horaria_integral_minutos}min</span>}
                             </div>
                             <div className="flex items-center gap-1">
-                              <button onClick={(e) => { e.stopPropagation(); openDisciplinaModal(periodo, disc) }} className="text-slate-400 hover:text-primary transition-colors p-1">
+                              <button onClick={(e) => { e.stopPropagation(); openDisciplinaModal(periodo, disc) }} className="text-muted-foreground hover:text-primary transition-colors p-1">
                                 <Pencil className="w-3.5 h-3.5" />
                               </button>
                               <button onClick={() => handleDeleteDisciplina(disc.id, periodo.id)} className="text-destructive hover:text-destructive/80 p-1">
@@ -755,8 +755,8 @@ export function MatrizForm({ schoolId, matrizId, onSaved, onCancel }: Props) {
       )}
 
       {/* Footer */}
-      <div className="flex justify-end gap-3 sticky bottom-0 bg-white py-4 px-2 -mx-4 -mb-4 border-t border-slate-200 shadow-[0_-4px_12px_rgba(0,0,0,0.04)]">
-        <Button variant="outline" onClick={onCancel} className="border-slate-300 hover:bg-slate-50">Cancelar</Button>
+      <div className="flex justify-end gap-3 sticky bottom-0 bg-card py-4 px-2 -mx-4 -mb-4 border-t border-border shadow-[0_-4px_12px_rgba(0,0,0,0.04)]">
+        <Button variant="outline" onClick={onCancel} className="border-border hover:bg-muted">Cancelar</Button>
         {periodos.length === 0 ? (
           <Button onClick={handleSave} disabled={saving} className="bg-primary hover:bg-primary/90 min-w-[180px] shadow-sm shadow-primary/20">
             {saving ? 'Salvando...' : 'Criar e Configurar Períodos'}
@@ -813,7 +813,7 @@ export function MatrizForm({ schoolId, matrizId, onSaved, onCancel }: Props) {
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <label className="flex items-center gap-2 cursor-pointer">
-                  <Checkbox checked={discForm.cargaRegular} onCheckedChange={(v) => setDiscForm(prev => ({ ...prev, cargaRegular: v === true }))} className="border-slate-400 data-[state=checked]:bg-primary data-[state=checked]:border-primary" />
+                  <Checkbox checked={discForm.cargaRegular} onCheckedChange={(v) => setDiscForm(prev => ({ ...prev, cargaRegular: v === true }))} className="border-border data-[state=checked]:bg-primary data-[state=checked]:border-primary" />
                   <span className="text-sm font-medium">Carga Horária Regular</span>
                 </label>
                 {discForm.cargaRegular && (
@@ -822,7 +822,7 @@ export function MatrizForm({ schoolId, matrizId, onSaved, onCancel }: Props) {
               </div>
               <div className="space-y-2">
                 <label className="flex items-center gap-2 cursor-pointer">
-                  <Checkbox checked={discForm.cargaIntegral} onCheckedChange={(v) => setDiscForm(prev => ({ ...prev, cargaIntegral: v === true }))} className="border-slate-400 data-[state=checked]:bg-primary data-[state=checked]:border-primary" />
+                  <Checkbox checked={discForm.cargaIntegral} onCheckedChange={(v) => setDiscForm(prev => ({ ...prev, cargaIntegral: v === true }))} className="border-border data-[state=checked]:bg-primary data-[state=checked]:border-primary" />
                   <span className="text-sm font-medium">Carga Horária Integral</span>
                 </label>
                 {discForm.cargaIntegral && (
@@ -833,11 +833,11 @@ export function MatrizForm({ schoolId, matrizId, onSaved, onCancel }: Props) {
 
             {discForm.tipoDisciplina === 'base_comum' && (
               <div className="space-y-0">
-                <div className="flex border-b border-slate-200">
+                <div className="flex border-b border-border">
                   <button
                     type="button"
                     onClick={() => setAbaHabilidades('bncc')}
-                    className={`px-4 py-2 text-xs font-medium transition-colors relative ${abaHabilidades === 'bncc' ? 'text-primary' : 'text-slate-500 hover:text-slate-700'}`}
+                    className={`px-4 py-2 text-xs font-medium transition-colors relative ${abaHabilidades === 'bncc' ? 'text-primary' : 'text-muted-foreground hover:text-foreground'}`}
                   >
                     Habilidades BNCC
                     {abaHabilidades === 'bncc' && <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary" />}
@@ -845,7 +845,7 @@ export function MatrizForm({ schoolId, matrizId, onSaved, onCancel }: Props) {
                   <button
                     type="button"
                     onClick={() => setAbaHabilidades('outras')}
-                    className={`px-4 py-2 text-xs font-medium transition-colors relative ${abaHabilidades === 'outras' ? 'text-primary' : 'text-slate-500 hover:text-slate-700'}`}
+                    className={`px-4 py-2 text-xs font-medium transition-colors relative ${abaHabilidades === 'outras' ? 'text-primary' : 'text-muted-foreground hover:text-foreground'}`}
                   >
                     Outras Habilidades
                     {abaHabilidades === 'outras' && <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary" />}
@@ -884,19 +884,19 @@ export function MatrizForm({ schoolId, matrizId, onSaved, onCancel }: Props) {
                           grupos[tema][objeto].push(h)
                         }
                         return Object.entries(grupos).map(([tema, objetos]) => (
-                          <div key={tema} className="border border-slate-200 rounded-lg overflow-hidden">
-                            <div className="bg-slate-50/40 px-3 py-2 text-xs font-semibold text-slate-600 border-b border-slate-200">
+                          <div key={tema} className="border border-border rounded-lg overflow-hidden">
+                            <div className="bg-muted/40 px-3 py-2 text-xs font-semibold text-muted-foreground border-b border-border">
                               {tema}
                             </div>
                             <div className="p-2 space-y-2">
                               {Object.entries(objetos).map(([objetoNome, habs]) => (
-                                <div key={objetoNome} className="border border-slate-100 rounded-md overflow-hidden">
-                                  <div className="bg-white/80 px-2 py-1.5 text-[11px] font-medium text-slate-500 border-b border-slate-100">
+                                <div key={objetoNome} className="border border-border rounded-md overflow-hidden">
+                                  <div className="bg-card/80 px-2 py-1.5 text-[11px] font-medium text-muted-foreground border-b border-border">
                                     {objetoNome}
                                   </div>
                                   <div className="p-1.5 space-y-0.5">
                                     {habs.map((h: any) => (
-                                      <label key={h.id} className="flex items-start gap-2 cursor-pointer py-1 px-1.5 rounded hover:bg-slate-50 transition-colors">
+                                      <label key={h.id} className="flex items-start gap-2 cursor-pointer py-1 px-1.5 rounded hover:bg-muted transition-colors">
                                         <Checkbox
                                           checked={discForm.habilidadesBNCC.includes(h.codigo_bncc)}
                                           onCheckedChange={() =>
@@ -907,11 +907,11 @@ export function MatrizForm({ schoolId, matrizId, onSaved, onCancel }: Props) {
                                                 : [...prev.habilidadesBNCC, h.codigo_bncc],
                                             }))
                                           }
-                                          className="size-4 mt-0.5 border-slate-400 data-[state=checked]:bg-primary data-[state=checked]:border-primary"
+                                          className="size-4 mt-0.5 border-border data-[state=checked]:bg-primary data-[state=checked]:border-primary"
                                         />
                                         <div className="flex-1 min-w-0">
                                           <span className="text-xs font-medium text-primary">{h.codigo_bncc}</span>
-                                          <span className="text-xs text-slate-600 ml-1">{h.descricao}</span>
+                                          <span className="text-xs text-muted-foreground ml-1">{h.descricao}</span>
                                         </div>
                                       </label>
                                     ))}
@@ -940,7 +940,7 @@ export function MatrizForm({ schoolId, matrizId, onSaved, onCancel }: Props) {
                     {habilidadesManuais.length > 0 && (
                       <div className="space-y-1 mt-2">
                         {habilidadesManuais.map(h => (
-                          <div key={h.id} className="flex items-center justify-between p-2 bg-slate-50/40 rounded border border-slate-200">
+                          <div key={h.id} className="flex items-center justify-between p-2 bg-muted/40 rounded border border-border">
                             <div><span className="text-xs font-medium text-primary">{h.codigo}</span><span className="text-xs text-muted-foreground ml-2">{h.descricao}</span></div>
                             <button onClick={() => removeHabilidadeManualLocal(h.id)} className="text-xs text-destructive hover:underline">Remover</button>
                           </div>
@@ -963,7 +963,7 @@ export function MatrizForm({ schoolId, matrizId, onSaved, onCancel }: Props) {
                 {habilidadesManuais.length > 0 && (
                   <div className="space-y-1 mt-2">
                     {habilidadesManuais.map(h => (
-                      <div key={h.id} className="flex items-center justify-between p-2 bg-slate-50/40 rounded border border-slate-200">
+                      <div key={h.id} className="flex items-center justify-between p-2 bg-muted/40 rounded border border-border">
                         <div><span className="text-xs font-medium text-primary">{h.codigo}</span><span className="text-xs text-muted-foreground ml-2">{h.descricao}</span></div>
                         <button onClick={() => removeHabilidadeManualLocal(h.id)} className="text-xs text-destructive hover:underline">Remover</button>
                       </div>
@@ -974,8 +974,8 @@ export function MatrizForm({ schoolId, matrizId, onSaved, onCancel }: Props) {
             )}
           </div>
 
-          <DialogFooter className="shrink-0 px-6 pb-6 pt-4 border-t border-slate-200 gap-2">
-            <Button variant="outline" onClick={() => setShowDiscModal(false)} disabled={savingDisc} className="border-slate-300">Cancelar</Button>
+          <DialogFooter className="shrink-0 px-6 pb-6 pt-4 border-t border-border gap-2">
+            <Button variant="outline" onClick={() => setShowDiscModal(false)} disabled={savingDisc} className="border-border">Cancelar</Button>
             <Button onClick={() => handleAddDisciplina(true)} disabled={savingDisc} variant="secondary" className="shadow-sm">
               {savingDisc ? 'Salvando...' : editandoDiscId ? 'Salvar e Continuar' : 'Adicionar e Continuar'}
             </Button>

@@ -290,8 +290,8 @@ export function TabMatrizes({ schoolId }: Props) {
         )}
 
         {anoEncerrado && matrizes.length > 0 && (
-          <div className="mt-4 p-3 bg-amber-50 border border-amber-200 rounded-lg flex items-center gap-2 text-sm text-amber-800">
-            <div className="w-2 h-2 bg-amber-500 rounded-full" /> Ano letivo encerrado. Apenas visualização.
+          <div className="mt-4 p-3 bg-warning/5 border border-warning/20 rounded-lg flex items-center gap-2 text-sm text-warning">
+            <div className="w-2 h-2 bg-warning rounded-full" /> Ano letivo encerrado. Apenas visualização.
           </div>
         )}
       </CardContent>
@@ -342,7 +342,7 @@ export function TabMatrizes({ schoolId }: Props) {
             </div>
 
             {matrizSelecionada?.tipo_turma?.includes('regular') && (
-              <div className="p-3 bg-slate-50/40 rounded-lg border border-slate-200">
+              <div className="p-3 bg-muted/40 rounded-lg border border-border">
                 <Label className="text-sm font-medium mb-2 block">Carga Horária - Regular</Label>
                 <div className="grid grid-cols-3 gap-3">
                   <div className="space-y-1">
@@ -355,14 +355,14 @@ export function TabMatrizes({ schoolId }: Props) {
                   </div>
                   <div className="space-y-1">
                     <Label className="text-xs text-muted-foreground">Total min</Label>
-                    <Input disabled value={discForm.cargaHorariaRegularHoras * 60 + discForm.cargaHorariaRegularMinutos} className="bg-slate-50" />
+                    <Input disabled value={discForm.cargaHorariaRegularHoras * 60 + discForm.cargaHorariaRegularMinutos} className="bg-muted" />
                   </div>
                 </div>
               </div>
             )}
 
             {matrizSelecionada?.tipo_turma?.includes('integral') && (
-              <div className="p-3 bg-slate-50/40 rounded-lg border border-slate-200">
+              <div className="p-3 bg-muted/40 rounded-lg border border-border">
                 <Label className="text-sm font-medium mb-2 block">Carga Horária - Integral</Label>
                 <div className="grid grid-cols-3 gap-3">
                   <div className="space-y-1">
@@ -375,20 +375,20 @@ export function TabMatrizes({ schoolId }: Props) {
                   </div>
                   <div className="space-y-1">
                     <Label className="text-xs text-muted-foreground">Total min</Label>
-                    <Input disabled value={discForm.cargaHorariaIntegralHoras * 60 + discForm.cargaHorariaIntegralMinutos} className="bg-slate-50" />
+                    <Input disabled value={discForm.cargaHorariaIntegralHoras * 60 + discForm.cargaHorariaIntegralMinutos} className="bg-muted" />
                   </div>
                 </div>
               </div>
             )}
 
-            <div className="border border-slate-200 rounded-lg overflow-hidden">
-              <div className="flex border-b border-slate-200 bg-slate-50/60">
+            <div className="border border-border rounded-lg overflow-hidden">
+              <div className="flex border-b border-border bg-muted/60">
                 <div className="flex-1 px-4 py-2 text-sm font-medium text-primary border-b-2 border-primary">Habilidades BNCC ({discForm.habilidadesBNCC.length})</div>
                 <div className="flex-1 px-4 py-2 text-sm font-medium text-muted-foreground">Outras ({habilidadesManuais.length})</div>
               </div>
               <div className="p-3 max-h-48 overflow-y-auto space-y-1">
                 {habilidadesBNCC.slice(0, 30).map((h: any) => (
-                  <label key={h.codigo_bncc || h.id} className="flex items-start gap-2 cursor-pointer hover:bg-slate-50 p-1 rounded">
+                  <label key={h.codigo_bncc || h.id} className="flex items-start gap-2 cursor-pointer hover:bg-muted p-1 rounded">
                     <Checkbox checked={discForm.habilidadesBNCC.includes(h.codigo_bncc)} onCheckedChange={() => toggleHabilidadeBNCC(h.codigo_bncc)} className="mt-0.5" />
                     <div><span className="text-xs font-medium text-primary">{h.codigo_bncc}</span><p className="text-xs text-muted-foreground line-clamp-2">{h.descricao}</p></div>
                   </label>
@@ -406,7 +406,7 @@ export function TabMatrizes({ schoolId }: Props) {
               {habilidadesManuais.length > 0 && (
                 <div className="space-y-1 mt-2">
                   {habilidadesManuais.map(h => (
-                    <div key={h.id} className="flex items-center justify-between p-2 bg-slate-50/40 rounded border border-slate-200">
+                    <div key={h.id} className="flex items-center justify-between p-2 bg-muted/40 rounded border border-border">
                       <div><span className="text-xs font-medium text-primary">{h.codigo}</span><span className="text-xs text-muted-foreground ml-2">{h.descricao}</span></div>
                       <button onClick={() => removeHabilidadeManualLocal(h.id)} className="text-xs text-destructive hover:underline">Remover</button>
                     </div>
@@ -417,8 +417,8 @@ export function TabMatrizes({ schoolId }: Props) {
           </div>
 
           <DialogFooter className="gap-3">
-            <Button variant="outline" onClick={() => setShowDisciplinaModal(false)} className="border-slate-300">Cancelar</Button>
-            <Button variant="outline" onClick={() => handleSaveDisciplina(false)} className="border-slate-300">Adicionar Disciplina</Button>
+            <Button variant="outline" onClick={() => setShowDisciplinaModal(false)} className="border-border">Cancelar</Button>
+            <Button variant="outline" onClick={() => handleSaveDisciplina(false)} className="border-border">Adicionar Disciplina</Button>
             <Button onClick={() => handleSaveDisciplina(true)}>Adicionar e Continuar</Button>
           </DialogFooter>
         </DialogContent>

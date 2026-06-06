@@ -149,9 +149,9 @@ export function DatePicker({
           disabled={isDisabled}
           className={cn(
             "h-9 w-9 rounded-md text-sm font-medium transition-all duration-150 cursor-pointer",
-            isDisabled ? "text-[#94a3b8] opacity-40 cursor-not-allowed" : "text-[#334155] hover:bg-[#f1f5f9]",
-            isSelected && "bg-[#1D3557] text-white hover:bg-[#1D3557]",
-            isToday && !isSelected && "bg-[#4FB3BF]/20 text-[#4FB3BF] font-bold"
+            isDisabled ? "text-muted-foreground opacity-40 cursor-not-allowed" : "text-foreground hover:bg-muted",
+            isSelected && "bg-primary text-primary-foreground hover:bg-primary",
+            isToday && !isSelected && "bg-accent/20 text-accent font-bold"
           )}
         >
           {day}
@@ -163,7 +163,7 @@ export function DatePicker({
   return (
     <div className={className}>
       {label && (
-        <label className="text-[#334155] font-medium block mb-2">
+        <label className="text-foreground font-medium block mb-2">
           {label}
         </label>
       )}
@@ -176,8 +176,8 @@ export function DatePicker({
               placeholder={placeholder}
               disabled={disabled}
               className={cn(
-                "border-2 border-[#cbd5e1] focus:border-[#1D3557] focus:ring-[#1D3557]/20 bg-white pr-10 cursor-text",
-                disabled && "bg-[#f1f5f9] text-[#64748b] cursor-not-allowed"
+                "border-2 border-border focus:border-primary focus:ring-primary/20 bg-card pr-10 cursor-text",
+                disabled && "bg-muted text-muted-foreground cursor-not-allowed"
               )}
             />
             <button
@@ -185,7 +185,7 @@ export function DatePicker({
               disabled={disabled}
               className={cn(
                 "absolute right-2 top-1/2 -translate-y-1/2 p-1",
-                disabled ? "text-[#94a3b8] cursor-not-allowed" : "text-[#64748b] hover:text-[#1D3557] cursor-pointer"
+                disabled ? "text-muted-foreground cursor-not-allowed" : "text-muted-foreground hover:text-primary cursor-pointer"
               )}
               onClick={() => !disabled && setOpen(!open)}
             >
@@ -199,7 +199,7 @@ export function DatePicker({
           </div>
         </PopoverTrigger>
         <PopoverContent 
-          className="w-80 p-4 bg-white border-2 border-[#e2e8f0] rounded-xl shadow-xl" 
+          className="w-80 p-4 bg-card border-2 border-border rounded-xl shadow-xl" 
           align="start" 
           side="bottom"
           sideOffset={8}
@@ -209,17 +209,17 @@ export function DatePicker({
             <button
               type="button"
               onClick={handlePrevMonth}
-              className="h-8 w-8 flex items-center justify-center rounded-md hover:bg-[#f1f5f9] transition-colors cursor-pointer text-[#64748b] hover:text-[#1D3557]"
+              className="h-8 w-8 flex items-center justify-center rounded-md hover:bg-muted transition-colors cursor-pointer text-muted-foreground hover:text-primary"
             >
               <ChevronLeft className="h-4 w-4" />
             </button>
-            <span className="text-sm font-semibold text-[#1D3557]">
+            <span className="text-sm font-semibold text-primary">
               {MONTHS[currentMonth.getMonth()]} {currentMonth.getFullYear()}
             </span>
             <button
               type="button"
               onClick={handleNextMonth}
-              className="h-8 w-8 flex items-center justify-center rounded-md hover:bg-[#f1f5f9] transition-colors cursor-pointer text-[#64748b] hover:text-[#1D3557]"
+              className="h-8 w-8 flex items-center justify-center rounded-md hover:bg-muted transition-colors cursor-pointer text-muted-foreground hover:text-primary"
             >
               <ChevronRight className="h-4 w-4" />
             </button>
@@ -228,7 +228,7 @@ export function DatePicker({
           {/* Days of week header */}
           <div className="grid grid-cols-7 gap-1 mb-2">
             {DAYS_WEEK.map((day) => (
-              <div key={day} className="h-8 w-9 flex items-center justify-center text-xs font-semibold text-[#64748b]">
+              <div key={day} className="h-8 w-9 flex items-center justify-center text-xs font-semibold text-muted-foreground">
                 {day}
               </div>
             ))}

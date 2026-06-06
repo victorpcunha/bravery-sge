@@ -42,7 +42,7 @@ export default function CardContato({ pessoaId, pessoaLogadaId }: Props) {
       <Card>
         <CardHeader className="pb-2">
           <CardTitle className="text-sm flex items-center gap-2">
-            <Phone className="h-4 w-4 text-blue-500" />
+            <Phone className="h-4 w-4 text-info" />
             Contato
           </CardTitle>
         </CardHeader>
@@ -57,7 +57,7 @@ export default function CardContato({ pessoaId, pessoaLogadaId }: Props) {
     <Card>
       <CardHeader className="pb-2">
         <CardTitle className="text-sm flex items-center gap-2">
-          <Phone className="h-4 w-4 text-blue-500" />
+          <Phone className="h-4 w-4 text-info" />
           Contato
         </CardTitle>
       </CardHeader>

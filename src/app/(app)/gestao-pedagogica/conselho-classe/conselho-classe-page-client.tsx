@@ -125,7 +125,7 @@ export default function ConselhoClassePageClient({ schoolId }: Props) {
   if (preReqOk === false) {
     return (
       <div className="flex flex-col items-center justify-center py-20 text-center">
-        <AlertCircle className="h-12 w-12 text-amber-500 mb-4" />
+        <AlertCircle className="h-12 w-12 text-warning mb-4" />
         <h2 className="text-lg font-semibold text-foreground mb-1">Conselho de Classe não disponível</h2>
         <p className="text-sm text-muted-foreground">{preReqErro}</p>
       </div>

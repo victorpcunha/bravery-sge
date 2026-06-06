@@ -342,8 +342,8 @@ export default function DisciplinasPage() {
                       <td className="p-4 text-center">
                         <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
                           disciplina.ativo 
-                            ? 'bg-green-100 text-green-700' 
-                            : 'bg-red-100 text-red-700'
+                            ? 'bg-success/10 text-success' 
+                            : 'bg-destructive/10 text-destructive'
                         }`}>
                           {disciplina.ativo ? 'Ativa' : 'Inativa'}
                         </span>
@@ -528,7 +528,7 @@ export default function DisciplinasPage() {
             </Button>
             <Button 
               onClick={handleAtivar}
-              className="bg-green-600 hover:bg-green-700"
+              className="bg-success hover:bg-success/90"
             >
               Ativar
             </Button>

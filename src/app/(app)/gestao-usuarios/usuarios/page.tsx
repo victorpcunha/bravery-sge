@@ -167,7 +167,7 @@ export default function UsuariosPage() {
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
                 placeholder="Buscar por nome..."
-                className="pl-10 [&_[data-slot='input']]:border-slate-300"
+                className="pl-10 [&_[data-slot='input']]:border-border"
                 value={search}
                 onChange={e => setSearch(e.target.value)}
               />
@@ -179,7 +179,7 @@ export default function UsuariosPage() {
                   variant={perfilFiltro === p.value ? 'default' : 'outline'}
                   size="sm"
                   onClick={() => setPerfilFiltro(p.value)}
-                  className={perfilFiltro === p.value ? '' : 'border-slate-300'}
+                  className={perfilFiltro === p.value ? '' : 'border-border'}
                 >
                   {p.label}
                 </Button>
@@ -190,7 +190,7 @@ export default function UsuariosPage() {
                 variant={mostrarInativos ? 'default' : 'outline'}
                 size="sm"
                 onClick={() => setMostrarInativos(v => !v)}
-                className={mostrarInativos ? '' : 'border-slate-300'}
+                className={mostrarInativos ? '' : 'border-border'}
               >
                 <ToggleLeft className="mr-1.5 h-3.5 w-3.5" />
                 {mostrarInativos ? 'Ocultar inativos' : 'Mostrar inativos'}
@@ -262,7 +262,7 @@ export default function UsuariosPage() {
                           </Badge>
                         ))}
                         {!pessoa.ativo && (
-                          <Badge className="bg-slate-200 text-slate-500 border-0">Inativo</Badge>
+                          <Badge className="bg-muted text-muted-foreground border-0">Inativo</Badge>
                         )}
                       </div>
                       <Button variant="ghost" size="icon-sm" onClick={() => handleEdit(pessoa)}>
@@ -270,11 +270,11 @@ export default function UsuariosPage() {
                       </Button>
                       {pessoa.ativo ? (
                         <Button variant="ghost" size="icon-sm" onClick={() => handleInativar(pessoa.id)} disabled={inativando === pessoa.id}>
-                          <ToggleLeft className="h-4 w-4 text-amber-600" />
+                          <ToggleLeft className="h-4 w-4 text-warning" />
                         </Button>
                       ) : (
                         <Button variant="ghost" size="icon-sm" onClick={() => handleReativar(pessoa.id)} disabled={inativando === pessoa.id}>
-                          <RotateCcw className="h-4 w-4 text-green-600" />
+                          <RotateCcw className="h-4 w-4 text-success" />
                         </Button>
                       )}
                       <Button variant="ghost" size="icon-sm" onClick={() => handleDelete(pessoa.id)} disabled={deleting === pessoa.id}>

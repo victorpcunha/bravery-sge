@@ -132,7 +132,7 @@ export default function ParecerDescritivo({ turmaId, alunos, quantidadePeriodosP
                       className={cn(
                         'text-[10px] px-1.5 py-0 h-4',
                         preenchido
-                          ? 'bg-green-100 text-green-700 hover:bg-green-200'
+                          ? 'bg-success/10 text-success hover:bg-success/20'
                           : 'text-muted-foreground/50'
                       )}
                     >

@@ -529,7 +529,7 @@ export default function MatriculaCadastroContent({ searchParams }: { searchParam
   }
 
   if (authLoading || loading) {
-    return <div className="md:pl-64 container mx-auto py-8 px-4"><div className="text-center text-slate-400">Carregando...</div></div>
+    return <div className="md:pl-64 container mx-auto py-8 px-4"><div className="text-center text-muted-foreground">Carregando...</div></div>
   }
 
   return (
@@ -539,14 +539,14 @@ export default function MatriculaCadastroContent({ searchParams }: { searchParam
         <div className="flex items-center gap-3">
           <Link href="/gestao-academica/matriculas">
             <Button variant="ghost" size="icon" className="h-8 w-8">
-              <ArrowLeft className="h-4 w-4 text-slate-500" />
+              <ArrowLeft className="h-4 w-4 text-muted-foreground" />
             </Button>
           </Link>
           <div>
-            <h1 className="text-xl font-semibold text-slate-800">
+            <h1 className="text-xl font-semibold text-foreground">
               {isEditing ? 'Editar Matrícula' : 'Nova Matrícula'}
             </h1>
-            <p className="text-sm text-slate-500 mt-0.5">
+            <p className="text-sm text-muted-foreground mt-0.5">
               {isEditing ? 'Edite os dados da matrícula do aluno' : 'Registre um novo aluno na turma'}
             </p>
           </div>
@@ -556,19 +556,19 @@ export default function MatriculaCadastroContent({ searchParams }: { searchParam
       <div className="space-y-6 pb-20">
         {/* Card Principal */}
         <Card className="border-border shadow-[0_2px_8px_rgba(0,0,0,0.06)]">
-          <CardHeader className="bg-slate-50/40 border-b border-slate-200 py-3">
-            <CardTitle className="text-sm font-medium text-slate-600">Dados da Matrícula</CardTitle>
+          <CardHeader className="bg-muted/40 border-b border-border py-3">
+            <CardTitle className="text-sm font-medium text-foreground">Dados da Matrícula</CardTitle>
           </CardHeader>
           <CardContent className="p-4 space-y-4">
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <Label className="text-xs text-slate-500 mb-1 block">Ano Letivo</Label>
-                <Input value={anoLetivo?.descricao || '—'} disabled className="h-9 border-slate-300 bg-slate-50" />
+                <Label className="text-xs text-muted-foreground mb-1 block">Ano Letivo</Label>
+                <Input value={anoLetivo?.descricao || '—'} disabled className="h-9 border-border bg-muted" />
               </div>
               <div>
-                <Label className="text-xs text-slate-500 mb-1 block">Aluno <span className="text-red-400">*</span></Label>
+                <Label className="text-xs text-muted-foreground mb-1 block">Aluno <span className="text-destructive">*</span></Label>
                 <Select value={form.aluno_id} onValueChange={v => setForm(p => ({ ...p, aluno_id: v }))} disabled={isEditing}>
-                  <SelectTrigger className="h-9 border-slate-300">
+                  <SelectTrigger className="h-9 border-border">
                     <SelectValue placeholder="Selecione" />
                   </SelectTrigger>
                   <SelectContent>
@@ -582,19 +582,19 @@ export default function MatriculaCadastroContent({ searchParams }: { searchParam
 
             <div className="grid grid-cols-3 gap-4">
               <div>
-                <Label className="text-xs text-slate-500 mb-1 block">Data de Matrícula <span className="text-red-400">*</span></Label>
+                <Label className="text-xs text-muted-foreground mb-1 block">Data de Matrícula <span className="text-destructive">*</span></Label>
                 <Input type="date" value={form.data_matricula}
                   onChange={e => setForm(p => ({ ...p, data_matricula: e.target.value }))}
-                  className="h-9 border-slate-300" />
+                  className="h-9 border-border" />
               </div>
               <div>
-                <Label className="text-xs text-slate-500 mb-1 block">Código INEP</Label>
-                <Input value={matricula?.codigo_inep || ''} disabled className="h-9 border-slate-300 bg-slate-50" placeholder="Atribuído pelo Censo" />
+                <Label className="text-xs text-muted-foreground mb-1 block">Código INEP</Label>
+                <Input value={matricula?.codigo_inep || ''} disabled className="h-9 border-border bg-muted" placeholder="Atribuído pelo Censo" />
               </div>
               <div>
-                <Label className="text-xs text-slate-500 mb-1 block">Turma <span className="text-red-400">*</span></Label>
+                <Label className="text-xs text-muted-foreground mb-1 block">Turma <span className="text-destructive">*</span></Label>
                 <Select value={form.turma_id} onValueChange={handleTurmaChange}>
-                  <SelectTrigger className="h-9 border-slate-300">
+                  <SelectTrigger className="h-9 border-border">
                     <SelectValue placeholder="Selecione" />
                   </SelectTrigger>
                   <SelectContent>
@@ -608,10 +608,10 @@ export default function MatriculaCadastroContent({ searchParams }: { searchParam
 
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <Label className="text-xs text-slate-500 mb-1 block">Etapa de Ensino <span className="text-red-400">*</span></Label>
+                <Label className="text-xs text-muted-foreground mb-1 block">Etapa de Ensino <span className="text-destructive">*</span></Label>
                 <Select value={form.etapa_ensino_id} onValueChange={handleEtapaChange}
                   disabled={etapasDisponiveis.length === 1}>
-                  <SelectTrigger className="h-9 border-slate-300">
+                  <SelectTrigger className="h-9 border-border">
                     <SelectValue placeholder="Selecione" />
                   </SelectTrigger>
                   <SelectContent>
@@ -622,10 +622,10 @@ export default function MatriculaCadastroContent({ searchParams }: { searchParam
                 </Select>
               </div>
               <div>
-                <Label className="text-xs text-slate-500 mb-1 block">Subetapa</Label>
+                <Label className="text-xs text-muted-foreground mb-1 block">Subetapa</Label>
                 <Select value={form.subetapa_id} onValueChange={v => setForm(p => ({ ...p, subetapa_id: v }))}
                   disabled={subetapasDisponiveis.length === 0}>
-                  <SelectTrigger className="h-9 border-slate-300">
+                  <SelectTrigger className="h-9 border-border">
                     <SelectValue placeholder={subetapasDisponiveis.length === 0 ? 'Não aplicável' : 'Selecione'} />
                   </SelectTrigger>
                   <SelectContent>
@@ -639,9 +639,9 @@ export default function MatriculaCadastroContent({ searchParams }: { searchParam
 
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <Label className="text-xs text-slate-500 mb-1 block">Forma de Ingresso <span className="text-red-400">*</span></Label>
+                <Label className="text-xs text-muted-foreground mb-1 block">Forma de Ingresso <span className="text-destructive">*</span></Label>
                 <Select value={form.forma_ingresso} onValueChange={v => setForm(p => ({ ...p, forma_ingresso: v }))}>
-                  <SelectTrigger className="h-9 border-slate-300">
+                  <SelectTrigger className="h-9 border-border">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -652,9 +652,9 @@ export default function MatriculaCadastroContent({ searchParams }: { searchParam
                 </Select>
               </div>
               <div>
-                <Label className="text-xs text-slate-500 mb-1 block">Escolarização em outro espaço</Label>
+                <Label className="text-xs text-muted-foreground mb-1 block">Escolarização em outro espaço</Label>
                 <Select value={form.escolarizacao_externa} onValueChange={v => setForm(p => ({ ...p, escolarizacao_externa: v }))}>
-                  <SelectTrigger className="h-9 border-slate-300">
+                  <SelectTrigger className="h-9 border-border">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -667,9 +667,9 @@ export default function MatriculaCadastroContent({ searchParams }: { searchParam
             </div>
 
             <div>
-              <Label className="text-xs text-slate-500 mb-1 block">Observações</Label>
+              <Label className="text-xs text-muted-foreground mb-1 block">Observações</Label>
               <textarea
-                className="w-full min-h-[60px] border border-slate-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
+                className="w-full min-h-[60px] border border-border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
                 value={form.observacoes}
                 onChange={e => setForm(p => ({ ...p, observacoes: e.target.value }))}
                 placeholder="Informações adicionais sobre a matrícula..."
@@ -680,17 +680,17 @@ export default function MatriculaCadastroContent({ searchParams }: { searchParam
 
         {/* Card Transporte Escolar */}
         <Card className="border-border shadow-[0_2px_8px_rgba(0,0,0,0.06)]">
-          <CardHeader className="bg-slate-50/40 border-b border-slate-200 py-3">
-            <CardTitle className="text-sm font-medium text-slate-600 flex items-center gap-2">
-              <Bus className="h-4 w-4 text-slate-400" />
+          <CardHeader className="bg-muted/40 border-b border-border py-3">
+            <CardTitle className="text-sm font-medium text-foreground flex items-center gap-2">
+              <Bus className="h-4 w-4 text-muted-foreground" />
               Transporte Escolar
             </CardTitle>
           </CardHeader>
           <CardContent className="p-4 space-y-4">
             <div className="w-72">
-              <Label className="text-xs text-slate-500 mb-1 block">Poder público responsável</Label>
+              <Label className="text-xs text-muted-foreground mb-1 block">Poder público responsável</Label>
               <Select value={form.transporte_responsavel} onValueChange={v => setForm(p => ({ ...p, transporte_responsavel: v, transporte_veiculo_rodoviario: '', transporte_veiculo_aquaviario: '' }))}>
-                <SelectTrigger className="h-9 border-slate-300">
+                <SelectTrigger className="h-9 border-border">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -702,13 +702,13 @@ export default function MatriculaCadastroContent({ searchParams }: { searchParam
             </div>
 
             {['Municipal', 'Estadual'].includes(form.transporte_responsavel) && (
-              <div className="border border-slate-200 rounded-md p-3 bg-slate-50/30 space-y-3">
-                <p className="text-xs font-medium text-slate-600">Tipo de veículo utilizado no transporte escolar público</p>
+              <div className="border border-border rounded-md p-3 bg-muted/30 space-y-3">
+                <p className="text-xs font-medium text-foreground">Tipo de veículo utilizado no transporte escolar público</p>
 
                 <div>
-                  <Label className="text-[11px] text-slate-500 mb-1 block">Parte Rodoviária</Label>
+                  <Label className="text-[11px] text-muted-foreground mb-1 block">Parte Rodoviária</Label>
                   <Select value={form.transporte_veiculo_rodoviario} onValueChange={v => setForm(p => ({ ...p, transporte_veiculo_rodoviario: v }))}>
-                    <SelectTrigger className="h-8 border-slate-300">
+                    <SelectTrigger className="h-8 border-border">
                       <SelectValue placeholder="Selecione" />
                     </SelectTrigger>
                     <SelectContent>
@@ -720,9 +720,9 @@ export default function MatriculaCadastroContent({ searchParams }: { searchParam
                 </div>
 
                 <div>
-                  <Label className="text-[11px] text-slate-500 mb-1 block">Parte Aquaviária</Label>
+                  <Label className="text-[11px] text-muted-foreground mb-1 block">Parte Aquaviária</Label>
                   <Select value={form.transporte_veiculo_aquaviario} onValueChange={v => setForm(p => ({ ...p, transporte_veiculo_aquaviario: v }))}>
-                    <SelectTrigger className="h-8 border-slate-300">
+                    <SelectTrigger className="h-8 border-border">
                       <SelectValue placeholder="Selecione" />
                     </SelectTrigger>
                     <SelectContent>
@@ -739,19 +739,19 @@ export default function MatriculaCadastroContent({ searchParams }: { searchParam
 
         {/* Card Disciplinas */}
         <Card className="border-border shadow-[0_2px_8px_rgba(0,0,0,0.06)]">
-          <CardHeader className="bg-slate-50/40 border-b border-slate-200 py-3">
-            <CardTitle className="text-sm font-medium text-slate-600 flex items-center gap-2">
-              <BookOpen className="h-4 w-4 text-slate-400" />
+          <CardHeader className="bg-muted/40 border-b border-border py-3">
+            <CardTitle className="text-sm font-medium text-foreground flex items-center gap-2">
+              <BookOpen className="h-4 w-4 text-muted-foreground" />
               Disciplinas
             </CardTitle>
           </CardHeader>
           <CardContent className="p-4 space-y-4">
             {disciplinasTurma.length === 0 ? (
-              <p className="text-xs text-slate-400 italic">Selecione uma turma para visualizar as disciplinas</p>
+              <p className="text-xs text-muted-foreground italic">Selecione uma turma para visualizar as disciplinas</p>
             ) : (
               <div className="flex flex-wrap gap-2">
                 {disciplinasTurma.map((d: any) => (
-                  <Badge key={d.disciplina_id} variant="outline" className="text-xs border-slate-300">
+                  <Badge key={d.disciplina_id} variant="outline" className="text-xs border-border">
                     {d.nome}
                   </Badge>
                 ))}
@@ -762,18 +762,18 @@ export default function MatriculaCadastroContent({ searchParams }: { searchParam
 
             {/* Dispensa de Disciplinas */}
             <div>
-              <Label className="text-xs text-slate-500 mb-2 block">Dispensa de Disciplinas</Label>
+              <Label className="text-xs text-muted-foreground mb-2 block">Dispensa de Disciplinas</Label>
 
               {dispensas.length > 0 && (
                 <div className="space-y-1.5 mb-3">
                   {dispensas.map(d => (
-                    <div key={d.id} className="flex items-center justify-between bg-amber-50 border border-amber-200 rounded px-2.5 py-1.5">
+                    <div key={d.id} className="flex items-center justify-between bg-warning/5 border border-warning/20 rounded px-2.5 py-1.5">
                       <div>
-                        <span className="text-xs font-medium text-amber-800">{d.disciplina?.nome || '—'}</span>
-                        <p className="text-[11px] text-amber-600">{d.motivo}</p>
+                        <span className="text-xs font-medium text-warning">{d.disciplina?.nome || '—'}</span>
+                        <p className="text-[11px] text-warning">{d.motivo}</p>
                       </div>
                       <Button variant="ghost" size="icon" className="h-5 w-5" onClick={() => handleRemoverDispensa(d.id)}>
-                        <X className="h-3 w-3 text-amber-500" />
+                        <X className="h-3 w-3 text-warning" />
                       </Button>
                     </div>
                   ))}
@@ -782,9 +782,9 @@ export default function MatriculaCadastroContent({ searchParams }: { searchParam
 
               <div className="flex items-end gap-2">
                 <div className="flex-1">
-                  <Label className="text-[11px] text-slate-400 mb-0.5 block">Disciplina</Label>
+                  <Label className="text-[11px] text-muted-foreground mb-0.5 block">Disciplina</Label>
                   <Select value={novaDispensaDisciplina} onValueChange={setNovaDispensaDisciplina}>
-                    <SelectTrigger className="h-8 border-slate-300 text-xs">
+                    <SelectTrigger className="h-8 border-border text-xs">
                       <SelectValue placeholder="Selecione" />
                     </SelectTrigger>
                     <SelectContent>
@@ -795,11 +795,11 @@ export default function MatriculaCadastroContent({ searchParams }: { searchParam
                   </Select>
                 </div>
                 <div className="flex-[2]">
-                  <Label className="text-[11px] text-slate-400 mb-0.5 block">Motivo</Label>
-                  <Input className="h-8 border-slate-300 text-xs" placeholder="Descreva o motivo..."
+                  <Label className="text-[11px] text-muted-foreground mb-0.5 block">Motivo</Label>
+                  <Input className="h-8 border-border text-xs" placeholder="Descreva o motivo..."
                     value={novaDispensaMotivo} onChange={e => setNovaDispensaMotivo(e.target.value)} />
                 </div>
-                <Button variant="outline" size="sm" className="h-8 border-slate-300 text-xs"
+                <Button variant="outline" size="sm" className="h-8 border-border text-xs"
                   onClick={handleAdicionarDispensa}>
                   <Plus className="h-3 w-3 mr-1" />
                   Adicionar
@@ -812,28 +812,28 @@ export default function MatriculaCadastroContent({ searchParams }: { searchParam
         {/* Card Movimentações (apenas edição) */}
         {isEditing && (
           <Card className="border-border shadow-[0_2px_8px_rgba(0,0,0,0.06)]">
-            <CardHeader className="bg-slate-50/40 border-b border-slate-200 py-3">
-              <CardTitle className="text-sm font-medium text-slate-600 flex items-center gap-2">
-                <History className="h-4 w-4 text-slate-400" />
+            <CardHeader className="bg-muted/40 border-b border-border py-3">
+              <CardTitle className="text-sm font-medium text-foreground flex items-center gap-2">
+                <History className="h-4 w-4 text-muted-foreground" />
                 Movimentações
               </CardTitle>
             </CardHeader>
             <CardContent className="p-4 space-y-4">
               {/* Botões de movimentação (bloqueados após salvar mov) */}
               <div className="flex flex-wrap gap-2">
-                <Button variant="outline" size="sm" className="border-slate-300 text-xs"
+                <Button variant="outline" size="sm" className="border-border text-xs"
                   onClick={() => abrirModalTransferencia()} disabled={movSalvas}>
                   Transferir
                 </Button>
-                <Button variant="outline" size="sm" className="border-slate-300 text-xs"
+                <Button variant="outline" size="sm" className="border-border text-xs"
                   onClick={() => abrirModalReclassificar()} disabled={movSalvas}>
                   Reclassificar
                 </Button>
-                <Button variant="outline" size="sm" className="border-slate-300 text-xs"
+                <Button variant="outline" size="sm" className="border-border text-xs"
                   onClick={() => abrirModalRemanejar()} disabled={movSalvas}>
                   Remanejar
                 </Button>
-                <Button variant="outline" size="sm" className="border-slate-300 text-xs"
+                <Button variant="outline" size="sm" className="border-border text-xs"
                   onClick={() => abrirModalDesistencia()} disabled={movSalvas}>
                   Desistir
                 </Button>
@@ -842,23 +842,23 @@ export default function MatriculaCadastroContent({ searchParams }: { searchParam
               {/* Histórico de movimentações */}
               {movimentacoes.length > 0 && (
                 <div>
-                  <Label className="text-xs text-slate-500 mb-2 block">Histórico de Movimentações</Label>
+                  <Label className="text-xs text-muted-foreground mb-2 block">Histórico de Movimentações</Label>
                   <div className="space-y-2">
                     {movimentacoes.map((mov: any) => (
-                      <div key={mov.id} className="border border-slate-200 rounded-md p-2.5 bg-white">
+                      <div key={mov.id} className="border border-border rounded-md p-2.5 bg-card">
                         <div className="flex items-start justify-between">
                           <div>
                             <div className="flex items-center gap-2">
                               <Badge variant="outline" className="text-[10px] px-1.5 py-0">
                                 {mov.tipo}
                               </Badge>
-                              <span className="text-xs text-slate-500">{formatData(mov.data_movimentacao)}</span>
+                              <span className="text-xs text-muted-foreground">{formatData(mov.data_movimentacao)}</span>
                             </div>
-                            <p className="text-[11px] text-slate-400 mt-1">
+                            <p className="text-[11px] text-muted-foreground mt-1">
                               {mov.profissional?.nome_completo || '—'} • {mov.data_registro ? formatData(mov.data_registro) : ''}
                             </p>
                             {mov.observacoes && (
-                              <p className="text-[11px] text-slate-500 mt-0.5 italic">{mov.observacoes}</p>
+                              <p className="text-[11px] text-muted-foreground mt-0.5 italic">{mov.observacoes}</p>
                             )}
                           </div>
                           {!movSalvas && (
@@ -870,11 +870,11 @@ export default function MatriculaCadastroContent({ searchParams }: { searchParam
                                   else if (mov.tipo === 'Remanejamento') abrirModalRemanejar(mov)
                                   else if (mov.tipo === 'Desistencia') abrirModalDesistencia(mov)
                                 }}>
-                                <Pencil className="h-3 w-3 text-slate-400" />
+                                <Pencil className="h-3 w-3 text-muted-foreground" />
                               </Button>
                               <Button variant="ghost" size="icon" className="h-6 w-6"
                                 onClick={() => removerMovimentacao(mov.id)}>
-                                <Trash2 className="h-3 w-3 text-red-400" />
+                                <Trash2 className="h-3 w-3 text-destructive" />
                               </Button>
                             </div>
                           )}
@@ -906,20 +906,20 @@ export default function MatriculaCadastroContent({ searchParams }: { searchParam
           </DialogHeader>
           <div className="space-y-3">
             <div>
-              <Label className="text-xs text-slate-500 mb-1 block">Data de Transferência <span className="text-red-400">*</span></Label>
-              <Input type="date" className="h-9 border-slate-300" value={movForm.data_movimentacao}
+              <Label className="text-xs text-muted-foreground mb-1 block">Data de Transferência <span className="text-destructive">*</span></Label>
+              <Input type="date" className="h-9 border-border" value={movForm.data_movimentacao}
                 onChange={e => setMovForm(p => ({ ...p, data_movimentacao: e.target.value }))} />
             </div>
             <div>
-              <Label className="text-xs text-slate-500 mb-1 block">Observações</Label>
-              <textarea className="w-full min-h-[60px] border border-slate-300 rounded-md px-3 py-2 text-sm"
+              <Label className="text-xs text-muted-foreground mb-1 block">Observações</Label>
+              <textarea className="w-full min-h-[60px] border border-border rounded-md px-3 py-2 text-sm"
                 value={movForm.observacoes}
                 onChange={e => setMovForm(p => ({ ...p, observacoes: e.target.value }))}
                 placeholder="Observações sobre a transferência..." />
             </div>
           </div>
           <DialogFooter className="gap-2">
-            <Button variant="outline" onClick={() => { setModalTransferencia(false); resetMovForm() }} className="border-slate-300">Cancelar</Button>
+            <Button variant="outline" onClick={() => { setModalTransferencia(false); resetMovForm() }} className="border-border">Cancelar</Button>
             <Button onClick={confirmarTransferencia} className="bg-primary hover:bg-primary/90 text-white">Confirmar</Button>
           </DialogFooter>
         </DialogContent>
@@ -933,14 +933,14 @@ export default function MatriculaCadastroContent({ searchParams }: { searchParam
           </DialogHeader>
           <div className="space-y-3">
             <div>
-              <Label className="text-xs text-slate-500 mb-1 block">Data de Reclassificação <span className="text-red-400">*</span></Label>
-              <Input type="date" className="h-9 border-slate-300" value={movForm.data_movimentacao}
+              <Label className="text-xs text-muted-foreground mb-1 block">Data de Reclassificação <span className="text-destructive">*</span></Label>
+              <Input type="date" className="h-9 border-border" value={movForm.data_movimentacao}
                 onChange={e => setMovForm(p => ({ ...p, data_movimentacao: e.target.value }))} />
             </div>
             <div>
-              <Label className="text-xs text-slate-500 mb-1 block">Nova Etapa de Ensino <span className="text-red-400">*</span></Label>
+              <Label className="text-xs text-muted-foreground mb-1 block">Nova Etapa de Ensino <span className="text-destructive">*</span></Label>
               <Select value={movForm.nova_etapa_id} onValueChange={handleEtapaReclassificacaoChange}>
-                <SelectTrigger className="h-9 border-slate-300">
+                <SelectTrigger className="h-9 border-border">
                   <SelectValue placeholder="Selecione" />
                 </SelectTrigger>
                 <SelectContent>
@@ -951,9 +951,9 @@ export default function MatriculaCadastroContent({ searchParams }: { searchParam
               </Select>
             </div>
             <div>
-              <Label className="text-xs text-slate-500 mb-1 block">Nova Turma <span className="text-red-400">*</span></Label>
+              <Label className="text-xs text-muted-foreground mb-1 block">Nova Turma <span className="text-destructive">*</span></Label>
               <Select value={movForm.nova_turma_id} onValueChange={v => setMovForm(p => ({ ...p, nova_turma_id: v }))}>
-                <SelectTrigger className="h-9 border-slate-300">
+                <SelectTrigger className="h-9 border-border">
                   <SelectValue placeholder="Selecione" />
                 </SelectTrigger>
                 <SelectContent>
@@ -964,15 +964,15 @@ export default function MatriculaCadastroContent({ searchParams }: { searchParam
               </Select>
             </div>
             <div>
-              <Label className="text-xs text-slate-500 mb-1 block">Observações</Label>
-              <textarea className="w-full min-h-[60px] border border-slate-300 rounded-md px-3 py-2 text-sm"
+              <Label className="text-xs text-muted-foreground mb-1 block">Observações</Label>
+              <textarea className="w-full min-h-[60px] border border-border rounded-md px-3 py-2 text-sm"
                 value={movForm.observacoes}
                 onChange={e => setMovForm(p => ({ ...p, observacoes: e.target.value }))}
                 placeholder="Observações sobre a reclassificação..." />
             </div>
           </div>
           <DialogFooter className="gap-2">
-            <Button variant="outline" onClick={() => { setModalReclassificar(false); resetMovForm() }} className="border-slate-300">Cancelar</Button>
+            <Button variant="outline" onClick={() => { setModalReclassificar(false); resetMovForm() }} className="border-border">Cancelar</Button>
             <Button onClick={confirmarReclassificacao} className="bg-primary hover:bg-primary/90 text-white">Confirmar</Button>
           </DialogFooter>
         </DialogContent>
@@ -986,14 +986,14 @@ export default function MatriculaCadastroContent({ searchParams }: { searchParam
           </DialogHeader>
           <div className="space-y-3">
             <div>
-              <Label className="text-xs text-slate-500 mb-1 block">Data de Remanejamento <span className="text-red-400">*</span></Label>
-              <Input type="date" className="h-9 border-slate-300" value={movForm.data_movimentacao}
+              <Label className="text-xs text-muted-foreground mb-1 block">Data de Remanejamento <span className="text-destructive">*</span></Label>
+              <Input type="date" className="h-9 border-border" value={movForm.data_movimentacao}
                 onChange={e => setMovForm(p => ({ ...p, data_movimentacao: e.target.value }))} />
             </div>
             <div>
-              <Label className="text-xs text-slate-500 mb-1 block">Turma de Destino <span className="text-red-400">*</span></Label>
+              <Label className="text-xs text-muted-foreground mb-1 block">Turma de Destino <span className="text-destructive">*</span></Label>
               <Select value={movForm.turma_destino_id} onValueChange={v => setMovForm(p => ({ ...p, turma_destino_id: v }))}>
-                <SelectTrigger className="h-9 border-slate-300">
+                <SelectTrigger className="h-9 border-border">
                   <SelectValue placeholder="Selecione" />
                 </SelectTrigger>
                 <SelectContent>
@@ -1004,15 +1004,15 @@ export default function MatriculaCadastroContent({ searchParams }: { searchParam
               </Select>
             </div>
             <div>
-              <Label className="text-xs text-slate-500 mb-1 block">Observações</Label>
-              <textarea className="w-full min-h-[60px] border border-slate-300 rounded-md px-3 py-2 text-sm"
+              <Label className="text-xs text-muted-foreground mb-1 block">Observações</Label>
+              <textarea className="w-full min-h-[60px] border border-border rounded-md px-3 py-2 text-sm"
                 value={movForm.observacoes}
                 onChange={e => setMovForm(p => ({ ...p, observacoes: e.target.value }))}
                 placeholder="Observações sobre o remanejamento..." />
             </div>
           </div>
           <DialogFooter className="gap-2">
-            <Button variant="outline" onClick={() => { setModalRemanejar(false); resetMovForm() }} className="border-slate-300">Cancelar</Button>
+            <Button variant="outline" onClick={() => { setModalRemanejar(false); resetMovForm() }} className="border-border">Cancelar</Button>
             <Button onClick={confirmarRemanejamento} className="bg-primary hover:bg-primary/90 text-white">Confirmar</Button>
           </DialogFooter>
         </DialogContent>
@@ -1026,14 +1026,14 @@ export default function MatriculaCadastroContent({ searchParams }: { searchParam
           </DialogHeader>
           <div className="space-y-3">
             <div>
-              <Label className="text-xs text-slate-500 mb-1 block">Data de Desistência <span className="text-red-400">*</span></Label>
-              <Input type="date" className="h-9 border-slate-300" value={movForm.data_movimentacao}
+              <Label className="text-xs text-muted-foreground mb-1 block">Data de Desistência <span className="text-destructive">*</span></Label>
+              <Input type="date" className="h-9 border-border" value={movForm.data_movimentacao}
                 onChange={e => setMovForm(p => ({ ...p, data_movimentacao: e.target.value }))} />
             </div>
             <div>
-              <Label className="text-xs text-slate-500 mb-1 block">Motivo <span className="text-red-400">*</span></Label>
+              <Label className="text-xs text-muted-foreground mb-1 block">Motivo <span className="text-destructive">*</span></Label>
               <Select value={movForm.motivo_desistencia} onValueChange={v => setMovForm(p => ({ ...p, motivo_desistencia: v }))}>
-                <SelectTrigger className="h-9 border-slate-300">
+                <SelectTrigger className="h-9 border-border">
                   <SelectValue placeholder="Selecione" />
                 </SelectTrigger>
                 <SelectContent>
@@ -1044,15 +1044,15 @@ export default function MatriculaCadastroContent({ searchParams }: { searchParam
               </Select>
             </div>
             <div>
-              <Label className="text-xs text-slate-500 mb-1 block">Observações</Label>
-              <textarea className="w-full min-h-[60px] border border-slate-300 rounded-md px-3 py-2 text-sm"
+              <Label className="text-xs text-muted-foreground mb-1 block">Observações</Label>
+              <textarea className="w-full min-h-[60px] border border-border rounded-md px-3 py-2 text-sm"
                 value={movForm.observacoes}
                 onChange={e => setMovForm(p => ({ ...p, observacoes: e.target.value }))}
                 placeholder="Observações sobre a desistência..." />
             </div>
           </div>
           <DialogFooter className="gap-2">
-            <Button variant="outline" onClick={() => { setModalDesistencia(false); resetMovForm() }} className="border-slate-300">Cancelar</Button>
+            <Button variant="outline" onClick={() => { setModalDesistencia(false); resetMovForm() }} className="border-border">Cancelar</Button>
             <Button onClick={confirmarDesistencia} className="bg-primary hover:bg-primary/90 text-white">Confirmar</Button>
           </DialogFooter>
         </DialogContent>

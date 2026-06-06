@@ -23,16 +23,16 @@ function formatData(data: string) {
 }
 
 const situacaoColors: Record<string, string> = {
-  Ativo: 'bg-emerald-100 text-emerald-700 border-emerald-200',
-  Transferido: 'bg-blue-100 text-blue-700 border-blue-200',
-  Desistente: 'bg-amber-100 text-amber-700 border-amber-200',
-  'Óbito': 'bg-slate-100 text-slate-700 border-slate-200',
+  Ativo: 'bg-success/10 text-success border-success/20',
+  Transferido: 'bg-info/10 text-info border-info/20',
+  Desistente: 'bg-warning/10 text-warning border-warning/20',
+  'Óbito': 'bg-muted text-foreground border-border',
   Reclassificado: 'bg-purple-100 text-purple-700 border-purple-200',
   Remanejado: 'bg-cyan-100 text-cyan-700 border-cyan-200',
-  Aprovado: 'bg-green-100 text-green-700 border-green-200',
+  Aprovado: 'bg-success/10 text-success border-success/20',
   'Aprovado por conselho de classe': 'bg-lime-100 text-lime-700 border-lime-200',
-  Reprovado: 'bg-red-100 text-red-700 border-red-200',
-  'Reprovado por frequência': 'bg-orange-100 text-orange-700 border-orange-200',
+  Reprovado: 'bg-destructive/10 text-destructive border-destructive/20',
+  'Reprovado por frequência': 'bg-warning/10 text-warning border-warning/20',
 }
 
 export default function MatriculasPage() {
@@ -118,7 +118,7 @@ export default function MatriculasPage() {
   }
 
   if (authLoading) {
-    return <div className="md:pl-64 container mx-auto py-8 px-4"><div className="text-center text-slate-400">Carregando...</div></div>
+    return <div className="md:pl-64 container mx-auto py-8 px-4"><div className="text-center text-muted-foreground">Carregando...</div></div>
   }
 
   return (
@@ -126,8 +126,8 @@ export default function MatriculasPage() {
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-xl font-semibold text-slate-800">Alunos Matriculados</h1>
-          <p className="text-sm text-slate-500 mt-0.5">
+          <h1 className="text-xl font-semibold text-foreground">Alunos Matriculados</h1>
+          <p className="text-sm text-muted-foreground mt-0.5">
             Gerencie as matrículas dos alunos nas turmas
           </p>
         </div>
@@ -141,15 +141,15 @@ export default function MatriculasPage() {
 
       {/* Filtros */}
       <Card className="border-border shadow-[0_2px_8px_rgba(0,0,0,0.06)] mb-6">
-        <CardHeader className="bg-slate-50/40 border-b border-slate-200 py-3">
-          <CardTitle className="text-sm font-medium text-slate-600">Filtros</CardTitle>
+        <CardHeader className="bg-muted/40 border-b border-border py-3">
+          <CardTitle className="text-sm font-medium text-muted-foreground">Filtros</CardTitle>
         </CardHeader>
         <CardContent className="p-4">
           <div className="flex flex-wrap gap-3">
             <div className="w-48">
-              <Label className="text-xs text-slate-500 mb-1 block">Ano Letivo</Label>
+              <Label className="text-xs text-muted-foreground mb-1 block">Ano Letivo</Label>
               <Select value={filtroAno} onValueChange={v => { setFiltroAno(v); setFiltroTurma(''); setFiltroEtapa('') }}>
-                <SelectTrigger className="h-9 border-slate-300">
+                <SelectTrigger className="h-9 border-border">
                   <SelectValue placeholder="Selecione" />
                 </SelectTrigger>
                 <SelectContent>
@@ -160,9 +160,9 @@ export default function MatriculasPage() {
               </Select>
             </div>
             <div className="w-56">
-              <Label className="text-xs text-slate-500 mb-1 block">Turma</Label>
+              <Label className="text-xs text-muted-foreground mb-1 block">Turma</Label>
               <Select value={filtroTurma} onValueChange={v => { setFiltroTurma(v); setFiltroEtapa('') }}>
-                <SelectTrigger className="h-9 border-slate-300">
+                <SelectTrigger className="h-9 border-border">
                   <SelectValue placeholder="Todas" />
                 </SelectTrigger>
                 <SelectContent>
@@ -174,9 +174,9 @@ export default function MatriculasPage() {
               </Select>
             </div>
             <div className="w-56">
-              <Label className="text-xs text-slate-500 mb-1 block">Etapa</Label>
+              <Label className="text-xs text-muted-foreground mb-1 block">Etapa</Label>
               <Select value={filtroEtapa} onValueChange={v => setFiltroEtapa(v === 'all' ? '' : v)}>
-                <SelectTrigger className="h-9 border-slate-300">
+                <SelectTrigger className="h-9 border-border">
                   <SelectValue placeholder="Todas" />
                 </SelectTrigger>
                 <SelectContent>
@@ -193,17 +193,17 @@ export default function MatriculasPage() {
 
       {/* Listagem */}
       <Card className="border-border shadow-[0_2px_8px_rgba(0,0,0,0.06)]">
-        <CardHeader className="bg-slate-50/40 border-b border-slate-200 py-3">
-          <CardTitle className="text-sm font-medium text-slate-600">
+        <CardHeader className="bg-muted/40 border-b border-border py-3">
+          <CardTitle className="text-sm font-medium text-muted-foreground">
             {matriculas.length} matrícula{matriculas.length !== 1 ? 's' : ''} encontrada{matriculas.length !== 1 ? 's' : ''}
           </CardTitle>
         </CardHeader>
         <CardContent className="p-0">
           {loading ? (
-            <div className="p-8 text-center text-slate-400 text-sm">Carregando...</div>
+            <div className="p-8 text-center text-muted-foreground text-sm">Carregando...</div>
           ) : matriculas.length === 0 ? (
-            <div className="p-8 text-center text-slate-400 text-sm">
-              <DoorOpen className="h-8 w-8 mx-auto mb-2 text-slate-300" />
+            <div className="p-8 text-center text-muted-foreground text-sm">
+              <DoorOpen className="h-8 w-8 mx-auto mb-2 text-muted-foreground" />
               <p>Nenhuma matrícula encontrada.</p>
               <p className="text-xs mt-1">Clique em "Nova Matrícula" para começar.</p>
             </div>
@@ -211,25 +211,25 @@ export default function MatriculasPage() {
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
-                  <tr className="border-b border-slate-200 bg-slate-50/80">
-                    <th className="text-left px-4 py-3 font-medium text-slate-600 text-xs uppercase">Aluno</th>
-                    <th className="text-left px-4 py-3 font-medium text-slate-600 text-xs uppercase">Turma</th>
-                    <th className="text-left px-4 py-3 font-medium text-slate-600 text-xs uppercase">Etapa</th>
-                    <th className="text-left px-4 py-3 font-medium text-slate-600 text-xs uppercase">Data Matrícula</th>
-                    <th className="text-left px-4 py-3 font-medium text-slate-600 text-xs uppercase">Situação</th>
-                    <th className="text-right px-4 py-3 font-medium text-slate-600 text-xs uppercase">Ações</th>
+                  <tr className="border-b border-border bg-muted/80">
+                    <th className="text-left px-4 py-3 font-medium text-muted-foreground text-xs uppercase">Aluno</th>
+                    <th className="text-left px-4 py-3 font-medium text-muted-foreground text-xs uppercase">Turma</th>
+                    <th className="text-left px-4 py-3 font-medium text-muted-foreground text-xs uppercase">Etapa</th>
+                    <th className="text-left px-4 py-3 font-medium text-muted-foreground text-xs uppercase">Data Matrícula</th>
+                    <th className="text-left px-4 py-3 font-medium text-muted-foreground text-xs uppercase">Situação</th>
+                    <th className="text-right px-4 py-3 font-medium text-muted-foreground text-xs uppercase">Ações</th>
                   </tr>
                 </thead>
                 <tbody>
                   {matriculas.map((m: any) => (
-                    <tr key={m.id} className="border-b border-slate-100 hover:bg-slate-50/50 transition-colors">
+                    <tr key={m.id} className="border-b border-border hover:bg-muted/50 transition-colors">
                       <td className="px-4 py-3">
-                        <div className="font-medium text-slate-700">{m.aluno?.nome_completo || '—'}</div>
-                        <div className="text-[11px] text-slate-400">{m.aluno?.cpf || ''}</div>
+                        <div className="font-medium text-foreground">{m.aluno?.nome_completo || '—'}</div>
+                        <div className="text-[11px] text-muted-foreground">{m.aluno?.cpf || ''}</div>
                       </td>
-                      <td className="px-4 py-3 text-slate-600">{m.turma?.nome || '—'}</td>
-                      <td className="px-4 py-3 text-slate-600">{m.etapa?.etapa_nome || '—'}</td>
-                      <td className="px-4 py-3 text-slate-600">{formatData(m.data_matricula)}</td>
+                      <td className="px-4 py-3 text-muted-foreground">{m.turma?.nome || '—'}</td>
+                      <td className="px-4 py-3 text-muted-foreground">{m.etapa?.etapa_nome || '—'}</td>
+                      <td className="px-4 py-3 text-muted-foreground">{formatData(m.data_matricula)}</td>
                       <td className="px-4 py-3">
                         <Badge variant="outline" className={`text-[11px] px-1.5 py-0 ${situacaoColors[m.situacao] || ''}`}>
                           {m.situacao}
@@ -237,7 +237,7 @@ export default function MatriculasPage() {
                       </td>
                       <td className="px-4 py-3 text-right">
                         <Link href={`/gestao-academica/matriculas/cadastro?id=${m.id}`}>
-                          <Button variant="ghost" size="sm" className="h-7 text-xs text-slate-500">
+                          <Button variant="ghost" size="sm" className="h-7 text-xs text-muted-foreground">
                             Editar
                           </Button>
                         </Link>

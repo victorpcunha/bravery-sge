@@ -518,7 +518,7 @@ export default function TurmasPage() {
         <div className="relative mb-6 max-w-md">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
-            className="pl-10 border-slate-300"
+            className="pl-10 border-border"
             placeholder="Buscar turma por nome..."
             value={search}
             onChange={e => setSearch(e.target.value)}
@@ -544,7 +544,7 @@ export default function TurmasPage() {
               <div className="overflow-x-auto">
                 <table className="w-full">
                   <thead>
-                    <tr className="border-b border-slate-200 text-xs text-muted-foreground uppercase tracking-wider">
+                    <tr className="border-b border-border text-xs text-muted-foreground uppercase tracking-wider">
                       <th className="text-left px-6 py-3 font-medium">Nome</th>
                       <th className="text-left px-6 py-3 font-medium">Modalidade</th>
                       <th className="text-left px-6 py-3 font-medium">Etapa</th>
@@ -555,7 +555,7 @@ export default function TurmasPage() {
                   </thead>
                   <tbody>
                     {turmas.map(t => (
-                      <tr key={t.id} className="border-b border-slate-100 hover:bg-slate-50/40 transition-colors">
+                      <tr key={t.id} className="border-b border-border hover:bg-muted/40 transition-colors">
                         <td className="px-6 py-4 text-sm font-medium">{t.nome}</td>
                         <td className="px-6 py-4 text-sm text-muted-foreground">{t.modalidade}</td>
                         <td className="px-6 py-4 text-sm text-muted-foreground">
@@ -569,8 +569,8 @@ export default function TurmasPage() {
                             onClick={() => handleToggleAtiva(t.id, !t.ativo)}
                             className={`text-xs px-2 py-0.5 rounded-full border transition-colors ${
                               t.ativo
-                                ? 'bg-green-50 text-green-700 border-green-200 hover:bg-green-100'
-                                : 'bg-slate-100 text-slate-500 border-slate-200 hover:bg-slate-200'
+                                ? 'bg-success/10 text-success border-success/20 hover:bg-success/20'
+                                : 'bg-muted text-muted-foreground border-border hover:bg-muted'
                             }`}
                           >
                             {t.ativo ? 'Ativa' : 'Inativa'}
@@ -607,7 +607,7 @@ export default function TurmasPage() {
               <Input
                 value={anoLetivo?.descricao || 'Nenhum ano letivo ativo encontrado'}
                 disabled
-                className="border-slate-300 bg-slate-50"
+                className="border-border bg-muted"
               />
               <p className="text-xs text-muted-foreground">Ano letivo ativo — campo bloqueado</p>
             </div>
@@ -622,7 +622,7 @@ export default function TurmasPage() {
                 <div className="space-y-1.5">
                   <Label>Nome da Turma *</Label>
                   <Input
-                    className="border-slate-300"
+                    className="border-border"
                     value={form.nome}
                     onChange={e => updateForm('nome', e.target.value)}
                     placeholder="Ex: 1º Ano A"
@@ -631,7 +631,7 @@ export default function TurmasPage() {
                 <div className="space-y-1.5">
                   <Label>Código INEP</Label>
                   <Input
-                    className="border-slate-300 bg-slate-50"
+                    className="border-border bg-muted"
                     value=""
                     disabled
                     placeholder="Preenchido após sincronização"
@@ -640,7 +640,7 @@ export default function TurmasPage() {
                 <div className="space-y-1.5">
                   <Label>Tipo de Mediação *</Label>
                   <Select value={form.tipo_mediacao} onValueChange={v => updateForm('tipo_mediacao', v)}>
-                    <SelectTrigger className="border-slate-300"><SelectValue /></SelectTrigger>
+                    <SelectTrigger className="border-border"><SelectValue /></SelectTrigger>
                     <SelectContent>
                       {TIPOS_MEDIACAO.map(m => <SelectItem key={m} value={m}>{m}</SelectItem>)}
                     </SelectContent>
@@ -650,7 +650,7 @@ export default function TurmasPage() {
                   <div className="space-y-1.5">
                     <Label>Tipo de Ensino</Label>
                     <Select value={form.tipo_ensino || ''} onValueChange={v => updateForm('tipo_ensino', v || null)}>
-                      <SelectTrigger className="border-slate-300"><SelectValue placeholder="Selecione" /></SelectTrigger>
+                      <SelectTrigger className="border-border"><SelectValue placeholder="Selecione" /></SelectTrigger>
                       <SelectContent>
                         {TIPOS_ENSINO.map(t => <SelectItem key={t} value={t}>{t}</SelectItem>)}
                       </SelectContent>
@@ -660,7 +660,7 @@ export default function TurmasPage() {
                 <div className="space-y-1.5">
                   <Label>Capacidade de Alunos *</Label>
                   <Input
-                    className="border-slate-300"
+                    className="border-border"
                     type="number"
                     min={1}
                     value={form.capacidade_alunos}
@@ -671,7 +671,7 @@ export default function TurmasPage() {
                   <div className="space-y-1.5">
                     <Label>Local de Funcionamento Diferenciado</Label>
                     <Select value={form.local_funcionamento || ''} onValueChange={v => updateForm('local_funcionamento', v || null)}>
-                      <SelectTrigger className="border-slate-300"><SelectValue placeholder="Selecione" /></SelectTrigger>
+                      <SelectTrigger className="border-border"><SelectValue placeholder="Selecione" /></SelectTrigger>
                       <SelectContent>
                         {LOCAIS_FUNCIONAMENTO.map(l => <SelectItem key={l} value={l}>{l}</SelectItem>)}
                       </SelectContent>
@@ -681,7 +681,7 @@ export default function TurmasPage() {
                 <div className="space-y-1.5">
                   <Label>Ciclo de Início</Label>
                   <Select value={form.ciclo_inicio || ''} onValueChange={v => updateForm('ciclo_inicio', v || null)}>
-                    <SelectTrigger className="border-slate-300"><SelectValue placeholder="Selecione" /></SelectTrigger>
+                    <SelectTrigger className="border-border"><SelectValue placeholder="Selecione" /></SelectTrigger>
                     <SelectContent>
                       {CICLOS_INICIO.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
                     </SelectContent>
@@ -694,13 +694,13 @@ export default function TurmasPage() {
                 <div className="flex items-center gap-2"
                   onClick={() => updateForm('educacao_bilingue_surdos', !form.educacao_bilingue_surdos)}>
                   <Checkbox checked={form.educacao_bilingue_surdos}
-                    className="data-[state=checked]:bg-primary border-slate-400 pointer-events-none" />
+                    className="data-[state=checked]:bg-primary border-border pointer-events-none" />
                   <Label className="cursor-pointer text-sm">Educação Bilíngue de Surdos</Label>
                 </div>
                 <div className="flex items-center gap-2"
                   onClick={() => updateForm('formacao_alternancia', !form.formacao_alternancia)}>
                   <Checkbox checked={form.formacao_alternancia}
-                    className="data-[state=checked]:bg-primary border-slate-400 pointer-events-none" />
+                    className="data-[state=checked]:bg-primary border-border pointer-events-none" />
                   <Label className="cursor-pointer text-sm">Formação por Alternância</Label>
                 </div>
               </div>
@@ -710,7 +710,7 @@ export default function TurmasPage() {
                 <div className="space-y-1.5">
                   <Label>Modalidade *</Label>
                   <Select value={form.modalidade} onValueChange={v => updateForm('modalidade', v)}>
-                    <SelectTrigger className="border-slate-300"><SelectValue placeholder="Selecione" /></SelectTrigger>
+                    <SelectTrigger className="border-border"><SelectValue placeholder="Selecione" /></SelectTrigger>
                     <SelectContent>
                       {MODALIDADES.map(m => <SelectItem key={m} value={m}>{m}</SelectItem>)}
                     </SelectContent>
@@ -719,7 +719,7 @@ export default function TurmasPage() {
                 <div className="space-y-1.5">
                   <Label>Etapa de Ensino *</Label>
                   <Select value={form.etapa_ensino_id} onValueChange={v => updateForm('etapa_ensino_id', v)}>
-                    <SelectTrigger className="border-slate-300"><SelectValue placeholder="Selecione" /></SelectTrigger>
+                    <SelectTrigger className="border-border"><SelectValue placeholder="Selecione" /></SelectTrigger>
                     <SelectContent>
                       {etapas.map(e => <SelectItem key={e.id} value={e.id}>{e.etapa_nome}</SelectItem>)}
                     </SelectContent>
@@ -731,7 +731,7 @@ export default function TurmasPage() {
               <div className="flex items-center gap-2"
                 onClick={() => updateForm('multietapa', !form.multietapa)}>
                 <Checkbox checked={form.multietapa}
-                  className="data-[state=checked]:bg-primary border-slate-400 pointer-events-none" />
+                  className="data-[state=checked]:bg-primary border-border pointer-events-none" />
                 <Label className="cursor-pointer text-sm font-medium">Multietapa</Label>
               </div>
             </div>
@@ -747,7 +747,7 @@ export default function TurmasPage() {
                   <div className="space-y-1.5">
                     <Label>Turno *</Label>
                     <Select value={turno.turno} onValueChange={v => handleUpdateTurno(idx, 'turno', v)}>
-                      <SelectTrigger className="border-slate-300"><SelectValue placeholder="Selecione" /></SelectTrigger>
+                      <SelectTrigger className="border-border"><SelectValue placeholder="Selecione" /></SelectTrigger>
                       <SelectContent>
                         {TURNOS_OPCOES.map(o => <SelectItem key={o} value={o}>{o}</SelectItem>)}
                       </SelectContent>
@@ -756,7 +756,7 @@ export default function TurmasPage() {
                   <div className="space-y-1.5">
                     <Label>Horário Inicial *</Label>
                     <Input
-                      className="border-slate-300"
+                      className="border-border"
                       type="time"
                       value={turno.horario_inicial}
                       onChange={e => handleUpdateTurno(idx, 'horario_inicial', e.target.value)}
@@ -765,7 +765,7 @@ export default function TurmasPage() {
                   <div className="space-y-1.5">
                     <Label>Horário Final *</Label>
                     <Input
-                      className="border-slate-300"
+                      className="border-border"
                       type="time"
                       value={turno.horario_final}
                       onChange={e => handleUpdateTurno(idx, 'horario_final', e.target.value)}
@@ -792,7 +792,7 @@ export default function TurmasPage() {
                   <div key={dia} className="flex items-center gap-2"
                     onClick={() => handleToggleDia(dia)}>
                     <Checkbox checked={form.dias_funcionamento.includes(dia)}
-                      className="data-[state=checked]:bg-primary border-slate-400 pointer-events-none" />
+                      className="data-[state=checked]:bg-primary border-border pointer-events-none" />
                     <Label className="cursor-pointer text-sm">{dia}</Label>
                   </div>
                 ))}
@@ -814,7 +814,7 @@ export default function TurmasPage() {
                       <Checkbox
                         checked={form.tipos_turma.includes(tipo)}
                         disabled={isAEEAndCurricular}
-                        className="data-[state=checked]:bg-primary border-slate-400 pointer-events-none"
+                        className="data-[state=checked]:bg-primary border-border pointer-events-none"
                       />
                       <Label className={`cursor-pointer text-sm ${isAEEAndCurricular ? 'text-muted-foreground/50 line-through' : ''}`}>
                         {tipo}
@@ -824,7 +824,7 @@ export default function TurmasPage() {
                 })}
               </div>
               {form.tipos_turma.includes('Curricular') && form.tipos_turma.includes('Atendimento Educacional Especializado (AEE)') && (
-                <p className="text-xs text-amber-600 flex items-center gap-1">
+                <p className="text-xs text-warning flex items-center gap-1">
                   <AlertCircle className="h-3 w-3" />
                   AEE foi desmarcado automaticamente (incompatível com Curricular)
                 </p>
@@ -840,7 +840,7 @@ export default function TurmasPage() {
                     <div key={item} className="flex items-center gap-2"
                       onClick={() => handleToggleOrgCurricular(item)}>
                       <Checkbox checked={form.organizacao_curricular.includes(item)}
-                        className="data-[state=checked]:bg-primary border-slate-400 pointer-events-none" />
+                        className="data-[state=checked]:bg-primary border-border pointer-events-none" />
                       <Label className="cursor-pointer text-sm">{item}</Label>
                     </div>
                   ))}
@@ -848,14 +848,14 @@ export default function TurmasPage() {
 
                 {/* Áreas do Itinerário Formativo (conditional) */}
                 {showAreasItinerario && (
-                  <div className="border border-slate-200 rounded-lg p-4 mt-4 bg-white space-y-3">
+                  <div className="border border-border rounded-lg p-4 mt-4 bg-card space-y-3">
                     <h4 className="font-semibold text-sm">Áreas do Itinerário Formativo</h4>
                     <div className="flex flex-wrap gap-4">
                       {AREAS_ITINERARIO.map(area => (
                         <div key={area} className="flex items-center gap-2"
                           onClick={() => handleToggleAreaItinerario(area)}>
                           <Checkbox checked={form.areas_itinerario.includes(area)}
-                            className="data-[state=checked]:bg-primary border-slate-400 pointer-events-none" />
+                            className="data-[state=checked]:bg-primary border-border pointer-events-none" />
                           <Label className="cursor-pointer text-sm">{area}</Label>
                         </div>
                       ))}
@@ -865,13 +865,13 @@ export default function TurmasPage() {
 
                 {/* Formação Técnica (conditional) */}
                 {showFormacaoTecnica && (
-                  <div className="border border-slate-200 rounded-lg p-4 mt-4 bg-white space-y-3">
+                  <div className="border border-border rounded-lg p-4 mt-4 bg-card space-y-3">
                     <h4 className="font-semibold text-sm">Itinerário de Formação Técnica e Profissional</h4>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div className="space-y-1.5">
                         <Label>Tipo de Curso *</Label>
                         <Select value={form.tipo_curso || ''} onValueChange={v => updateForm('tipo_curso', v || null)}>
-                          <SelectTrigger className="border-slate-300"><SelectValue placeholder="Selecione" /></SelectTrigger>
+                          <SelectTrigger className="border-border"><SelectValue placeholder="Selecione" /></SelectTrigger>
                           <SelectContent>
                             {TIPOS_CURSO.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
                           </SelectContent>
@@ -880,7 +880,7 @@ export default function TurmasPage() {
                       <div className="space-y-1.5">
                         <Label>Código do Curso Técnico</Label>
                         <Input
-                          className="border-slate-300"
+                          className="border-border"
                           value={form.curso_tecnico_id || ''}
                           onChange={e => updateForm('curso_tecnico_id', e.target.value || null)}
                           placeholder="Informe o código"
@@ -902,7 +902,7 @@ export default function TurmasPage() {
                 <div className="flex flex-wrap gap-x-6 gap-y-2">
                   {FORMAS_ORGANIZACAO.map(f => (
                     <div key={f} className="flex items-center gap-2">
-                      <RadioGroupItem value={f} id={`forma-${f}`} className="border-slate-400" />
+                      <RadioGroupItem value={f} id={`forma-${f}`} className="border-border" />
                       <Label htmlFor={`forma-${f}`} className="cursor-pointer text-sm">{f}</Label>
                     </div>
                   ))}
@@ -922,7 +922,7 @@ export default function TurmasPage() {
                     <div key={e.id} className="flex items-center gap-2"
                       onClick={() => handleToggleMultietapaEtapa(e.id)}>
                       <Checkbox checked={multietapaEtapas.includes(e.id)}
-                        className="data-[state=checked]:bg-primary border-slate-400 pointer-events-none" />
+                        className="data-[state=checked]:bg-primary border-border pointer-events-none" />
                       <Label className="cursor-pointer text-sm">{e.etapa_nome}</Label>
                     </div>
                   ))}
@@ -950,7 +950,7 @@ export default function TurmasPage() {
                       <div key={d.id} className="flex items-center gap-2"
                         onClick={() => handleToggleDisciplina(d.id)}>
                         <Checkbox checked={selectedDisciplinas.includes(d.id)}
-                          className="data-[state=checked]:bg-primary border-slate-400 pointer-events-none" />
+                          className="data-[state=checked]:bg-primary border-border pointer-events-none" />
                         <Label className="cursor-pointer text-sm">
                           {d.academico_disciplinas?.nome || 'Disciplina'}
                         </Label>
@@ -978,10 +978,10 @@ export default function TurmasPage() {
                 <div className="space-y-2">
                   {profissionais.map(p => (
                     <div key={p.id}
-                      className="flex items-center justify-between p-3 bg-white rounded-lg border border-slate-200 gap-4">
+                      className="flex items-center justify-between p-3 bg-card rounded-lg border border-border gap-4">
                       <div className="min-w-0 flex-1">
                         <span className="text-sm font-medium">{p.people?.nome_completo || 'Profissional'}</span>
-                        <span className={`ml-2 text-xs px-1.5 py-0.5 rounded-full ${p.ativo ? 'bg-green-100 text-green-700' : 'bg-slate-100 text-slate-500'}`}>
+                        <span className={`ml-2 text-xs px-1.5 py-0.5 rounded-full ${p.ativo ? 'bg-success/10 text-success' : 'bg-muted text-muted-foreground'}`}>
                           {p.ativo ? 'Ativo' : 'Inativo'}
                         </span>
                         {p.data_inicio && (
@@ -1039,7 +1039,7 @@ export default function TurmasPage() {
                 onValueChange={handleProfPersonChange}
                 disabled={!!profEditId}
               >
-                <SelectTrigger className="border-slate-300"><SelectValue placeholder="Selecione o profissional" /></SelectTrigger>
+                <SelectTrigger className="border-border"><SelectValue placeholder="Selecione o profissional" /></SelectTrigger>
                 <SelectContent>
                   {profissionaisDisponiveis.map(p => (
                     <SelectItem key={p.id} value={p.id}>
@@ -1062,7 +1062,7 @@ export default function TurmasPage() {
                 }}
                 disabled={profVinculosDisponiveis.length <= 1 && profVinculosDisponiveis.length > 0}
               >
-                <SelectTrigger className="border-slate-300"><SelectValue placeholder={profVinculosDisponiveis.length > 0 ? "Vínculo carregado" : "Primeiro selecione o profissional"} /></SelectTrigger>
+                <SelectTrigger className="border-border"><SelectValue placeholder={profVinculosDisponiveis.length > 0 ? "Vínculo carregado" : "Primeiro selecione o profissional"} /></SelectTrigger>
                 <SelectContent>
                   {profVinculosDisponiveis.map(v => (
                     <SelectItem key={v.id} value={v.id}>
@@ -1079,7 +1079,7 @@ export default function TurmasPage() {
             <div className="space-y-1.5">
               <Label>Data de Início *</Label>
               <Input
-                className="border-slate-300"
+                className="border-border"
                 type="date"
                 value={profFormDataInicio}
                 min={profVinculoDataInicio || undefined}
@@ -1110,7 +1110,7 @@ export default function TurmasPage() {
                           )
                         }}>
                         <Checkbox checked={profFormDisciplinas.includes(d.id)}
-                          className="data-[state=checked]:bg-primary border-slate-400 pointer-events-none" />
+                          className="data-[state=checked]:bg-primary border-border pointer-events-none" />
                         <Label className="cursor-pointer text-sm">
                           {d.academico_disciplinas?.nome || 'Disciplina'}
                         </Label>

@@ -85,7 +85,7 @@ export default function LoginPage() {
             <Form {...form}>
               <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
                 {error && (
-                  <div className="p-3 text-sm text-destructive bg-red-50 border border-red-100 rounded-lg">
+                  <div className="p-3 text-sm text-destructive bg-destructive/5 border border-destructive/20 rounded-lg">
                     {error}
                   </div>
                 )}
@@ -101,7 +101,7 @@ export default function LoginPage() {
                           <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                           <Input
                             placeholder="000.000.000-00 ou email@exemplo.com"
-                            className="pl-10 bg-white/80 border-border focus:border-primary focus:ring-primary/20"
+                            className="pl-10 bg-card/80 border-border focus:border-primary focus:ring-primary/20"
                             {...field}
                           />
                         </div>
@@ -123,7 +123,7 @@ export default function LoginPage() {
                           <Input
                             type="password"
                             placeholder="••••••"
-                            className="pl-10 bg-white/80 border-border focus:border-primary focus:ring-primary/20"
+                            className="pl-10 bg-card/80 border-border focus:border-primary focus:ring-primary/20"
                             {...field}
                           />
                         </div>

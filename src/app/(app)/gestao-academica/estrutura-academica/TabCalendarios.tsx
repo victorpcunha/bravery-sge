@@ -37,9 +37,9 @@ const statusLabels = {
 }
 
 const statusColors = {
-  ativo: 'bg-green-100 text-green-700',
-  planejamento: 'bg-amber-100 text-amber-700',
-  encerramento: 'bg-gray-100 text-gray-700'
+  ativo: 'bg-success/10 text-success',
+  planejamento: 'bg-warning/10 text-warning',
+  encerramento: 'bg-muted text-foreground'
 }
 
 interface TabCalendariosProps {
@@ -567,7 +567,7 @@ export function TabCalendarios({ schoolId }: TabCalendariosProps) {
             <span className="text-muted-foreground">Dia Letivo</span>
           </div>
           <div className="flex items-center gap-2">
-            <div className="w-4 h-4 bg-gray-100 rounded"></div>
+            <div className="w-4 h-4 bg-muted rounded"></div>
             <span className="text-muted-foreground">Não Letivo</span>
           </div>
           <div className="flex items-center gap-2">
@@ -603,7 +603,7 @@ export function TabCalendarios({ schoolId }: TabCalendariosProps) {
                       ? 'bg-destructive text-white hover:opacity-80' 
                       : dayData?.isLetivo 
                         ? 'bg-success text-white hover:opacity-80' 
-                        : 'bg-gray-100 text-gray-400 hover:bg-gray-200'
+                        : 'bg-muted text-muted-foreground hover:bg-muted'
                   }`}
                 >
                   {i}
@@ -689,7 +689,7 @@ export function TabCalendarios({ schoolId }: TabCalendariosProps) {
                         </p>
                       </div>
                       <div className="flex items-center gap-2">
-                        <span className={`text-xs px-2 py-1 rounded ${statusColors[ano.status as keyof typeof statusColors] || 'bg-gray-100 text-gray-700'}`}>
+                        <span className={`text-xs px-2 py-1 rounded ${statusColors[ano.status as keyof typeof statusColors] || 'bg-muted text-foreground'}`}>
                           {statusLabels[ano.status as keyof typeof statusLabels] || ano.status}
                         </span>
                         <Button
@@ -864,7 +864,7 @@ export function TabCalendarios({ schoolId }: TabCalendariosProps) {
           <div className="space-y-5">
             <div>
               <Label className="text-foreground font-medium block mb-2">
-                Descrição <span className="text-red-500">*</span>
+                Descrição <span className="text-destructive">*</span>
               </Label>
               <Input 
                 className="border-2 border-border focus:border-primary focus:ring-primary/20 bg-input"
@@ -876,7 +876,7 @@ export function TabCalendarios({ schoolId }: TabCalendariosProps) {
             </div>
             <div>
               <Label className="text-foreground font-medium block mb-2">
-                Situação <span className="text-red-500">*</span>
+                Situação <span className="text-destructive">*</span>
               </Label>
               <Select 
                 value={anoForm.status || ""}
@@ -922,7 +922,7 @@ export function TabCalendarios({ schoolId }: TabCalendariosProps) {
           <div className="space-y-5">
             <div>
               <Label className="text-foreground font-medium block mb-2">
-                Descrição <span className="text-red-500">*</span>
+                Descrição <span className="text-destructive">*</span>
               </Label>
               <Input 
                 className="border-2 border-border focus:border-info focus:ring-info/20 bg-input"
@@ -967,7 +967,7 @@ export function TabCalendarios({ schoolId }: TabCalendariosProps) {
           <div className="space-y-5">
             <div>
               <Label className="text-foreground font-medium block mb-2">
-                Descrição <span className="text-red-500">*</span>
+                Descrição <span className="text-destructive">*</span>
               </Label>
               <Input 
                 className="border-2 border-border focus:border-ring focus:ring-ring/20 bg-input"
@@ -1066,16 +1066,16 @@ export function TabCalendarios({ schoolId }: TabCalendariosProps) {
                   <br />
                   Tem certeza que deseja remover apenas o dia {formatarData(diaEspecificoExclusao)}?
                   <br />
-                  {eventoParaExcluir?.tipo === 'dia_letivo' && <span className="text-amber-600">Esse dia deixará de ser letivo.</span>}
-                  {eventoParaExcluir?.tipo === 'recesso' && <span className="text-amber-600">Esse dia deixará de ser recesso.</span>}
+                  {eventoParaExcluir?.tipo === 'dia_letivo' && <span className="text-warning">Esse dia deixará de ser letivo.</span>}
+                  {eventoParaExcluir?.tipo === 'recesso' && <span className="text-warning">Esse dia deixará de ser recesso.</span>}
                 </>
               ) : (
                 <>
                   Tem certeza que deseja excluir o evento "{eventoParaExcluir?.descricao}" do dia {eventoParaExcluir ? formatarData(eventoParaExcluir.data_inicio) : ''}?
                   <br />
-                  {eventoParaExcluir?.tipo === 'dia_letivo' && <span className="text-amber-600">Isso fará com que o dia deixe de ser letivo.</span>}
-                  {eventoParaExcluir?.tipo === 'recesso' && <span className="text-amber-600">Isso fará com que o dia deixe de ser recesso.</span>}
-                  {eventoParaExcluir?.tipo === 'nao_letivo' && <span className="text-amber-600">Isso tornará o dia letivo novamente.</span>}
+                  {eventoParaExcluir?.tipo === 'dia_letivo' && <span className="text-warning">Isso fará com que o dia deixe de ser letivo.</span>}
+                  {eventoParaExcluir?.tipo === 'recesso' && <span className="text-warning">Isso fará com que o dia deixe de ser recesso.</span>}
+                  {eventoParaExcluir?.tipo === 'nao_letivo' && <span className="text-warning">Isso tornará o dia letivo novamente.</span>}
                 </>
               )}
             </AlertDialogDescription>
@@ -1103,7 +1103,7 @@ export function TabCalendarios({ schoolId }: TabCalendariosProps) {
             <AlertDialogDescription>
               Tem certeza que deseja excluir o calendário "{calendarioParaExcluir?.descricao}"?
               <br />
-              <span className="text-amber-600">Todos os eventos deste calendário também serão excluídos.</span>
+              <span className="text-warning">Todos os eventos deste calendário também serão excluídos.</span>
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter className="mt-4 gap-3">
@@ -1128,7 +1128,7 @@ export function TabCalendarios({ schoolId }: TabCalendariosProps) {
             <AlertDialogDescription>
               Tem certeza que deseja excluir o ano letivo "{anoParaExcluir?.descricao}"?
               <br />
-              <span className="text-amber-600">Todos os calendários e eventos deste ano também serão excluídos.</span>
+              <span className="text-warning">Todos os calendários e eventos deste ano também serão excluídos.</span>
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter className="mt-4 gap-3">

@@ -127,7 +127,7 @@ export default function CriarPlanoEnsinoPage() {
                 <select
                   value={anoLetivoId}
                   onChange={e => { setAnoLetivoId(e.target.value); setTurmaId(''); setSelectedDiscs([]) }}
-                  className="w-full h-10 px-3 rounded-lg border border-slate-300 bg-white text-sm mt-1"
+                  className="w-full h-10 px-3 rounded-lg border border-border bg-card text-sm mt-1"
                 >
                   <option value="">Selecione...</option>
                   {anosLetivos.map((a: any) => (
@@ -141,7 +141,7 @@ export default function CriarPlanoEnsinoPage() {
                 <select
                   value={turmaId}
                   onChange={e => { setTurmaId(e.target.value); setSelectedDiscs([]) }}
-                  className="w-full h-10 px-3 rounded-lg border border-slate-300 bg-white text-sm mt-1"
+                  className="w-full h-10 px-3 rounded-lg border border-border bg-card text-sm mt-1"
                   disabled={!anoLetivoId}
                 >
                   <option value="">Selecione...</option>
@@ -182,7 +182,7 @@ export default function CriarPlanoEnsinoPage() {
                     {disciplinas.map(d => {
                       const checked = selectedDiscs.includes(d.matriz_disciplina_id)
                       return (
-                        <label key={d.matriz_disciplina_id} className="flex items-center gap-3 p-2 rounded-lg hover:bg-slate-50 cursor-pointer">
+                        <label key={d.matriz_disciplina_id} className="flex items-center gap-3 p-2 rounded-lg hover:bg-muted cursor-pointer">
                           <Checkbox
                             checked={checked}
                             onCheckedChange={() => toggleDisc(d.matriz_disciplina_id)}

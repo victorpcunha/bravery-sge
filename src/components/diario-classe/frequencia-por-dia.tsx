@@ -196,11 +196,11 @@ export default function FrequenciaPorDia({ turmaId, alunos, disciplinas }: Props
             <div className="text-[10px] text-muted-foreground">Dias Letivos</div>
           </div>
           <div className="rounded-lg border bg-card p-3 text-center">
-            <div className="text-lg font-bold text-green-600">{estatisticas.diasRegistrados}</div>
+            <div className="text-lg font-bold text-success">{estatisticas.diasRegistrados}</div>
             <div className="text-[10px] text-muted-foreground">Dias c/ Registro</div>
           </div>
           <div className="rounded-lg border bg-card p-3 text-center">
-            <div className="text-lg font-bold text-amber-600">{estatisticas.diasPendentes}</div>
+            <div className="text-lg font-bold text-warning">{estatisticas.diasPendentes}</div>
             <div className="text-[10px] text-muted-foreground">Dias Pendentes</div>
           </div>
         </div>
@@ -309,14 +309,14 @@ export default function FrequenciaPorDia({ turmaId, alunos, disciplinas }: Props
                   const percentual = calcPercentual(aluno.id)
                   return (
                     <tr key={aluno.id} className={cn(
-                      "border-b border-slate-100 hover:bg-slate-50/40",
-                      idx % 2 === 0 && "bg-white",
-                      idx % 2 === 1 && "bg-slate-50/30"
+                      "border-b border-border hover:bg-muted/40",
+                      idx % 2 === 0 && "bg-card",
+                      idx % 2 === 1 && "bg-muted/30"
                     )}>
                       <td className={cn(
                         "sticky left-0 py-2 px-3 text-sm font-medium z-10 shadow-[2px_0_4px_-2px_rgba(0,0,0,0.08)]",
-                        idx % 2 === 0 && "bg-white",
-                        idx % 2 === 1 && "bg-slate-50/30"
+                        idx % 2 === 0 && "bg-card",
+                        idx % 2 === 1 && "bg-muted/30"
                       )}>
                         {aluno.nome_completo}
                       </td>
@@ -349,10 +349,10 @@ export default function FrequenciaPorDia({ turmaId, alunos, disciplinas }: Props
                                 "w-7 h-7 rounded-md text-xs font-bold transition-all flex items-center justify-center mx-auto",
                                 !disabled && !isOutsidePeriod && "cursor-pointer hover:ring-2 hover:ring-primary/30",
                                 isOutsidePeriod && "cursor-not-allowed",
-                                status === 'P' && "bg-green-100 text-green-700 hover:bg-green-200",
-                                status === 'F' && "bg-red-100 text-red-700 hover:bg-red-200",
-                                status === 'FJ' && "bg-amber-100 text-amber-700 hover:bg-amber-200",
-                                !status && !disabled && !isOutsidePeriod && "bg-transparent text-muted-foreground/30 hover:bg-slate-100 hover:text-muted-foreground/60",
+                                status === 'P' && "bg-success/10 text-success hover:bg-success/20",
+                                status === 'F' && "bg-destructive/10 text-destructive hover:bg-destructive/20",
+                                status === 'FJ' && "bg-warning/10 text-warning hover:bg-warning/20",
+                                !status && !disabled && !isOutsidePeriod && "bg-transparent text-muted-foreground/30 hover:bg-muted hover:text-muted-foreground/60",
                                 !status && (isFuture || isOutsidePeriod) && "bg-transparent text-muted-foreground/10",
                                 isFuture && "cursor-default",
                                 isSaving && "opacity-50 cursor-wait"
@@ -371,9 +371,9 @@ export default function FrequenciaPorDia({ turmaId, alunos, disciplinas }: Props
                         {percentual !== null && (
                           <span className={cn(
                             "text-xs font-semibold",
-                            percentual >= 75 && "text-green-600",
-                            percentual >= 50 && percentual < 75 && "text-amber-600",
-                            percentual < 50 && "text-red-600"
+percentual >= 75 && "text-success",
+                                percentual >= 50 && percentual < 75 && "text-warning",
+                                percentual < 50 && "text-destructive"
                           )}>
                             {percentual}%
                           </span>
@@ -388,13 +388,13 @@ export default function FrequenciaPorDia({ turmaId, alunos, disciplinas }: Props
 
           <div className="flex items-center gap-4 mt-3 text-xs text-muted-foreground flex-wrap">
             <span className="flex items-center gap-1">
-              <Check className="h-3 w-3 text-green-600" /> Presente
+              <Check className="h-3 w-3 text-success" /> Presente
             </span>
             <span className="flex items-center gap-1">
-              <X className="h-3 w-3 text-red-600" /> Falta
+              <X className="h-3 w-3 text-destructive" /> Falta
             </span>
             <span className="flex items-center gap-1">
-              <AlertTriangle className="h-3 w-3 text-amber-600" /> Falta Justificada
+              <AlertTriangle className="h-3 w-3 text-warning" /> Falta Justificada
             </span>
             <span className="text-muted-foreground/60">Clique para alternar</span>
             <span className="text-muted-foreground/40">|</span>

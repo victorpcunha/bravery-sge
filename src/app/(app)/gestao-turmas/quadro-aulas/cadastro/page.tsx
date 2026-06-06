@@ -51,7 +51,7 @@ function getDisciplinaFullName(d: any): string {
 
 export default function CadastroQuadroAulaPage() {
   return (
-    <Suspense fallback={<div className="md:pl-64 container mx-auto py-8 px-4"><div className="text-center text-slate-400 py-8">Carregando...</div></div>}>
+    <Suspense fallback={<div className="md:pl-64 container mx-auto py-8 px-4"><div className="text-center text-muted-foreground py-8">Carregando...</div></div>}>
       <CadastroForm />
     </Suspense>
   )
@@ -453,7 +453,7 @@ function CadastroForm() {
   if (loading) {
     return (
       <div className="md:pl-64 container mx-auto py-8 px-4">
-        <div className="text-center text-slate-400 py-8">Carregando...</div>
+        <div className="text-center text-muted-foreground py-8">Carregando...</div>
       </div>
     )
   }
@@ -463,13 +463,13 @@ function CadastroForm() {
       <div className="flex items-center gap-3 mb-6">
         <Button variant="ghost" size="icon" className="h-9 w-9"
           onClick={() => router.push('/gestao-turmas/quadro-aulas')}>
-          <ArrowLeft className="h-5 w-5 text-slate-600" />
+          <ArrowLeft className="h-5 w-5 text-foreground" />
         </Button>
         <div>
-          <h1 className="text-xl font-semibold text-slate-800">
+          <h1 className="text-xl font-semibold text-foreground">
             {editId ? 'Editar Quadro de Aulas' : 'Novo Quadro de Aulas'}
           </h1>
-          <p className="text-sm text-slate-500 mt-0.5">
+          <p className="text-sm text-muted-foreground mt-0.5">
             {editId ? 'Altere as informações do quadro' : 'Preencha os dados para gerar a grade horária'}
           </p>
         </div>
@@ -477,8 +477,8 @@ function CadastroForm() {
 
       {/* Card Identificação */}
       <Card className="border-border shadow-[0_2px_8px_rgba(0,0,0,0.06)] mb-6">
-        <CardHeader className="bg-slate-50/40 border-b border-slate-200">
-          <CardTitle className="text-base font-medium text-slate-700 flex items-center gap-2">
+        <CardHeader className="bg-muted/40 border-b border-border">
+          <CardTitle className="text-base font-medium text-foreground flex items-center gap-2">
             <Calendar className="h-4 w-4" />
             Identificação
           </CardTitle>
@@ -487,15 +487,15 @@ function CadastroForm() {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             {/* Ano Letivo */}
             <div>
-              <Label className="text-xs text-slate-500 mb-1 block">Ano Letivo</Label>
-              <Input value={anoLetivoDesc} disabled className="border-slate-300 bg-slate-50" />
+              <Label className="text-xs text-muted-foreground mb-1 block">Ano Letivo</Label>
+              <Input value={anoLetivoDesc} disabled className="border-border bg-muted" />
             </div>
 
             {/* Turma */}
             <div>
-              <Label className="text-xs text-slate-500 mb-1 block">Turma <span className="text-red-400">*</span></Label>
+              <Label className="text-xs text-muted-foreground mb-1 block">Turma <span className="text-destructive">*</span></Label>
               <Select value={turmaId} onValueChange={handleTurmaChange} disabled={!!editId}>
-                <SelectTrigger className="border-slate-300">
+                <SelectTrigger className="border-border">
                   <SelectValue placeholder="Selecione a turma" />
                 </SelectTrigger>
                 <SelectContent>
@@ -510,33 +510,33 @@ function CadastroForm() {
 
             {/* Data Inicial */}
             <div>
-              <Label className="text-xs text-slate-500 mb-1 block">Data Inicial <span className="text-red-400">*</span></Label>
+              <Label className="text-xs text-muted-foreground mb-1 block">Data Inicial <span className="text-destructive">*</span></Label>
               <Input
                 type="date"
                 value={dataInicial}
                 min={anoLetivoDataInicio}
                 max={anoLetivoDataTermino}
                 onChange={e => setDataInicial(e.target.value)}
-                className="border-slate-300"
+                className="border-border"
               />
               {dataInicial && anoLetivoDataInicio && dataInicial < anoLetivoDataInicio && (
-                <p className="text-[11px] text-red-500 mt-0.5">Data anterior ao início do ano letivo</p>
+                <p className="text-[11px] text-destructive mt-0.5">Data anterior ao início do ano letivo</p>
               )}
             </div>
 
             {/* Data Final */}
             <div>
-              <Label className="text-xs text-slate-500 mb-1 block">Data Final <span className="text-red-400">*</span></Label>
+              <Label className="text-xs text-muted-foreground mb-1 block">Data Final <span className="text-destructive">*</span></Label>
               <Input
                 type="date"
                 value={dataFinal}
                 min={anoLetivoDataInicio}
                 max={anoLetivoDataTermino}
                 onChange={e => setDataFinal(e.target.value)}
-                className="border-slate-300"
+                className="border-border"
               />
               {dataFinal && anoLetivoDataTermino && dataFinal > anoLetivoDataTermino && (
-                <p className="text-[11px] text-red-500 mt-0.5">Data posterior ao término do ano letivo</p>
+                <p className="text-[11px] text-destructive mt-0.5">Data posterior ao término do ano letivo</p>
               )}
             </div>
           </div>
@@ -544,16 +544,16 @@ function CadastroForm() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
             {/* Tempo de Aula */}
             <div>
-              <Label className="text-xs text-slate-500 mb-1 block">Tempo de Aula (minutos) <span className="text-red-400">*</span></Label>
+              <Label className="text-xs text-muted-foreground mb-1 block">Tempo de Aula (minutos) <span className="text-destructive">*</span></Label>
               <div className="flex items-center gap-2">
                 <Input
                   type="number"
                   min={1}
                   value={tempoAula}
                   onChange={e => setTempoAula(e.target.value)}
-                  className="border-slate-300 w-32"
+                  className="border-border w-32"
                 />
-                <span className="text-sm text-slate-500">minutos</span>
+                <span className="text-sm text-muted-foreground">minutos</span>
               </div>
             </div>
           </div>
@@ -562,38 +562,38 @@ function CadastroForm() {
           <Separator className="my-4" />
           <div>
             <div className="flex items-center justify-between mb-3">
-              <Label className="text-xs text-slate-500">Intervalos</Label>
+              <Label className="text-xs text-muted-foreground">Intervalos</Label>
               {intervalos.length < 3 && (
                 <Button variant="outline" size="sm" onClick={addIntervalo}
-                  className="h-8 text-xs border-slate-300">
+                  className="h-8 text-xs border-border">
                   <Plus className="h-3 w-3 mr-1" />
                   Adicionar outro intervalo
                 </Button>
               )}
             </div>
             {intervalos.length === 0 ? (
-              <p className="text-sm text-slate-400 italic">Nenhum intervalo cadastrado</p>
+              <p className="text-sm text-muted-foreground italic">Nenhum intervalo cadastrado</p>
             ) : (
               <div className="space-y-2">
                 {intervalos.map((iv, idx) => (
                   <div key={idx} className="flex items-center gap-3">
-                    <span className="text-xs text-slate-500 w-6">{idx + 1}.</span>
+                    <span className="text-xs text-muted-foreground w-6">{idx + 1}.</span>
                     <Input
                       type="time"
                       value={iv.hora_inicial}
                       onChange={e => updateIntervalo(idx, 'hora_inicial', e.target.value)}
-                      className="border-slate-300 w-36"
+                      className="border-border w-36"
                     />
-                    <span className="text-slate-400">às</span>
+                    <span className="text-muted-foreground">às</span>
                     <Input
                       type="time"
                       value={iv.hora_final}
                       onChange={e => updateIntervalo(idx, 'hora_final', e.target.value)}
-                      className="border-slate-300 w-36"
+                      className="border-border w-36"
                     />
                     <Button variant="ghost" size="icon" className="h-8 w-8"
                       onClick={() => removeIntervalo(idx)}>
-                      <Trash2 className="h-4 w-4 text-red-400" />
+                      <Trash2 className="h-4 w-4 text-destructive" />
                     </Button>
                   </div>
                 ))}
@@ -602,7 +602,7 @@ function CadastroForm() {
           </div>
 
           {/* Botão Gerar */}
-          <div className="mt-5 pt-4 border-t border-slate-200">
+          <div className="mt-5 pt-4 border-t border-border">
             <Button
               className="bg-primary hover:bg-primary/90 text-white"
               onClick={handleGerarGrade}
@@ -612,7 +612,7 @@ function CadastroForm() {
               Gerar Quadro de Aulas
             </Button>
             {!turmaId && (
-              <p className="text-xs text-slate-400 mt-1.5">Selecione uma turma primeiro</p>
+              <p className="text-xs text-muted-foreground mt-1.5">Selecione uma turma primeiro</p>
             )}
           </div>
         </CardContent>
@@ -621,11 +621,11 @@ function CadastroForm() {
       {/* Card Quadro de Aulas */}
       {gradeGerada && slots.length > 0 && (
 <Card className="border-border shadow-[0_2px_8px_rgba(0,0,0,0.06)] mb-6">
-          <CardHeader className="bg-slate-50/40 border-b border-slate-200">
-            <CardTitle className="text-base font-medium text-slate-700 flex items-center gap-2">
+          <CardHeader className="bg-muted/40 border-b border-border">
+            <CardTitle className="text-base font-medium text-foreground flex items-center gap-2">
               <Clock className="h-4 w-4" />
               Quadro de Aulas
-              <span className="text-xs font-normal text-slate-400 ml-1">
+              <span className="text-xs font-normal text-muted-foreground ml-1">
                 ({slots.length} horários gerados)
               </span>
             </CardTitle>
@@ -633,12 +633,12 @@ function CadastroForm() {
           <CardContent className="p-0 overflow-x-auto">
             <table className="w-full text-sm border-collapse">
               <thead>
-                <tr className="bg-slate-50/80">
-                  <th className="sticky left-0 bg-slate-50/80 border-b border-slate-200 px-3 py-2.5 text-left text-xs font-medium text-slate-500 w-28">
+                <tr className="bg-muted/80">
+                  <th className="sticky left-0 bg-muted/80 border-b border-border px-3 py-2.5 text-left text-xs font-medium text-muted-foreground w-28">
                     Horário
                   </th>
                   {diasPresentes.map(dia => (
-                    <th key={dia} className="border-b border-slate-200 px-3 py-2.5 text-center text-xs font-medium text-slate-500 min-w-[160px]">
+                    <th key={dia} className="border-b border-border px-3 py-2.5 text-center text-xs font-medium text-muted-foreground min-w-[160px]">
                       {DIAS_NOME[dia] || `Dia ${dia}`}
                     </th>
                   ))}
@@ -648,8 +648,8 @@ function CadastroForm() {
                 {uniqueHorarios.map(hr => {
                   const [hInicio, hFim] = hr.split('-')
                   return (
-                    <tr key={hr} className="border-b border-slate-100 last:border-0">
-                      <td className="sticky left-0 bg-white border-r border-slate-200 px-3 py-2 text-xs font-medium text-slate-600 whitespace-nowrap">
+                    <tr key={hr} className="border-b border-border last:border-0">
+                      <td className="sticky left-0 bg-card border-r border-border px-3 py-2 text-xs font-medium text-foreground whitespace-nowrap">
                         {hInicio} - {hFim}
                       </td>
                       {diasPresentes.map(dia => {
@@ -658,14 +658,14 @@ function CadastroForm() {
                         const temConflito = conflitos.has(key)
 
                         return (
-                          <td key={key} className={`px-1.5 py-1 border-r border-slate-100 last:border-r-0 ${temConflito ? 'bg-red-50' : ''}`}>
+                          <td key={key} className={`px-1.5 py-1 border-r border-border last:border-r-0 ${temConflito ? 'bg-destructive/5' : ''}`}>
                             <div className="space-y-1 min-w-[140px]">
                               {/* Disciplina select */}
                               <Select
                                 value={cell.disciplina_id || ''}
                                 onValueChange={v => handleCellChange(dia, hInicio, 'disciplina_id', v || null)}
                               >
-                                <SelectTrigger className={`h-7 text-[11px] border-slate-300 ${!cell.disciplina_id ? 'text-slate-400' : ''}`}>
+                                <SelectTrigger className={`h-7 text-[11px] border-border ${!cell.disciplina_id ? 'text-muted-foreground' : ''}`}>
                                   <SelectValue placeholder="Disciplina" />
                                 </SelectTrigger>
                                 <SelectContent>
@@ -684,7 +684,7 @@ function CadastroForm() {
                                 onValueChange={v => handleCellChange(dia, hInicio, 'professor_id', v || null)}
                                 disabled={!cell.disciplina_id}
                               >
-                                <SelectTrigger className={`h-7 text-[11px] border-slate-300 ${!cell.professor_id ? 'text-slate-400' : ''}`}>
+                                <SelectTrigger className={`h-7 text-[11px] border-border ${!cell.professor_id ? 'text-muted-foreground' : ''}`}>
                                   <SelectValue placeholder={cell.disciplina_id ? 'Professor' : '—'} />
                                 </SelectTrigger>
                                 <SelectContent>
@@ -715,8 +715,8 @@ function CadastroForm() {
 
                               {temConflito && mensagensConflito[key] && (
                                 <div className="flex items-start gap-1 mt-1">
-                                  <AlertCircle className="h-3 w-3 text-red-500 mt-0.5 shrink-0" />
-                                  <p className="text-[11px] text-red-600 leading-tight">
+                                  <AlertCircle className="h-3 w-3 text-destructive mt-0.5 shrink-0" />
+                                  <p className="text-[11px] text-destructive leading-tight">
                                     {mensagensConflito[key]}
                                   </p>
                                 </div>
@@ -737,7 +737,7 @@ function CadastroForm() {
       {/* Footer */}
       {gradeGerada && (
         <div className="flex items-center justify-end gap-3">
-          <Button variant="outline" className="border-slate-300"
+          <Button variant="outline" className="border-border"
             onClick={() => router.push('/gestao-turmas/quadro-aulas')}>
             Cancelar
           </Button>

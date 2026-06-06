@@ -44,10 +44,10 @@ function contrastRatio(hex1: string, hex2: string) {
 }
 
 function contrastLevel(ratio: number) {
-  if (ratio >= 7) return { label: 'AAA', class: 'text-green-600' }
-  if (ratio >= 4.5) return { label: 'AA', class: 'text-yellow-600' }
-  if (ratio >= 3) return { label: 'AA (large)', class: 'text-orange-600' }
-  return { label: 'FAIL', class: 'text-red-600' }
+  if (ratio >= 7) return { label: 'AAA', class: 'text-success' }
+  if (ratio >= 4.5) return { label: 'AA', class: 'text-warning' }
+  if (ratio >= 3) return { label: 'AA (large)', class: 'text-warning' }
+  return { label: 'FAIL', class: 'text-destructive' }
 }
 
 type FormData = {
@@ -178,7 +178,7 @@ function CheckboxWithTooltip({
         <TooltipProvider>
           <Tooltip>
             <TooltipTrigger asChild>
-              <Info className="h-3.5 w-3.5 text-slate-400 hover:text-slate-600 cursor-help transition-colors" />
+              <Info className="h-3.5 w-3.5 text-muted-foreground hover:text-muted-foreground cursor-help transition-colors" />
             </TooltipTrigger>
             <TooltipContent className="max-w-xs">
               <p>{tooltips[tooltipKey]}</p>
@@ -383,9 +383,9 @@ export function MetodosForm({ schoolId, editId, onSaved, onCancel }: Props) {
   }
 
   return (
-    <div className="space-y-6 [&_[data-slot='input']]:border-slate-300 [&_[data-slot='input']]:focus-visible:border-primary [&_[data-slot='input']]:focus-visible:ring-2 [&_[data-slot='input']]:focus-visible:ring-primary/20 [&_[data-slot='checkbox']]:border-slate-300 [&_[data-slot='checkbox']]:data-[state=checked]:border-primary">
+    <div className="space-y-6 [&_[data-slot='input']]:border-border [&_[data-slot='input']]:focus-visible:border-primary [&_[data-slot='input']]:focus-visible:ring-2 [&_[data-slot='input']]:focus-visible:ring-primary/20 [&_[data-slot='checkbox']]:border-border [&_[data-slot='checkbox']]:data-[state=checked]:border-primary">
       <Card className="border-border shadow-[0_2px_8px_rgba(0,0,0,0.06)]">
-        <CardHeader className="border-b border-slate-100 pb-4"><CardTitle className="text-base font-semibold text-slate-800">Identificação</CardTitle></CardHeader>
+        <CardHeader className="border-b border-border pb-4"><CardTitle className="text-base font-semibold text-foreground">Identificação</CardTitle></CardHeader>
         <CardContent className="space-y-5 px-6 pb-6 pt-0">
           <div className="space-y-2">
             <Label htmlFor="nome">Descrição</Label>
@@ -418,7 +418,7 @@ export function MetodosForm({ schoolId, editId, onSaved, onCancel }: Props) {
             </Label>
           </div>
 
-          <Separator className="bg-slate-200" />
+          <Separator className="bg-border" />
 
           <div>
             <Label className="mb-3 block">Método de Avaliação</Label>
@@ -446,7 +446,7 @@ export function MetodosForm({ schoolId, editId, onSaved, onCancel }: Props) {
                       <div className="flex items-center gap-2">
                         <span className="text-sm text-muted-foreground">Períodos:</span>
                         {[1, 2, 3, 4].map((n) => (
-                          <Label key={n} className={`cursor-pointer flex items-center justify-center w-10 h-10 rounded-lg border-2 text-sm font-semibold transition-all duration-150 ${periodValue === n ? 'bg-primary text-white border-primary shadow-sm shadow-primary/20 ring-1 ring-primary/30' : 'border-slate-300 text-slate-700 hover:border-primary hover:text-primary hover:bg-primary/5 hover:shadow-sm'}`}>
+                          <Label key={n} className={`cursor-pointer flex items-center justify-center w-10 h-10 rounded-lg border-2 text-sm font-semibold transition-all duration-150 ${periodValue === n ? 'bg-primary text-white border-primary shadow-sm shadow-primary/20 ring-1 ring-primary/30' : 'border-border text-foreground hover:border-primary hover:text-primary hover:bg-primary/5 hover:shadow-sm'}`}>
                             <input
                               type="radio"
                               name={`periodo_${tipo}`}
@@ -470,7 +470,7 @@ export function MetodosForm({ schoolId, editId, onSaved, onCancel }: Props) {
       {form.tipos_avaliacao.numerico && (
         <>
           <Card className="border-border shadow-[0_2px_8px_rgba(0,0,0,0.06)]">
-            <CardHeader className="border-b border-slate-100 pb-4"><CardTitle className="text-base font-semibold text-slate-800">Configuração de Avaliações Numéricas</CardTitle></CardHeader>
+            <CardHeader className="border-b border-border pb-4"><CardTitle className="text-base font-semibold text-foreground">Configuração de Avaliações Numéricas</CardTitle></CardHeader>
             <CardContent className="space-y-5 px-6 pb-6 pt-0">
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
@@ -541,7 +541,7 @@ export function MetodosForm({ schoolId, editId, onSaved, onCancel }: Props) {
                 </div>
               </div>
 
-              <Separator className="bg-slate-200" />
+              <Separator className="bg-border" />
 
               <div className="space-y-3">
                 <Label className="text-sm font-medium">Opções</Label>
@@ -569,10 +569,10 @@ export function MetodosForm({ schoolId, editId, onSaved, onCancel }: Props) {
 
           {form.limitar_avaliacoes && (
             <Card className="border-border shadow-[0_2px_8px_rgba(0,0,0,0.06)]">
-              <CardHeader className="border-b border-slate-100 pb-4"><CardTitle className="text-base font-semibold text-slate-800">Avaliações</CardTitle></CardHeader>
+              <CardHeader className="border-b border-border pb-4"><CardTitle className="text-base font-semibold text-foreground">Avaliações</CardTitle></CardHeader>
               <CardContent className="space-y-4 px-6 pb-6 pt-0">
                 {form.avaliacoes_list.map((av, i) => (
-                  <div key={i} className="flex items-end gap-3 p-3 border border-slate-200 rounded-lg bg-slate-50/40">
+                  <div key={i} className="flex items-end gap-3 p-3 border border-border rounded-lg bg-muted">
                     <div className="flex-1 space-y-1">
                       <Label className="text-xs">Nome da Avaliação</Label>
                       <Input
@@ -622,7 +622,7 @@ export function MetodosForm({ schoolId, editId, onSaved, onCancel }: Props) {
                 ))}
                 <Button variant="outline" size="sm" onClick={() => {
                   set('avaliacoes_list', [...form.avaliacoes_list, { nome: '', peso: 1, nota_maxima: 10 }])
-                }} className="border-slate-300 hover:bg-primary/5 hover:text-primary hover:border-primary">
+                }} className="border-border hover:bg-primary/5 hover:text-primary hover:border-primary">
                   <Plus className="mr-1 h-3.5 w-3.5" />
                   Adicionar Avaliação
                 </Button>
@@ -631,7 +631,7 @@ export function MetodosForm({ schoolId, editId, onSaved, onCancel }: Props) {
           )}
 
           <Card className="border-border shadow-[0_2px_8px_rgba(0,0,0,0.06)]">
-            <CardHeader className="border-b border-slate-100 pb-4"><CardTitle className="text-base font-semibold text-slate-800">Aprovações</CardTitle></CardHeader>
+            <CardHeader className="border-b border-border pb-4"><CardTitle className="text-base font-semibold text-foreground">Aprovações</CardTitle></CardHeader>
             <CardContent className="space-y-5 px-6 pb-6 pt-0">
               <div>
                 <h4 className="text-sm font-semibold mb-3">Aprovação Direta</h4>
@@ -660,7 +660,7 @@ export function MetodosForm({ schoolId, editId, onSaved, onCancel }: Props) {
 
               {form.permite_recuperacao.includes('final') && (
                 <>
-                  <Separator className="bg-slate-200" />
+                  <Separator className="bg-border" />
                   <div>
                     <h4 className="text-sm font-semibold mb-3">Aprovação por Recuperação</h4>
                     <div className="space-y-3">
@@ -675,7 +675,7 @@ export function MetodosForm({ schoolId, editId, onSaved, onCancel }: Props) {
                           <TooltipProvider>
                             <Tooltip>
                               <TooltipTrigger asChild onClick={(e) => e.preventDefault()}>
-                                <Info className="h-3.5 w-3.5 text-slate-400 hover:text-slate-600 cursor-help transition-colors ml-1" />
+                                <Info className="h-3.5 w-3.5 text-muted-foreground hover:text-muted-foreground cursor-help transition-colors ml-1" />
                               </TooltipTrigger>
                               <TooltipContent className="max-w-xs">
                                 <p>Aritmética: (MA + RF) / 2. Ponderada: (MA × Peso + RF × Peso) / soma dos pesos. Recomendado: marcar com pesos 2 e 1.</p>
@@ -708,7 +708,7 @@ export function MetodosForm({ schoolId, editId, onSaved, onCancel }: Props) {
           </Card>
 
           <Card className="border-border shadow-[0_2px_8px_rgba(0,0,0,0.06)]">
-            <CardHeader className="border-b border-slate-100 pb-4"><CardTitle className="text-base font-semibold text-slate-800">Configuração de Arredondamento</CardTitle></CardHeader>
+            <CardHeader className="border-b border-border pb-4"><CardTitle className="text-base font-semibold text-foreground">Configuração de Arredondamento</CardTitle></CardHeader>
             <CardContent className="space-y-5 px-6 pb-6 pt-0">
               <div className="w-1/3 space-y-2">
                 <Label>Tipo de Arredondamento</Label>
@@ -771,7 +771,7 @@ export function MetodosForm({ schoolId, editId, onSaved, onCancel }: Props) {
 
       {form.tipos_avaliacao.parecer && (
         <Card className="border-border shadow-[0_2px_8px_rgba(0,0,0,0.06)]">
-          <CardHeader className="border-b border-slate-100 pb-4"><CardTitle className="text-base font-semibold text-slate-800">Configuração de Pareceres Descritivos</CardTitle></CardHeader>
+          <CardHeader className="border-b border-border pb-4"><CardTitle className="text-base font-semibold text-foreground">Configuração de Pareceres Descritivos</CardTitle></CardHeader>
           <CardContent>
             <div className="flex items-center gap-2">
               <Checkbox id="reg_geral" checked={form.registro_geral} onCheckedChange={(v) => set('registro_geral', !!v)} />
@@ -786,8 +786,8 @@ export function MetodosForm({ schoolId, editId, onSaved, onCancel }: Props) {
 
       {form.tipos_avaliacao.conceito && (
         <Card className="border-border shadow-[0_2px_8px_rgba(0,0,0,0.06)]">
-          <CardHeader className="flex flex-row items-center justify-between border-b border-slate-100 pb-4">
-            <CardTitle className="text-base font-semibold text-slate-800">Configurações de Conceitos</CardTitle>
+          <CardHeader className="flex flex-row items-center justify-between border-b border-border pb-4">
+            <CardTitle className="text-base font-semibold text-foreground">Configurações de Conceitos</CardTitle>
           </CardHeader>
           <CardContent className="space-y-5 px-6 pb-6 pt-0">
             <CardConceitosList
@@ -802,7 +802,7 @@ export function MetodosForm({ schoolId, editId, onSaved, onCancel }: Props) {
               final={false}
             />
 
-            <Separator className="bg-slate-200" />
+            <Separator className="bg-border" />
 
             <div className="flex items-center gap-2 pt-2">
               <Checkbox
@@ -838,7 +838,7 @@ export function MetodosForm({ schoolId, editId, onSaved, onCancel }: Props) {
 
       {form.tipos_avaliacao.nivel && (
         <Card className="border-border shadow-[0_2px_8px_rgba(0,0,0,0.06)]">
-          <CardHeader className="border-b border-slate-100 pb-4"><CardTitle className="text-base font-semibold text-slate-800">Configuração de Níveis de Desenvolvimento</CardTitle></CardHeader>
+          <CardHeader className="border-b border-border pb-4"><CardTitle className="text-base font-semibold text-foreground">Configuração de Níveis de Desenvolvimento</CardTitle></CardHeader>
           <CardContent>
             <CardNiveisList
               niveis={form.niveis}
@@ -850,7 +850,7 @@ export function MetodosForm({ schoolId, editId, onSaved, onCancel }: Props) {
       )}
 
       <div className="flex justify-end gap-3 sticky bottom-0 bg-card py-4 px-2 -mx-4 -mb-4 border-t border-border shadow-[0_-4px_12px_rgba(0,0,0,0.04)]">
-        <Button variant="outline" onClick={onCancel} className="border-slate-300 hover:bg-slate-50">Cancelar</Button>
+        <Button variant="outline" onClick={onCancel} className="border-border hover:bg-muted">Cancelar</Button>
         <Button onClick={handleSave} disabled={saving} className="bg-primary hover:bg-primary/90 min-w-[140px] shadow-sm shadow-primary/20">
           {saving ? 'Salvando...' : form.id ? 'Atualizar' : 'Salvar'}
         </Button>
@@ -866,7 +866,7 @@ function LabelWithTooltip({ label, tooltip }: { label: string; tooltip: string }
       <TooltipProvider>
         <Tooltip>
           <TooltipTrigger asChild>
-            <Info className="h-3.5 w-3.5 text-slate-400 hover:text-slate-600 cursor-help transition-colors shrink-0" />
+            <Info className="h-3.5 w-3.5 text-muted-foreground hover:text-muted-foreground cursor-help transition-colors shrink-0" />
           </TooltipTrigger>
           <TooltipContent className="max-w-xs">
             <p>{tooltip}</p>
@@ -879,7 +879,7 @@ function LabelWithTooltip({ label, tooltip }: { label: string; tooltip: string }
 
 function ColorPreview({ bg, text, sigla }: { bg: string; text: string; sigla?: string }) {
   return (
-    <div className="w-10 h-10 rounded-md flex items-center justify-center text-xs font-bold border-2 border-slate-200 shadow-sm shrink-0" style={{ backgroundColor: bg, color: text }}>
+    <div className="w-10 h-10 rounded-md flex items-center justify-center text-xs font-bold border-2 border-border shadow-sm shrink-0" style={{ backgroundColor: bg, color: text }}>
       {sigla || 'Aa'}
     </div>
   )
@@ -918,13 +918,13 @@ function CardConceitosList({
     <div className="space-y-3">
       <div className="flex items-center justify-between">
         <h4 className="text-sm font-semibold">{title} ({conceitos.length}/{max})</h4>
-        <Button variant="outline" size="sm" onClick={add} disabled={conceitos.length >= max} className="border-slate-300 hover:bg-primary/5 hover:text-primary hover:border-primary">
+        <Button variant="outline" size="sm" onClick={add} disabled={conceitos.length >= max} className="border-border hover:bg-primary/5 hover:text-primary hover:border-primary">
           <Plus className="mr-1 h-3.5 w-3.5" />
           {addLabel}
         </Button>
       </div>
       {conceitos.map((item, i) => (
-        <div key={i} className="flex items-start gap-3 p-4 border border-slate-200 rounded-lg bg-slate-50/40">
+        <div key={i} className="flex items-start gap-3 p-4 border border-border rounded-lg bg-muted">
           <div className="flex-1 space-y-2">
             <div className="flex gap-2">
               <div className="flex-1 space-y-1">
@@ -940,15 +940,15 @@ function CardConceitosList({
               <div className="space-y-2">
                 <Label className="text-xs">Cor de Fundo</Label>
                 <div className="flex gap-1 items-center flex-wrap">
-                  <label className="relative w-6 h-6 rounded-full border-2 border-dashed border-slate-400 flex items-center justify-center cursor-pointer bg-white hover:bg-slate-50 shrink-0 overflow-hidden">
-                    <span className="text-slate-500 text-sm font-bold leading-none">+</span>
+                  <label className="relative w-6 h-6 rounded-full border-2 border-dashed border-border flex items-center justify-center cursor-pointer bg-card hover:bg-muted shrink-0 overflow-hidden">
+                    <span className="text-muted-foreground text-sm font-bold leading-none">+</span>
                     <input type="color" value={item.cor_fundo} onChange={(e) => update(i, 'cor_fundo', e.target.value)} className="absolute inset-0 opacity-0 cursor-pointer" title="Personalizar cor" />
                   </label>
                   {COLORS_BG.map((cor) => (
                     <button
                       key={cor}
                       type="button"
-                      className={`w-6 h-6 rounded-full border-2 ${item.cor_fundo === cor ? 'border-foreground scale-110' : 'border-slate-300'}`}
+                      className={`w-6 h-6 rounded-full border-2 ${item.cor_fundo === cor ? 'border-foreground scale-110' : 'border-border'}`}
                       style={{ backgroundColor: cor }}
                       onClick={() => update(i, 'cor_fundo', cor)}
                     />
@@ -958,15 +958,15 @@ function CardConceitosList({
               <div className="space-y-2">
                 <Label className="text-xs">Cor da Letra</Label>
                 <div className="flex gap-1 items-center flex-wrap">
-                  <label className="relative w-6 h-6 rounded-full border-2 border-dashed border-slate-400 flex items-center justify-center cursor-pointer bg-white hover:bg-slate-50 shrink-0 overflow-hidden">
-                    <span className="text-slate-500 text-sm font-bold leading-none">+</span>
+                  <label className="relative w-6 h-6 rounded-full border-2 border-dashed border-border flex items-center justify-center cursor-pointer bg-card hover:bg-muted shrink-0 overflow-hidden">
+                    <span className="text-muted-foreground text-sm font-bold leading-none">+</span>
                     <input type="color" value={item.cor_letra} onChange={(e) => update(i, 'cor_letra', e.target.value)} className="absolute inset-0 opacity-0 cursor-pointer" title="Personalizar cor" />
                   </label>
                   {COLORS_TEXT.map((cor) => (
                     <button
                       key={cor}
                       type="button"
-                      className={`w-6 h-6 rounded-full border-2 ${item.cor_letra === cor ? 'border-foreground scale-110' : 'border-slate-300'}`}
+                      className={`w-6 h-6 rounded-full border-2 ${item.cor_letra === cor ? 'border-foreground scale-110' : 'border-border'}`}
                       style={{ backgroundColor: cor }}
                       onClick={() => update(i, 'cor_letra', cor)}
                     />
@@ -1012,13 +1012,13 @@ function CardNiveisList({
     <div className="space-y-3">
       <div className="flex items-center justify-between">
         <h4 className="text-sm font-semibold">Níveis ({niveis.length}/{max})</h4>
-        <Button variant="outline" size="sm" onClick={add} disabled={niveis.length >= max} className="border-slate-300 hover:bg-primary/5 hover:text-primary hover:border-primary">
+        <Button variant="outline" size="sm" onClick={add} disabled={niveis.length >= max} className="border-border hover:bg-primary/5 hover:text-primary hover:border-primary">
           <Plus className="mr-1 h-3.5 w-3.5" />
           Novo Nível de Desenvolvimento
         </Button>
       </div>
       {niveis.map((item, i) => (
-        <div key={i} className="flex items-start gap-3 p-4 border border-slate-200 rounded-lg bg-slate-50/40">
+        <div key={i} className="flex items-start gap-3 p-4 border border-border rounded-lg bg-muted">
           <div className="flex-1 space-y-2">
             <div className="flex gap-2">
               <div className="flex-1 space-y-1">
@@ -1034,15 +1034,15 @@ function CardNiveisList({
               <div className="space-y-2">
                 <Label className="text-xs">Cor de Fundo</Label>
                 <div className="flex gap-1 items-center flex-wrap">
-                  <label className="relative w-6 h-6 rounded-full border-2 border-dashed border-slate-400 flex items-center justify-center cursor-pointer bg-white hover:bg-slate-50 shrink-0 overflow-hidden">
-                    <span className="text-slate-500 text-sm font-bold leading-none">+</span>
+                  <label className="relative w-6 h-6 rounded-full border-2 border-dashed border-border flex items-center justify-center cursor-pointer bg-card hover:bg-muted shrink-0 overflow-hidden">
+                    <span className="text-muted-foreground text-sm font-bold leading-none">+</span>
                     <input type="color" value={item.cor_fundo} onChange={(e) => update(i, 'cor_fundo', e.target.value)} className="absolute inset-0 opacity-0 cursor-pointer" title="Personalizar cor" />
                   </label>
                   {COLORS_BG.map((cor) => (
                     <button
                       key={cor}
                       type="button"
-                      className={`w-6 h-6 rounded-full border-2 ${item.cor_fundo === cor ? 'border-foreground scale-110' : 'border-slate-300'}`}
+                      className={`w-6 h-6 rounded-full border-2 ${item.cor_fundo === cor ? 'border-foreground scale-110' : 'border-border'}`}
                       style={{ backgroundColor: cor }}
                       onClick={() => update(i, 'cor_fundo', cor)}
                     />
@@ -1052,15 +1052,15 @@ function CardNiveisList({
               <div className="space-y-2">
                 <Label className="text-xs">Cor da Letra</Label>
                 <div className="flex gap-1 items-center flex-wrap">
-                  <label className="relative w-6 h-6 rounded-full border-2 border-dashed border-slate-400 flex items-center justify-center cursor-pointer bg-white hover:bg-slate-50 shrink-0 overflow-hidden">
-                    <span className="text-slate-500 text-sm font-bold leading-none">+</span>
+                  <label className="relative w-6 h-6 rounded-full border-2 border-dashed border-border flex items-center justify-center cursor-pointer bg-card hover:bg-muted shrink-0 overflow-hidden">
+                    <span className="text-muted-foreground text-sm font-bold leading-none">+</span>
                     <input type="color" value={item.cor_letra} onChange={(e) => update(i, 'cor_letra', e.target.value)} className="absolute inset-0 opacity-0 cursor-pointer" title="Personalizar cor" />
                   </label>
                   {COLORS_TEXT.map((cor) => (
                     <button
                       key={cor}
                       type="button"
-                      className={`w-6 h-6 rounded-full border-2 ${item.cor_letra === cor ? 'border-foreground scale-110' : 'border-slate-300'}`}
+                      className={`w-6 h-6 rounded-full border-2 ${item.cor_letra === cor ? 'border-foreground scale-110' : 'border-border'}`}
                       style={{ backgroundColor: cor }}
                       onClick={() => update(i, 'cor_letra', cor)}
                     />

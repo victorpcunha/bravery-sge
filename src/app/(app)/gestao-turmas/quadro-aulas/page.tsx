@@ -105,8 +105,8 @@ export default function QuadrosAulasPage() {
     <div className="md:pl-64 container mx-auto py-8 px-4">
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-xl font-semibold text-slate-800">Quadro de Aulas</h1>
-          <p className="text-sm text-slate-500 mt-0.5">Grade horária das turmas</p>
+          <h1 className="text-xl font-semibold text-foreground">Quadro de Aulas</h1>
+          <p className="text-sm text-muted-foreground mt-0.5">Grade horária das turmas</p>
         </div>
         <Button
           className="bg-primary hover:bg-primary/90 text-white"
@@ -118,10 +118,10 @@ export default function QuadrosAulasPage() {
       </div>
 
       <Card className="border-border shadow-[0_2px_8px_rgba(0,0,0,0.06)]">
-        <CardHeader className="bg-slate-50/40 border-b border-slate-200">
+        <CardHeader className="bg-muted/40 border-b border-border">
           <div className="flex items-center gap-3">
             <Select value={anoFiltro} onValueChange={setAnoFiltro}>
-              <SelectTrigger className="w-64 border-slate-300">
+              <SelectTrigger className="w-64 border-border">
                 <SelectValue placeholder="Filtrar por ano letivo" />
               </SelectTrigger>
               <SelectContent>
@@ -134,38 +134,38 @@ export default function QuadrosAulasPage() {
         </CardHeader>
         <CardContent className="p-0">
           {loading ? (
-            <div className="p-8 text-center text-slate-400 text-sm">Carregando...</div>
+            <div className="p-8 text-center text-muted-foreground text-sm">Carregando...</div>
           ) : quadros.length === 0 ? (
-            <div className="p-8 text-center text-slate-400 text-sm">Nenhum quadro de aulas encontrado</div>
+            <div className="p-8 text-center text-muted-foreground text-sm">Nenhum quadro de aulas encontrado</div>
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
-                  <tr className="border-b border-slate-200 bg-slate-50/60">
-                    <th className="text-left px-4 py-3 font-medium text-slate-600">Turma</th>
-                    <th className="text-left px-4 py-3 font-medium text-slate-600">Ano Letivo</th>
-                    <th className="text-left px-4 py-3 font-medium text-slate-600">Vigência</th>
-                    <th className="text-left px-4 py-3 font-medium text-slate-600">Status</th>
-                    <th className="text-left px-4 py-3 font-medium text-slate-600">Última Alteração</th>
-                    <th className="text-right px-4 py-3 font-medium text-slate-600">Ações</th>
+                  <tr className="border-b border-border bg-muted/60">
+                    <th className="text-left px-4 py-3 font-medium text-muted-foreground">Turma</th>
+                    <th className="text-left px-4 py-3 font-medium text-muted-foreground">Ano Letivo</th>
+                    <th className="text-left px-4 py-3 font-medium text-muted-foreground">Vigência</th>
+                    <th className="text-left px-4 py-3 font-medium text-muted-foreground">Status</th>
+                    <th className="text-left px-4 py-3 font-medium text-muted-foreground">Última Alteração</th>
+                    <th className="text-right px-4 py-3 font-medium text-muted-foreground">Ações</th>
                   </tr>
                 </thead>
                 <tbody>
                   {quadros.map((q: any) => {
                     const st = STATUS_MAP[q.status] || STATUS_MAP.futuro
                     return (
-                      <tr key={q.id} className="border-b border-slate-100 hover:bg-slate-50/50 transition-colors">
+                      <tr key={q.id} className="border-b border-border hover:bg-muted/50 transition-colors">
                         <td className="px-4 py-3">
                           <div className="flex items-center gap-2">
-                            <GraduationCap className="h-4 w-4 text-slate-400" />
-                            <span className="font-medium text-slate-800">
+                            <GraduationCap className="h-4 w-4 text-muted-foreground" />
+                            <span className="font-medium text-foreground">
                               {q.turma?.codigo_inep ? `${q.turma.codigo_inep} - ` : ''}{q.turma?.nome}
                             </span>
                           </div>
                         </td>
-                        <td className="px-4 py-3 text-slate-600">{q.academico_anos_letivos?.descricao}</td>
+                        <td className="px-4 py-3 text-muted-foreground">{q.academico_anos_letivos?.descricao}</td>
                         <td className="px-4 py-3">
-                          <div className="flex items-center gap-1.5 text-slate-600">
+                          <div className="flex items-center gap-1.5 text-muted-foreground">
                             <Calendar className="h-3.5 w-3.5" />
                             {formatDate(q.data_inicial)} - {formatDate(q.data_final)}
                           </div>
@@ -173,7 +173,7 @@ export default function QuadrosAulasPage() {
                         <td className="px-4 py-3">
                           <Badge variant={st.variant}>{st.label}</Badge>
                         </td>
-                        <td className="px-4 py-3 text-slate-500 text-xs">
+                        <td className="px-4 py-3 text-muted-foreground text-xs">
                           {q.updated_at ? new Date(q.updated_at).toLocaleString('pt-BR') : '-'}
                         </td>
                         <td className="px-4 py-3 text-right">
@@ -181,17 +181,17 @@ export default function QuadrosAulasPage() {
                             <Button variant="ghost" size="icon" className="h-8 w-8"
                               onClick={() => router.push(`/gestao-turmas/quadro-aulas/cadastro?id=${q.id}`)}
                               title="Visualizar/Editar">
-                              <Eye className="h-4 w-4 text-slate-500" />
+                              <Eye className="h-4 w-4 text-muted-foreground" />
                             </Button>
                             <Button variant="ghost" size="icon" className="h-8 w-8"
                               onClick={() => handleToggleAtivo(q.id, !q.ativo)}
                               title={q.ativo ? 'Inativar' : 'Reativar'}>
-                              <Pencil className="h-4 w-4 text-slate-500" />
+                              <Pencil className="h-4 w-4 text-muted-foreground" />
                             </Button>
                             <Button variant="ghost" size="icon" className="h-8 w-8"
                               onClick={() => handleDelete(q.id)}
                               title="Excluir">
-                              <Trash2 className="h-4 w-4 text-red-400" />
+                              <Trash2 className="h-4 w-4 text-destructive" />
                             </Button>
                           </div>
                         </td>

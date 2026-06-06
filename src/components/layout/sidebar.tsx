@@ -24,6 +24,7 @@ import {
   Table2,
   UserCircle,
 } from 'lucide-react'
+import { ThemeToggle } from '@/components/layout/theme-toggle'
 import { useState } from 'react'
 
 const modules = [
@@ -387,6 +388,7 @@ export function Sidebar() {
                 <p className="text-xs text-sidebar-foreground/40 truncate">{user?.email}</p>
               </div>
             </div>
+            <ThemeToggle />
             <Button 
               variant="ghost" 
               size="sm"

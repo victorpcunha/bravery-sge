@@ -44,13 +44,13 @@ function SelectTrigger({
       data-slot="select-trigger"
       data-size={size}
       className={cn(
-        "flex w-full items-center justify-between gap-2 rounded-lg border-2 border-[#cbd5e1] bg-white px-3 py-2.5 text-sm whitespace-nowrap transition-all duration-200 outline-none cursor-pointer",
-        "hover:border-[#1D3557] hover:shadow-md hover:bg-white",
-        "focus:border-[#1D3557] focus:ring-2 focus:ring-[#1D3557]/20 focus:outline-none",
-        "data-[placeholder]:text-[#94a3b8]",
+        "flex w-full items-center justify-between gap-2 rounded-lg border-2 border-border bg-card px-3 py-2.5 text-sm whitespace-nowrap transition-all duration-200 outline-none cursor-pointer",
+        "hover:border-primary hover:shadow-md hover:bg-card",
+        "focus:border-primary focus:ring-2 focus:ring-primary/20 focus:outline-none",
+        "data-[placeholder]:text-muted-foreground",
         "disabled:cursor-not-allowed disabled:opacity-50",
         "data-[size=default]:h-10 data-[size=sm]:h-9",
-        "[&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4 [&_svg]:text-[#64748b] [&_svg]:transition-transform [&_svg]:duration-200",
+        "[&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4 [&_svg]:text-muted-foreground [&_svg]:transition-transform [&_svg]:duration-200",
         "data-[state=open]:[&_svg]:rotate-180",
         className
       )}

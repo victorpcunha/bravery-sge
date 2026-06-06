@@ -250,7 +250,7 @@ export default function TurmaDiarioPage() {
                         </thead>
                         <tbody>
                           {alunos.filter(a => !a.data_saida).map((aluno, idx) => (
-                            <tr key={aluno.id} className="border-b border-slate-50 hover:bg-slate-50/40">
+                            <tr key={aluno.id} className="border-b border-border hover:bg-muted/40">
                               <td className="py-2 px-2 text-sm text-muted-foreground">
                                 {idx + 1}
                               </td>

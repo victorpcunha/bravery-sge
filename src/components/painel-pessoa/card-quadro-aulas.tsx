@@ -44,7 +44,7 @@ export default function CardQuadroAulas({ turmaId, pessoaLogadaId }: Props) {
       <Card>
         <CardHeader className="pb-2">
           <CardTitle className="text-sm flex items-center gap-2">
-            <Calendar className="h-4 w-4 text-blue-500" />
+            <Calendar className="h-4 w-4 text-info" />
             Quadro de Aulas
           </CardTitle>
         </CardHeader>
@@ -75,7 +75,7 @@ export default function CardQuadroAulas({ turmaId, pessoaLogadaId }: Props) {
     <Card>
       <CardHeader className="pb-2">
         <CardTitle className="text-sm flex items-center gap-2">
-          <Calendar className="h-4 w-4 text-blue-500" />
+          <Calendar className="h-4 w-4 text-info" />
           Quadro de Aulas
         </CardTitle>
       </CardHeader>

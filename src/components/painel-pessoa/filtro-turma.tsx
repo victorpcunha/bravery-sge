@@ -15,7 +15,7 @@ export default function FiltroTurma({ turmas, selectedId, onSelect, loading }: P
     return (
       <div className="min-w-[220px]">
         <label className="text-xs text-muted-foreground font-medium mb-1 block">Turma</label>
-        <div className="h-9 rounded-lg border border-slate-200 bg-slate-50 animate-pulse" />
+        <div className="h-9 rounded-lg border border-border bg-muted animate-pulse" />
       </div>
     )
   }

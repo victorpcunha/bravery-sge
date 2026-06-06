@@ -118,7 +118,7 @@ export default function CardSaude({ pessoaId, schoolId, pessoaLogadaId }: Props)
             </p>
             <div className="flex flex-wrap gap-1">
               {condicoesAtivas.map(c => (
-                <span key={c} className="text-xs bg-red-50 text-red-700 border border-red-200 rounded px-1.5 py-0.5">
+                <span key={c} className="text-xs bg-destructive/10 text-destructive border border-destructive/20 rounded px-1.5 py-0.5">
                   {c}
                 </span>
               ))}
@@ -133,7 +133,7 @@ export default function CardSaude({ pessoaId, schoolId, pessoaLogadaId }: Props)
             </p>
             <div className="flex flex-wrap gap-1">
               {transtornosAtivos.map(t => (
-                <span key={t} className="text-xs bg-amber-50 text-amber-700 border border-amber-200 rounded px-1.5 py-0.5">
+                <span key={t} className="text-xs bg-warning/10 text-warning border border-warning/20 rounded px-1.5 py-0.5">
                   {t}
                 </span>
               ))}
@@ -148,7 +148,7 @@ export default function CardSaude({ pessoaId, schoolId, pessoaLogadaId }: Props)
             </p>
             <div className="flex flex-wrap gap-1">
               {recursosSaeb.map(r => (
-                <span key={r} className="text-xs bg-blue-50 text-blue-700 border border-blue-200 rounded px-1.5 py-0.5">
+                <span key={r} className="text-xs bg-info/10 text-info border border-info/20 rounded px-1.5 py-0.5">
                   {r}
                 </span>
               ))}

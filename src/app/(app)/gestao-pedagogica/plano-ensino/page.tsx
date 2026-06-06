@@ -81,7 +81,7 @@ export default function PlanoEnsinoPage() {
           <select
             value={anoLetivoId}
             onChange={e => setAnoLetivoId(e.target.value)}
-            className="w-full max-w-xs h-10 px-3 rounded-lg border border-slate-300 bg-white text-sm"
+            className="w-full max-w-xs h-10 px-3 rounded-lg border border-border bg-card text-sm"
           >
             <option value="">Todos os anos</option>
             {anosLetivos.map((a: any) => (
@@ -115,7 +115,7 @@ export default function PlanoEnsinoPage() {
             {planos.map(plano => (
               <Card
                 key={plano.id}
-                className="cursor-pointer hover:shadow-md transition-all border-slate-200 hover:border-primary/30"
+                className="cursor-pointer hover:shadow-md transition-all border-border hover:border-primary/30"
                 onClick={() => router.push(`/gestao-pedagogica/plano-ensino/${plano.id}`)}
               >
                 <CardContent className="p-4 flex items-center justify-between">
@@ -128,13 +128,13 @@ export default function PlanoEnsinoPage() {
                       <p className="text-sm text-muted-foreground flex items-center gap-2 mt-0.5">
                         <span>{plano.etapa_nome}</span>
                         {plano.is_interdisciplinar && (
-                          <span className="text-xs bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded">Interdisciplinar</span>
+                          <span className="text-xs bg-warning/10 text-warning px-1.5 py-0.5 rounded">Interdisciplinar</span>
                         )}
                       </p>
                       {(plano.disciplinas?.length ?? 0) > 0 && (
                         <div className="flex flex-wrap gap-1 mt-1.5">
                           {plano.disciplinas?.map(d => (
-                            <span key={d.id} className="text-xs bg-slate-100 text-slate-600 px-1.5 py-0.5 rounded">
+                            <span key={d.id} className="text-xs bg-muted text-muted-foreground px-1.5 py-0.5 rounded">
                               {d.nome}
                             </span>
                           ))}

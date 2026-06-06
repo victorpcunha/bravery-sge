@@ -208,7 +208,7 @@ export default function AvaliacaoIndicadores({
           <select
             value={periodo}
             onChange={e => setPeriodo(Number(e.target.value))}
-            className="h-9 px-3 rounded-lg border border-slate-300 bg-white text-sm"
+            className="h-9 px-3 rounded-lg border border-border bg-card text-sm"
           >
             {periodos.map(p => (
               <option key={p} value={p}>
@@ -224,7 +224,7 @@ export default function AvaliacaoIndicadores({
           <select
             value={disciplinaId}
             onChange={e => setDisciplinaId(e.target.value)}
-            className="h-9 px-3 rounded-lg border border-slate-300 bg-white text-sm min-w-[180px]"
+            className="h-9 px-3 rounded-lg border border-border bg-card text-sm min-w-[180px]"
           >
             <option value="">Selecione uma disciplina</option>
             {disciplinas.map(d => (
@@ -313,7 +313,7 @@ export default function AvaliacaoIndicadores({
                                     'inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-medium transition-all cursor-pointer border',
                                     isSelected
                                       ? 'bg-primary text-primary-foreground border-primary shadow-sm'
-                                      : 'bg-background text-muted-foreground border-slate-200 hover:border-primary/40 hover:text-foreground',
+                                      : 'bg-background text-muted-foreground border-border hover:border-primary/40 hover:text-foreground',
                                     (!podeEditar || salvando) &&
                                       'opacity-60 cursor-not-allowed'
                                   )}
@@ -346,7 +346,7 @@ export default function AvaliacaoIndicadores({
                             }
                           }}
                           className={cn(
-                            'w-full mt-2 px-2.5 py-1.5 rounded-md text-xs border border-slate-200 bg-background resize-none focus:outline-none focus:ring-1 focus:ring-primary/30 transition-all',
+                            'w-full mt-2 px-2.5 py-1.5 rounded-md text-xs border border-border bg-background resize-none focus:outline-none focus:ring-1 focus:ring-primary/30 transition-all',
                             !podeEditar && 'opacity-60 cursor-not-allowed'
                           )}
                         />

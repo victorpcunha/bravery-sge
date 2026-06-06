@@ -32,7 +32,7 @@ export function PerfilGrid({ perfis, loading, onEdit, onDelete, podeEditar = tru
     <div className="overflow-x-auto">
       <table className="w-full">
         <thead>
-          <tr className="border-b border-slate-200 text-xs text-muted-foreground uppercase tracking-wider">
+          <tr className="border-b border-border text-xs text-muted-foreground uppercase tracking-wider">
             <th className="text-left px-6 py-3 font-medium">Nome</th>
             <th className="text-left px-6 py-3 font-medium">Descrição</th>
             <th className="text-left px-6 py-3 font-medium">Tipo</th>
@@ -43,14 +43,14 @@ export function PerfilGrid({ perfis, loading, onEdit, onDelete, podeEditar = tru
         </thead>
         <tbody>
           {perfis.map(p => (
-            <tr key={p.id} className="border-b border-slate-100 hover:bg-slate-50/40 transition-colors">
+            <tr key={p.id} className="border-b border-border hover:bg-muted/40 transition-colors">
               <td className="px-6 py-4 text-sm font-medium">{p.nome}</td>
               <td className="px-6 py-4 text-sm text-muted-foreground max-w-xs truncate">
                 {p.descricao || '-'}
               </td>
               <td className="px-6 py-4">
                 <span className={`inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full ${
-                  p.usa_vinculo_turma ? 'bg-blue-100 text-blue-700' : 'bg-purple-100 text-purple-700'
+                  p.usa_vinculo_turma ? 'bg-info/10 text-info' : 'bg-purple-100 text-purple-700'
                 }`}>
                   {p.usa_vinculo_turma ? <GraduationCap className="h-3 w-3" /> : <Shield className="h-3 w-3" />}
                   {p.usa_vinculo_turma ? 'Professor' : 'Administrativo'}
@@ -58,7 +58,7 @@ export function PerfilGrid({ perfis, loading, onEdit, onDelete, podeEditar = tru
               </td>
               <td className="px-6 py-4">
                 <span className={`text-xs px-2 py-0.5 rounded-full ${
-                  p.ativo ? 'bg-green-100 text-green-700' : 'bg-slate-100 text-slate-500'
+                  p.ativo ? 'bg-success/10 text-success' : 'bg-muted text-muted-foreground'
                 }`}>
                   {p.ativo ? 'Ativo' : 'Inativo'}
                 </span>

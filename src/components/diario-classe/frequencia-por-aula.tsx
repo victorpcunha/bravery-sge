@@ -253,7 +253,7 @@ export default function FrequenciaPorAula({ turmaId, alunos, disciplinas }: Prop
           <select
             value={disciplinaId}
             onChange={e => setDisciplinaId(e.target.value)}
-            className="h-9 px-3 rounded-lg border border-slate-300 bg-white text-sm min-w-[200px]"
+            className="h-9 px-3 rounded-lg border border-border bg-card text-sm min-w-[200px]"
           >
             <option value="">Selecione uma disciplina</option>
             {disciplinas.map(d => (
@@ -317,11 +317,11 @@ export default function FrequenciaPorAula({ turmaId, alunos, disciplinas }: Prop
                 <div className="text-[10px] text-muted-foreground">Dias da Disciplina</div>
               </div>
               <div className="rounded-lg border bg-card p-3 text-center">
-                <div className="text-lg font-bold text-green-600">{estatisticas.diasRegistrados}</div>
+                <div className="text-lg font-bold text-success">{estatisticas.diasRegistrados}</div>
                 <div className="text-[10px] text-muted-foreground">Dias c/ Registro</div>
               </div>
               <div className="rounded-lg border bg-card p-3 text-center">
-                <div className="text-lg font-bold text-amber-600">{estatisticas.diasPendentes}</div>
+                <div className="text-lg font-bold text-warning">{estatisticas.diasPendentes}</div>
                 <div className="text-[10px] text-muted-foreground">Dias Pendentes</div>
               </div>
               <div className="rounded-lg border bg-card p-3 text-center">
@@ -329,11 +329,11 @@ export default function FrequenciaPorAula({ turmaId, alunos, disciplinas }: Prop
                 <div className="text-[10px] text-muted-foreground">Aulas no Quadro</div>
               </div>
               <div className="rounded-lg border bg-card p-3 text-center">
-                <div className="text-lg font-bold text-green-600">{estatisticas.aulasRegistradas ?? '-'}</div>
+                <div className="text-lg font-bold text-success">{estatisticas.aulasRegistradas ?? '-'}</div>
                 <div className="text-[10px] text-muted-foreground">Aulas c/ Registro</div>
               </div>
               <div className="rounded-lg border bg-card p-3 text-center">
-                <div className="text-lg font-bold text-amber-600">{estatisticas.aulasPendentes ?? '-'}</div>
+                <div className="text-lg font-bold text-warning">{estatisticas.aulasPendentes ?? '-'}</div>
                 <div className="text-[10px] text-muted-foreground">Aulas Pendentes</div>
               </div>
             </div>
@@ -352,7 +352,7 @@ export default function FrequenciaPorAula({ turmaId, alunos, disciplinas }: Prop
                     <th
                       key={grupo.data}
                       colSpan={grupo.aulas.length}
-                      className="py-2 px-1 text-center font-medium border-l border-slate-200"
+                      className="py-2 px-1 text-center font-medium border-l border-border"
                     >
                       <div className="text-xs capitalize">{grupo.diaSemana}</div>
                       <div className="text-sm font-bold">{formatarDataCurta(grupo.data)}</div>
@@ -378,7 +378,7 @@ export default function FrequenciaPorAula({ turmaId, alunos, disciplinas }: Prop
                         <th
                           key={`${aula.horario_id}_${aula.data}`}
                           className={cn(
-                            "py-1.5 px-1 text-center font-normal text-muted-foreground border-l border-slate-200 min-w-[64px] transition-colors group relative",
+                            "py-1.5 px-1 text-center font-normal text-muted-foreground border-l border-border min-w-[64px] transition-colors group relative",
                             isFuture ? "cursor-default opacity-50" : "cursor-pointer hover:bg-primary/10"
                           )}
                         >
@@ -386,7 +386,7 @@ export default function FrequenciaPorAula({ turmaId, alunos, disciplinas }: Prop
                           <div className="text-[10px]">{aula.horario_inicial}</div>
                           {hasPlano && (
                             <div className="mt-0.5">
-                              <BookOpen className="h-3 w-3 text-emerald-500 inline" />
+                              <BookOpen className="h-3 w-3 text-success inline" />
                             </div>
                           )}
                           <div
@@ -403,14 +403,14 @@ export default function FrequenciaPorAula({ turmaId, alunos, disciplinas }: Prop
               <tbody>
                 {alunos.map((aluno, idx) => (
                   <tr key={aluno.id} className={cn(
-                    "border-b border-slate-100 hover:bg-slate-50/40",
-                    idx % 2 === 0 && "bg-white",
-                    idx % 2 === 1 && "bg-slate-50/30"
+                    "border-b border-border hover:bg-muted/40",
+                    idx % 2 === 0 && "bg-card",
+                    idx % 2 === 1 && "bg-muted/30"
                   )}>
                     <td className={cn(
                       "sticky left-0 py-2 px-3 text-sm font-medium z-20 shadow-[2px_0_8px_-4px_rgba(0,0,0,0.12)]",
-                      idx % 2 === 0 && "bg-white",
-                      idx % 2 === 1 && "bg-slate-50/30"
+                      idx % 2 === 0 && "bg-card",
+                      idx % 2 === 1 && "bg-muted/30"
                     )}>
                       {aluno.nome_completo}
                     </td>
@@ -432,7 +432,7 @@ export default function FrequenciaPorAula({ turmaId, alunos, disciplinas }: Prop
 
                           return (
                             <td key={key} className={cn(
-                              "py-1 px-0.5 text-center border-l border-slate-100",
+                              "py-1 px-0.5 text-center border-l border-border",
                               isOutsidePeriod && "opacity-40"
                             )}>
                               <button
@@ -443,10 +443,10 @@ export default function FrequenciaPorAula({ turmaId, alunos, disciplinas }: Prop
                                   "w-7 h-7 rounded-md text-xs font-bold transition-all flex items-center justify-center mx-auto",
                                   !disabled && !isOutsidePeriod && "cursor-pointer hover:ring-2 hover:ring-primary/30",
                                   isOutsidePeriod && "cursor-not-allowed",
-                                  status === 'P' && "bg-green-100 text-green-700 hover:bg-green-200",
-                                  status === 'F' && "bg-red-100 text-red-700 hover:bg-red-200",
-                                  status === 'FJ' && "bg-amber-100 text-amber-700 hover:bg-amber-200",
-                                  !status && !disabled && !isOutsidePeriod && "bg-transparent text-muted-foreground/30 hover:bg-slate-100 hover:text-muted-foreground/60",
+                                  status === 'P' && "bg-success/10 text-success hover:bg-success/20",
+                                  status === 'F' && "bg-destructive/10 text-destructive hover:bg-destructive/20",
+                                  status === 'FJ' && "bg-warning/10 text-warning hover:bg-warning/20",
+                                  !status && !disabled && !isOutsidePeriod && "bg-transparent text-muted-foreground/30 hover:bg-muted hover:text-muted-foreground/60",
                                   !status && (isFuture || isOutsidePeriod) && "bg-transparent text-muted-foreground/10",
                                   isFuture && "cursor-default",
                                   isSaving && "opacity-50 cursor-wait"
@@ -470,13 +470,13 @@ export default function FrequenciaPorAula({ turmaId, alunos, disciplinas }: Prop
 
           <div className="flex items-center gap-4 mt-3 text-xs text-muted-foreground flex-wrap">
             <span className="flex items-center gap-1">
-              <Check className="h-3 w-3 text-green-600" /> Presente
+              <Check className="h-3 w-3 text-success" /> Presente
             </span>
             <span className="flex items-center gap-1">
-              <X className="h-3 w-3 text-red-600" /> Falta
+              <X className="h-3 w-3 text-destructive" /> Falta
             </span>
             <span className="flex items-center gap-1">
-              <AlertTriangle className="h-3 w-3 text-amber-600" /> Falta Justificada
+              <AlertTriangle className="h-3 w-3 text-warning" /> Falta Justificada
             </span>
             <span className="text-muted-foreground/60">Clique para alternar</span>
             <span className="text-muted-foreground/40">|</span>
@@ -485,7 +485,7 @@ export default function FrequenciaPorAula({ turmaId, alunos, disciplinas }: Prop
             <span className="text-muted-foreground/60 italic">Células apagadas = fora do período ativo do aluno</span>
             <span className="text-muted-foreground/40">|</span>
             <span className="flex items-center gap-1">
-              <BookOpen className="h-3 w-3 text-emerald-500" /> Plano de Aula
+              <BookOpen className="h-3 w-3 text-success" /> Plano de Aula
             </span>
           </div>
         </>

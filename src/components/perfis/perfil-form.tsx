@@ -75,7 +75,7 @@ export function PerfilForm({ perfil, recursos, onSave, onCancel, saving }: Perfi
   return (
     <div className="space-y-6 py-4">
       {/* Card Identificação */}
-      <div className="border border-border rounded-lg p-5 bg-slate-50/40 space-y-4">
+      <div className="border border-border rounded-lg p-5 bg-muted/40 space-y-4">
         <h3 className="text-sm font-semibold text-foreground uppercase tracking-wider flex items-center gap-2">
           <Shield className="h-4 w-4 text-primary" />
           Identificação
@@ -86,7 +86,7 @@ export function PerfilForm({ perfil, recursos, onSave, onCancel, saving }: Perfi
             value={nome}
             onChange={e => setNome(e.target.value)}
             placeholder="Ex: Professor, Coordenação, Secretaria"
-            className="border-slate-300"
+            className="border-border"
           />
         </div>
         <div className="space-y-2">
@@ -95,7 +95,7 @@ export function PerfilForm({ perfil, recursos, onSave, onCancel, saving }: Perfi
             value={descricao}
             onChange={e => setDescricao(e.target.value)}
             placeholder="Descreva a finalidade e escopo deste perfil..."
-            className="border-slate-300 min-h-[80px]"
+            className="border-border min-h-[80px]"
           />
         </div>
         <div className="flex items-center gap-3">
@@ -105,7 +105,7 @@ export function PerfilForm({ perfil, recursos, onSave, onCancel, saving }: Perfi
           </Label>
         </div>
         {!ativo && (
-          <p className="text-xs text-amber-600">
+          <p className="text-xs text-warning">
             Perfis inativos não podem ser vinculados a usuários.
           </p>
         )}
@@ -132,7 +132,7 @@ export function PerfilForm({ perfil, recursos, onSave, onCancel, saving }: Perfi
       <Separator />
 
       {/* Card Permissões */}
-      <div className="border border-border rounded-lg p-5 bg-slate-50/40 space-y-4">
+      <div className="border border-border rounded-lg p-5 bg-muted/40 space-y-4">
         <h3 className="text-sm font-semibold text-foreground uppercase tracking-wider flex items-center gap-2">
           <Shield className="h-4 w-4 text-primary" />
           Permissões de Acesso
@@ -155,7 +155,7 @@ export function PerfilForm({ perfil, recursos, onSave, onCancel, saving }: Perfi
         <button
           type="button"
           onClick={onCancel}
-          className="h-9 px-4 text-sm font-medium rounded-lg border border-slate-300 text-slate-700 hover:bg-slate-50 transition-colors"
+          className="h-9 px-4 text-sm font-medium rounded-lg border border-border text-foreground hover:bg-muted transition-colors"
         >
           Cancelar
         </button>

@@ -620,7 +620,7 @@ export function PessoaForm({ schoolId, person, onSaved, onCancel }: Props) {
   }
 
   return (
-    <div className="flex flex-col flex-1 min-h-0 [&_[data-slot='input']]:border-slate-300 [&_[data-slot='input']]:focus-visible:border-primary [&_[data-slot='input']]:focus-visible:ring-2 [&_[data-slot='input']]:focus-visible:ring-primary/20 [&_[data-slot='checkbox']]:border-slate-400 [&_[data-slot='checkbox']]:data-[state=checked]:bg-primary">
+    <div className="flex flex-col flex-1 min-h-0 [&_[data-slot='input']]:border-border [&_[data-slot='input']]:focus-visible:border-primary [&_[data-slot='input']]:focus-visible:ring-2 [&_[data-slot='input']]:focus-visible:ring-primary/20 [&_[data-slot='checkbox']]:border-border [&_[data-slot='checkbox']]:data-[state=checked]:bg-primary">
       <Tabs value={activeTab} onValueChange={setActiveTab} className="flex flex-col flex-1 min-h-0">
         <div className="px-6 shrink-0">
           <TabsList className="w-full flex-wrap h-auto">
@@ -664,7 +664,7 @@ export function PessoaForm({ schoolId, person, onSaved, onCancel }: Props) {
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label>Código da Pessoa</Label>
-              <Input value={form.codigo_pessoa ?? ''} placeholder={person ? '' : 'Gerado automaticamente'} disabled className="bg-slate-50 text-slate-500 cursor-not-allowed" />
+              <Input value={form.codigo_pessoa ?? ''} placeholder={person ? '' : 'Gerado automaticamente'} disabled className="bg-muted text-muted-foreground cursor-not-allowed" />
             </div>
             <div className="space-y-2">
               <Label>CPF {isResponsavel && '*'}</Label>
@@ -821,7 +821,7 @@ export function PessoaForm({ schoolId, person, onSaved, onCancel }: Props) {
               </div>
 
               {form.permitir_acesso && (
-                <div className="ml-6 space-y-4 p-4 border rounded-lg bg-slate-50">
+                <div className="ml-6 space-y-4 p-4 border rounded-lg bg-muted">
                   <div className="space-y-2">
                     <Label>Nome de acesso</Label>
                     <Input value={form.email} onChange={(e) => set('email', e.target.value)} placeholder="email@exemplo.com" />
@@ -840,7 +840,7 @@ export function PessoaForm({ schoolId, person, onSaved, onCancel }: Props) {
                     <Label>Perfil de acesso</Label>
                     <p className="text-xs text-muted-foreground">Define as permissões do usuário no sistema (configurado em Perfis e Permissões)</p>
                     <Select value={form.perfil_id || '__none__'} onValueChange={(v) => set('perfil_id', v === '__none__' ? null : v)}>
-                      <SelectTrigger className="border-slate-300"><SelectValue placeholder="Selecione um perfil de acesso" /></SelectTrigger>
+                      <SelectTrigger className="border-border"><SelectValue placeholder="Selecione um perfil de acesso" /></SelectTrigger>
                       <SelectContent>
                         <SelectItem value="__none__">Sem perfil de acesso</SelectItem>
                         {perfisAcesso.map(p => (
@@ -948,7 +948,7 @@ export function PessoaForm({ schoolId, person, onSaved, onCancel }: Props) {
                 value={form.medicamentos || ''}
                 onChange={(e) => set('medicamentos', e.target.value)}
                 rows={2}
-                className="w-full px-3 py-2 rounded-lg border border-slate-300 bg-white text-sm resize-y"
+                className="w-full px-3 py-2 rounded-lg border border-border bg-card text-sm resize-y"
                 placeholder="Medicamentos de uso contínuo, alergias, condições relevantes para o ambiente escolar"
               />
             </div>
@@ -1101,7 +1101,7 @@ export function PessoaForm({ schoolId, person, onSaved, onCancel }: Props) {
                   </Card>
                 ))}
                 {cursoCount < 3 && (
-                  <Button type="button" variant="outline" className="border-slate-300" onClick={() => setCursoCount(c => c + 1)}>
+                  <Button type="button" variant="outline" className="border-border" onClick={() => setCursoCount(c => c + 1)}>
                     + Adicionar outro curso superior
                   </Button>
                 )}
@@ -1157,7 +1157,7 @@ export function PessoaForm({ schoolId, person, onSaved, onCancel }: Props) {
                   </Card>
                 ))}
                 {!form.sem_pos && posCount < 6 && (
-                  <Button type="button" variant="outline" className="border-slate-300" onClick={() => setPosCount(c => c + 1)}>
+                  <Button type="button" variant="outline" className="border-border" onClick={() => setPosCount(c => c + 1)}>
                     + Adicionar outra pós-graduação
                   </Button>
                 )}
@@ -1192,7 +1192,7 @@ export function PessoaForm({ schoolId, person, onSaved, onCancel }: Props) {
           <TabsContent value="vinculo" className="space-y-4">
             <div className="flex items-center justify-between">
               <Label className="text-sm font-semibold">Vínculos Profissionais</Label>
-              <Button variant="outline" size="sm" onClick={adicionarVinculoProfissional} className="border-slate-300">
+              <Button variant="outline" size="sm" onClick={adicionarVinculoProfissional} className="border-border">
                 <Plus className="mr-1 h-3.5 w-3.5" /> Adicionar Vínculo
               </Button>
             </div>
@@ -1266,22 +1266,22 @@ export function PessoaForm({ schoolId, person, onSaved, onCancel }: Props) {
                   </div>
 
                   {v.situacao === '2' && (
-                    <div className="grid grid-cols-2 gap-4 p-3 bg-amber-50/40 rounded-lg border border-amber-200">
+                    <div className="grid grid-cols-2 gap-4 p-3 bg-warning/5 rounded-lg border border-warning/20">
                       <div className="space-y-2">
-                        <Label className="text-amber-800">Data de Início do Afastamento *</Label>
+                        <Label className="text-warning">Data de Início do Afastamento *</Label>
                         <Input type="date" value={v.data_inicio_afastamento || ''} onChange={(e) => updateVinculoProfissionalState(idx, 'data_inicio_afastamento', e.target.value)} />
                       </div>
                       <div className="space-y-2">
-                        <Label className="text-amber-800">Data de Término do Afastamento</Label>
+                        <Label className="text-warning">Data de Término do Afastamento</Label>
                         <Input type="date" value={v.data_termino_afastamento || ''} onChange={(e) => updateVinculoProfissionalState(idx, 'data_termino_afastamento', e.target.value)} />
                       </div>
                     </div>
                   )}
 
                   {v.situacao === '3' && (
-                    <div className="p-3 bg-red-50/40 rounded-lg border border-red-200">
+                    <div className="p-3 bg-destructive/5 rounded-lg border border-destructive/20">
                       <div className="space-y-2">
-                        <Label className="text-red-800">Data de Término *</Label>
+                        <Label className="text-destructive">Data de Término *</Label>
                         <Input type="date" value={v.data_termino || ''} onChange={(e) => updateVinculoProfissionalState(idx, 'data_termino', e.target.value)} />
                       </div>
                     </div>
@@ -1290,7 +1290,7 @@ export function PessoaForm({ schoolId, person, onSaved, onCancel }: Props) {
                   <div className="space-y-2">
                     <Label>Observações</Label>
                     <textarea
-                      className="w-full min-h-[60px] rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 resize-y"
+                      className="w-full min-h-[60px] rounded-lg border border-border px-3 py-2 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 resize-y"
                       value={v.observacoes || ''}
                       onChange={(e) => updateVinculoProfissionalState(idx, 'observacoes', e.target.value)}
                       placeholder="Observações sobre este vínculo..."
@@ -1335,9 +1335,9 @@ export function PessoaForm({ schoolId, person, onSaved, onCancel }: Props) {
                     onChange={(e) => buscarAlunosHandler(e.target.value)}
                   />
                   {alunosOptions.length > 0 && (
-                    <div className="border border-slate-200 rounded-lg max-h-40 overflow-y-auto">
+                    <div className="border border-border rounded-lg max-h-40 overflow-y-auto">
                       {alunosOptions.map(a => (
-                        <button key={a.id} type="button" className="w-full text-left px-3 py-2 text-sm hover:bg-slate-50 transition-colors" onClick={() => adicionarVinculo(a.id)}>
+                        <button key={a.id} type="button" className="w-full text-left px-3 py-2 text-sm hover:bg-muted transition-colors" onClick={() => adicionarVinculo(a.id)}>
                           {a.nome_completo}
                         </button>
                       ))}
@@ -1348,7 +1348,7 @@ export function PessoaForm({ schoolId, person, onSaved, onCancel }: Props) {
                 {form.vinculos.length > 0 && (
                   <div className="space-y-2">
                     {form.vinculos.map((v: any, idx: number) => (
-                      <div key={idx} className="flex items-center justify-between p-3 bg-slate-50/40 rounded-lg border border-slate-200">
+                      <div key={idx} className="flex items-center justify-between p-3 bg-muted/40 rounded-lg border border-border">
                         <div className="flex-1 space-y-2">
                           <span className="text-sm font-medium">{v.aluno_nome}</span>
                           <div className="flex flex-wrap gap-2">
@@ -1413,8 +1413,8 @@ export function PessoaForm({ schoolId, person, onSaved, onCancel }: Props) {
         </div>
       </Tabs>
 
-      <div className="bg-white pt-4 pb-2 px-6 flex justify-end gap-3 border-t border-slate-200 shrink-0">
-        <Button variant="outline" onClick={onCancel} className="border-slate-300">Cancelar</Button>
+      <div className="bg-card pt-4 pb-2 px-6 flex justify-end gap-3 border-t border-border shrink-0">
+        <Button variant="outline" onClick={onCancel} className="border-border">Cancelar</Button>
         <Button onClick={handleSave} disabled={saving} className="bg-primary hover:bg-primary/90 shadow-sm shadow-primary/20">
           {saving ? 'Salvando...' : person ? 'Atualizar' : 'Criar'}
         </Button>

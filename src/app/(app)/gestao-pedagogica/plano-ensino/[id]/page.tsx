@@ -293,12 +293,12 @@ export default function PlanoEnsinoDetailPage() {
             {plano.disciplinas.length > 0 && (
               <div className="flex flex-wrap gap-1 mt-2">
                 {plano.disciplinas.map((d: any) => (
-                  <span key={d.id} className="text-xs bg-slate-100 text-slate-600 px-2 py-0.5 rounded">{d.nome}</span>
+                  <span key={d.id} className="text-xs bg-muted text-muted-foreground px-2 py-0.5 rounded">{d.nome}</span>
                 ))}
               </div>
             )}
             {plano.is_interdisciplinar && (
-              <span className="text-xs bg-amber-100 text-amber-700 px-2 py-0.5 rounded inline-block mt-2">Interdisciplinar</span>
+              <span className="text-xs bg-warning/10 text-warning px-2 py-0.5 rounded inline-block mt-2">Interdisciplinar</span>
             )}
           </CardContent>
         </Card>
@@ -350,7 +350,7 @@ export default function PlanoEnsinoDetailPage() {
                     <div>
                       <Label className="text-xs">Conteúdo</Label>
                       <textarea value={conteudo} onChange={e => setConteudo(e.target.value)} rows={3}
-                        className="w-full mt-1 px-3 py-2 rounded-lg border border-slate-300 bg-white text-sm resize-y"
+                        className="w-full mt-1 px-3 py-2 rounded-lg border border-border bg-card text-sm resize-y"
                         placeholder="Conteúdo programático da aula" />
                     </div>
 
@@ -520,25 +520,25 @@ export default function PlanoEnsinoDetailPage() {
                     <div>
                       <Label className="text-xs">Recursos Didáticos</Label>
                       <textarea value={recursos} onChange={e => setRecursos(e.target.value)} rows={2}
-                        className="w-full mt-1 px-3 py-2 rounded-lg border border-slate-300 bg-white text-sm resize-y"
+                        className="w-full mt-1 px-3 py-2 rounded-lg border border-border bg-card text-sm resize-y"
                         placeholder="Recursos utilizados na aula" />
                     </div>
                     <div>
                       <Label className="text-xs">Metodologia</Label>
                       <textarea value={metodologia} onChange={e => setMetodologia(e.target.value)} rows={2}
-                        className="w-full mt-1 px-3 py-2 rounded-lg border border-slate-300 bg-white text-sm resize-y"
+                        className="w-full mt-1 px-3 py-2 rounded-lg border border-border bg-card text-sm resize-y"
                         placeholder="Estratégias e métodos de ensino" />
                     </div>
                     <div>
                       <Label className="text-xs">Avaliação</Label>
                       <textarea value={avaliacao} onChange={e => setAvaliacao(e.target.value)} rows={2}
-                        className="w-full mt-1 px-3 py-2 rounded-lg border border-slate-300 bg-white text-sm resize-y"
+                        className="w-full mt-1 px-3 py-2 rounded-lg border border-border bg-card text-sm resize-y"
                         placeholder="Forma de avaliação da aula" />
                     </div>
                     <div>
                       <Label className="text-xs">Referências</Label>
                       <textarea value={referencias} onChange={e => setReferencias(e.target.value)} rows={2}
-                        className="w-full mt-1 px-3 py-2 rounded-lg border border-slate-300 bg-white text-sm resize-y"
+                        className="w-full mt-1 px-3 py-2 rounded-lg border border-border bg-card text-sm resize-y"
                         placeholder="Referências bibliográficas" />
                     </div>
                     <div className="flex justify-end gap-2 pt-2">
@@ -564,7 +564,7 @@ export default function PlanoEnsinoDetailPage() {
               {aulas.length > 0 && (
                 <div className="space-y-3">
                   {aulas.map(aula => (
-                    <Card key={aula.id} className="border-slate-200">
+                    <Card key={aula.id} className="border-border">
                       <CardContent className="p-4">
                         <div className="flex items-start justify-between">
                           <div className="flex-1">
@@ -573,7 +573,7 @@ export default function PlanoEnsinoDetailPage() {
                               {aula.periodos && aula.periodos.length > 0 && (
                                 <div className="flex gap-1">
                                   {aula.periodos.map(per => (
-                                    <span key={per} className="text-[10px] bg-blue-50 text-blue-600 border border-blue-200 px-1.5 py-0.5 rounded">{per}ºP</span>
+                                    <span key={per} className="text-[10px] bg-info/10 text-info border border-info/20 px-1.5 py-0.5 rounded">{per}ºP</span>
                                   ))}
                                 </div>
                               )}
@@ -592,7 +592,7 @@ export default function PlanoEnsinoDetailPage() {
                             {aula.bncc_fields && aula.bncc_fields.length > 0 && (
                               <div className="flex flex-wrap gap-1 mt-2">
                                 {aula.bncc_fields.map((item: any, idx: number) => (
-                                  <span key={idx} className="text-[10px] bg-emerald-50 text-emerald-700 border border-emerald-200 px-1.5 py-0.5 rounded">
+                                  <span key={idx} className="text-[10px] bg-success/5 text-success border border-success/20 px-1.5 py-0.5 rounded">
                                     {item.codigo || item.nome || item.tipo}
                                   </span>
                                 ))}

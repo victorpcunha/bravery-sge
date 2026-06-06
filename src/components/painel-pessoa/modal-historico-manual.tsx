@@ -124,7 +124,7 @@ export default function ModalHistoricoManual({ open, onClose, onSuccess, personI
                 ))}
               </SelectContent>
             </Select>
-            {errors.ano_letivo_id && <p className="text-xs text-red-500 mt-1">{errors.ano_letivo_id.message}</p>}
+            {errors.ano_letivo_id && <p className="text-xs text-destructive mt-1">{errors.ano_letivo_id.message}</p>}
           </div>
 
           <div className="grid grid-cols-2 gap-3">
@@ -181,7 +181,7 @@ export default function ModalHistoricoManual({ open, onClose, onSuccess, personI
           <div>
             <Label className="text-xs">Observações</Label>
             <textarea {...register('observacoes')} rows={2}
-              className="w-full mt-0.5 px-3 py-2 rounded-lg border border-slate-300 bg-white text-sm resize-y" />
+              className="w-full mt-0.5 px-3 py-2 rounded-lg border border-border bg-card text-sm resize-y" />
           </div>
 
           <div className="flex justify-end gap-2 pt-2">

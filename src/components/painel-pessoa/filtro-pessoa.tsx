@@ -104,7 +104,7 @@ export default function FiltroPessoa({ schoolId, pessoaLogadaId, onSelect, selec
       )}
 
       {open && !loading && erro && (
-        <div className="absolute z-50 mt-1 w-full bg-popover border border-red-200 rounded-lg shadow-lg p-4 text-center text-sm text-red-600">
+        <div className="absolute z-50 mt-1 w-full bg-popover border border-destructive/20 rounded-lg shadow-lg p-4 text-center text-sm text-destructive">
           {erro}
         </div>
       )}

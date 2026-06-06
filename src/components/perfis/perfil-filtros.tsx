@@ -21,7 +21,7 @@ export function PerfilFiltros({ search, onSearchChange, situacao, onSituacaoChan
           value={search}
           onChange={e => onSearchChange(e.target.value)}
           placeholder="Buscar por nome do perfil..."
-          className="pl-10 border-slate-300"
+          className="pl-10 border-border"
         />
         {search && (
           <Button
@@ -35,7 +35,7 @@ export function PerfilFiltros({ search, onSearchChange, situacao, onSituacaoChan
         )}
       </div>
       <Select value={situacao} onValueChange={onSituacaoChange}>
-        <SelectTrigger className="w-full sm:w-44 border-slate-300">
+        <SelectTrigger className="w-full sm:w-44 border-border">
           <SelectValue placeholder="Todas situações" />
         </SelectTrigger>
         <SelectContent>

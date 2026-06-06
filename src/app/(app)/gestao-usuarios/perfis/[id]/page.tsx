@@ -141,7 +141,7 @@ export default function PerfilCadastroPage({ params }: PageProps) {
       <Sidebar />
       <div className="md:pl-64 container mx-auto py-8 px-4 max-w-5xl">
         <div className="flex items-center gap-3 mb-8">
-          <Button variant="ghost" size="icon" onClick={() => router.push('/gestao-usuarios/perfis')} className="hover:bg-slate-100">
+          <Button variant="ghost" size="icon" onClick={() => router.push('/gestao-usuarios/perfis')} className="hover:bg-muted">
             <ChevronLeft className="h-5 w-5" />
           </Button>
           <div>
@@ -154,7 +154,7 @@ export default function PerfilCadastroPage({ params }: PageProps) {
           </div>
         </div>
 
-        <Card className="border-[#cbd5e1] shadow-[0_2px_8px_rgba(0,0,0,0.06)]">
+        <Card className="border-border shadow-[0_2px_8px_rgba(0,0,0,0.06)]">
           <CardHeader>
             <CardTitle className="text-lg flex items-center gap-2">
               <Shield className="h-5 w-5 text-primary" />

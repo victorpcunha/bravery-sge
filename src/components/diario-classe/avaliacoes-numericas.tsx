@@ -290,7 +290,7 @@ export default function AvaliacoesNumericas({
               setSubAba('registro')
               setDesempenhos([])
             }}
-            className="h-9 px-3 rounded-lg border border-slate-300 bg-white text-sm min-w-[180px]"
+            className="h-9 px-3 rounded-lg border border-border bg-card text-sm min-w-[180px]"
           >
             <option value="">Selecione...</option>
             {disciplinas.map(d => (
@@ -384,7 +384,7 @@ export default function AvaliacoesNumericas({
                               return next
                             })
                           }}
-                          className="mt-1 h-6 w-full text-[10px] px-1 rounded border border-slate-200 bg-transparent text-muted-foreground"
+                          className="mt-1 h-6 w-full text-[10px] px-1 rounded border border-border bg-transparent text-muted-foreground"
                           disabled={!podeEditar}
                         />
                       </th>
@@ -414,19 +414,19 @@ export default function AvaliacoesNumericas({
                       <tr
                         key={aluno.id}
                         className={cn(
-                          'border-b border-slate-100',
-                          idx % 2 === 0 && 'bg-white',
-                          idx % 2 === 1 && 'bg-slate-50/30'
-                        )}
-                      >
-                        <td className="py-2 px-3 text-sm font-medium">
-                          {aluno.nome_completo}
-                        </td>
-                        {descricoes.map(d => {
-                          const nota = getNota(aluno.id, d)
-                          return (
-                            <td key={d} className="py-1 px-1 text-center">
-                              <Input
+'border-b border-border',
+                        idx % 2 === 0 && 'bg-card',
+                        idx % 2 === 1 && 'bg-muted/30'
+                      )}
+                    >
+                      <td className="py-2 px-3 text-sm font-medium">
+                        {aluno.nome_completo}
+                      </td>
+                      {descricoes.map(d => {
+                        const nota = getNota(aluno.id, d)
+                        return (
+                          <td key={d} className="py-1 px-1 text-center">
+                            <Input
                                 type="number"
                                 step="0.01"
                                 min="0"
@@ -447,10 +447,10 @@ export default function AvaliacoesNumericas({
                               className={cn(
                                 'text-sm font-semibold',
                                 media >= 7
-                                  ? 'text-green-600'
+                                  ? 'text-success'
                                   : media >= 5
-                                  ? 'text-amber-600'
-                                  : 'text-red-600'
+                                  ? 'text-warning'
+                                  : 'text-destructive'
                               )}
                             >
                               {media.toFixed(2)}
@@ -512,9 +512,9 @@ export default function AvaliacoesNumericas({
                     <tr
                       key={aluno.id}
                       className={cn(
-                        'border-b border-slate-100',
-                        idx % 2 === 0 && 'bg-white',
-                        idx % 2 === 1 && 'bg-slate-50/30'
+                        'border-b border-border',
+                        idx % 2 === 0 && 'bg-card',
+                        idx % 2 === 1 && 'bg-muted/30'
                       )}
                     >
                       <td className="py-2 px-3 text-sm font-medium">
@@ -560,17 +560,17 @@ export default function AvaliacoesNumericas({
                       </td>
                       <td className="text-center py-2 px-2">
                         {d?.status === 'aprovado' && (
-                          <Badge className="bg-green-100 text-green-700 hover:bg-green-200">
+                          <Badge className="bg-success/10 text-success hover:bg-success/20">
                             <Check className="h-3 w-3 mr-1" /> Aprovado
                           </Badge>
                         )}
                         {d?.status === 'recuperacao' && (
-                          <Badge className="bg-amber-100 text-amber-700 hover:bg-amber-200">
+                          <Badge className="bg-warning/10 text-warning hover:bg-warning/20">
                             <AlertTriangle className="h-3 w-3 mr-1" /> Recuperação
                           </Badge>
                         )}
                         {d?.status === 'reprovado' && (
-                          <Badge className="bg-red-100 text-red-700 hover:bg-red-200">
+                          <Badge className="bg-destructive/10 text-destructive hover:bg-destructive/20">
                             <X className="h-3 w-3 mr-1" /> Reprovado
                           </Badge>
                         )}

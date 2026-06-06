@@ -10,7 +10,7 @@ type Props = {
 
 export default function GraficoDesempenho({ data, loading }: Props) {
   if (loading) {
-    return <div className="h-48 animate-pulse bg-slate-100 rounded-lg" />
+    return <div className="h-48 animate-pulse bg-muted rounded-lg" />
   }
 
   if (!data) {

@@ -10,7 +10,7 @@ export default async function MatriculaCadastroPage({
   return (
     <Suspense fallback={
       <div className="md:pl-64 container mx-auto py-8 px-4">
-        <div className="text-center text-slate-400 py-8">Carregando...</div>
+        <div className="text-center text-muted-foreground py-8">Carregando...</div>
       </div>
     }>
       <MatriculaCadastroContent searchParams={params} />

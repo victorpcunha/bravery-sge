@@ -50,7 +50,7 @@ export default function CardHistorico({ pessoaId, schoolId, pessoaLogadaId }: Pr
       <Card>
         <CardHeader className="pb-2">
           <CardTitle className="text-sm flex items-center gap-2">
-            <GraduationCap className="h-4 w-4 text-orange-500" />
+            <GraduationCap className="h-4 w-4 text-warning" />
             Histórico Escolar
             {permiteManual && (
               <Button variant="outline" size="sm" className="ml-auto h-7 text-xs gap-1" onClick={() => setModalOpen(true)}>

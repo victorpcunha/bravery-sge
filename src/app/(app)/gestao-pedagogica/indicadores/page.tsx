@@ -375,7 +375,7 @@ export default function IndicadoresPage() {
   const grupos = agruparIndicadores(indicadores, isInfantil)
 
   if (authLoading) {
-    return <div className="md:pl-64 container mx-auto py-8 px-4"><div className="text-center text-slate-400">Carregando...</div></div>
+    return <div className="md:pl-64 container mx-auto py-8 px-4"><div className="text-center text-muted-foreground">Carregando...</div></div>
   }
 
   return (
@@ -383,14 +383,14 @@ export default function IndicadoresPage() {
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-xl font-semibold text-slate-800">Indicadores de Avaliação</h1>
-          <p className="text-sm text-slate-500 mt-0.5">
+          <h1 className="text-xl font-semibold text-foreground">Indicadores de Avaliação</h1>
+          <p className="text-sm text-muted-foreground mt-0.5">
             Defina os indicadores que os professores utilizarão para avaliar os alunos
           </p>
         </div>
         <div className="flex items-center gap-2">
           {filtroAno && filtroEtapa && isInfantil && (
-            <Button variant="outline" className="border-slate-300" size="sm"
+            <Button variant="outline" className="border-border" size="sm"
               onClick={async () => {
                 try {
                   setImportando(true)
@@ -419,16 +419,16 @@ export default function IndicadoresPage() {
 
       {/* Filtros */}
       <Card className="border-border shadow-[0_2px_8px_rgba(0,0,0,0.06)] mb-6">
-        <CardHeader className="bg-slate-50/40 border-b border-slate-200 py-3">
-          <CardTitle className="text-sm font-medium text-slate-600">Filtros</CardTitle>
+        <CardHeader className="bg-muted/40 border-b border-border py-3">
+          <CardTitle className="text-sm font-medium text-muted-foreground">Filtros</CardTitle>
         </CardHeader>
         <CardContent className="p-4">
           <div className="flex flex-wrap gap-3">
             {/* Ano Letivo */}
             <div className="w-48">
-              <Label className="text-xs text-slate-500 mb-1 block">Ano Letivo</Label>
+              <Label className="text-xs text-muted-foreground mb-1 block">Ano Letivo</Label>
               <Select value={filtroAno} onValueChange={v => { setFiltroAno(v); setFiltroEtapa(''); }}>
-                <SelectTrigger className="h-9 border-slate-300">
+                <SelectTrigger className="h-9 border-border">
                   <SelectValue placeholder="Selecione" />
                 </SelectTrigger>
                 <SelectContent>
@@ -441,9 +441,9 @@ export default function IndicadoresPage() {
 
             {/* Etapa */}
             <div className="w-56">
-              <Label className="text-xs text-slate-500 mb-1 block">Etapa de Ensino</Label>
+              <Label className="text-xs text-muted-foreground mb-1 block">Etapa de Ensino</Label>
               <Select value={filtroEtapa} onValueChange={handleFiltroEtapaChange}>
-                <SelectTrigger className="h-9 border-slate-300">
+                <SelectTrigger className="h-9 border-border">
                   <SelectValue placeholder="Selecione" />
                 </SelectTrigger>
                 <SelectContent>
@@ -457,9 +457,9 @@ export default function IndicadoresPage() {
             {/* Subetapa */}
             {subetapas.length > 0 && (
               <div className="w-48">
-                <Label className="text-xs text-slate-500 mb-1 block">Subetapa</Label>
+                <Label className="text-xs text-muted-foreground mb-1 block">Subetapa</Label>
                 <Select value={filtroSubetapa} onValueChange={v => setFiltroSubetapa(v === 'all' ? '' : v)}>
-                  <SelectTrigger className="h-9 border-slate-300">
+                  <SelectTrigger className="h-9 border-border">
                     <SelectValue placeholder="Todas" />
                   </SelectTrigger>
                   <SelectContent>
@@ -475,9 +475,9 @@ export default function IndicadoresPage() {
             {/* Campo de Experiência (Infantil) */}
             {isInfantil && camposExperiencia.length > 0 && (
               <div className="w-64">
-                <Label className="text-xs text-slate-500 mb-1 block">Campo de Experiência</Label>
+                <Label className="text-xs text-muted-foreground mb-1 block">Campo de Experiência</Label>
                 <Select value={filtroCampo} onValueChange={v => { setFiltroCampo(v === 'all' ? '' : v); setFiltroDisciplina('') }}>
-                  <SelectTrigger className="h-9 border-slate-300">
+                  <SelectTrigger className="h-9 border-border">
                     <SelectValue placeholder="Todos" />
                   </SelectTrigger>
                   <SelectContent>
@@ -493,9 +493,9 @@ export default function IndicadoresPage() {
             {/* Disciplina (demais etapas) */}
             {!isInfantil && disciplinasMatriz.length > 0 && (
               <div className="w-56">
-                <Label className="text-xs text-slate-500 mb-1 block">Disciplina</Label>
+                <Label className="text-xs text-muted-foreground mb-1 block">Disciplina</Label>
                 <Select value={filtroDisciplina} onValueChange={v => { setFiltroDisciplina(v === 'all' ? '' : v); setFiltroCampo('') }}>
-                  <SelectTrigger className="h-9 border-slate-300">
+                  <SelectTrigger className="h-9 border-border">
                     <SelectValue placeholder="Todas" />
                   </SelectTrigger>
                   <SelectContent>
@@ -515,51 +515,51 @@ export default function IndicadoresPage() {
 
       {/* Listagem hierárquica */}
       <Card className="border-border shadow-[0_2px_8px_rgba(0,0,0,0.06)]">
-        <CardHeader className="bg-slate-50/40 border-b border-slate-200 py-3">
-          <CardTitle className="text-sm font-medium text-slate-600">
+        <CardHeader className="bg-muted/40 border-b border-border py-3">
+          <CardTitle className="text-sm font-medium text-muted-foreground">
             {indicadores.length} indicador{indicadores.length !== 1 ? 'es' : ''} encontrado{indicadores.length !== 1 ? 's' : ''}
           </CardTitle>
         </CardHeader>
         <CardContent className="p-0">
           {loading ? (
-            <div className="p-8 text-center text-slate-400 text-sm">Carregando...</div>
+            <div className="p-8 text-center text-muted-foreground text-sm">Carregando...</div>
           ) : !filtroAno || !filtroEtapa ? (
-            <div className="p-8 text-center text-slate-400 text-sm">Selecione Ano Letivo e Etapa de Ensino para visualizar os indicadores</div>
+            <div className="p-8 text-center text-muted-foreground text-sm">Selecione Ano Letivo e Etapa de Ensino para visualizar os indicadores</div>
           ) : indicadores.length === 0 ? (
-            <div className="p-8 text-center text-slate-400 text-sm">
+            <div className="p-8 text-center text-muted-foreground text-sm">
               <p>Nenhum indicador encontrado.</p>
               <p className="text-xs mt-1">{isInfantil ? 'Clique em "Importar da Matriz" ou "Novo Indicador" para começar.' : 'Clique em "Novo Indicador" para criar indicadores personalizados para a disciplina.'}</p>
             </div>
           ) : (
             <div className="p-4 space-y-2">
               {grupos.map(grupo => (
-                <div key={grupo.key} className="border border-slate-200 rounded-lg overflow-hidden">
+                <div key={grupo.key} className="border border-border rounded-lg overflow-hidden">
                   {/* Grupo (Campo/Disciplina) */}
                   <div
-                    className="flex items-center gap-2 px-3 py-2 bg-slate-50/80 cursor-pointer hover:bg-slate-100/80 transition-colors"
+                    className="flex items-center gap-2 px-3 py-2 bg-muted/80 cursor-pointer hover:bg-muted transition-colors"
                     onClick={() => toggleGrupo(grupo.key)}
                   >
-                    {expandedGrupos[grupo.key] ? <ChevronDown className="h-4 w-4 text-slate-400" /> : <ChevronRight className="h-4 w-4 text-slate-400" />}
-                    <Layers className="h-4 w-4 text-slate-500" />
-                    <span className="text-sm font-medium text-slate-700">{formatNome(grupo.nome)}</span>
+                    {expandedGrupos[grupo.key] ? <ChevronDown className="h-4 w-4 text-muted-foreground" /> : <ChevronRight className="h-4 w-4 text-muted-foreground" />}
+                    <Layers className="h-4 w-4 text-muted-foreground" />
+                    <span className="text-sm font-medium text-foreground">{formatNome(grupo.nome)}</span>
                     <Badge variant="secondary" className="text-[11px] px-1.5 py-0">{grupo.indicadores.length}</Badge>
                   </div>
 
                   {expandedGrupos[grupo.key] && (
-                    <div className="border-t border-slate-200">
+                    <div className="border-t border-border">
                       {grupo.subgrupos.length > 0 ? (
                         grupo.subgrupos.map(sub => (
                           <div key={sub.key}>
                             <div
-                              className="flex items-center gap-2 px-6 py-1.5 bg-white cursor-pointer hover:bg-slate-50/50 transition-colors"
+                              className="flex items-center gap-2 px-6 py-1.5 bg-card cursor-pointer hover:bg-muted/50 transition-colors"
                               onClick={() => toggleSubgrupo(sub.key)}
                             >
-                              {expandedSubgrupos[sub.key] ? <ChevronDown className="h-3.5 w-3.5 text-slate-400" /> : <ChevronRight className="h-3.5 w-3.5 text-slate-400" />}
-                              <span className="text-xs font-medium text-slate-500">{sub.nome}</span>
+                              {expandedSubgrupos[sub.key] ? <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" /> : <ChevronRight className="h-3.5 w-3.5 text-muted-foreground" />}
+                              <span className="text-xs font-medium text-muted-foreground">{sub.nome}</span>
                               <Badge variant="outline" className="text-[10px] px-1 py-0">{sub.indicadores.length}</Badge>
                             </div>
                             {expandedSubgrupos[sub.key] && (
-                              <div className="border-t border-slate-100">
+                              <div className="border-t border-border">
                                 {sub.indicadores.map(ind => renderIndicador(ind))}
                               </div>
                             )}
@@ -587,11 +587,11 @@ export default function IndicadoresPage() {
             {/* Contexto (bloqueado na edição) */}
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <Label className="text-xs text-slate-500">Ano Letivo</Label>
+                <Label className="text-xs text-muted-foreground">Ano Letivo</Label>
                 <Select value={formContexto.ano_letivo_id}
                   onValueChange={v => setFormContexto(p => ({ ...p, ano_letivo_id: v }))}
                   disabled={!!editId}>
-                  <SelectTrigger className="h-9 border-slate-300">
+                  <SelectTrigger className="h-9 border-border">
                     <SelectValue placeholder="Selecione" />
                   </SelectTrigger>
                   <SelectContent>
@@ -602,11 +602,11 @@ export default function IndicadoresPage() {
                 </Select>
               </div>
               <div>
-                <Label className="text-xs text-slate-500">Etapa de Ensino</Label>
+                <Label className="text-xs text-muted-foreground">Etapa de Ensino</Label>
                 <Select value={formContexto.etapa_ensino_id}
                   onValueChange={v => setFormContexto(p => ({ ...p, etapa_ensino_id: v }))}
                   disabled={!!editId}>
-                  <SelectTrigger className="h-9 border-slate-300">
+                  <SelectTrigger className="h-9 border-border">
                     <SelectValue placeholder="Selecione" />
                   </SelectTrigger>
                   <SelectContent>
@@ -621,7 +621,7 @@ export default function IndicadoresPage() {
             {/* Subetapas */}
             {formSubetapas.length > 0 && (
               <div>
-                <Label className="text-xs text-slate-500 mb-1 block">Subetapas</Label>
+                <Label className="text-xs text-muted-foreground mb-1 block">Subetapas</Label>
                 <div className="flex flex-wrap gap-2">
                   {formSubetapas.map((s: any) => (
                     <label key={s.id} className="flex items-center gap-1.5 text-xs cursor-pointer">
@@ -647,11 +647,11 @@ export default function IndicadoresPage() {
             {/* Campo de Experiência ou Disciplina */}
             {formIsInfantil ? (
               <div>
-                <Label className="text-xs text-slate-500 mb-1 block">Campo de Experiência</Label>
+                <Label className="text-xs text-muted-foreground mb-1 block">Campo de Experiência</Label>
                 <Select value={formContexto.campo_experiencia}
                   onValueChange={v => setFormContexto(p => ({ ...p, campo_experiencia: v }))}
                   disabled={!!editId}>
-                  <SelectTrigger className="h-9 border-slate-300">
+                  <SelectTrigger className="h-9 border-border">
                     <SelectValue placeholder="Selecione" />
                   </SelectTrigger>
                   <SelectContent>
@@ -663,11 +663,11 @@ export default function IndicadoresPage() {
               </div>
             ) : (
               <div>
-                <Label className="text-xs text-slate-500 mb-1 block">Disciplina</Label>
+                <Label className="text-xs text-muted-foreground mb-1 block">Disciplina</Label>
                 <Select value={formContexto.disciplina_id}
                   onValueChange={v => setFormContexto(p => ({ ...p, disciplina_id: v }))}
                   disabled={!!editId}>
-                  <SelectTrigger className="h-9 border-slate-300">
+                  <SelectTrigger className="h-9 border-border">
                     <SelectValue placeholder="Selecione" />
                   </SelectTrigger>
                   <SelectContent>
@@ -683,9 +683,9 @@ export default function IndicadoresPage() {
 
             {/* Descrição */}
             <div>
-              <Label className="text-xs text-slate-500 mb-1 block">Descrição do Indicador <span className="text-red-400">*</span></Label>
+              <Label className="text-xs text-muted-foreground mb-1 block">Descrição do Indicador <span className="text-destructive">*</span></Label>
               <textarea
-                className="w-full min-h-[80px] border border-slate-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
+                className="w-full min-h-[80px] border border-border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
                 value={formData.descricao}
                 onChange={e => setFormData(p => ({ ...p, descricao: e.target.value }))}
                 placeholder="Descreva o critério de avaliação..."
@@ -694,9 +694,9 @@ export default function IndicadoresPage() {
 
             {/* Períodos */}
             <div>
-              <Label className="text-xs text-slate-500 mb-1 block">Períodos</Label>
+              <Label className="text-xs text-muted-foreground mb-1 block">Períodos</Label>
               {formPeriodos.length === 0 ? (
-                <p className="text-xs text-slate-400 italic">Nenhum período disponível</p>
+                <p className="text-xs text-muted-foreground italic">Nenhum período disponível</p>
               ) : (
                 <div className="space-y-1.5">
                   <label className="flex items-center gap-1.5 text-xs cursor-pointer">
@@ -733,9 +733,9 @@ export default function IndicadoresPage() {
 
             {/* Níveis de Desenvolvimento */}
             <div>
-              <Label className="text-xs text-slate-500 mb-1 block">
+              <Label className="text-xs text-muted-foreground mb-1 block">
                 Níveis de Desenvolvimento
-                <span className="text-slate-400 font-normal ml-1">
+                <span className="text-muted-foreground font-normal ml-1">
                   (selecione os níveis do método ou crie níveis personalizados)
                 </span>
               </Label>
@@ -743,7 +743,7 @@ export default function IndicadoresPage() {
               {/* Níveis do Método */}
               {formOpcoes.length > 0 && (
                 <div className="mb-3">
-                  <p className="text-[11px] text-slate-400 mb-1.5">Níveis do Método de Avaliação:</p>
+                  <p className="text-[11px] text-muted-foreground mb-1.5">Níveis do Método de Avaliação:</p>
                   <div className="space-y-1.5">
                     {formOpcoes.map((op: any) => (
                       <label key={op.id} className="flex items-center gap-1.5 text-xs cursor-pointer">
@@ -763,21 +763,21 @@ export default function IndicadoresPage() {
               )}
 
               {/* Níveis Personalizados */}
-              <div className="border border-slate-200 rounded-md p-3 bg-slate-50/30">
-                <p className="text-[11px] text-slate-400 mb-2">Níveis Personalizados:</p>
+              <div className="border border-border rounded-md p-3 bg-muted/30">
+                <p className="text-[11px] text-muted-foreground mb-2">Níveis Personalizados:</p>
 
                 {formNiveisPersonalizados.length === 0 ? (
-                  <p className="text-xs text-slate-400 italic mb-2">Nenhum nível personalizado criado.</p>
+                  <p className="text-xs text-muted-foreground italic mb-2">Nenhum nível personalizado criado.</p>
                 ) : (
                   <div className="space-y-1.5 mb-3">
                     {formNiveisPersonalizados.map((n, i) => (
-                      <div key={i} className="flex items-center justify-between bg-white border border-slate-200 rounded px-2 py-1.5">
-                        <span className="text-xs text-slate-700">
-                          {n.descricao} {n.sigla ? <span className="text-slate-400">({n.sigla})</span> : ''}
+                      <div key={i} className="flex items-center justify-between bg-card border border-border rounded px-2 py-1.5">
+                        <span className="text-xs text-foreground">
+                          {n.descricao} {n.sigla ? <span className="text-muted-foreground">({n.sigla})</span> : ''}
                         </span>
                         <Button variant="ghost" size="icon" className="h-5 w-5"
                           onClick={() => removerNivelPersonalizado(i)}>
-                          <X className="h-3 w-3 text-red-400" />
+                          <X className="h-3 w-3 text-destructive" />
                         </Button>
                       </div>
                     ))}
@@ -786,20 +786,20 @@ export default function IndicadoresPage() {
 
                 <div className="flex items-center gap-2">
                   <Input
-                    className="h-8 text-xs border-slate-300 flex-1"
+                    className="h-8 text-xs border-border flex-1"
                     placeholder="Descrição do nível..."
                     value={novoNivelDescricao}
                     onChange={e => setNovoNivelDescricao(e.target.value)}
                     onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); adicionarNivelPersonalizado() } }}
                   />
                   <Input
-                    className="h-8 text-xs border-slate-300 w-20"
+                    className="h-8 text-xs border-border w-20"
                     placeholder="Sigla"
                     value={novoNivelSigla}
                     onChange={e => setNovoNivelSigla(e.target.value)}
                     onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); adicionarNivelPersonalizado() } }}
                   />
-                  <Button variant="outline" size="sm" className="h-8 border-slate-300 text-xs whitespace-nowrap"
+                  <Button variant="outline" size="sm" className="h-8 border-border text-xs whitespace-nowrap"
                     onClick={adicionarNivelPersonalizado}>
                     + Adicionar
                   </Button>
@@ -808,7 +808,7 @@ export default function IndicadoresPage() {
             </div>
           </div>
           <DialogFooter className="gap-2">
-            <Button variant="outline" onClick={() => setDialogOpen(false)} className="border-slate-300">Cancelar</Button>
+            <Button variant="outline" onClick={() => setDialogOpen(false)} className="border-border">Cancelar</Button>
             <Button onClick={handleSave} className="bg-primary hover:bg-primary/90 text-white">
               {editId ? 'Salvar' : 'Salvar'}
             </Button>
@@ -822,17 +822,17 @@ export default function IndicadoresPage() {
           <DialogHeader>
             <DialogTitle className="text-base">Remover Indicador</DialogTitle>
           </DialogHeader>
-          <p className="text-sm text-slate-600">
+          <p className="text-sm text-muted-foreground">
             Tem certeza que deseja remover o indicador?
           </p>
-          <p className="text-sm text-slate-700 bg-slate-50 p-2 rounded border border-slate-200 italic">
+          <p className="text-sm text-foreground bg-muted p-2 rounded border border-border italic">
             &ldquo;{deleteConfirmDesc}&rdquo;
           </p>
-          <p className="text-xs text-slate-500">
+          <p className="text-xs text-muted-foreground">
             Esta ação não pode ser desfeita automaticamente.
           </p>
           <DialogFooter className="gap-2">
-            <Button variant="outline" onClick={() => setDeleteConfirmId(null)} className="border-slate-300">Cancelar</Button>
+            <Button variant="outline" onClick={() => setDeleteConfirmId(null)} className="border-border">Cancelar</Button>
             <Button variant="destructive" onClick={confirmDelete}>Remover</Button>
           </DialogFooter>
         </DialogContent>
@@ -846,13 +846,13 @@ export default function IndicadoresPage() {
     const codigoDisplay = ind.codigo ? `${ind.codigo} - ` : ''
 
     return (
-      <div key={ind.id} className="flex items-start justify-between px-6 py-2.5 border-t border-slate-100 hover:bg-slate-50/50 transition-colors group">
+      <div key={ind.id} className="flex items-start justify-between px-6 py-2.5 border-t border-border hover:bg-muted/50 transition-colors group">
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2">
-            <span className="text-sm text-slate-700">{codigoDisplay}{ind.descricao}</span>
+            <span className="text-sm text-foreground">{codigoDisplay}{ind.descricao}</span>
             <Badge variant="outline" className="text-[10px] px-1 py-0">{origemLabel}</Badge>
           </div>
-          <div className="flex items-center gap-3 mt-0.5 text-[11px] text-slate-400">
+          <div className="flex items-center gap-3 mt-0.5 text-[11px] text-muted-foreground">
             {ind.periodos_ids && ind.periodos_ids.length > 0 && (
               <span>{ind.periodos_ids.length} período(s)</span>
             )}
@@ -860,19 +860,19 @@ export default function IndicadoresPage() {
         </div>
         <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
           {ind.utilizado ? (
-            <span className="text-[11px] text-slate-400 italic mr-1" title="Já utilizado em avaliações">
+            <span className="text-[11px] text-muted-foreground italic mr-1" title="Já utilizado em avaliações">
               <AlertCircle className="h-3.5 w-3.5 inline mr-0.5" />
               Em uso
             </span>
           ) : null}
           <Button variant="ghost" size="icon" className="h-7 w-7"
             onClick={() => openEditDialog(ind)} title="Editar">
-            <Pencil className="h-3.5 w-3.5 text-slate-500" />
+            <Pencil className="h-3.5 w-3.5 text-muted-foreground" />
           </Button>
           <Button variant="ghost" size="icon" className="h-7 w-7"
             onClick={() => handleDeleteClick(ind)} title="Remover"
             disabled={ind.utilizado}>
-            <Trash2 className={`h-3.5 w-3.5 ${ind.utilizado ? 'text-slate-300' : 'text-red-400'}`} />
+            <Trash2 className={`h-3.5 w-3.5 ${ind.utilizado ? 'text-muted-foreground' : 'text-destructive'}`} />
           </Button>
         </div>
       </div>

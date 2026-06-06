@@ -66,7 +66,7 @@ export function Combobox({
 
   return (
     <div className={cn('space-y-2', className)}>
-      {label && <label className="text-[#334155] font-medium block text-sm">{label}</label>}
+      {label && <label className="text-foreground font-medium block text-sm">{label}</label>}
       <Popover open={open && !disabled} onOpenChange={setOpen}>
         <PopoverTrigger asChild>
           <Button
@@ -75,7 +75,7 @@ export function Combobox({
             aria-expanded={open}
             disabled={disabled}
             className={cn(
-              'w-full justify-between font-normal border-slate-300 bg-white hover:bg-white h-9 px-2.5',
+              'w-full justify-between font-normal border-border bg-card hover:bg-card h-9 px-2.5',
               !value && 'text-muted-foreground'
             )}
           >

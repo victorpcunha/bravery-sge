@@ -118,7 +118,7 @@ export default function FuncoesPage() {
         <div className="flex items-center justify-between mb-8">
           <div className="animate-fade-in-up">
             <div className="flex items-center gap-3">
-              <Button variant="ghost" size="icon" onClick={() => router.push('/gestao-usuarios/usuarios')} className="hover:bg-slate-100">
+              <Button variant="ghost" size="icon" onClick={() => router.push('/gestao-usuarios/usuarios')} className="hover:bg-muted">
                 <ChevronLeft className="h-5 w-5" />
               </Button>
               <div>
@@ -152,7 +152,7 @@ export default function FuncoesPage() {
               <div className="overflow-x-auto">
                 <table className="w-full">
                   <thead>
-                    <tr className="border-b border-slate-200 text-xs text-muted-foreground uppercase tracking-wider">
+                    <tr className="border-b border-border text-xs text-muted-foreground uppercase tracking-wider">
                       <th className="text-left px-6 py-3 font-medium">Nome</th>
                       <th className="text-left px-6 py-3 font-medium">Tipo Censo INEP</th>
                       <th className="text-left px-6 py-3 font-medium">Status</th>
@@ -163,13 +163,13 @@ export default function FuncoesPage() {
                     {funcoes.map(f => {
                       const censo = CENSO_FUNCOES.find(c => c.codigo === f.tipo_censo)
                       return (
-                        <tr key={f.id} className="border-b border-slate-100 hover:bg-slate-50/40 transition-colors">
+                        <tr key={f.id} className="border-b border-border hover:bg-muted/40 transition-colors">
                           <td className="px-6 py-4 text-sm font-medium">{f.nome}</td>
                           <td className="px-6 py-4 text-sm text-muted-foreground">
                             {censo ? `Campo ${censo.codigo} - ${censo.nome}` : f.tipo_censo || '-'}
                           </td>
                           <td className="px-6 py-4">
-                            <span className={`text-xs px-2 py-0.5 rounded-full ${f.ativo ? 'bg-green-100 text-green-700' : 'bg-slate-100 text-slate-500'}`}>
+                            <span className={`text-xs px-2 py-0.5 rounded-full ${f.ativo ? 'bg-success/10 text-success' : 'bg-muted text-muted-foreground'}`}>
                               {f.ativo ? 'Ativa' : 'Inativa'}
                             </span>
                           </td>

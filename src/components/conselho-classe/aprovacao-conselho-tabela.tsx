@@ -89,7 +89,7 @@ export default function AprovacaoConselhoTabela({ alunos, loading, error, school
             <tr key={aluno.matricula_id} className="border-b border-muted/50 last:border-b-0">
               <td className="py-3 px-4 text-sm">{aluno.nome}</td>
               <td className="py-3 px-4 text-sm text-center">
-                <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400">
+                <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-destructive/10 text-destructive dark:bg-destructive/30">
                   {aluno.situacao}
                 </span>
               </td>

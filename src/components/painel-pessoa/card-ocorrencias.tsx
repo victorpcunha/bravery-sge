@@ -14,8 +14,8 @@ type Props = {
 }
 
 const COR_TIPO: Record<string, string> = {
-  disciplinar: 'bg-red-100 text-red-700 border-red-200',
-  pedagogica: 'bg-amber-100 text-amber-700 border-amber-200',
+  disciplinar: 'bg-destructive/10 text-destructive border-destructive/20',
+  pedagogica: 'bg-warning/10 text-warning border-warning/20',
 }
 
 export default function CardOcorrencias({ pessoaId, schoolId, pessoaLogadaId }: Props) {
