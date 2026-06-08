@@ -73,23 +73,27 @@ export type TurmaMultietapa = {
   etapa_nome?: string
 }
 
-export async function getAnoLetivoAtivo(schoolId: string) {
-  const { data, error } = await supabase
+export async function getAnoLetivoAtivo(schoolId: string | null | null) {
+  let query = supabase
     .from('academico_anos_letivos')
     .select('*')
-    .eq('school_id', schoolId)
     .eq('status', 'ativo')
+
+  if (schoolId) query = query.eq('school_id', schoolId)
+
+  const { data, error } = await query
     .limit(1)
     .maybeSingle()
   if (error) throw error
   return data as { id: string; descricao: string; status: string } | null
 }
 
-export async function getTurmas(schoolId: string, search?: string, etapaId?: string) {
+export async function getTurmas(schoolId: string | null, search?: string, etapaId?: string) {
   let query = supabase
     .from('turmas')
     .select('*, academico_etapas_ensino(etapa_nome, etapa_tipo)')
-    .eq('school_id', schoolId)
+
+  if (schoolId) query = query.eq('school_id', schoolId)
 
   if (search) query = query.ilike('nome', `%${search}%`)
   if (etapaId) query = query.eq('etapa_ensino_id', etapaId)
@@ -99,9 +103,12 @@ export async function getTurmas(schoolId: string, search?: string, etapaId?: str
   return data as any[]
 }
 
-export async function getTurma(id: string) {
+export async function getTurma(id: string, schoolId?: string | null) {
+  let turmaQuery = supabase.from('turmas').select('*, academico_etapas_ensino(etapa_nome, etapa_tipo)').eq('id', id);
+  if (schoolId) turmaQuery = turmaQuery.eq('school_id', schoolId);
+
   const [turmaResult, disciplinasResult, profissionaisResult, multietapaResult] = await Promise.all([
-    supabase.from('turmas').select('*, academico_etapas_ensino(etapa_nome, etapa_tipo)').eq('id', id).single(),
+    turmaQuery.single(),
     supabase.from('turmas_disciplinas').select('*, academico_matriz_disciplinas(disciplina_id, academico_disciplinas(nome))').eq('turma_id', id),
     supabase.from('turmas_profissionais').select('*, people(nome_completo)').eq('turma_id', id),
     supabase.from('turmas_multietapa').select('*, academico_etapas_ensino(etapa_nome)').eq('turma_id', id),
@@ -382,14 +389,17 @@ export async function removeProfissionalTurma(id: string, pessoaId?: string | nu
   }
 }
 
-export async function getDisciplinasPorMatriz(etapaEnsinoId: string, schoolId: string, anoLetivoId: string) {
-  const { data: matrizes, error } = await supabase
+export async function getDisciplinasPorMatriz(etapaEnsinoId: string, schoolId: string | null, anoLetivoId: string) {
+  let query = supabase
     .from('academico_matrizes_curriculares')
     .select('id')
-    .eq('school_id', schoolId)
     .eq('etapa_ensino_id', etapaEnsinoId)
     .eq('ano_letivo_id', anoLetivoId)
     .eq('ativa', true)
+
+  if (schoolId) query = query.eq('school_id', schoolId)
+
+  const { data: matrizes, error } = await query
     .limit(1)
 
   if (error) throw error
@@ -425,24 +435,29 @@ export async function getDisciplinasPorMatriz(etapaEnsinoId: string, schoolId: s
   return unicas as any[]
 }
 
-export async function getAnosLetivosAdmin(schoolId: string) {
-  const { data, error } = await supabase
+export async function getAnosLetivosAdmin(schoolId: string | null) {
+  let query = supabase
     .from('academico_anos_letivos')
     .select('*')
-    .eq('school_id', schoolId)
     .order('descricao', { ascending: false })
 
+  if (schoolId) query = query.eq('school_id', schoolId)
+
+  const { data, error } = await query
   if (error) throw error
   return data as any[]
 }
 
-export async function getProfissionaisAtivos(schoolId: string) {
-  const { data, error } = await supabase
+export async function getProfissionaisAtivos(schoolId: string | null) {
+  let query = supabase
     .from('people')
     .select('id, nome_completo, codigo_pessoa, perfil')
-    .eq('school_id', schoolId)
     .eq('ativo', true)
     .order('nome_completo')
+
+  if (schoolId) query = query.eq('school_id', schoolId)
+
+  const { data, error } = await query
 
   if (error) throw error
   const all = data as any[] || []

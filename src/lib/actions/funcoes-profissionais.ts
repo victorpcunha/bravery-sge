@@ -15,11 +15,14 @@ export type FuncaoProfissional = {
   updated_at: string
 }
 
-export async function inicializarFuncoesPadrao(schoolId: string) {
-  const { data: existentes } = await supabase
+export async function inicializarFuncoesPadrao(schoolId: string | null) {
+  let query = supabase
     .from('funcoes_profissionais')
     .select('nome')
-    .eq('school_id', schoolId)
+
+  if (schoolId) query = query.eq('school_id', schoolId)
+
+  const { data: existentes } = await query
 
   const nomesExistentes = new Set(existentes?.map(f => f.nome) || [])
 
@@ -36,12 +39,13 @@ export async function inicializarFuncoesPadrao(schoolId: string) {
   }
 }
 
-export async function getFuncoes(schoolId: string, apenasAtivas = true) {
+export async function getFuncoes(schoolId: string | null, apenasAtivas = true) {
   let query = supabase
     .from('funcoes_profissionais')
     .select('*')
-    .eq('school_id', schoolId)
     .order('nome')
+
+  if (schoolId) query = query.eq('school_id', schoolId)
 
   if (apenasAtivas) query = query.eq('ativo', true)
 

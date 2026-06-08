@@ -16,7 +16,6 @@ import {
   Plus, Pencil, Trash2, Search, ChevronDown, ChevronRight,
   AlertCircle, Layers, BookOpen, ListChecks, Import, X
 } from 'lucide-react'
-import { getFirstSchool } from '@/lib/actions/schools'
 import {
   getIndicadores, createIndicador, updateIndicador, deleteIndicador,
   importarIndicadoresDaMatriz, salvarNiveisIndicador, getIndicadorNiveis, deleteIndicadorNivel,
@@ -38,9 +37,7 @@ function formatNome(nome: string) {
 
 export default function IndicadoresPage() {
   const router = useRouter()
-  const { user, loading: authLoading } = useAuth()
-
-  const [schoolId, setSchoolId] = useState('')
+  const { user, schoolId, loading: authLoading } = useAuth()
 
   // Filtros
   const [anosLetivos, setAnosLetivos] = useState<any[]>([])
@@ -113,11 +110,9 @@ export default function IndicadoresPage() {
 
   const loadInitial = async () => {
     try {
-      const s = await getFirstSchool()
-      setSchoolId(s.id)
       const [anos, etapasList, campos] = await Promise.all([
-        getAnosLetivosAtivos(s.id),
-        getEtapasEnsino(s.id),
+        getAnosLetivosAtivos(schoolId!),
+        getEtapasEnsino(schoolId!),
         getCamposExperiencia(),
       ])
       setAnosLetivos(anos)
@@ -151,7 +146,7 @@ export default function IndicadoresPage() {
       if (filtroCampo) filtros.campo_experiencia = filtroCampo
       if (filtroDisciplina) filtros.disciplina_id = filtroDisciplina
 
-      const data = await getIndicadores(schoolId, filtros)
+      const data = await getIndicadores(schoolId!, filtros)
       setIndicadores(data)
     } catch (e) {
       console.error('Erro loadIndicadores:', e)
@@ -178,7 +173,7 @@ export default function IndicadoresPage() {
     if (val) {
       const [subs, disciplinas] = await Promise.all([
         getSubetapas(val),
-        infantil ? Promise.resolve([]) : getDisciplinasMatriz(schoolId, filtroAno, val),
+        infantil ? Promise.resolve([]) : getDisciplinasMatriz(schoolId!, filtroAno, val),
       ])
       setSubetapas(subs)
       setDisciplinasMatriz(disciplinas)
@@ -319,7 +314,7 @@ export default function IndicadoresPage() {
         toast.success('Indicador atualizado')
       } else {
         const novo = await createIndicador({
-          school_id: schoolId,
+          school_id: schoolId!,
           ano_letivo_id: formContexto.ano_letivo_id,
           etapa_ensino_id: formContexto.etapa_ensino_id,
           subetapa_id: formContexto.subetapa_ids[0] || null,

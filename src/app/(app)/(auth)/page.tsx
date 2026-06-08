@@ -1,37 +1,14 @@
 'use client'
 
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/components/providers/auth-provider'
 import { Sidebar } from '@/components/layout/sidebar'
-import { getSupabaseClient } from '@/lib/auth'
 import { PageHeader } from '@/components/layout/page-header'
 import { StatCard } from '@/components/ui/stat-card'
 import { PageSection } from '@/components/layout/page-section'
+import { getDashboardData } from '@/lib/actions/schools'
 import { School, Users, GraduationCap, UserCheck, Calendar, ArrowRight } from 'lucide-react'
-
-async function getSchoolInfo() {
-  const supabase = getSupabaseClient()
-  
-  const { data: school } = await supabase
-    .from('schools')
-    .select('*')
-    .limit(1)
-    .single()
-
-  const [teachersCount, classroomsCount, peopleCount] = await Promise.all([
-    supabase.from('teachers').select('id', { count: 'exact' }),
-    supabase.from('classrooms').select('id', { count: 'exact' }),
-    supabase.from('people').select('id', { count: 'exact' }),
-  ])
-
-  return {
-    school,
-    teachers: teachersCount.count || 0,
-    classrooms: classroomsCount.count || 0,
-    people: peopleCount.count || 0,
-  }
-}
 
 const nextSteps = [
   { icon: School, label: 'Cadastrar dados da escola', href: '/escolas' },
@@ -41,14 +18,20 @@ const nextSteps = [
 ]
 
 export default function DashboardPage() {
-  const { user, loading } = useAuth()
+  const { user, loading, schoolId, isSuperAdmin, allSchools } = useAuth()
   const router = useRouter()
+  const [counts, setCounts] = useState({ turmas: 0, alunos: 0 })
 
   useEffect(() => {
     if (!loading && !user) {
       router.push('/login')
     }
   }, [user, loading, router])
+
+  useEffect(() => {
+    if (!user) return
+    getDashboardData(schoolId).then(setCounts).catch(() => {})
+  }, [user, schoolId])
 
   if (loading) {
     return (
@@ -65,6 +48,10 @@ export default function DashboardPage() {
     return null
   }
 
+  const schoolName = isSuperAdmin
+    ? 'Visão Global'
+    : allSchools.find(s => s.id === schoolId)?.nome_escola || 'Escola'
+
   return (
     <>
       <Sidebar />
@@ -79,15 +66,18 @@ export default function DashboardPage() {
           {/* Welcome */}
           <div className="mb-8 p-5 rounded-xl bg-primary/5 border border-primary/10 animate-fade-in-up delay-75">
             <p className="text-sm text-muted-foreground">
-              Você está logado no sistema de gestão escolar. Para começar, cadastre os dados da sua escola no módulo <strong className="text-foreground">&quot;Escola&quot;</strong> no menu lateral.
+              {isSuperAdmin
+                ? <>Você está no modo <strong className="text-foreground">Super Admin</strong>. Escola atual: <strong className="text-foreground">{schoolName}</strong></>
+                : <>Você está logado no sistema de gestão escolar. Escola: <strong className="text-foreground">{schoolName}</strong></>
+              }
             </p>
           </div>
 
           {/* Stats */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
             <StatCard icon={Users} value={0} label="Docentes" variant="default" className="animate-fade-in-up delay-75" />
-            <StatCard icon={GraduationCap} value={0} label="Turmas" variant="default" className="animate-fade-in-up delay-150" />
-            <StatCard icon={UserCheck} value={0} label="Alunos" variant="default" className="animate-fade-in-up delay-225" />
+            <StatCard icon={GraduationCap} value={counts.turmas} label="Turmas" variant="default" className="animate-fade-in-up delay-150" />
+            <StatCard icon={UserCheck} value={counts.alunos} label="Alunos" variant="default" className="animate-fade-in-up delay-225" />
             <StatCard icon={Calendar} value="2026" label="Ano Letivo" variant="success" className="animate-fade-in-up delay-300" />
           </div>
 

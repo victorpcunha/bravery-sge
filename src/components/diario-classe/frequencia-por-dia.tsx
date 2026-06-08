@@ -12,7 +12,6 @@ import {
   type AlunoMatriculado,
   type FrequenciaDia,
 } from '@/lib/actions/diario-classe'
-import { getFirstSchool } from '@/lib/actions/schools'
 import { Button } from '@/components/ui/button'
 import { ChevronLeft, ChevronRight, Check, X, AlertTriangle, CalendarDays } from 'lucide-react'
 import { cn } from '@/lib/utils'
@@ -32,7 +31,7 @@ function nextStatus(current: FrequenciaDia['status'] | null): FrequenciaDia['sta
 }
 
 export default function FrequenciaPorDia({ turmaId, alunos, disciplinas }: Props) {
-  const { user } = useAuth()
+  const { user, schoolId } = useAuth()
   const hoje = new Date()
   const hojeStr = `${hoje.getFullYear()}-${String(hoje.getMonth() + 1).padStart(2, '0')}-${String(hoje.getDate()).padStart(2, '0')}`
   const [ano, setAno] = useState(hoje.getFullYear())
@@ -41,15 +40,8 @@ export default function FrequenciaPorDia({ turmaId, alunos, disciplinas }: Props
   const [frequencias, setFrequencias] = useState<Map<string, FrequenciaDia['status']>>(new Map())
   const [loading, setLoading] = useState(true)
   const [estatisticas, setEstatisticas] = useState<EstatisticasFrequencia | null>(null)
-  const [schoolId, setSchoolId] = useState<string | null>(null)
   const [salvando, setSalvando] = useState<Set<string>>(new Set())
   const [semCalendario, setSemCalendario] = useState(false)
-
-  useEffect(() => {
-    getFirstSchool().then(s => {
-      if (s) setSchoolId(s.id)
-    })
-  }, [])
 
   const { pessoaId } = usePermissoes(schoolId || '')
 

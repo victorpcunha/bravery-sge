@@ -11,7 +11,6 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { toast } from 'sonner'
 import { Plus, Search, DoorOpen } from 'lucide-react'
-import { getFirstSchool } from '@/lib/actions/schools'
 import { getAnosLetivosAtivos } from '@/lib/actions/quadro-aulas'
 import { getMatriculas, getTurmasAtivas, type FiltrosMatriculas } from '@/lib/actions/matriculas'
 import { getEtapasEnsino } from '@/lib/actions/etapas-ensino'
@@ -37,9 +36,8 @@ const situacaoColors: Record<string, string> = {
 
 export default function MatriculasPage() {
   const router = useRouter()
-  const { user, loading: authLoading } = useAuth()
+  const { user, schoolId, loading: authLoading } = useAuth()
 
-  const [schoolId, setSchoolId] = useState('')
   const [anosLetivos, setAnosLetivos] = useState<any[]>([])
   const [turmas, setTurmas] = useState<any[]>([])
   const [etapas, setEtapas] = useState<any[]>([])
@@ -62,11 +60,9 @@ export default function MatriculasPage() {
 
   const loadInitial = async () => {
     try {
-      const s = await getFirstSchool()
-      setSchoolId(s.id)
       const [anos, etapasList] = await Promise.all([
-        getAnosLetivosAtivos(s.id),
-        getEtapasEnsino(s.id),
+        getAnosLetivosAtivos(schoolId!),
+        getEtapasEnsino(schoolId!),
       ])
       setAnosLetivos(anos)
       setEtapas(etapasList)
@@ -87,7 +83,7 @@ export default function MatriculasPage() {
 
   const loadTurmas = async () => {
     try {
-      const data = await getTurmasAtivas(schoolId, filtroAno)
+      const data = await getTurmasAtivas(schoolId!, filtroAno)
       setTurmas(data)
     } catch (e) {
       console.error('Erro ao carregar turmas:', e)
@@ -107,7 +103,7 @@ export default function MatriculasPage() {
       if (filtroTurma) filtros.turma_id = filtroTurma
       if (filtroEtapa) filtros.etapa_ensino_id = filtroEtapa
 
-      const data = await getMatriculas(schoolId, filtros)
+      const data = await getMatriculas(schoolId!, filtros)
       setMatriculas(data)
     } catch (e) {
       console.error('Erro ao carregar matrículas:', e)

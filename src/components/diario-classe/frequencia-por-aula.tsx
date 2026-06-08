@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
+import { useAuth } from '@/components/providers/auth-provider'
 import { usePermissoes } from '@/hooks/use-permissoes'
 import {
   registrarFrequenciaAula,
@@ -13,7 +14,6 @@ import {
   type FrequenciaAula,
 } from '@/lib/actions/diario-classe'
 import { listarPlanoAulaPorMes, type PlanoAula } from '@/lib/actions/plano-ensino'
-import { getFirstSchool } from '@/lib/actions/schools'
 import { Button } from '@/components/ui/button'
 import { ChevronLeft, ChevronRight, Check, X, AlertTriangle, BookOpen } from 'lucide-react'
 import { cn } from '@/lib/utils'
@@ -51,17 +51,11 @@ export default function FrequenciaPorAula({ turmaId, alunos, disciplinas }: Prop
   const [loading, setLoading] = useState(false)
   const [estatisticas, setEstatisticas] = useState<EstatisticasFrequencia | null>(null)
   const [loadingStats, setLoadingStats] = useState(false)
-  const [schoolId, setSchoolId] = useState<string | null>(null)
+  const { schoolId } = useAuth()
   const [salvando, setSalvando] = useState<Set<string>>(new Set())
 
   // Plano de Ensino — indicator only
   const [planos, setPlanos] = useState<PlanoAula[]>([])
-
-  useEffect(() => {
-    getFirstSchool().then(s => {
-      if (s) setSchoolId(s.id)
-    })
-  }, [])
 
   const { pessoaId } = usePermissoes(schoolId || '')
 

@@ -7,7 +7,6 @@ import { Sidebar } from '@/components/layout/sidebar'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Plus, Shield, ShieldOff } from 'lucide-react'
-import { getFirstSchool } from '@/lib/actions/schools'
 import { listarPerfis, type Perfil } from '@/lib/actions/perfis'
 import { PerfilFiltros } from '@/components/perfis/perfil-filtros'
 import { PerfilGrid } from '@/components/perfis/perfil-grid'
@@ -15,9 +14,8 @@ import { usePermissoes } from '@/hooks/use-permissoes'
 import { toast } from 'sonner'
 
 export default function PerfisPage() {
-  const { user, loading: authLoading } = useAuth()
+  const { user, loading: authLoading, schoolId } = useAuth()
   const router = useRouter()
-  const [schoolId, setSchoolId] = useState('')
   const [perfis, setPerfis] = useState<Perfil[]>([])
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
@@ -28,10 +26,7 @@ export default function PerfisPage() {
     if (!authLoading && !user) router.push('/login')
   }, [user, authLoading, router])
 
-  useEffect(() => {
-    if (!user) return
-    getFirstSchool().then(s => setSchoolId(s.id)).catch(() => {})
-  }, [user])
+
 
   useEffect(() => {
     if (!schoolId) return
@@ -46,6 +41,7 @@ export default function PerfisPage() {
   }, [permLoaded, schoolId, isSetup])
 
   const loadPerfis = async () => {
+    if (!schoolId) return
     setLoading(true)
     try {
       const ativo = situacao === 'todas' ? undefined : situacao === 'ativas'

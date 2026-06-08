@@ -7,7 +7,6 @@ import { usePermissoes } from '@/hooks/use-permissoes'
 import { Sidebar } from '@/components/layout/sidebar'
 import { listarTurmasDiario, type TurmaDiario } from '@/lib/actions/diario-classe'
 import { getAnosLetivosAtivos } from '@/lib/actions/quadro-aulas'
-import { getFirstSchool } from '@/lib/actions/schools'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
@@ -16,19 +15,12 @@ import { Skeleton } from '@/components/ui/skeleton'
 
 export default function DiarioClassePage() {
   const router = useRouter()
-  const { user } = useAuth()
-  const [schoolId, setSchoolId] = useState<string | null>(null)
+  const { user, schoolId } = useAuth()
   const [anoLetivoId, setAnoLetivoId] = useState<string>('')
   const [anosLetivos, setAnosLetivos] = useState<any[]>([])
   const [turmas, setTurmas] = useState<TurmaDiario[]>([])
   const [loading, setLoading] = useState(true)
   const [pessoaId, setPessoaId] = useState<string | null>(null)
-
-  useEffect(() => {
-    getFirstSchool().then(s => {
-      if (s) setSchoolId(s.id)
-    })
-  }, [])
 
   const { loaded: permLoaded, pessoaId: pid } = usePermissoes(schoolId || '')
 

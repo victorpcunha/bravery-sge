@@ -20,6 +20,7 @@ import { areasConhecimento } from '@/data/areas-conhecimento'
 import { areasPosGraduacao } from '@/data/areas-pos-graduacao'
 import { Plus, Trash2 } from 'lucide-react'
 import { toast } from 'sonner'
+import { useAuth } from '@/components/providers/auth-provider'
 import { createPerson, updatePerson, Person, getVinculosResponsavel, vincularResponsavel, desvincularResponsavel, buscarAlunos, criarAuthUser, salvarSaudeEstudante } from '@/lib/actions/people'
 import { getVinculosProfissionais, createVinculoProfissional, updateVinculoProfissional, deleteVinculoProfissional, type VinculoProfissionalWithFuncao } from '@/lib/actions/vinculos-profissionais'
 import { getFuncoes, type FuncaoProfissional } from '@/lib/actions/funcoes-profissionais'
@@ -224,7 +225,10 @@ const defaultForm: FormData = {
   confirmacao_senha: '',
 }
 
-export function PessoaForm({ schoolId, person, onSaved, onCancel }: Props) {
+export function PessoaForm({ schoolId: propSchoolId, person, onSaved, onCancel }: Props) {
+  const { isSuperAdmin, allSchools } = useAuth()
+  const [selectedSchoolId, setSelectedSchoolId] = useState<string>(allSchools[0]?.id || '')
+  const schoolId = (!propSchoolId && isSuperAdmin) ? selectedSchoolId : propSchoolId
   const [form, setForm] = useState<FormData>({ ...defaultForm })
   const [saving, setSaving] = useState(false)
   const [activeTab, setActiveTab] = useState('identificacao')
@@ -621,6 +625,23 @@ export function PessoaForm({ schoolId, person, onSaved, onCancel }: Props) {
 
   return (
     <div className="flex flex-col flex-1 min-h-0 [&_[data-slot='input']]:border-border [&_[data-slot='input']]:focus-visible:border-primary [&_[data-slot='input']]:focus-visible:ring-2 [&_[data-slot='input']]:focus-visible:ring-primary/20 [&_[data-slot='checkbox']]:border-border [&_[data-slot='checkbox']]:data-[state=checked]:bg-primary">
+      {isSuperAdmin && !propSchoolId && (
+        <div className="px-6 py-3 border-b border-border bg-muted/30">
+          <div className="flex items-center gap-3">
+            <Label className="text-sm font-medium shrink-0">Escola:</Label>
+            <Select value={selectedSchoolId} onValueChange={setSelectedSchoolId}>
+              <SelectTrigger className="w-full max-w-sm">
+                <SelectValue placeholder="Selecione a escola" />
+              </SelectTrigger>
+              <SelectContent>
+                {allSchools.map(s => (
+                  <SelectItem key={s.id} value={s.id}>{s.nome_escola}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+      )}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="flex flex-col flex-1 min-h-0">
         <div className="px-6 shrink-0">
           <TabsList className="w-full flex-wrap h-auto">

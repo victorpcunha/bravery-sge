@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue, SelectGroup, SelectLabel } from '@/components/ui/select'
 import { Badge } from '@/components/ui/badge'
 import { BookOpen, ChevronDown, ChevronRight } from 'lucide-react'
-import { getFirstSchool } from '@/lib/actions/schools'
+import { useAuth } from '@/components/providers/auth-provider'
 
 type EtapaEnsino = {
   id: string
@@ -58,7 +58,7 @@ function getBroadTipo(tipo: string): 'infantil' | 'fundamental' | 'medio' {
 }
 
 export default function BNCCConsultaPage() {
-  const [schoolId, setSchoolId] = useState<string | null>(null)
+  const { schoolId } = useAuth()
   const [etapas, setEtapas] = useState<EtapaEnsino[]>([])
   const [etapa, setEtapa] = useState('')
   const [etapaTipo, setEtapaTipo] = useState('')
@@ -74,10 +74,6 @@ export default function BNCCConsultaPage() {
   const [dados, setDados] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [expandedGrupo, setExpandedGrupo] = useState<string | null>(null)
-
-  useEffect(() => {
-    getFirstSchool().then(s => setSchoolId(s.id)).catch(() => {})
-  }, [])
 
   useEffect(() => {
     if (!schoolId) return

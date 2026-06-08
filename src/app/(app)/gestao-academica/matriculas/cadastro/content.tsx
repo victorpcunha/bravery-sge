@@ -18,7 +18,6 @@ import {
   ArrowLeft, Save, Pencil, Trash2, Plus, X,
   Bus, BookOpen, History, AlertCircle, DoorOpen
 } from 'lucide-react'
-import { getFirstSchool } from '@/lib/actions/schools'
 import { getAnosLetivosAtivos } from '@/lib/actions/quadro-aulas'
 import {
   getMatricula, createMatricula, updateMatricula,
@@ -52,10 +51,9 @@ const motivosDesistencia = [
 export default function MatriculaCadastroContent({ searchParams }: { searchParams: { id?: string } }) {
   const router = useRouter()
   const editId = searchParams?.id
-  const { user, loading: authLoading } = useAuth()
+  const { user, schoolId, loading: authLoading } = useAuth()
   const isEditing = !!editId
 
-  const [schoolId, setSchoolId] = useState('')
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
 
@@ -134,24 +132,21 @@ export default function MatriculaCadastroContent({ searchParams }: { searchParam
 
   const loadInitial = async () => {
     try {
-      const s = await getFirstSchool()
-      setSchoolId(s.id)
-
       const [ativo, alunosList] = await Promise.all([
-        getAnoLetivoAtivo(s.id),
-        getAlunos(s.id),
+        getAnoLetivoAtivo(schoolId!),
+        getAlunos(schoolId!),
       ])
       setAnoLetivo(ativo)
       setAlunos(alunosList)
 
       if (ativo) {
-        const turmasDoAno = await getTurmasAtivas(s.id, ativo.id)
+        const turmasDoAno = await getTurmasAtivas(schoolId!, ativo.id)
         setTurmas(turmasDoAno)
         setForm(p => ({ ...p, data_matricula: new Date().toISOString().substring(0, 10) }))
       }
 
       if (isEditing && editId) {
-        await loadMatricula(s.id, editId, ativo)
+        await loadMatricula(schoolId!, editId, ativo)
       }
     } catch (e: any) {
       console.error('Erro init:', e)
@@ -323,7 +318,7 @@ export default function MatriculaCadastroContent({ searchParams }: { searchParam
     }
     // Carregar etapas posteriores
     const { getEtapasEnsino } = await import('@/lib/actions/etapas-ensino')
-    const todas = await getEtapasEnsino(schoolId)
+    const todas = await getEtapasEnsino(schoolId!)
     const etapaAtualIdx = todas.findIndex((e: any) => e.id === form.etapa_ensino_id)
     if (etapaAtualIdx >= 0) {
       setEtapasPosteriores(todas.slice(etapaAtualIdx + 1))
@@ -337,7 +332,7 @@ export default function MatriculaCadastroContent({ searchParams }: { searchParam
   const handleEtapaReclassificacaoChange = async (etapaId: string) => {
     setMovForm(p => ({ ...p, nova_etapa_id: etapaId, nova_turma_id: '' }))
     if (!etapaId || !anoLetivo) { setTurmasPorEtapa([]); return }
-    const turmas = await getTurmasAtivas(schoolId, anoLetivo.id)
+    const turmas = await getTurmasAtivas(schoolId!, anoLetivo.id)
     setTurmasPorEtapa(turmas.filter((t: any) => {
       if (t.multietapa) return t.etapas_ensino_ids?.includes(etapaId)
       return t.etapas_ensino_ids?.[0] === etapaId
@@ -379,7 +374,7 @@ export default function MatriculaCadastroContent({ searchParams }: { searchParam
     }
     // Carregar turmas da mesma etapa (exceto atual)
     const { getTurmasAtivas } = await import('@/lib/actions/matriculas')
-    const todas = await getTurmasAtivas(schoolId, anoLetivo?.id || '')
+    const todas = await getTurmasAtivas(schoolId!, anoLetivo?.id || '')
     setTurmasRemanejamento(todas.filter((t: any) => {
       if (t.id === form.turma_id) return false
       if (t.multietapa) return t.etapas_ensino_ids?.includes(form.etapa_ensino_id)
@@ -482,7 +477,7 @@ export default function MatriculaCadastroContent({ searchParams }: { searchParam
         toast.success('Matrícula atualizada')
       } else {
         const nova = await createMatricula({
-          school_id: schoolId,
+          school_id: schoolId!,
           aluno_id: form.aluno_id,
           ano_letivo_id: anoLetivo?.id || '',
           turma_id: form.turma_id,

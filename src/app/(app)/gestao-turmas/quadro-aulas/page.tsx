@@ -9,7 +9,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Plus, Search, GraduationCap, Clock, Calendar, Eye, Pencil, Trash2 } from 'lucide-react'
-import { getFirstSchool } from '@/lib/actions/schools'
 import { getQuadrosAulas, getAnosLetivosAtivos, deleteQuadroAula, toggleQuadroAulaAtivo } from '@/lib/actions/quadro-aulas'
 import { toast } from 'sonner'
 
@@ -30,10 +29,8 @@ function formatDate(d: string) {
 }
 
 export default function QuadrosAulasPage() {
-  const { user, loading: authLoading } = useAuth()
+  const { user, loading: authLoading, schoolId } = useAuth()
   const router = useRouter()
-
-  const [schoolId, setSchoolId] = useState('')
   const { pessoaId } = usePermissoes(schoolId)
   const [quadros, setQuadros] = useState<any[]>([])
   const [anosLetivos, setAnosLetivos] = useState<any[]>([])
@@ -45,17 +42,15 @@ export default function QuadrosAulasPage() {
   }, [user, authLoading, router])
 
   useEffect(() => {
-    if (!user) return
-    getFirstSchool().then(async s => {
-      setSchoolId(s.id)
-      const anos = await getAnosLetivosAtivos(s.id)
+    if (!schoolId) return
+    getAnosLetivosAtivos(schoolId).then(anos => {
       setAnosLetivos(anos)
       const ativo = anos.find((a: any) => a.status === 'ativo')
       if (ativo) setAnoFiltro(ativo.id)
     }).catch((e) => {
       console.error('Erro init listagem:', e)
     })
-  }, [user])
+  }, [schoolId])
 
   useEffect(() => {
     if (!schoolId) return
@@ -63,6 +58,7 @@ export default function QuadrosAulasPage() {
   }, [schoolId])
 
   const loadQuadros = async () => {
+    if (!schoolId) return
     setLoading(true)
     try {
       const data = await getQuadrosAulas(schoolId, anoFiltro || undefined)

@@ -142,17 +142,19 @@ export type QuadroAulaItem = {
 
 export async function buscarPessoasMatriculadas(
   termo: string,
-  schoolId: string,
+  schoolId: string | null,
   pessoaId?: string | null
 ): Promise<PessoaResumida[]> {
   await validarPermRead(pessoaId)
 
-  const { data: anoVigente } = await supabase
+  let anoQuery = supabase
     .from('academico_anos_letivos')
     .select('id')
-    .eq('school_id', schoolId)
     .eq('status', 'ativo')
-    .maybeSingle()
+
+  if (schoolId) anoQuery = anoQuery.eq('school_id', schoolId)
+
+  const { data: anoVigente } = await anoQuery.maybeSingle()
 
   if (!anoVigente) throw new Error('Nenhum ano letivo ativo encontrado para esta escola.')
 
@@ -175,7 +177,8 @@ export async function buscarPessoasMatriculadas(
   let pessoasQuery = supabase
     .from('people')
     .select('id, nome_completo, cpf')
-    .eq('school_id', schoolId)
+
+  if (schoolId) pessoasQuery = pessoasQuery.eq('school_id', schoolId)
 
   if (cpfDigits) {
     pessoasQuery = pessoasQuery
@@ -191,13 +194,16 @@ export async function buscarPessoasMatriculadas(
 
   const pessoaIds = pessoas.map(p => p.id)
 
-  const { data: matriculas, error: matriculasError } = await supabase
+  let matriculasQuery = supabase
     .from('academico_matriculas')
     .select('aluno_id')
-    .eq('school_id', schoolId)
     .eq('ano_letivo_id', anoVigente.id)
     .eq('ativo', true)
     .in('aluno_id', pessoaIds)
+
+  if (schoolId) matriculasQuery = matriculasQuery.eq('school_id', schoolId)
+
+  const { data: matriculas, error: matriculasError } = await matriculasQuery
 
   if (matriculasError) throw new Error(`Erro ao verificar matrículas: ${matriculasError.message}`)
   if (!matriculas || matriculas.length === 0) return []
@@ -211,31 +217,35 @@ export async function buscarPessoasMatriculadas(
 
 export async function getTurmasDaPessoa(
   pessoaId: string,
-  schoolId: string,
+  schoolId: string | null,
   pessoaLogadaId?: string | null
 ): Promise<TurmaResumida[]> {
   await validarPermRead(pessoaLogadaId)
 
   let anoVigente: { id: string; descricao?: string; status?: string } | null = null
 
-  const { data: anoAtivo, error: errAno } = await supabase
+  let anoAtivoQuery = supabase
     .from('academico_anos_letivos')
     .select('id, descricao, status')
-    .eq('school_id', schoolId)
     .eq('status', 'ativo')
-    .maybeSingle()
+
+  if (schoolId) anoAtivoQuery = anoAtivoQuery.eq('school_id', schoolId)
+
+  const { data: anoAtivo, error: errAno } = await anoAtivoQuery.maybeSingle()
 
   if (errAno) throw new Error(`Erro ao buscar ano letivo: ${errAno.message}`)
 
   if (anoAtivo) {
     anoVigente = anoAtivo
   } else {
-    // fallback: busca o mais recente
-    const { data: ultimo } = await supabase
+    let ultimoQuery = supabase
       .from('academico_anos_letivos')
       .select('id')
-      .eq('school_id', schoolId)
       .order('data_inicio', { ascending: false })
+
+    if (schoolId) ultimoQuery = ultimoQuery.eq('school_id', schoolId)
+
+    const { data: ultimo } = await ultimoQuery
       .limit(1)
       .maybeSingle()
     if (ultimo) anoVigente = ultimo
@@ -243,13 +253,16 @@ export async function getTurmasDaPessoa(
 
   if (!anoVigente) return []
 
-  const { data, error: errMat } = await supabase
+  let matTurmaQuery = supabase
     .from('academico_matriculas')
     .select('turma_id, turmas!turma_id(nome, etapa_ensino_id)')
     .eq('aluno_id', pessoaId)
-    .eq('school_id', schoolId)
     .eq('ano_letivo_id', anoVigente.id)
     .eq('ativo', true)
+
+  if (schoolId) matTurmaQuery = matTurmaQuery.eq('school_id', schoolId)
+
+  const { data, error: errMat } = await matTurmaQuery
 
   if (errMat) throw new Error(`Erro ao buscar matrículas: ${errMat.message}`)
   if (!data || data.length === 0) return []
@@ -288,18 +301,20 @@ export async function getDadosPessoais(
 
 export async function getSaudeEstudante(
   pessoaId: string,
-  schoolId: string,
+  schoolId: string | null,
   pessoaLogadaId?: string | null
 ): Promise<SaudeEstudante | null> {
   await validarPermRead(pessoaLogadaId)
 
+  let saudeQuery = supabase
+    .from('saude_estudantes')
+    .select('medicamentos, condicoes')
+    .eq('person_id', pessoaId)
+
+  if (schoolId) saudeQuery = saudeQuery.eq('school_id', schoolId)
+
   const [saudeRes, peopleRes] = await Promise.all([
-    supabase
-      .from('saude_estudantes')
-      .select('medicamentos, condicoes')
-      .eq('person_id', pessoaId)
-      .eq('school_id', schoolId)
-      .maybeSingle(),
+    saudeQuery.maybeSingle(),
     supabase
       .from('people')
       .select(`
@@ -613,18 +628,21 @@ export async function getQuadroAulas(
 
 export async function getOcorrencias(
   pessoaId: string,
-  schoolId: string,
+  schoolId: string | null,
   pessoaLogadaId?: string | null
 ): Promise<Ocorrencia[]> {
   await validarPermRead(pessoaLogadaId)
 
-  const { data } = await supabase
+  let ocoQuery = supabase
     .from('ocorrencias')
     .select('id, tipo, descricao, data_ocorrencia, turma_id')
     .eq('person_id', pessoaId)
-    .eq('school_id', schoolId)
     .order('data_ocorrencia', { ascending: false })
     .limit(50)
+
+  if (schoolId) ocoQuery = ocoQuery.eq('school_id', schoolId)
+
+  const { data } = await ocoQuery
 
   if (!data) return []
 
@@ -678,12 +696,15 @@ export async function getCriterioFrequenciaTurma(
   return metodo?.criterio_frequencia || null
 }
 
-export async function listarAnosLetivos(schoolId: string): Promise<{ id: string; ano: number }[]> {
-  const { data } = await supabase
+export async function listarAnosLetivos(schoolId: string | null): Promise<{ id: string; ano: number }[]> {
+  let query = supabase
     .from('academico_anos_letivos')
     .select('id, ano')
-    .eq('school_id', schoolId)
     .order('ano', { ascending: false })
+
+  if (schoolId) query = query.eq('school_id', schoolId)
+
+  const { data } = await query
 
   return (data || []) as { id: string; ano: number }[]
 }

@@ -7,7 +7,6 @@ import { usePermissoes } from '@/hooks/use-permissoes'
 import { Sidebar } from '@/components/layout/sidebar'
 import { listarPlanosEnsino, excluirPlanoEnsino, type PlanoEnsino } from '@/lib/actions/plano-ensino'
 import { getAnosLetivosAtivos } from '@/lib/actions/quadro-aulas'
-import { getFirstSchool } from '@/lib/actions/schools'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { BookOpen, Users, Plus, ChevronRight, Trash2, GraduationCap, Search, FileText } from 'lucide-react'
@@ -16,19 +15,12 @@ import { toast } from 'sonner'
 
 export default function PlanoEnsinoPage() {
   const router = useRouter()
-  const { user } = useAuth()
-  const [schoolId, setSchoolId] = useState<string | null>(null)
+  const { user, schoolId } = useAuth()
   const [anoLetivoId, setAnoLetivoId] = useState<string>('')
   const [anosLetivos, setAnosLetivos] = useState<any[]>([])
   const [planos, setPlanos] = useState<PlanoEnsino[]>([])
   const [loading, setLoading] = useState(true)
   const [pessoaId, setPessoaId] = useState<string | null>(null)
-
-  useEffect(() => {
-    getFirstSchool().then(s => {
-      if (s) setSchoolId(s.id)
-    })
-  }, [])
 
   const { loaded: permLoaded, pessoaId: pid } = usePermissoes(schoolId || '')
 

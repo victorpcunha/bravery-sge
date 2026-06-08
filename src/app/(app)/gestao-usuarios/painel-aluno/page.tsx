@@ -1,8 +1,8 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { useAuth } from '@/components/providers/auth-provider'
 import { usePermissoes } from '@/hooks/use-permissoes'
-import { getFirstSchool } from '@/lib/actions/schools'
 import { getTurmasDaPessoa, type PessoaResumida, type TurmaResumida } from '@/lib/actions/painel-pessoa'
 import { Sidebar } from '@/components/layout/sidebar'
 import FiltroPessoa from '@/components/painel-pessoa/filtro-pessoa'
@@ -21,17 +21,11 @@ import { toast } from 'sonner'
 
 export default function PainelAlunoPage() {
   const router = useRouter()
-  const [schoolId, setSchoolId] = useState<string | null>(null)
+  const { schoolId } = useAuth()
   const [pessoaSelecionada, setPessoaSelecionada] = useState<PessoaResumida | null>(null)
   const [turmas, setTurmas] = useState<TurmaResumida[]>([])
   const [turmaId, setTurmaId] = useState<string>('')
   const [loadingTurmas, setLoadingTurmas] = useState(false)
-
-  useEffect(() => {
-    getFirstSchool().then(s => {
-      if (s) setSchoolId(s.id)
-    })
-  }, [])
 
   const { loaded: permLoaded, pessoaId, pode } = usePermissoes(schoolId || '')
 

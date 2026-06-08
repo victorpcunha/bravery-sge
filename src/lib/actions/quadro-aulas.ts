@@ -45,12 +45,13 @@ export type HorarioRow = {
 
 // ------- Listagem -------
 
-export async function getQuadrosAulas(schoolId: string, anoLetivoId?: string) {
+export async function getQuadrosAulas(schoolId: string | null, anoLetivoId?: string) {
   try {
     let query = supabase
       .from('quadro_aulas')
       .select('*, turma:turma_id(nome, codigo_inep), academico_anos_letivos(descricao)')
-      .eq('school_id', schoolId)
+
+    if (schoolId) query = query.eq('school_id', schoolId)
 
     if (anoLetivoId) query = query.eq('ano_letivo_id', anoLetivoId)
 
@@ -65,14 +66,16 @@ export async function getQuadrosAulas(schoolId: string, anoLetivoId?: string) {
   }
 }
 
-export async function getQuadroAula(id: string) {
+export async function getQuadroAula(id: string, schoolId?: string | null) {
   try {
+    let quadroQuery = supabase
+      .from('quadro_aulas')
+      .select('*, turma:turma_id(*), academico_anos_letivos(descricao)')
+      .eq('id', id);
+    if (schoolId) quadroQuery = quadroQuery.eq('school_id', schoolId);
+
     const [quadroResult, horariosResult] = await Promise.all([
-      supabase
-        .from('quadro_aulas')
-        .select('*, turma:turma_id(*), academico_anos_letivos(descricao)')
-        .eq('id', id)
-        .single(),
+      quadroQuery.single(),
       supabase
         .from('quadro_aulas_horarios')
         .select('*, disciplina:disciplina_id(academico_disciplinas(nome)), professor:professor_id(nome_completo)')
@@ -393,14 +396,16 @@ export async function validarSobreposicaoVigencia(
 
 // ------- Turmas para select -------
 
-export async function getTurmasAtivas(schoolId: string) {
-  const { data, error } = await supabase
+export async function getTurmasAtivas(schoolId: string | null) {
+  let query = supabase
     .from('turmas')
     .select('id, nome, codigo_inep, turnos, dias_funcionamento')
-    .eq('school_id', schoolId)
     .eq('ativo', true)
     .order('nome')
 
+  if (schoolId) query = query.eq('school_id', schoolId)
+
+  const { data, error } = await query
   if (error) throw error
   return data as any[]
 }
@@ -426,13 +431,15 @@ export async function getProfessoresDaTurma(turmaId: string) {
   return data as any[]
 }
 
-export async function getAnosLetivosAtivos(schoolId: string) {
-  const { data, error } = await supabase
+export async function getAnosLetivosAtivos(schoolId: string | null) {
+  let query = supabase
     .from('academico_anos_letivos')
     .select('id, descricao, data_inicio, data_termino, status')
-    .eq('school_id', schoolId)
     .order('descricao', { ascending: false })
 
+  if (schoolId) query = query.eq('school_id', schoolId)
+
+  const { data, error } = await query
   if (error) throw error
   return data as any[]
 }

@@ -49,11 +49,12 @@ export type RecursoComPermissao = Recurso & {
 
 // ------- Perfis -------
 
-export async function listarPerfis(schoolId: string, params?: { search?: string; ativo?: boolean }) {
+export async function listarPerfis(schoolId: string | null, params?: { search?: string; ativo?: boolean }) {
   let query = supabase
     .from('perfis')
     .select('*')
-    .eq('school_id', schoolId)
+
+  if (schoolId) query = query.eq('school_id', schoolId)
 
   if (params?.search) {
     query = query.ilike('nome', `%${params.search}%`)
@@ -186,7 +187,7 @@ export async function excluirPerfil(id: string, pessoaId?: string) {
 
 // ------- Permissões -------
 
-export async function listarPermissoes(schoolId: string, perfilId?: string) {
+export async function listarPermissoes(schoolId: string | null, perfilId?: string) {
   const { data: recursos, error: errRecursos } = await supabase
     .from('recursos')
     .select('*')
@@ -203,11 +204,14 @@ export async function listarPermissoes(schoolId: string, perfilId?: string) {
     })) as RecursoComPermissao[]
   }
 
-  const { data: permissoes, error: errPerms } = await supabase
+  let permissoesQuery = supabase
     .from('perfis_permissoes')
     .select('*')
     .eq('perfil_id', perfilId)
-    .eq('school_id', schoolId)
+
+  if (schoolId) permissoesQuery = permissoesQuery.eq('school_id', schoolId)
+
+  const { data: permissoes, error: errPerms } = await permissoesQuery
 
   if (errPerms) throw errPerms
 
@@ -225,7 +229,7 @@ export async function listarPermissoes(schoolId: string, perfilId?: string) {
 }
 
 export async function salvarPermissoes(
-  schoolId: string,
+  schoolId: string | null,
   perfilId: string,
   permissoes: { recurso_id: string; visualizar: boolean; criar: boolean; editar: boolean; excluir: boolean }[],
   pessoaId?: string
@@ -239,11 +243,14 @@ export async function salvarPermissoes(
   if (!perfil) throw new Error('Perfil não encontrado')
   if (!perfil.ativo) throw new Error('Não é possível alterar permissões de um perfil inativo')
 
-  const { data: permissoesAnteriores } = await supabase
+  let anterioresQuery = supabase
     .from('perfis_permissoes')
     .select('recurso_id, visualizar, criar, editar, excluir')
     .eq('perfil_id', perfilId)
-    .eq('school_id', schoolId)
+
+  if (schoolId) anterioresQuery = anterioresQuery.eq('school_id', schoolId)
+
+  const { data: permissoesAnteriores } = await anterioresQuery
 
   const upsertData = permissoes.map(p => ({
     school_id: schoolId,
@@ -263,7 +270,7 @@ export async function salvarPermissoes(
   if (error) throw error
 
   await registrarAuditoria({
-    school_id: schoolId,
+    school_id: schoolId!,
     entidade: 'permissoes',
     entidade_id: perfilId,
     acao: 'editar',

@@ -11,7 +11,6 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Plus, Pencil, Trash2, ClipboardList, AlertCircle } from 'lucide-react'
-import { getFirstSchool } from '@/lib/actions/schools'
 import { getMetodos, deleteMetodo, type MetodoAvaliacao } from '@/lib/actions/metodos'
 import { MetodosForm } from './MetodosForm'
 import { toast } from 'sonner'
@@ -24,9 +23,8 @@ const tipoLabels: Record<string, string> = {
 }
 
 export default function MetodosAvaliacaoPage() {
-  const { user, loading: authLoading } = useAuth()
+  const { user, schoolId, loading: authLoading } = useAuth()
   const router = useRouter()
-  const [schoolId, setSchoolId] = useState('')
   const [metodos, setMetodos] = useState<MetodoAvaliacao[]>([])
   const [loading, setLoading] = useState(true)
   const [modalOpen, setModalOpen] = useState(false)
@@ -38,19 +36,6 @@ export default function MetodosAvaliacaoPage() {
       router.push('/login')
     }
   }, [user, authLoading, router])
-
-  useEffect(() => {
-    if (!user) return
-    const init = async () => {
-      try {
-        const school = await getFirstSchool()
-        setSchoolId(school.id)
-      } catch (err) {
-        console.error('Erro ao carregar escola:', err)
-      }
-    }
-    init()
-  }, [user])
 
   const loadMetodos = useCallback(async () => {
     if (!schoolId) return

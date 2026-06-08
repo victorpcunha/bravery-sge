@@ -3,6 +3,7 @@
 import { createContext, useContext, useEffect, useState } from 'react'
 import { User, Session } from '@supabase/supabase-js'
 import { getSupabaseClient } from '@/lib/auth'
+import { getUserAuthInfo } from '@/lib/actions/schools'
 
 type AuthContextType = {
   user: User | null
@@ -10,6 +11,9 @@ type AuthContextType = {
   loading: boolean
   signIn: (email: string, password: string) => Promise<{ error: Error | null }>
   signOut: () => Promise<void>
+  schoolId: string | null
+  isSuperAdmin: boolean
+  allSchools: { id: string; nome_escola: string }[]
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
@@ -18,18 +22,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
   const [session, setSession] = useState<Session | null>(null)
   const [loading, setLoading] = useState(true)
+  const [schoolId, setSchoolId] = useState<string | null>(null)
+  const [isSuperAdmin, setIsSuperAdmin] = useState(false)
+  const [allSchools, setAllSchools] = useState<{ id: string; nome_escola: string }[]>([])
 
   useEffect(() => {
     const supabase = getSupabaseClient()
 
-    // Verificar sessão atual
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session)
       setUser(session?.user ?? null)
       setLoading(false)
     })
 
-    // Escutar mudanças de auth
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setSession(session)
       setUser(session?.user ?? null)
@@ -39,10 +44,30 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return () => subscription.unsubscribe()
   }, [])
 
+  useEffect(() => {
+    if (!user) {
+      setSchoolId(null)
+      setIsSuperAdmin(false)
+      setAllSchools([])
+      return
+    }
+
+    getUserAuthInfo(user.id, user.email || '').then((info) => {
+      setIsSuperAdmin(info.isSuperAdmin)
+      setAllSchools(info.allSchools)
+      if (info.isSuperAdmin) {
+        setSchoolId(null)
+      } else if (info.schoolIds.length > 0) {
+        setSchoolId(info.schoolIds[0])
+      }
+    }).catch((err) => {
+      console.error('[AuthProvider] getUserAuthInfo failed:', err)
+    })
+  }, [user])
+
   const signIn = async (email: string, password: string) => {
     const supabase = getSupabaseClient()
 
-    // Se o input tem 11 dígitos, busca por CPF
     let emailFinal = email
     if (/^\d{11}$/.test(email.replace(/\D/g, ''))) {
       const cpf = email.replace(/\D/g, '')
@@ -63,10 +88,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const signOut = async () => {
     const supabase = getSupabaseClient()
     await supabase.auth.signOut()
+    setSchoolId(null)
+    setIsSuperAdmin(false)
+    setAllSchools([])
   }
 
   return (
-    <AuthContext.Provider value={{ user, session, loading, signIn, signOut }}>
+    <AuthContext.Provider value={{ user, session, loading, signIn, signOut, schoolId, isSuperAdmin, allSchools }}>
       {children}
     </AuthContext.Provider>
   )

@@ -1,4 +1,8 @@
-import { supabase } from '@/lib/supabase'
+'use server'
+
+import { getSupabaseAdmin } from '@/lib/auth'
+
+const supabase = getSupabaseAdmin()
 
 export type School = {
   id: string
@@ -21,6 +25,12 @@ export type School = {
   localizacao: string
   created_at: string
   updated_at: string
+}
+
+export type UserAuthInfo = {
+  schoolIds: string[]
+  isSuperAdmin: boolean
+  allSchools: { id: string; nome_escola: string }[]
 }
 
 export async function getSchools() {
@@ -55,6 +65,60 @@ export async function getFirstSchool() {
   return data as { id: string, nome_escola: string }
 }
 
+export async function getUserAuthInfo(userId: string, email: string): Promise<UserAuthInfo> {
+  const { data: userSchools } = await supabase
+    .from('user_schools')
+    .select('school_id')
+    .eq('user_id', userId)
+
+  const schoolIds = (userSchools || []).map((us: { school_id: string }) => us.school_id)
+
+  let isSuperAdmin = false
+  try {
+    const { data: peopleRows } = await supabase
+      .from('people')
+      .select('is_super_admin')
+      .eq('email', email.toLowerCase().trim())
+      .limit(1)
+
+    if (peopleRows && peopleRows.length > 0) {
+      isSuperAdmin = peopleRows[0].is_super_admin === true
+    }
+  } catch {
+    isSuperAdmin = false
+  }
+
+  let allSchools: { id: string; nome_escola: string }[] = []
+  if (isSuperAdmin) {
+    const { data: schools } = await supabase
+      .from('schools')
+      .select('id, nome_escola')
+      .order('nome_escola', { ascending: true })
+
+    allSchools = schools || []
+  } else if (schoolIds.length > 0) {
+    const { data: schools } = await supabase
+      .from('schools')
+      .select('id, nome_escola')
+      .in('id', schoolIds)
+      .order('nome_escola', { ascending: true })
+
+    allSchools = schools || []
+  } else {
+    const { data: schools } = await supabase
+      .from('schools')
+      .select('id, nome_escola')
+      .limit(1)
+
+    if (schools && schools.length > 0) {
+      allSchools = schools
+      schoolIds.push(schools[0].id)
+    }
+  }
+
+  return { schoolIds, isSuperAdmin, allSchools }
+}
+
 export async function createSchool(school: Partial<School>) {
   const { data, error } = await supabase
     .from('schools')
@@ -85,4 +149,22 @@ export async function deleteSchool(id: string) {
     .eq('id', id)
 
   if (error) throw error
+}
+
+export async function getDashboardData(schoolId: string | null) {
+  const buildCount = (table: string) => {
+    let query = supabase.from(table).select('id', { count: 'exact', head: true })
+    if (schoolId) query = query.eq('school_id', schoolId)
+    return query
+  }
+
+  const [turmasRes, peopleRes] = await Promise.all([
+    buildCount('turmas'),
+    buildCount('people'),
+  ])
+
+  return {
+    turmas: turmasRes.count || 0,
+    alunos: peopleRes.count || 0,
+  }
 }

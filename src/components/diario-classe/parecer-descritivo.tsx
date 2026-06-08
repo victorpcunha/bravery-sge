@@ -9,7 +9,7 @@ import {
   type ParecerDescritivo,
 } from '@/lib/actions/pareceres'
 import { type AlunoMatriculado } from '@/lib/actions/diario-classe'
-import { getFirstSchool } from '@/lib/actions/schools'
+
 import {
   Accordion,
   AccordionContent,
@@ -30,19 +30,12 @@ type Props = {
 }
 
 export default function ParecerDescritivo({ turmaId, alunos, quantidadePeriodosParecer }: Props) {
-  const { user } = useAuth()
-  const [schoolId, setSchoolId] = useState<string | null>(null)
+  const { user, schoolId } = useAuth()
   const [pareceres, setPareceres] = useState<ParecerDescritivo[]>([])
   const [loading, setLoading] = useState(true)
   const [editando, setEditando] = useState<{ alunoId: string; periodo: number } | null>(null)
   const [textoEditando, setTextoEditando] = useState('')
   const [salvando, setSalvando] = useState(false)
-
-  useEffect(() => {
-    getFirstSchool().then(s => {
-      if (s) setSchoolId(s.id)
-    })
-  }, [])
 
   const { pessoaId, pode } = usePermissoes(schoolId || '')
 

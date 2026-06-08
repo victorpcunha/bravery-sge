@@ -14,7 +14,6 @@ import { toast } from 'sonner'
 import {
   Plus, Trash2, ArrowLeft, Save, Calendar, Clock, AlertCircle, Loader2
 } from 'lucide-react'
-import { getFirstSchool } from '@/lib/actions/schools'
 import {
   getQuadroAula, createQuadroAula, updateQuadroAula,
   gerarGradeHorarios, validarConflitosProfessor, validarSobreposicaoVigencia,
@@ -61,8 +60,7 @@ function CadastroForm() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const editId = searchParams.get('id')
-  const [schoolId, setSchoolId] = useState('')
-  const { user, loading: authLoading } = useAuth()
+  const { user, loading: authLoading, schoolId } = useAuth()
   const { pessoaId } = usePermissoes(schoolId)
 
   const [loading, setLoading] = useState(true)
@@ -100,17 +98,16 @@ function CadastroForm() {
   }, [user, authLoading, router])
 
   useEffect(() => {
-    if (!user) return
+    if (!user || !schoolId) return
     init()
-  }, [user])
+  }, [user, schoolId])
 
   const init = async () => {
+    if (!schoolId) return
     try {
-      const s = await getFirstSchool()
-      setSchoolId(s.id)
       const [anos, turmas] = await Promise.all([
-        getAnosLetivosAtivos(s.id),
-        getTurmasAtivas(s.id),
+        getAnosLetivosAtivos(schoolId),
+        getTurmasAtivas(schoolId),
       ])
       setAnosLetivos(anos)
       setTurmasAtivas(turmas)
@@ -431,7 +428,7 @@ function CadastroForm() {
         toast.success('Quadro de aulas atualizado')
       } else {
         await createQuadroAula({
-          school_id: schoolId,
+          school_id: schoolId!,
           ano_letivo_id: anoLetivoId,
           turma_id: turmaId,
           data_inicial: dataInicial,

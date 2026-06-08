@@ -80,7 +80,7 @@ export async function verificarPreRequisitos(turmaId: string) {
 }
 
 export async function listarAlunosAbaixoMedia(
-  schoolId: string,
+  schoolId: string | null,
   turmaId: string,
   periodo: number,
   disciplinaId?: string
@@ -105,13 +105,15 @@ export async function listarAlunosAbaixoMedia(
     pesoMap.set(av.nome, av.peso)
   }
 
-  const { data: matriz } = await supabase
+  let matrizQuery = supabase
     .from('academico_matrizes_curriculares')
     .select('id')
-    .eq('school_id', schoolId)
     .eq('ano_letivo_id', (await supabase.from('turmas').select('ano_letivo_id').eq('id', turmaId).maybeSingle()).data?.ano_letivo_id)
     .eq('etapa_ensino_id', (await supabase.from('turmas').select('etapa_ensino_id').eq('id', turmaId).maybeSingle()).data?.etapa_ensino_id)
-    .maybeSingle()
+
+  if (schoolId) matrizQuery = matrizQuery.eq('school_id', schoolId)
+
+  const { data: matriz } = await matrizQuery.maybeSingle()
 
   const { data: aprovacao } = await supabase
     .from('academico_metodos_avaliacao_aprovacao')
@@ -247,15 +249,18 @@ export async function listarAlunosAbaixoMedia(
 }
 
 export async function listarAlunosReprovados(
-  schoolId: string,
+  schoolId: string | null,
   turmaId: string
 ): Promise<AlunoReprovado[]> {
-  const { data: matriculas } = await supabase
+  let query = supabase
     .from('academico_matriculas')
     .select('id, aluno_id, situacao')
     .eq('turma_id', turmaId)
-    .eq('school_id', schoolId)
     .in('situacao', ['Reprovado', 'Reprovado por frequência'])
+
+  if (schoolId) query = query.eq('school_id', schoolId)
+
+  const { data: matriculas } = await query
 
   if (!matriculas?.length) return []
 
@@ -280,7 +285,7 @@ export async function listarAlunosReprovados(
 }
 
 export async function salvarNotaConselho(
-  schoolId: string,
+  schoolId: string | null,
   turmaId: string,
   matrizDisciplinaId: string,
   alunoId: string,
@@ -340,7 +345,7 @@ export async function salvarNotaConselho(
 }
 
 export async function alternarAprovacaoConselho(
-  schoolId: string,
+  schoolId: string | null,
   matriculaId: string,
   aprovado: boolean,
   pessoaId: string | null
@@ -367,14 +372,17 @@ export async function alternarAprovacaoConselho(
   }
 }
 
-export async function listarTurmasConselho(schoolId: string, anoLetivoId: string) {
-  const { data, error } = await supabase
+export async function listarTurmasConselho(schoolId: string | null, anoLetivoId: string) {
+  let query = supabase
     .from('turmas')
     .select('id, nome, turnos')
-    .eq('school_id', schoolId)
     .eq('ano_letivo_id', anoLetivoId)
     .eq('ativo', true)
     .order('nome')
+
+  if (schoolId) query = query.eq('school_id', schoolId)
+
+  const { data, error } = await query
 
   if (error) throw error
   return (data || []) as { id: string; nome: string; turnos: string[] }[]

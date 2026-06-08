@@ -15,7 +15,6 @@ import {
   type PlanoAula,
 } from '@/lib/actions/plano-ensino'
 import { listarPlanosEnsino } from '@/lib/actions/plano-ensino'
-import { getFirstSchool } from '@/lib/actions/schools'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
@@ -40,8 +39,7 @@ export default function PlanoEnsinoDetailPage() {
   const params = useParams()
   const router = useRouter()
   const planoId = params.id as string
-  const { user } = useAuth()
-  const [schoolId, setSchoolId] = useState<string | null>(null)
+  const { user, schoolId } = useAuth()
   const [pessoaId, setPessoaId] = useState<string | null>(null)
   const [plano, setPlano] = useState<any>(null)
   const [periodos, setPeriodos] = useState<number[]>([])
@@ -79,12 +77,6 @@ export default function PlanoEnsinoDetailPage() {
 
   // BNCC selection drilldown
   const [bnccNivel1, setBnccNivel1] = useState<string[]>([])
-
-  useEffect(() => {
-    getFirstSchool().then(s => {
-      if (s) setSchoolId(s.id)
-    })
-  }, [])
 
   const { loaded: permLoaded, pessoaId: pid } = usePermissoes(schoolId || '')
 

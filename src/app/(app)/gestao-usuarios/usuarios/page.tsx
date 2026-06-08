@@ -10,7 +10,6 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog'
 import { Plus, Pencil, Trash2, ToggleLeft, RotateCcw, UserCheck, Search, Users } from 'lucide-react'
-import { getFirstSchool } from '@/lib/actions/schools'
 import { getPeople, deletePerson, inativarPessoa, reativarPessoa, type Person } from '@/lib/actions/people'
 import { PessoaForm } from './PessoaForm'
 import { toast } from 'sonner'
@@ -38,9 +37,8 @@ const PERFIS = [
 ]
 
 export default function UsuariosPage() {
-  const { user, loading: authLoading } = useAuth()
+  const { user, loading: authLoading, schoolId } = useAuth()
   const router = useRouter()
-  const [schoolId, setSchoolId] = useState('')
   const [pessoas, setPessoas] = useState<Person[]>([])
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
@@ -54,11 +52,6 @@ export default function UsuariosPage() {
   useEffect(() => {
     if (!authLoading && !user) router.push('/login')
   }, [user, authLoading, router])
-
-  useEffect(() => {
-    if (!user) return
-    getFirstSchool().then(s => setSchoolId(s.id)).catch(() => {})
-  }, [user])
 
   const loadPessoas = useCallback(async () => {
     if (!schoolId) return

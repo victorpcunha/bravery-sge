@@ -47,12 +47,13 @@ export type FiltrosIndicadores = {
 
 // ------- Listagem com filtros -------
 
-export async function getIndicadores(schoolId: string, filtros: FiltrosIndicadores) {
+export async function getIndicadores(schoolId: string | null, filtros: FiltrosIndicadores) {
   let query = supabase
     .from('indicadores_avaliacao')
     .select('*, disciplina:disciplina_id(nome), bncc_objetivo:objetivo_bncc_id(codigo_bncc, descricao)')
-    .eq('school_id', schoolId)
     .eq('ativo', true)
+
+  if (schoolId) query = query.eq('school_id', schoolId)
 
   if (filtros.ano_letivo_id) query = query.eq('ano_letivo_id', filtros.ano_letivo_id)
   if (filtros.etapa_ensino_id) query = query.eq('etapa_ensino_id', filtros.etapa_ensino_id)
@@ -65,12 +66,15 @@ export async function getIndicadores(schoolId: string, filtros: FiltrosIndicador
   return data as any[]
 }
 
-export async function getIndicador(id: string) {
-  const { data, error } = await supabase
+export async function getIndicador(id: string, schoolId?: string | null) {
+  let query = supabase
     .from('indicadores_avaliacao')
     .select('*, disciplina:disciplina_id(nome), bncc_objetivo:objetivo_bncc_id(codigo_bncc, descricao)')
     .eq('id', id)
-    .single()
+
+  if (schoolId) query = query.eq('school_id', schoolId)
+
+  const { data, error } = await query.single()
 
   if (error) throw error
   return data as any
@@ -254,17 +258,20 @@ export async function deleteIndicadorNivel(id: string) {
 // ------- Importação da Matriz (apenas Infantil) -------
 
 export async function importarIndicadoresDaMatriz(
-  schoolId: string,
+  schoolId: string | null,
   anoLetivoId: string,
   etapaEnsinoId: string
 ) {
-  const { count, error: countError } = await supabase
+  let countQuery = supabase
     .from('indicadores_avaliacao')
     .select('id', { count: 'exact', head: true })
-    .eq('school_id', schoolId)
     .eq('ano_letivo_id', anoLetivoId)
     .eq('etapa_ensino_id', etapaEnsinoId)
     .eq('ativo', true)
+
+  if (schoolId) countQuery = countQuery.eq('school_id', schoolId)
+
+  const { count, error: countError } = await countQuery
 
   if (countError) throw countError
   if (count && count > 0) throw new Error('Já existem indicadores cadastrados para esta combinação.')
@@ -387,14 +394,17 @@ export async function getCamposExperiencia() {
 }
 
 
-export async function getPeriodosMatriz(schoolId: string, anoLetivoId: string, etapaEnsinoId: string) {
-  const { data: matriz } = await supabase
+export async function getPeriodosMatriz(schoolId: string | null, anoLetivoId: string, etapaEnsinoId: string) {
+  let query = supabase
     .from('academico_matrizes_curriculares')
     .select('id')
-    .eq('school_id', schoolId)
     .eq('ano_letivo_id', anoLetivoId)
     .eq('etapa_ensino_id', etapaEnsinoId)
     .eq('ativa', true)
+
+  if (schoolId) query = query.eq('school_id', schoolId)
+
+  const { data: matriz } = await query
     .limit(1)
     .maybeSingle()
 
@@ -409,14 +419,17 @@ export async function getPeriodosMatriz(schoolId: string, anoLetivoId: string, e
   return (periodos || []) as any[]
 }
 
-export async function getOpcoesRegistro(schoolId: string, anoLetivoId: string, etapaEnsinoId: string) {
-  const { data: matriz } = await supabase
+export async function getOpcoesRegistro(schoolId: string | null, anoLetivoId: string, etapaEnsinoId: string) {
+  let query = supabase
     .from('academico_matrizes_curriculares')
     .select('metodo_avaliacao_id')
-    .eq('school_id', schoolId)
     .eq('ano_letivo_id', anoLetivoId)
     .eq('etapa_ensino_id', etapaEnsinoId)
     .eq('ativa', true)
+
+  if (schoolId) query = query.eq('school_id', schoolId)
+
+  const { data: matriz } = await query
     .limit(1)
     .maybeSingle()
 
@@ -431,14 +444,17 @@ export async function getOpcoesRegistro(schoolId: string, anoLetivoId: string, e
   return (niveis || []) as any[]
 }
 
-export async function getDisciplinasMatriz(schoolId: string, anoLetivoId: string, etapaEnsinoId: string) {
-  const { data: matriz } = await supabase
+export async function getDisciplinasMatriz(schoolId: string | null, anoLetivoId: string, etapaEnsinoId: string) {
+  let query = supabase
     .from('academico_matrizes_curriculares')
     .select('id')
-    .eq('school_id', schoolId)
     .eq('ano_letivo_id', anoLetivoId)
     .eq('etapa_ensino_id', etapaEnsinoId)
     .eq('ativa', true)
+
+  if (schoolId) query = query.eq('school_id', schoolId)
+
+  const { data: matriz } = await query
     .limit(1)
     .maybeSingle()
 

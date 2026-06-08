@@ -9,7 +9,6 @@ import { criarPlanoEnsino, getTurmaEtapaEnsino } from '@/lib/actions/plano-ensin
 import { listarTurmasDiario } from '@/lib/actions/diario-classe'
 import { getDisciplinasDiario } from '@/lib/actions/diario-classe'
 import { getAnosLetivosAtivos } from '@/lib/actions/quadro-aulas'
-import { getFirstSchool } from '@/lib/actions/schools'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Checkbox } from '@/components/ui/checkbox'
@@ -20,8 +19,7 @@ import { toast } from 'sonner'
 
 export default function CriarPlanoEnsinoPage() {
   const router = useRouter()
-  const { user } = useAuth()
-  const [schoolId, setSchoolId] = useState<string | null>(null)
+  const { user, schoolId } = useAuth()
   const [pessoaId, setPessoaId] = useState<string | null>(null)
   const [anosLetivos, setAnosLetivos] = useState<any[]>([])
   const [turmas, setTurmas] = useState<any[]>([])
@@ -32,12 +30,6 @@ export default function CriarPlanoEnsinoPage() {
   const [turmaId, setTurmaId] = useState('')
   const [selectedDiscs, setSelectedDiscs] = useState<string[]>([])
   const [isInterdisciplinar, setIsInterdisciplinar] = useState(false)
-
-  useEffect(() => {
-    getFirstSchool().then(s => {
-      if (s) setSchoolId(s.id)
-    })
-  }, [])
 
   const { loaded: permLoaded, pessoaId: pid } = usePermissoes(schoolId || '')
 

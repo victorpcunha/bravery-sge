@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
+import { useAuth } from '@/components/providers/auth-provider'
 import { usePermissoes } from '@/hooks/use-permissoes'
 import {
   getIndicadoresDaTurma,
@@ -10,7 +11,6 @@ import {
   type AvaliacaoIndicador,
 } from '@/lib/actions/avaliacoes-indicadores'
 import { type AlunoMatriculado } from '@/lib/actions/diario-classe'
-import { getFirstSchool } from '@/lib/actions/schools'
 import {
   Accordion,
   AccordionContent,
@@ -42,19 +42,13 @@ export default function AvaliacaoIndicadores({
   disciplinas,
   quantidadePeriodosNivel,
 }: Props) {
-  const [schoolId, setSchoolId] = useState<string | null>(null)
+  const { schoolId } = useAuth()
   const [periodo, setPeriodo] = useState(1)
   const [disciplinaId, setDisciplinaId] = useState<string>('')
   const [indicadores, setIndicadores] = useState<IndicadorComNiveis[]>([])
   const [avaliacoes, setAvaliacoes] = useState<AvaliacaoIndicador[]>([])
   const [loading, setLoading] = useState(true)
   const [salvando, setSalvando] = useState(false)
-
-  useEffect(() => {
-    getFirstSchool().then(s => {
-      if (s) setSchoolId(s.id)
-    })
-  }, [])
 
   const { pessoaId, pode } = usePermissoes(schoolId || '')
 

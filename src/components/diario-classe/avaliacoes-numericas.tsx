@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
+import { useAuth } from '@/components/providers/auth-provider'
 import { usePermissoes } from '@/hooks/use-permissoes'
 import {
   salvarNota,
@@ -15,7 +16,6 @@ import {
   type DesempenhoAluno,
 } from '@/lib/actions/avaliacoes-numericas'
 import { type AlunoMatriculado } from '@/lib/actions/diario-classe'
-import { getFirstSchool } from '@/lib/actions/schools'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -47,7 +47,7 @@ export default function AvaliacoesNumericas({
   quantidadePeriodosNumerico,
   metodoId,
 }: Props) {
-  const [schoolId, setSchoolId] = useState<string | null>(null)
+  const { schoolId } = useAuth()
   const [periodo, setPeriodo] = useState(1)
   const [disciplinaId, setDisciplinaId] = useState<string>('')
   const [notas, setNotas] = useState<Nota[]>([])
@@ -61,12 +61,6 @@ export default function AvaliacoesNumericas({
   const [novaDescricao, setNovaDescricao] = useState('')
   const [subAba, setSubAba] = useState('registro')
   const [datasAvaliacoes, setDatasAvaliacoes] = useState<Map<string, string>>(new Map())
-
-  useEffect(() => {
-    getFirstSchool().then(s => {
-      if (s) setSchoolId(s.id)
-    })
-  }, [])
 
   const { pessoaId, pode } = usePermissoes(schoolId || '')
   const podeEditar = pode.editar('gestao-pedagogica.diario-classe')

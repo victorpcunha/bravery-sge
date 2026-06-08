@@ -17,7 +17,6 @@ import { Badge } from '@/components/ui/badge'
 import { Separator } from '@/components/ui/separator'
 import { TooltipProvider, Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip'
 import { Plus, Pencil, Trash2, GraduationCap, Search, ChevronLeft, X, UserPlus, AlertCircle, Clock, Calendar, BookOpen } from 'lucide-react'
-import { getFirstSchool } from '@/lib/actions/schools'
 import { getEtapasEnsino } from '@/lib/actions/etapas-ensino'
 import {
   getTurmas, getTurma, createTurma, updateTurma, deleteTurma, toggleTurmaAtiva,
@@ -79,10 +78,8 @@ type FormData = {
 }
 
 export default function TurmasPage() {
-  const { user, loading: authLoading } = useAuth()
+  const { user, loading: authLoading, schoolId } = useAuth()
   const router = useRouter()
-
-  const [schoolId, setSchoolId] = useState('')
   const { pessoaId } = usePermissoes(schoolId)
   const [anoLetivo, setAnoLetivo] = useState<{ id: string; descricao: string } | null>(null)
   const [turmas, setTurmas] = useState<any[]>([])
@@ -122,18 +119,16 @@ export default function TurmasPage() {
   }, [user, authLoading, router])
 
   useEffect(() => {
-    if (!user) return
-    getFirstSchool().then(async s => {
-      setSchoolId(s.id)
-      const [ano, e] = await Promise.all([
-        getAnoLetivoAtivo(s.id),
-        getEtapasEnsino(s.id),
-      ])
+    if (!schoolId) return
+    Promise.all([
+      getAnoLetivoAtivo(schoolId),
+      getEtapasEnsino(schoolId),
+    ]).then(([ano, e]) => {
       if (ano) setAnoLetivo(ano)
       setEtapas(e)
       setAllEtapas(e)
     }).catch(() => {})
-  }, [user])
+  }, [schoolId])
 
   useEffect(() => {
     if (!schoolId) return
@@ -141,6 +136,7 @@ export default function TurmasPage() {
   }, [schoolId])
 
   const loadTurmas = async () => {
+    if (!schoolId) return
     setLoading(true)
     try {
       const data = await getTurmas(schoolId, search || undefined)
@@ -193,7 +189,7 @@ export default function TurmasPage() {
       // Load disciplinas from matriz if etapa is set
       if (t.etapa_ensino_id && anoLetivo) {
         try {
-          const discs = await getDisciplinasPorMatriz(t.etapa_ensino_id, schoolId, anoLetivo.id)
+          const discs = await getDisciplinasPorMatriz(t.etapa_ensino_id, schoolId!, anoLetivo.id)
           setDisciplinasDisponiveis(discs)
         } catch { setDisciplinasDisponiveis([]) }
       }
@@ -227,7 +223,7 @@ export default function TurmasPage() {
       } else {
         if (!anoLetivo) { toast.error('Ano letivo ativo não encontrado'); return }
         const novaTurma = await createTurma({
-          school_id: schoolId,
+          school_id: schoolId!,
           ano_letivo_id: anoLetivo.id,
           ...form,
           disciplinas: form.tipos_turma.includes('Curricular') ? selectedDisciplinas : [],
@@ -349,6 +345,7 @@ export default function TurmasPage() {
 
   // Carregar profissionais disponíveis ao abrir modal (filtrar já adicionados)
   const handleOpenProfModal = async () => {
+    if (!schoolId) return
     setProfEditId(null)
     setProfFormPersonId('')
     setProfFormVinculoId('')
@@ -369,6 +366,7 @@ export default function TurmasPage() {
   }
 
   const handleEditProfissional = async (prof: any) => {
+    if (!schoolId) return
     setProfEditId(prof.id)
     setProfFormPersonId(prof.person_id)
     setProfFormVinculoId(prof.vinculo_profissional_id || '')

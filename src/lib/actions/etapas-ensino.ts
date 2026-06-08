@@ -20,13 +20,16 @@ export type Subetapa = {
   created_at: string
 }
 
-export async function getEtapasEnsino(schoolId: string) {
-  const { data, error } = await supabase
+export async function getEtapasEnsino(schoolId: string | null) {
+  let query = supabase
     .from('academico_etapas_ensino')
     .select('*')
-    .eq('school_id', schoolId)
     .eq('ativa', true)
     .order('etapa_codigo')
+
+  if (schoolId) query = query.eq('school_id', schoolId)
+
+  const { data, error } = await query
 
   if (error) throw error
   return data as EtapaEnsino[]

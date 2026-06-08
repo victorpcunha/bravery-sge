@@ -62,7 +62,7 @@ export type BnccFieldItem = {
 // ─── FASE 1: Listagem ───
 
 export async function listarPlanosEnsino(
-  schoolId: string,
+  schoolId: string | null,
   pessoaId: string | null,
   anoLetivoId?: string,
   turmaId?: string
@@ -98,7 +98,8 @@ export async function listarPlanosEnsino(
       turmas!inner(nome),
       academico_etapas_ensino!inner(etapa_nome, etapa_tipo)
     `)
-    .eq('school_id', schoolId)
+
+  if (schoolId) query = query.eq('school_id', schoolId)
 
   if (anoLetivoId) {
     query = query.eq('ano_letivo_id', anoLetivoId)

@@ -1,40 +1,24 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/components/providers/auth-provider'
 import { Sidebar } from '@/components/layout/sidebar'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { CalendarDays, GraduationCap, BookOpen } from 'lucide-react'
-import { getFirstSchool } from '@/lib/actions/schools'
 import { TabCalendarios } from './TabCalendarios'
 import { TabEtapas } from './TabEtapas'
 import { TabMatrizes } from './TabMatrizes'
 
 export default function GestaoAcademicaPage() {
-  const { user, loading } = useAuth()
+  const { user, schoolId, loading } = useAuth()
   const router = useRouter()
-  const [schoolId, setSchoolId] = useState<string>('')
 
   useEffect(() => {
     if (!loading && !user) {
       router.push('/login')
     }
   }, [user, loading, router])
-
-  useEffect(() => {
-    if (user) {
-      const loadSchool = async () => {
-        try {
-          const school = await getFirstSchool()
-          setSchoolId(school.id)
-        } catch (error) {
-          console.error('Erro ao carregar escola:', error)
-        }
-      }
-      loadSchool()
-    }
-  }, [user])
 
   if (loading || !schoolId) {
     return (

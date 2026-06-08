@@ -13,7 +13,6 @@ import { Checkbox } from '@/components/ui/checkbox'
 import { toast } from 'sonner'
 import { Plus, Pencil, Trash2, Search, ArrowLeft } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
-import { getFirstSchool } from '@/lib/actions/schools'
 
 interface Disciplina {
   id: string
@@ -45,7 +44,7 @@ interface ComponenteINEP {
 }
 
 export default function DisciplinasPage() {
-  const { user, loading: authLoading } = useAuth()
+  const { user, schoolId, loading: authLoading } = useAuth()
   const router = useRouter()
   
   const [loadingPage, setLoadingPage] = useState(true)
@@ -136,11 +135,11 @@ export default function DisciplinasPage() {
 
     try {
       setSaving(true)
-      const school = await getFirstSchool()
-      if (!school) throw new Error('Escola não encontrada')
+      const school_id = schoolId
+      if (!school_id) throw new Error('Escola não encontrada')
 
       const payload = {
-        school_id: school.id,
+        school_id,
         nome: formData.nome,
         nome_abreviado: formData.sigla || null,
         sigla: formData.sigla || null,

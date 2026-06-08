@@ -11,15 +11,13 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog'
 import { Plus, Pencil, Trash2, Building2, ChevronLeft } from 'lucide-react'
-import { getFirstSchool } from '@/lib/actions/schools'
 import { getFuncoes, createFuncao, updateFuncao, deleteFuncao, inicializarFuncoesPadrao, type FuncaoProfissional } from '@/lib/actions/funcoes-profissionais'
 import { CENSO_FUNCOES } from '@/data/funcoes-censo'
 import { toast } from 'sonner'
 
 export default function FuncoesPage() {
-  const { user, loading: authLoading } = useAuth()
+  const { user, loading: authLoading, schoolId } = useAuth()
   const router = useRouter()
-  const [schoolId, setSchoolId] = useState('')
   const [funcoes, setFuncoes] = useState<FuncaoProfissional[]>([])
   const [loading, setLoading] = useState(true)
   const [modalOpen, setModalOpen] = useState(false)
@@ -32,14 +30,9 @@ export default function FuncoesPage() {
   }, [user, authLoading, router])
 
   useEffect(() => {
-    if (!user) return
-    getFirstSchool().then(async s => {
-      setSchoolId(s.id)
-      try {
-        await inicializarFuncoesPadrao(s.id)
-      } catch { /* já existem */ }
-    }).catch(() => {})
-  }, [user])
+    if (!schoolId) return
+    inicializarFuncoesPadrao(schoolId).catch(() => { /* já existem */ })
+  }, [schoolId])
 
   useEffect(() => {
     if (!schoolId) return
@@ -47,6 +40,7 @@ export default function FuncoesPage() {
   }, [schoolId])
 
   const loadFuncoes = async () => {
+    if (!schoolId) return
     setLoading(true)
     try {
       const data = await getFuncoes(schoolId, false)
@@ -79,7 +73,7 @@ export default function FuncoesPage() {
         await updateFuncao(editItem.id, { nome: formNome.trim(), tipo_censo: formTipoCenso || null })
         toast.success('Função atualizada!')
       } else {
-        await createFuncao({ nome: formNome.trim(), tipo_censo: formTipoCenso || null, school_id: schoolId })
+        await createFuncao({ nome: formNome.trim(), tipo_censo: formTipoCenso || null, school_id: schoolId! })
         toast.success('Função criada!')
       }
       setModalOpen(false)

@@ -7,7 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { BookOpen, Plus, ChevronDown, ChevronRight } from 'lucide-react'
-import { getFirstSchool } from '@/lib/actions/schools'
+import { useAuth } from '@/components/providers/auth-provider'
 
 type Disciplina = {
   id: string
@@ -29,7 +29,7 @@ type UnidadeTematica = {
 }
 
 export default function UnidadesTematicasPage() {
-  const [schoolId, setSchoolId] = useState<string | null>(null)
+  const { schoolId } = useAuth()
   const [disciplina, setDisciplina] = useState('all')
   const [etapa, setEtapa] = useState('all')
   const [disciplinasList, setDisciplinasList] = useState<Disciplina[]>([])
@@ -37,18 +37,6 @@ export default function UnidadesTematicasPage() {
   const [unidades, setUnidades] = useState<UnidadeTematica[]>([])
   const [loading, setLoading] = useState(true)
   const [expandedUnidade, setExpandedUnidade] = useState<string | null>(null)
-
-  useEffect(() => {
-    async function loadSchool() {
-      try {
-        const school = await getFirstSchool()
-        setSchoolId(school.id)
-      } catch (err) {
-        console.error(err)
-      }
-    }
-    loadSchool()
-  }, [])
 
   useEffect(() => {
     if (schoolId) {

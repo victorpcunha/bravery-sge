@@ -65,13 +65,14 @@ export type FiltrosMatriculas = {
 
 // ------- Listagem -------
 
-export async function getMatriculas(schoolId: string, filtros: FiltrosMatriculas) {
+export async function getMatriculas(schoolId: string | null, filtros: FiltrosMatriculas) {
   let query = supabase
     .from('academico_matriculas')
     .select('*, aluno:aluno_id(nome_completo, cpf), turma:turma_id(nome, codigo_inep), etapa:etapa_ensino_id(etapa_nome), subetapa:subetapa_id(nome)')
-    .eq('school_id', schoolId)
     .eq('ativo', true)
     .order('created_at', { ascending: false })
+
+  if (schoolId) query = query.eq('school_id', schoolId)
 
   if (filtros.ano_letivo_id) query = query.eq('ano_letivo_id', filtros.ano_letivo_id)
   if (filtros.turma_id) query = query.eq('turma_id', filtros.turma_id)
@@ -82,12 +83,15 @@ export async function getMatriculas(schoolId: string, filtros: FiltrosMatriculas
   return data as any[]
 }
 
-export async function getMatricula(id: string) {
-  const { data, error } = await supabase
+export async function getMatricula(id: string, schoolId?: string | null) {
+  let query = supabase
     .from('academico_matriculas')
     .select('*, aluno:aluno_id(nome_completo, cpf), turma:turma_id(nome, codigo_inep, turnos), etapa:etapa_ensino_id(etapa_nome, etapa_tipo), subetapa:subetapa_id(nome)')
     .eq('id', id)
-    .single()
+
+  if (schoolId) query = query.eq('school_id', schoolId)
+
+  const { data, error } = await query.single()
 
   if (error) throw error
   return data as any
@@ -273,28 +277,32 @@ export async function removerDispensa(id: string) {
 
 // ------- Queries auxiliares -------
 
-export async function getAlunos(schoolId: string) {
-  const { data, error } = await supabase
+export async function getAlunos(schoolId: string | null) {
+  let query = supabase
     .from('people')
     .select('id, nome_completo, cpf, data_nascimento')
-    .eq('school_id', schoolId)
     .contains('perfil', ['aluno'])
     .eq('ativo', true)
     .order('nome_completo')
 
+  if (schoolId) query = query.eq('school_id', schoolId)
+
+  const { data, error } = await query
   if (error) throw error
   return data as any[]
 }
 
-export async function getTurmasAtivas(schoolId: string, anoLetivoId: string) {
-  const { data, error } = await supabase
+export async function getTurmasAtivas(schoolId: string | null, anoLetivoId: string) {
+  let query = supabase
     .from('turmas')
     .select('id, nome, codigo_inep, turnos, tipos_turma, etapas_ensino_ids, multietapa')
-    .eq('school_id', schoolId)
     .eq('ano_letivo_id', anoLetivoId)
     .eq('ativo', true)
     .order('nome')
 
+  if (schoolId) query = query.eq('school_id', schoolId)
+
+  const { data, error } = await query
   if (error) throw error
   return data as any[]
 }
@@ -391,12 +399,15 @@ export async function getDisciplinasDaTurma(turmaId: string) {
   })) as any[]
 }
 
-export async function getAnoLetivoAtivo(schoolId: string) {
-  const { data, error } = await supabase
+export async function getAnoLetivoAtivo(schoolId: string | null) {
+  let query = supabase
     .from('academico_anos_letivos')
     .select('*')
-    .eq('school_id', schoolId)
     .eq('status', 'ativo')
+
+  if (schoolId) query = query.eq('school_id', schoolId)
+
+  const { data, error } = await query
     .limit(1)
     .maybeSingle()
 

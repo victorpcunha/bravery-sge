@@ -6,7 +6,6 @@ import { useAuth } from '@/components/providers/auth-provider'
 import { usePermissoes } from '@/hooks/use-permissoes'
 import { Sidebar } from '@/components/layout/sidebar'
 import { getAlunosDaTurmaComPeriodo, getDisciplinasDiario, gerarNumeroChamada, getMetodoAvaliacaoDaTurma, getTurmaDiarioInfo, type AlunoMatriculado, type TurmaDiarioInfo } from '@/lib/actions/diario-classe'
-import { getFirstSchool } from '@/lib/actions/schools'
 import FrequenciaPorDia from '@/components/diario-classe/frequencia-por-dia'
 import FrequenciaPorAula from '@/components/diario-classe/frequencia-por-aula'
 import ParecerDescritivo from '@/components/diario-classe/parecer-descritivo'
@@ -25,8 +24,7 @@ export default function TurmaDiarioPage() {
   const params = useParams()
   const router = useRouter()
   const turmaId = params.turmaId as string
-  const { user } = useAuth()
-  const [schoolId, setSchoolId] = useState<string | null>(null)
+  const { user, schoolId } = useAuth()
   const [turmaInfo, setTurmaInfo] = useState<TurmaDiarioInfo | null>(null)
   const [alunos, setAlunos] = useState<AlunoMatriculado[]>([])
   const [disciplinas, setDisciplinas] = useState<any[]>([])
@@ -34,12 +32,6 @@ export default function TurmaDiarioPage() {
   const [loading, setLoading] = useState(true)
   const [gerando, setGerando] = useState(false)
   const [abaAtiva, setAbaAtiva] = useState('alunos')
-
-  useEffect(() => {
-    getFirstSchool().then(s => {
-      if (s) setSchoolId(s.id)
-    })
-  }, [])
 
   const { loaded: permLoaded, pessoaId, pode } = usePermissoes(schoolId || '')
 

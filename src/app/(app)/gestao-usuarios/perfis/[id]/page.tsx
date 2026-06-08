@@ -7,7 +7,6 @@ import { Sidebar } from '@/components/layout/sidebar'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { ChevronLeft, Shield } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { getFirstSchool } from '@/lib/actions/schools'
 import {
   buscarPerfil,
   criarPerfil,
@@ -29,9 +28,8 @@ export default function PerfilCadastroPage({ params }: PageProps) {
   const { id } = use(params)
   const isNew = id === 'novo'
 
-  const { user, loading: authLoading } = useAuth()
+  const { user, loading: authLoading, schoolId } = useAuth()
   const router = useRouter()
-  const [schoolId, setSchoolId] = useState('')
   const [perfil, setPerfil] = useState<Perfil | null>(null)
   const [recursos, setRecursos] = useState<RecursoComPermissao[]>([])
   const [loading, setLoading] = useState(true)
@@ -42,10 +40,7 @@ export default function PerfilCadastroPage({ params }: PageProps) {
     if (!authLoading && !user) router.push('/login')
   }, [user, authLoading, router])
 
-  useEffect(() => {
-    if (!user) return
-    getFirstSchool().then(s => setSchoolId(s.id)).catch(() => {})
-  }, [user])
+
 
   useEffect(() => {
     if (!schoolId) return
@@ -66,6 +61,7 @@ export default function PerfilCadastroPage({ params }: PageProps) {
   }, [permLoaded, schoolId, isSetup])
 
   const loadData = async () => {
+    if (!schoolId) return
     setLoading(true)
     try {
       const recursosData = await listarPermissoes(schoolId, id === 'novo' ? '' : id)
@@ -94,7 +90,7 @@ export default function PerfilCadastroPage({ params }: PageProps) {
     try {
       if (isNew) {
         const created = await criarPerfil({
-          school_id: schoolId,
+          school_id: schoolId!,
           nome: data.nome,
           descricao: data.descricao,
           ativo: data.ativo,
@@ -102,7 +98,7 @@ export default function PerfilCadastroPage({ params }: PageProps) {
           created_by: pessoaId || undefined,
         })
 
-        await salvarPermissoes(schoolId, created.id, data.permissoes, pessoaId || undefined)
+        await salvarPermissoes(schoolId!, created.id, data.permissoes, pessoaId || undefined)
         toast.success('Perfil criado com sucesso!')
       } else {
         await editarPerfil(id, {
@@ -113,7 +109,7 @@ export default function PerfilCadastroPage({ params }: PageProps) {
           updated_by: pessoaId || undefined,
         })
 
-        await salvarPermissoes(schoolId, id, data.permissoes, pessoaId || undefined)
+        await salvarPermissoes(schoolId!, id, data.permissoes, pessoaId || undefined)
         toast.success('Perfil atualizado com sucesso!')
       }
 

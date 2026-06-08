@@ -40,12 +40,15 @@ export type EventoCalendario = {
 // Anos Letivos
 // ============================================
 
-export async function getAnosLetivos(schoolId: string) {
-  const { data, error } = await supabase
+export async function getAnosLetivos(schoolId: string | null) {
+  let query = supabase
     .from('academico_anos_letivos')
     .select('*')
-    .eq('school_id', schoolId)
     .order('descricao', { ascending: false })
+
+  if (schoolId) query = query.eq('school_id', schoolId)
+
+  const { data, error } = await query
 
   if (error) throw error
   return data as AnoLetivo[]

@@ -153,12 +153,13 @@ export type ResponsavelAluno = {
   updated_at: string
 }
 
-export async function getPeople(schoolId: string, search?: string, perfil?: string, mostrarInativos?: boolean) {
+export async function getPeople(schoolId: string | null, search?: string, perfil?: string, mostrarInativos?: boolean) {
   let query = supabase
     .from('people')
     .select('*')
-    .eq('school_id', schoolId)
     .order('nome_completo', { ascending: true })
+
+  if (schoolId) query = query.eq('school_id', schoolId)
 
   if (!mostrarInativos) query = query.eq('ativo', true)
   if (search) query = query.ilike('nome_completo', `%${search}%`)
@@ -169,25 +170,29 @@ export async function getPeople(schoolId: string, search?: string, perfil?: stri
   return data as Person[]
 }
 
-export async function getPerson(id: string) {
-  const { data, error } = await supabase
+export async function getPerson(id: string, schoolId?: string | null) {
+  let query = supabase
     .from('people')
     .select('*')
     .eq('id', id)
-    .single()
+
+  if (schoolId) query = query.eq('school_id', schoolId)
+
+  const { data, error } = await query.single()
 
   if (error) throw error
   return data as Person
 }
 
-async function verificarCpfDuplicado(cpf: string | null, schoolId: string, ignoreId?: string) {
+async function verificarCpfDuplicado(cpf: string | null, schoolId: string | null, ignoreId?: string) {
   if (!cpf) return
   let query = supabase
     .from('people')
     .select('id')
     .eq('cpf', cpf)
-    .eq('school_id', schoolId)
     .eq('ativo', true)
+
+  if (schoolId) query = query.eq('school_id', schoolId)
   if (ignoreId) query = query.neq('id', ignoreId)
   const { data } = await query.limit(1)
   if (data && data.length > 0) throw new Error('Já existe uma pessoa com este CPF nesta escola')
@@ -330,14 +335,15 @@ export async function desvincularResponsavel(responsavelId: string, alunoId: str
 // Utilitários
 // ============================================
 
-export async function buscarAlunos(schoolId: string, search?: string) {
+export async function buscarAlunos(schoolId: string | null, search?: string) {
   let query = supabase
     .from('people')
     .select('id, nome_completo, codigo_pessoa')
     .eq('ativo', true)
-    .eq('school_id', schoolId)
     .contains('perfil', ['aluno'])
     .order('nome_completo')
+
+  if (schoolId) query = query.eq('school_id', schoolId)
 
   if (search) query = query.ilike('nome_completo', `%${search}%`)
 
@@ -346,24 +352,30 @@ export async function buscarAlunos(schoolId: string, search?: string) {
   return data as { id: string; nome_completo: string; codigo_pessoa: number }[]
 }
 
-export async function getPessoaPorEmail(email: string, schoolId: string) {
-  const { data, error } = await supabase
+export async function getPessoaPorEmail(email: string, schoolId: string | null) {
+  let query = supabase
     .from('people')
     .select('id, nome_completo, perfil_id')
     .eq('email', email)
-    .eq('school_id', schoolId)
+
+  if (schoolId) query = query.eq('school_id', schoolId)
+
+  const { data, error } = await query
     .maybeSingle()
 
   if (error) throw error
   return data
 }
 
-export async function getPessoaPorCpf(cpf: string) {
-  const { data, error } = await supabase
+export async function getPessoaPorCpf(cpf: string, schoolId?: string | null) {
+  let query = supabase
     .from('people')
     .select('id, nome_completo, email')
     .eq('cpf', cpf)
-    .maybeSingle()
+
+  if (schoolId) query = query.eq('school_id', schoolId)
+
+  const { data, error } = await query.maybeSingle()
 
   if (error) throw error
   return data
@@ -410,16 +422,17 @@ export async function criarAuthUser(params: {
 
 export async function salvarSaudeEstudante(
   personId: string,
-  schoolId: string,
+  schoolId: string | null,
   data: { medicamentos?: string | null }
 ) {
-  // Tenta atualizar registro existente
-  const { data: existing } = await supabase
+  let existingQuery = supabase
     .from('saude_estudantes')
     .select('id')
     .eq('person_id', personId)
-    .eq('school_id', schoolId)
-    .maybeSingle()
+
+  if (schoolId) existingQuery = existingQuery.eq('school_id', schoolId)
+
+  const { data: existing } = await existingQuery.maybeSingle()
 
   if (existing) {
     const { error } = await supabase
@@ -446,11 +459,14 @@ export async function buscarSaudeEstudante(
   personId: string,
   schoolId: string
 ): Promise<{ medicamentos: string | null } | null> {
-  const { data } = await supabase
+  let query = supabase
     .from('saude_estudantes')
     .select('medicamentos')
     .eq('person_id', personId)
-    .eq('school_id', schoolId)
+
+  if (schoolId) query = query.eq('school_id', schoolId)
+
+  const { data } = await query
     .maybeSingle()
 
   return data as { medicamentos: string | null } | null
