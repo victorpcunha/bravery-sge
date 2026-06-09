@@ -66,7 +66,7 @@ export default function ParecerDescritivo({ turmaId, alunos, quantidadePeriodosP
   }
 
   const handleSalvar = async () => {
-    if (!editando || !schoolId) return
+    if (!editando) return
     setSalvando(true)
     try {
       await salvarParecer(schoolId, editando.alunoId, editando.periodo, textoEditando, pessoaId)

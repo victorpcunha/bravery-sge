@@ -133,7 +133,6 @@ export default function AvaliacoesNumericas({
     descricao: string,
     valor: string
   ) => {
-    if (!schoolId) return
     const max = getNotaMaxima(descricao)
     const rawValor = valor === '' ? null : parseFloat(valor)
     const numValor = rawValor !== null ? Math.min(rawValor, max) : null
@@ -219,7 +218,6 @@ export default function AvaliacoesNumericas({
   }
 
   const handleRecChange = async (alunoId: string, valor: string) => {
-    if (!schoolId) return
     const numValor = valor === '' ? null : parseFloat(valor)
     const existing = getRecuperacaoAluno(alunoId)
 

@@ -3,7 +3,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/components/providers/auth-provider'
-import { Sidebar } from '@/components/layout/sidebar'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog'
@@ -38,7 +37,6 @@ export default function MetodosAvaliacaoPage() {
   }, [user, authLoading, router])
 
   const loadMetodos = useCallback(async () => {
-    if (!schoolId) return
     setLoading(true)
     try {
       const data = await getMetodos(schoolId)
@@ -86,7 +84,7 @@ export default function MetodosAvaliacaoPage() {
     loadMetodos()
   }
 
-  if (authLoading || !schoolId) {
+  if (authLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
@@ -99,8 +97,7 @@ export default function MetodosAvaliacaoPage() {
 
   return (
     <>
-      <Sidebar />
-      <div className="md:pl-64 container mx-auto py-8 px-4">
+      <div className=" container mx-auto py-8 px-4">
         <div className="flex items-center justify-between mb-8">
           <div className="animate-fade-in-up">
             <h1 className="text-3xl font-bold text-foreground">Métodos de Avaliação</h1>

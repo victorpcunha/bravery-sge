@@ -135,7 +135,7 @@ export default function ObjetivosPage() {
   }, {})
 
   return (
-    <div className="container mx-auto py-8 px-4 md:pl-64">
+    <div className="container mx-auto py-8 px-4">
       <div className="mb-8 animate-fade-in-up">
         <div className="flex items-center justify-between">
           <div>

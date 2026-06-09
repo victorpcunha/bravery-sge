@@ -76,7 +76,6 @@ export default function BNCCConsultaPage() {
   const [expandedGrupo, setExpandedGrupo] = useState<string | null>(null)
 
   useEffect(() => {
-    if (!schoolId) return
     loadEtapas()
     loadDisciplinas()
     loadAreas()
@@ -214,7 +213,7 @@ export default function BNCCConsultaPage() {
   const totalUnicos = new Set(dados.map((d: any) => d.codigo_bncc || d.codigo)).size
 
   return (
-    <div className="container mx-auto py-8 px-4 md:pl-64">
+    <div className="container mx-auto py-8 px-4">
       <div className="mb-8 animate-fade-in-up">
         <h1 className="text-3xl font-bold text-foreground">Consulta da BNCC</h1>
         <p className="text-muted-foreground mt-1">

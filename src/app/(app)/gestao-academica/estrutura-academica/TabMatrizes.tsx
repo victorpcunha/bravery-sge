@@ -24,7 +24,7 @@ import {
 import { getEtapasEnsino, getSubetapas, type EtapaEnsino } from '@/lib/actions/etapas-ensino'
 import { MatrizForm } from './MatrizForm'
 
-interface Props { schoolId: string }
+interface Props { schoolId: string | null }
 
 export function TabMatrizes({ schoolId }: Props) {
   const [anosLetivos, setAnosLetivos] = useState<AnoLetivo[]>([])

@@ -7,7 +7,7 @@ import { Heart, Pill, Activity, Loader2, Stethoscope, Brain } from 'lucide-react
 
 type Props = {
   pessoaId: string
-  schoolId: string
+  schoolId: string | null
   pessoaLogadaId: string | null
 }
 

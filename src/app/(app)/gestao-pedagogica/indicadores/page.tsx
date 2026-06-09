@@ -131,7 +131,7 @@ export default function IndicadoresPage() {
 
   // Carregar indicadores quando filtros mudam
   useEffect(() => {
-    if (!schoolId || !filtroAno || !filtroEtapa) return
+    if (!filtroAno || !filtroEtapa) return
     loadIndicadores()
   }, [schoolId, filtroAno, filtroEtapa, filtroSubetapa, filtroCampo, filtroDisciplina])
 
@@ -370,11 +370,11 @@ export default function IndicadoresPage() {
   const grupos = agruparIndicadores(indicadores, isInfantil)
 
   if (authLoading) {
-    return <div className="md:pl-64 container mx-auto py-8 px-4"><div className="text-center text-muted-foreground">Carregando...</div></div>
+    return <div className="container mx-auto py-8 px-4"><div className="text-center text-muted-foreground">Carregando...</div></div>
   }
 
   return (
-    <div className="md:pl-64 container mx-auto py-8 px-4">
+    <div className="container mx-auto py-8 px-4">
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div>

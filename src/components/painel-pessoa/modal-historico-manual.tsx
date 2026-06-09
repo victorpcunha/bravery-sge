@@ -46,7 +46,7 @@ type Props = {
   onClose: () => void
   onSuccess: () => void
   personId: string
-  schoolId: string
+  schoolId: string | null
   pessoaLogadaId: string | null
 }
 
@@ -77,6 +77,7 @@ export default function ModalHistoricoManual({ open, onClose, onSuccess, personI
   }, [open, schoolId, reset])
 
   const onSubmit = async (data: FormData) => {
+    if (!schoolId) { toast.error('Escola não selecionada'); return }
     setSalvando(true)
     try {
       await adicionarHistoricoManual({

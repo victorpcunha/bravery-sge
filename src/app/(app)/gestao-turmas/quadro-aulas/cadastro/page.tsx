@@ -50,7 +50,7 @@ function getDisciplinaFullName(d: any): string {
 
 export default function CadastroQuadroAulaPage() {
   return (
-    <Suspense fallback={<div className="md:pl-64 container mx-auto py-8 px-4"><div className="text-center text-muted-foreground py-8">Carregando...</div></div>}>
+    <Suspense fallback={<div className="container mx-auto py-8 px-4"><div className="text-center text-muted-foreground py-8">Carregando...</div></div>}>
       <CadastroForm />
     </Suspense>
   )
@@ -98,12 +98,11 @@ function CadastroForm() {
   }, [user, authLoading, router])
 
   useEffect(() => {
-    if (!user || !schoolId) return
+    if (!user) return
     init()
   }, [user, schoolId])
 
   const init = async () => {
-    if (!schoolId) return
     try {
       const [anos, turmas] = await Promise.all([
         getAnosLetivosAtivos(schoolId),
@@ -449,14 +448,14 @@ function CadastroForm() {
 
   if (loading) {
     return (
-      <div className="md:pl-64 container mx-auto py-8 px-4">
+      <div className="container mx-auto py-8 px-4">
         <div className="text-center text-muted-foreground py-8">Carregando...</div>
       </div>
     )
   }
 
   return (
-    <div className="md:pl-64 container mx-auto py-8 px-4">
+    <div className="container mx-auto py-8 px-4">
       <div className="flex items-center gap-3 mb-6">
         <Button variant="ghost" size="icon" className="h-9 w-9"
           onClick={() => router.push('/gestao-turmas/quadro-aulas')}>

@@ -91,7 +91,6 @@ export default function AvaliacaoIndicadores({
     indicadorId: string,
     nivelId: string | null
   ) => {
-    if (!schoolId) return
     setSalvando(true)
     try {
       const current = getAvaliacao(alunoId, indicadorId)
@@ -145,7 +144,6 @@ export default function AvaliacaoIndicadores({
     indicadorId: string,
     observacao: string
   ) => {
-    if (!schoolId) return
     const current = getAvaliacao(alunoId, indicadorId)
 
     try {

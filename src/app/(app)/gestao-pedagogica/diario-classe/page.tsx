@@ -4,7 +4,6 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/components/providers/auth-provider'
 import { usePermissoes } from '@/hooks/use-permissoes'
-import { Sidebar } from '@/components/layout/sidebar'
 import { listarTurmasDiario, type TurmaDiario } from '@/lib/actions/diario-classe'
 import { getAnosLetivosAtivos } from '@/lib/actions/quadro-aulas'
 import { Button } from '@/components/ui/button'
@@ -29,12 +28,11 @@ export default function DiarioClassePage() {
   }, [pid])
 
   useEffect(() => {
-    if (!schoolId) return
     getAnosLetivosAtivos(schoolId).then(setAnosLetivos).catch(() => {})
   }, [schoolId])
 
   useEffect(() => {
-    if (!schoolId || !permLoaded || !anoLetivoId) return
+    if (!permLoaded || !anoLetivoId) return
     setLoading(true)
     listarTurmasDiario(schoolId, pessoaId, anoLetivoId)
       .then(setTurmas)
@@ -43,9 +41,7 @@ export default function DiarioClassePage() {
   }, [schoolId, pessoaId, anoLetivoId, permLoaded])
 
   return (
-    <>
-      <Sidebar />
-      <div className="md:pl-64 container mx-auto py-8 px-4 max-w-5xl">
+      <div className="container mx-auto py-8 px-4 max-w-5xl">
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-foreground">Diário de Classe</h1>
           <p className="text-muted-foreground mt-1">Selecione uma turma para registrar frequência e avaliações</p>
@@ -126,6 +122,5 @@ export default function DiarioClassePage() {
           </div>
         )}
       </div>
-    </>
   )
 }

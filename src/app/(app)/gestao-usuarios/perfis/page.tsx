@@ -3,7 +3,6 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/components/providers/auth-provider'
-import { Sidebar } from '@/components/layout/sidebar'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Plus, Shield, ShieldOff } from 'lucide-react'
@@ -29,7 +28,6 @@ export default function PerfisPage() {
 
 
   useEffect(() => {
-    if (!schoolId) return
     loadPerfis()
   }, [schoolId, search, situacao])
 
@@ -41,7 +39,6 @@ export default function PerfisPage() {
   }, [permLoaded, schoolId, isSetup])
 
   const loadPerfis = async () => {
-    if (!schoolId) return
     setLoading(true)
     try {
       const ativo = situacao === 'todas' ? undefined : situacao === 'ativas'
@@ -70,7 +67,7 @@ export default function PerfisPage() {
     }
   }
 
-  if (authLoading || !schoolId || (!permLoaded)) {
+  if (authLoading || (!permLoaded)) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
@@ -82,9 +79,7 @@ export default function PerfisPage() {
   }
 
   return (
-    <>
-      <Sidebar />
-      <div className="md:pl-64 container mx-auto py-8 px-4">
+      <div className="container mx-auto py-8 px-4">
         <div className="flex items-center justify-between mb-8">
           <div className="animate-fade-in-up">
             <div className="flex items-center gap-3">
@@ -135,6 +130,5 @@ export default function PerfisPage() {
           </CardContent>
         </Card>
       </div>
-    </>
   )
 }

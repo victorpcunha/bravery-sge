@@ -15,7 +15,7 @@ export type FiltrosAprovacao = {
 }
 
 type Props = {
-  schoolId: string
+  schoolId: string | null
   onFilter: (filtros: FiltrosAprovacao) => void
 }
 
@@ -27,7 +27,6 @@ export default function AprovacaoConselhoFiltros({ schoolId, onFilter }: Props) 
   const [loadingTurmas, setLoadingTurmas] = useState(false)
 
   useEffect(() => {
-    if (!schoolId) return
     getAnosLetivosAtivos(schoolId).then(setAnosLetivos).catch(() => {})
   }, [schoolId])
 

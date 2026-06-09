@@ -12,7 +12,7 @@ import { Plus, ChevronDown, ChevronRight } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 
 interface TabEtapasProps {
-  schoolId: string
+  schoolId: string | null
 }
 
 interface Etapa {
@@ -110,7 +110,6 @@ export function TabEtapas({ schoolId }: TabEtapasProps) {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    if (!schoolId) return
     loadEtapas()
   }, [schoolId])
 

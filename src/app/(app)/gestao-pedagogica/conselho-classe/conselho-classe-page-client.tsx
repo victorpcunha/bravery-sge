@@ -15,7 +15,7 @@ import { AlertCircle } from 'lucide-react'
 import { toast } from 'sonner'
 
 type Props = {
-  schoolId: string
+  schoolId: string | null
 }
 
 export default function ConselhoClassePageClient({ schoolId }: Props) {

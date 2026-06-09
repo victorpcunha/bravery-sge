@@ -4,7 +4,6 @@ import { useState, useEffect, useCallback } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { useAuth } from '@/components/providers/auth-provider'
 import { usePermissoes } from '@/hooks/use-permissoes'
-import { Sidebar } from '@/components/layout/sidebar'
 import {
   listarPlanoAula,
   criarPlanoAula,
@@ -85,7 +84,7 @@ export default function PlanoEnsinoDetailPage() {
   }, [pid])
 
   const carregarPlano = useCallback(async () => {
-    if (!schoolId || !planoId) return
+    if (!planoId) return
     setLoading(true)
     try {
       const planos = await listarPlanosEnsino(schoolId, pessoaId)
@@ -248,8 +247,7 @@ export default function PlanoEnsinoDetailPage() {
   if (loading) {
     return (
       <>
-        <Sidebar />
-        <div className="md:pl-64 container mx-auto py-8 px-4 max-w-5xl">
+        <div className=" container mx-auto py-8 px-4 max-w-5xl">
           <Skeleton className="h-8 w-48 mb-4" />
           <Skeleton className="h-32 w-full rounded-lg mb-4" />
           <Skeleton className="h-64 w-full rounded-lg" />
@@ -261,8 +259,7 @@ export default function PlanoEnsinoDetailPage() {
   if (!plano) {
     return (
       <>
-        <Sidebar />
-        <div className="md:pl-64 container mx-auto py-8 px-4 max-w-5xl">
+        <div className=" container mx-auto py-8 px-4 max-w-5xl">
           <p className="text-muted-foreground">Plano não encontrado.</p>
         </div>
       </>
@@ -271,8 +268,7 @@ export default function PlanoEnsinoDetailPage() {
 
   return (
     <>
-      <Sidebar />
-      <div className="md:pl-64 container mx-auto py-8 px-4 max-w-5xl">
+      <div className=" container mx-auto py-8 px-4 max-w-5xl">
         <Button variant="ghost" className="mb-4" onClick={() => router.push('/gestao-pedagogica/plano-ensino')}>
           <ArrowLeft className="h-4 w-4 mr-1" />
           Voltar

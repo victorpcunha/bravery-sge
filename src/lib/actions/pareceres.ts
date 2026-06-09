@@ -19,7 +19,7 @@ export type ParecerDescritivo = {
 }
 
 export async function salvarParecer(
-  schoolId: string,
+  schoolId: string | null,
   alunoId: string,
   periodo: number,
   texto: string,

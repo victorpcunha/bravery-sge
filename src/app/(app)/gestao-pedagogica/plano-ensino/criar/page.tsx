@@ -4,7 +4,6 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/components/providers/auth-provider'
 import { usePermissoes } from '@/hooks/use-permissoes'
-import { Sidebar } from '@/components/layout/sidebar'
 import { criarPlanoEnsino, getTurmaEtapaEnsino } from '@/lib/actions/plano-ensino'
 import { listarTurmasDiario } from '@/lib/actions/diario-classe'
 import { getDisciplinasDiario } from '@/lib/actions/diario-classe'
@@ -38,12 +37,11 @@ export default function CriarPlanoEnsinoPage() {
   }, [pid])
 
   useEffect(() => {
-    if (!schoolId) return
     getAnosLetivosAtivos(schoolId).then(setAnosLetivos).catch(() => {})
   }, [schoolId])
 
   useEffect(() => {
-    if (!schoolId || !permLoaded || !anoLetivoId) return
+    if (!permLoaded || !anoLetivoId) return
     listarTurmasDiario(schoolId, pessoaId, anoLetivoId)
       .then(setTurmas)
       .catch(() => {})
@@ -67,8 +65,12 @@ export default function CriarPlanoEnsinoPage() {
   }
 
   const handleSave = async () => {
-    if (!schoolId || !anoLetivoId || !turmaId) {
+    if (!anoLetivoId || !turmaId) {
       toast.error('Selecione o ano letivo e a turma')
+      return
+    }
+    if (!schoolId) {
+      toast.error('Escola não selecionada')
       return
     }
     setSaving(true)
@@ -100,9 +102,7 @@ export default function CriarPlanoEnsinoPage() {
   const turmaSelecionada = turmas.find(t => t.id === turmaId) as any
 
   return (
-    <>
-      <Sidebar />
-      <div className="md:pl-64 container mx-auto py-8 px-4 max-w-5xl">
+      <div className="container mx-auto py-8 px-4 max-w-5xl">
         <Button variant="ghost" className="mb-4" onClick={() => router.push('/gestao-pedagogica/plano-ensino')}>
           <ArrowLeft className="h-4 w-4 mr-1" />
           Voltar
@@ -203,6 +203,5 @@ export default function CriarPlanoEnsinoPage() {
           </div>
         </div>
       </div>
-    </>
   )
 }

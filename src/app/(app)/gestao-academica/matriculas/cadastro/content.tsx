@@ -156,7 +156,7 @@ export default function MatriculaCadastroContent({ searchParams }: { searchParam
     }
   }
 
-  const loadMatricula = async (schoolId: string, id: string, ativo: any) => {
+  const loadMatricula = async (schoolId: string | null, id: string, ativo: any) => {
     try {
       const m = await getMatricula(id)
       setMatricula(m)
@@ -524,11 +524,11 @@ export default function MatriculaCadastroContent({ searchParams }: { searchParam
   }
 
   if (authLoading || loading) {
-    return <div className="md:pl-64 container mx-auto py-8 px-4"><div className="text-center text-muted-foreground">Carregando...</div></div>
+    return <div className="container mx-auto py-8 px-4"><div className="text-center text-muted-foreground">Carregando...</div></div>
   }
 
   return (
-    <div className="md:pl-64 container mx-auto py-8 px-4 relative min-h-screen">
+    <div className="container mx-auto py-8 px-4 relative min-h-screen">
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-3">

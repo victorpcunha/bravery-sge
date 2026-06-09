@@ -3,7 +3,6 @@
 import { useState, useEffect, use } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/components/providers/auth-provider'
-import { Sidebar } from '@/components/layout/sidebar'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { ChevronLeft, Shield } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -43,7 +42,6 @@ export default function PerfilCadastroPage({ params }: PageProps) {
 
 
   useEffect(() => {
-    if (!schoolId) return
     loadData()
   }, [schoolId])
 
@@ -61,7 +59,6 @@ export default function PerfilCadastroPage({ params }: PageProps) {
   }, [permLoaded, schoolId, isSetup])
 
   const loadData = async () => {
-    if (!schoolId) return
     setLoading(true)
     try {
       const recursosData = await listarPermissoes(schoolId, id === 'novo' ? '' : id)
@@ -121,7 +118,7 @@ export default function PerfilCadastroPage({ params }: PageProps) {
     }
   }
 
-  if (authLoading || !schoolId || loading || !permLoaded) {
+  if (authLoading || loading || !permLoaded) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
@@ -133,9 +130,7 @@ export default function PerfilCadastroPage({ params }: PageProps) {
   }
 
   return (
-    <>
-      <Sidebar />
-      <div className="md:pl-64 container mx-auto py-8 px-4 max-w-5xl">
+      <div className="container mx-auto py-8 px-4 max-w-5xl">
         <div className="flex items-center gap-3 mb-8">
           <Button variant="ghost" size="icon" onClick={() => router.push('/gestao-usuarios/perfis')} className="hover:bg-muted">
             <ChevronLeft className="h-5 w-5" />
@@ -168,6 +163,5 @@ export default function PerfilCadastroPage({ params }: PageProps) {
           </CardContent>
         </Card>
       </div>
-    </>
   )
 }

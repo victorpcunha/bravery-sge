@@ -9,7 +9,7 @@ import { AlertCircle, Loader2 } from 'lucide-react'
 
 type Props = {
   pessoaId: string
-  schoolId: string
+  schoolId: string | null
   pessoaLogadaId: string | null
 }
 

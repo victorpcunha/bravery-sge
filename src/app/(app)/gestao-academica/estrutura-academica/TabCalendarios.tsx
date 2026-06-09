@@ -43,7 +43,7 @@ const statusColors = {
 }
 
 interface TabCalendariosProps {
-  schoolId: string
+  schoolId: string | null
 }
 
 function gerarDiasCalendario(inicio: string, termino: string) {
@@ -144,6 +144,7 @@ export function TabCalendarios({ schoolId }: TabCalendariosProps) {
 
   // Funções de Ano Letivo
   async function handleCreateAno() {
+    if (!schoolId) { toast.error('Escola não selecionada'); return }
     if (!anoForm.descricao.trim()) {
       toast.error('O campo Descrição é obrigatório.')
       return

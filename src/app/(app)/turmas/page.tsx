@@ -36,8 +36,7 @@ export default function TurmasPage() {
   const [searchTerm, setSearchTerm] = useState('')
 
   return (
-    <>
-      <div className="container mx-auto py-8 px-4 md:pl-64">
+      <div className="container mx-auto py-8 px-4">
         <div className="flex items-center justify-between mb-8">
           <div className="animate-fade-in-up">
             <h1 className="text-3xl font-bold text-foreground">Turmas</h1>
@@ -123,6 +122,5 @@ export default function TurmasPage() {
           </div>
         </div>
       </div>
-    </>
   )
 }

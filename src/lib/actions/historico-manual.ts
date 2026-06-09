@@ -55,7 +55,7 @@ export async function adicionarHistoricoManual(
 }
 
 export async function getConfigEscola(
-  schoolId: string,
+  schoolId: string | null,
   pessoaId?: string | null
 ): Promise<{ permite_historico_manual: boolean }> {
   if (pessoaId) {
@@ -63,11 +63,13 @@ export async function getConfigEscola(
     await validarPermissaoServer(pessoaId, RESOURCE, 'visualizar')
   }
 
-  const { data } = await supabase
+  let query = supabase
     .from('schools')
     .select('permite_historico_manual')
-    .eq('id', schoolId)
-    .single()
+
+  if (schoolId) query = query.eq('id', schoolId)
+
+  const { data } = await query.single()
 
   return { permite_historico_manual: data?.permite_historico_manual || false }
 }

@@ -42,7 +42,6 @@ export default function QuadrosAulasPage() {
   }, [user, authLoading, router])
 
   useEffect(() => {
-    if (!schoolId) return
     getAnosLetivosAtivos(schoolId).then(anos => {
       setAnosLetivos(anos)
       const ativo = anos.find((a: any) => a.status === 'ativo')
@@ -53,12 +52,10 @@ export default function QuadrosAulasPage() {
   }, [schoolId])
 
   useEffect(() => {
-    if (!schoolId) return
     loadQuadros()
   }, [schoolId])
 
   const loadQuadros = async () => {
-    if (!schoolId) return
     setLoading(true)
     try {
       const data = await getQuadrosAulas(schoolId, anoFiltro || undefined)
@@ -72,7 +69,6 @@ export default function QuadrosAulasPage() {
   }
 
   useEffect(() => {
-    if (!schoolId) return
     loadQuadros()
   }, [anoFiltro])
 
@@ -98,7 +94,7 @@ export default function QuadrosAulasPage() {
   }
 
   return (
-    <div className="md:pl-64 container mx-auto py-8 px-4">
+    <div className="container mx-auto py-8 px-4">
       <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-xl font-semibold text-foreground">Quadro de Aulas</h1>

@@ -191,7 +191,7 @@ function CheckboxWithTooltip({
 }
 
 interface Props {
-  schoolId: string
+  schoolId: string | null
   editId: string | null
   onSaved: () => void
   onCancel: () => void

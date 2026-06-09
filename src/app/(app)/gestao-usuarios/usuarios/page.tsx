@@ -3,7 +3,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/components/providers/auth-provider'
-import { Sidebar } from '@/components/layout/sidebar'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -54,7 +53,6 @@ export default function UsuariosPage() {
   }, [user, authLoading, router])
 
   const loadPessoas = useCallback(async () => {
-    if (!schoolId) return
     setLoading(true)
     try {
       const data = await getPeople(schoolId, search || undefined, perfilFiltro || undefined, mostrarInativos)
@@ -125,7 +123,7 @@ export default function UsuariosPage() {
     loadPessoas()
   }
 
-  if (authLoading || !schoolId) {
+  if (authLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
@@ -138,8 +136,7 @@ export default function UsuariosPage() {
 
   return (
     <>
-      <Sidebar />
-      <div className="md:pl-64 container mx-auto py-8 px-4">
+      <div className=" container mx-auto py-8 px-4">
         <div className="flex items-center justify-between mb-8">
           <div className="animate-fade-in-up">
             <h1 className="text-3xl font-bold text-foreground">Usuários</h1>

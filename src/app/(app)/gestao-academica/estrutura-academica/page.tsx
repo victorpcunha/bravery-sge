@@ -3,7 +3,6 @@
 import { useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/components/providers/auth-provider'
-import { Sidebar } from '@/components/layout/sidebar'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { CalendarDays, GraduationCap, BookOpen } from 'lucide-react'
 import { TabCalendarios } from './TabCalendarios'
@@ -20,7 +19,7 @@ export default function GestaoAcademicaPage() {
     }
   }, [user, loading, router])
 
-  if (loading || !schoolId) {
+  if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="text-center">
@@ -32,9 +31,7 @@ export default function GestaoAcademicaPage() {
   }
 
   return (
-    <>
-      <Sidebar />
-      <div className="md:pl-64 container mx-auto py-8 px-4">
+      <div className="container mx-auto py-8 px-4">
         <div className="mb-8 animate-fade-in-up">
           <h1 className="text-3xl font-bold text-foreground">Gestão Acadêmica</h1>
           <p className="text-muted-foreground mt-1">
@@ -71,6 +68,5 @@ export default function GestaoAcademicaPage() {
           </TabsContent>
         </Tabs>
       </div>
-    </>
   )
 }

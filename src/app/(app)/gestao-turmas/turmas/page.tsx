@@ -4,7 +4,6 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/components/providers/auth-provider'
 import { usePermissoes } from '@/hooks/use-permissoes'
-import { Sidebar } from '@/components/layout/sidebar'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -119,7 +118,6 @@ export default function TurmasPage() {
   }, [user, authLoading, router])
 
   useEffect(() => {
-    if (!schoolId) return
     Promise.all([
       getAnoLetivoAtivo(schoolId),
       getEtapasEnsino(schoolId),
@@ -131,12 +129,10 @@ export default function TurmasPage() {
   }, [schoolId])
 
   useEffect(() => {
-    if (!schoolId) return
     loadTurmas()
   }, [schoolId])
 
   const loadTurmas = async () => {
-    if (!schoolId) return
     setLoading(true)
     try {
       const data = await getTurmas(schoolId, search || undefined)
@@ -146,7 +142,6 @@ export default function TurmasPage() {
   }
 
   useEffect(() => {
-    if (!schoolId) return
     const timer = setTimeout(() => loadTurmas(), 300)
     return () => clearTimeout(timer)
   }, [search])
@@ -334,7 +329,7 @@ export default function TurmasPage() {
 
   // Quando etapa de ensino muda, recarregar disciplinas
   useEffect(() => {
-    if (!form.etapa_ensino_id || !schoolId || !anoLetivo) {
+    if (!form.etapa_ensino_id || !anoLetivo) {
       setDisciplinasDisponiveis([])
       return
     }
@@ -345,7 +340,6 @@ export default function TurmasPage() {
 
   // Carregar profissionais disponíveis ao abrir modal (filtrar já adicionados)
   const handleOpenProfModal = async () => {
-    if (!schoolId) return
     setProfEditId(null)
     setProfFormPersonId('')
     setProfFormVinculoId('')
@@ -366,7 +360,6 @@ export default function TurmasPage() {
   }
 
   const handleEditProfissional = async (prof: any) => {
-    if (!schoolId) return
     setProfEditId(prof.id)
     setProfFormPersonId(prof.person_id)
     setProfFormVinculoId(prof.vinculo_profissional_id || '')
@@ -484,7 +477,7 @@ export default function TurmasPage() {
     return allEtapas
   }
 
-  if (authLoading || !schoolId) {
+  if (authLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
@@ -497,8 +490,7 @@ export default function TurmasPage() {
 
   return (
     <>
-      <Sidebar />
-      <div className="md:pl-64 container mx-auto py-8 px-4">
+      <div className=" container mx-auto py-8 px-4">
         {/* Header */}
         <div className="flex items-center justify-between mb-8">
           <div className="animate-fade-in-up">

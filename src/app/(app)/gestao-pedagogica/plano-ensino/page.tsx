@@ -4,7 +4,6 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/components/providers/auth-provider'
 import { usePermissoes } from '@/hooks/use-permissoes'
-import { Sidebar } from '@/components/layout/sidebar'
 import { listarPlanosEnsino, excluirPlanoEnsino, type PlanoEnsino } from '@/lib/actions/plano-ensino'
 import { getAnosLetivosAtivos } from '@/lib/actions/quadro-aulas'
 import { Button } from '@/components/ui/button'
@@ -29,12 +28,11 @@ export default function PlanoEnsinoPage() {
   }, [pid])
 
   useEffect(() => {
-    if (!schoolId) return
     getAnosLetivosAtivos(schoolId).then(setAnosLetivos).catch(() => {})
   }, [schoolId])
 
   useEffect(() => {
-    if (!schoolId || !permLoaded) return
+    if (!permLoaded) return
     setLoading(true)
     listarPlanosEnsino(schoolId, pessoaId, anoLetivoId || undefined)
       .then(setPlanos)
@@ -54,9 +52,7 @@ export default function PlanoEnsinoPage() {
   }
 
   return (
-    <>
-      <Sidebar />
-      <div className="md:pl-64 container mx-auto py-8 px-4 max-w-5xl">
+      <div className="container mx-auto py-8 px-4 max-w-5xl">
         <div className="flex items-center justify-between mb-8">
           <div>
             <h1 className="text-3xl font-bold text-foreground">Plano de Ensino</h1>
@@ -154,6 +150,5 @@ export default function PlanoEnsinoPage() {
           </div>
         )}
       </div>
-    </>
   )
 }

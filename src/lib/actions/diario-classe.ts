@@ -23,7 +23,7 @@ export type AlunoMatriculado = {
   data_saida?: string | null
 }
 
-export async function listarTurmasDiario(schoolId: string, pessoaId: string | null, anoLetivoId?: string) {
+export async function listarTurmasDiario(schoolId: string | null, pessoaId: string | null, anoLetivoId?: string) {
   let usaVinculo = false
 
   if (pessoaId) {
@@ -51,8 +51,9 @@ export async function listarTurmasDiario(schoolId: string, pessoaId: string | nu
       id, nome, capacidade_alunos, turnos,
       academico_etapas_ensino(etapa_nome, etapa_tipo)
     `)
-    .eq('school_id', schoolId)
     .eq('ativo', true)
+
+  if (schoolId) query = query.eq('school_id', schoolId)
 
   if (anoLetivoId) {
     query = query.eq('ano_letivo_id', anoLetivoId)
@@ -301,7 +302,7 @@ export type FrequenciaDia = {
 }
 
 export async function registrarFrequenciaDia(
-  schoolId: string,
+  schoolId: string | null,
   turmaId: string,
   alunoId: string,
   diaLetivo: string,
@@ -550,7 +551,7 @@ export type FrequenciaAula = {
 }
 
 export async function registrarFrequenciaAula(
-  schoolId: string,
+  schoolId: string | null,
   turmaId: string,
   horarioId: string,
   alunoId: string,

@@ -110,7 +110,7 @@ export async function getMetodoIdDaTurma(turmaId: string) {
 // ── FASE 5: Server Actions ──
 
 export async function salvarNota(
-  schoolId: string,
+  schoolId: string | null,
   turmaId: string,
   alunoId: string,
   disciplinaId: string,
@@ -176,7 +176,7 @@ export async function listarNotas(turmaId: string, periodo: number, disciplinaId
 }
 
 export async function salvarRecuperacao(
-  schoolId: string,
+  schoolId: string | null,
   turmaId: string,
   alunoId: string,
   disciplinaId: string,

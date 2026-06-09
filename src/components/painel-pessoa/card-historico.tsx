@@ -11,7 +11,7 @@ import ModalHistoricoManual from './modal-historico-manual'
 
 type Props = {
   pessoaId: string
-  schoolId: string
+  schoolId: string | null
   pessoaLogadaId: string | null
 }
 

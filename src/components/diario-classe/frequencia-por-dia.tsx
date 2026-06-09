@@ -95,9 +95,6 @@ export default function FrequenciaPorDia({ turmaId, alunos, disciplinas }: Props
     const key = `${alunoId}_${dia}`
     const current = frequencias.get(key) || null
     const newVal = nextStatus(current)
-
-    if (!schoolId) return
-
     const savingKey = `${key}_${newVal}`
     setSalvando(prev => new Set(prev).add(savingKey))
 
@@ -212,7 +209,6 @@ export default function FrequenciaPorDia({ turmaId, alunos, disciplinas }: Props
         <>
           <div className="flex items-center gap-2 mb-3">
             <Button variant="outline" size="sm" onClick={() => {
-              if (!schoolId) return
               let count = 0
               dias.forEach(dia => {
                 const diaStr = `${ano}-${String(mes).padStart(2, '0')}-${String(dia).padStart(2, '0')}`
@@ -242,7 +238,6 @@ export default function FrequenciaPorDia({ turmaId, alunos, disciplinas }: Props
               Marcar todos presentes
             </Button>
             <Button variant="outline" size="sm" onClick={() => {
-              if (!schoolId) return
               let count = 0
               dias.forEach(dia => {
                 const diaStr = `${ano}-${String(mes).padStart(2, '0')}-${String(dia).padStart(2, '0')}`

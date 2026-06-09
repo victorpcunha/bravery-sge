@@ -77,7 +77,7 @@ export default function MatriculasPage() {
   }
 
   useEffect(() => {
-    if (!schoolId || !filtroAno) return
+    if (!filtroAno) return
     loadTurmas()
   }, [schoolId, filtroAno])
 
@@ -91,7 +91,6 @@ export default function MatriculasPage() {
   }
 
   useEffect(() => {
-    if (!schoolId) return
     loadMatriculas()
   }, [schoolId, filtroAno, filtroTurma, filtroEtapa])
 
@@ -114,11 +113,11 @@ export default function MatriculasPage() {
   }
 
   if (authLoading) {
-    return <div className="md:pl-64 container mx-auto py-8 px-4"><div className="text-center text-muted-foreground">Carregando...</div></div>
+    return <div className="container mx-auto py-8 px-4"><div className="text-center text-muted-foreground">Carregando...</div></div>
   }
 
   return (
-    <div className="md:pl-64 container mx-auto py-8 px-4">
+    <div className="container mx-auto py-8 px-4">
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div>

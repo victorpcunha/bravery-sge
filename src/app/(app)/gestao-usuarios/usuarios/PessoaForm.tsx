@@ -142,7 +142,7 @@ const AREA_CONHECIMENTO_OPTIONS = areasConhecimento.filter(a => a.codigo).map(a 
 const AREA_POS_OPTIONS = areasPosGraduacao.map(a => ({ value: String(a.codigo), label: `${a.codigo} - ${a.nome}`, searchLabel: `${a.nome}` }))
 
 interface Props {
-  schoolId: string
+  schoolId: string | null
   person?: Person | null
   onSaved: () => void
   onCancel: () => void
@@ -244,7 +244,6 @@ export function PessoaForm({ schoolId: propSchoolId, person, onSaved, onCancel }
 
   // Carregar funções disponíveis
   useEffect(() => {
-    if (!schoolId) return
     getFuncoes(schoolId).then(setFuncoesOptions).catch(() => {})
     listarPerfis(schoolId, { ativo: true }).then(setPerfisAcesso).catch(() => {})
   }, [schoolId])
@@ -408,6 +407,8 @@ export function PessoaForm({ schoolId: propSchoolId, person, onSaved, onCancel }
       if (!/[^A-Za-z0-9]/.test(form.senha)) { toast.error('Senha deve conter pelo menos um caractere especial'); return }
       if (form.senha !== form.confirmacao_senha) { toast.error('Senhas não conferem'); return }
     }
+
+    if (!schoolId) { toast.error('Escola não selecionada'); return }
 
     setSaving(true)
     try {

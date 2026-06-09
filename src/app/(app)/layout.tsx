@@ -1,12 +1,15 @@
 'use client'
 
-import { Sidebar } from '@/components/layout/sidebar'
+import { SidebarProvider, SidebarInset } from '@/components/ui/sidebar'
+import { AppSidebar } from '@/components/layout/sidebar'
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   return (
-    <>
-      <Sidebar />
-      {children}
-    </>
+    <SidebarProvider defaultOpen={true}>
+      <AppSidebar />
+      <SidebarInset>
+        {children}
+      </SidebarInset>
+    </SidebarProvider>
   )
 }

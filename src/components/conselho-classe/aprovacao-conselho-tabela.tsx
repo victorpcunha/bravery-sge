@@ -12,7 +12,7 @@ type Props = {
   alunos: AlunoReprovado[]
   loading: boolean
   error: string | null
-  schoolId: string
+  schoolId: string | null
   pessoaId: string | null
   readonly: boolean
   onToggle: () => void

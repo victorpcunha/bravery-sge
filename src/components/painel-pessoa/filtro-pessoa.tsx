@@ -7,7 +7,7 @@ import { Loader2, Search, ChevronDown } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 type Props = {
-  schoolId: string
+  schoolId: string | null
   pessoaLogadaId: string | null
   onSelect: (pessoa: PessoaResumida) => void
   selectedId?: string

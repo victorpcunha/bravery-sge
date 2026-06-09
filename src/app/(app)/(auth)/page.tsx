@@ -3,7 +3,6 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/components/providers/auth-provider'
-import { Sidebar } from '@/components/layout/sidebar'
 import { PageHeader } from '@/components/layout/page-header'
 import { StatCard } from '@/components/ui/stat-card'
 import { PageSection } from '@/components/layout/page-section'
@@ -53,9 +52,7 @@ export default function DashboardPage() {
     : allSchools.find(s => s.id === schoolId)?.nome_escola || 'Escola'
 
   return (
-    <>
-      <Sidebar />
-      <div className="md:pl-64 min-h-screen bg-background">
+      <div className="min-h-screen bg-background">
         <div className="container mx-auto py-8 px-4 max-w-6xl">
           <PageHeader
             icon={School}
@@ -101,6 +98,5 @@ export default function DashboardPage() {
           </PageSection>
         </div>
       </div>
-    </>
   )
 }

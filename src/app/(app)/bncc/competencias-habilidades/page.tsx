@@ -126,7 +126,7 @@ export default function CompetenciasHabilidadesPage() {
   const compKeys = Object.keys(habilidadesPorComp).sort((a, b) => Number(a) - Number(b))
 
   return (
-    <div className="container mx-auto py-8 px-4 md:pl-64">
+    <div className="container mx-auto py-8 px-4">
       <div className="mb-8 animate-fade-in-up">
         <h1 className="text-3xl font-bold text-foreground">Competências e Habilidades</h1>
         <p className="text-muted-foreground mt-1">Habilidades da BNCC do Ensino Médio{isLp && ' — Língua Portuguesa por Campo de Atuação'}</p>

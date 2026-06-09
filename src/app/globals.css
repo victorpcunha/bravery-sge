@@ -180,6 +180,16 @@
   }
 }
 
+/* Sidebar hover expand on collapsed state */
+@media (min-width: 768px) {
+  [data-state="collapsed"] [data-slot="sidebar-container"] {
+    transition: width 200ms cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  [data-state="collapsed"]:hover [data-slot="sidebar-container"] {
+    width: var(--sidebar-width) !important;
+  }
+}
+
 /* Glassmorphism */
 .glass {
   background: rgba(255, 255, 255, 0.85);

@@ -98,12 +98,14 @@ export interface MetodoCompleto {
   parecer: MetodoParecer | null
 }
 
-export async function getMetodos(schoolId: string) {
-  const { data, error } = await supabase
+export async function getMetodos(schoolId: string | null) {
+  let query = supabase
     .from('academico_metodos_avaliacao')
     .select('*')
-    .eq('school_id', schoolId)
-    .order('created_at', { ascending: false })
+
+  if (schoolId) query = query.eq('school_id', schoolId)
+
+  const { data, error } = await query.order('created_at', { ascending: false })
 
   if (error) throw error
   return data as MetodoAvaliacao[]
@@ -184,7 +186,7 @@ export type SaveMetodoPayload = {
   niveis: Partial<MetodoNivel>[]
 }
 
-export async function saveMetodo(schoolId: string, payload: SaveMetodoPayload) {
+export async function saveMetodo(schoolId: string | null, payload: SaveMetodoPayload) {
   const { id: _, ...principalData } = payload.principal
   const isUpdate = !!payload.principal.id
 

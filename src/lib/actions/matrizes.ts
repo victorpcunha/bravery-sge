@@ -77,11 +77,12 @@ export type Disciplina = {
 // Matrizes Curriculares
 // ============================================
 
-export async function getMatrizes(schoolId: string, anoLetivoId?: string, etapaId?: string) {
+export async function getMatrizes(schoolId: string | null, anoLetivoId?: string, etapaId?: string) {
   let query = supabase
     .from('academico_matrizes_curriculares')
     .select('*, academico_etapas_ensino(etapa_nome, etapa_tipo), academico_metodos_avaliacao(nome)')
-    .eq('school_id', schoolId)
+
+  if (schoolId) query = query.eq('school_id', schoolId)
 
   if (anoLetivoId) {
     query = query.eq('ano_letivo_id', anoLetivoId)
@@ -156,12 +157,14 @@ export async function toggleMatrizAtiva(id: string, ativa: boolean) {
 // Métodos de Avaliação
 // ============================================
 
-export async function getMetodosAvaliacao(schoolId: string) {
-  const { data, error } = await supabase
+export async function getMetodosAvaliacao(schoolId: string | null) {
+  let query = supabase
     .from('academico_metodos_avaliacao')
     .select('*')
-    .eq('school_id', schoolId)
-    .order('nome')
+
+  if (schoolId) query = query.eq('school_id', schoolId)
+
+  const { data, error } = await query.order('nome')
 
   if (error) throw error
   return data as MetodoAvaliacao[]
@@ -171,13 +174,14 @@ export async function getMetodosAvaliacao(schoolId: string) {
 // Disciplinas
 // ============================================
 
-export async function getDisciplinas(schoolId: string, tipoEnsino?: string) {
+export async function getDisciplinas(schoolId: string | null, tipoEnsino?: string) {
   let query = supabase
     .from('academico_disciplinas')
     .select('*')
-    .eq('school_id', schoolId)
     .eq('ativo', true)
     .order('nome')
+
+  if (schoolId) query = query.eq('school_id', schoolId)
 
   if (tipoEnsino && tipoEnsino !== 'todos') {
     query = query.or(`tipo_ensino.eq.${tipoEnsino},tipo_ensino.eq.todos`)

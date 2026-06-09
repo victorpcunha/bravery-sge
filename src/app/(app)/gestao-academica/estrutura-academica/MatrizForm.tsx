@@ -47,7 +47,7 @@ function LabelWithTooltip({ label, tooltip }: { label: string; tooltip: string }
 }
 
 interface Props {
-  schoolId: string
+  schoolId: string | null
   matrizId?: string | null
   onSaved: () => void
   onCancel: () => void
@@ -216,6 +216,7 @@ export function MatrizForm({ schoolId, matrizId, onSaved, onCancel }: Props) {
   }
 
   const handleSave = async () => {
+    if (!schoolId) { toast.error('Escola não selecionada'); return }
     if (!form.descricao.trim()) { toast.error('Descrição é obrigatória'); return }
     if (!form.anoLetivoId) { toast.error('Ano letivo é obrigatório'); return }
     if (!form.metodoId) { toast.error('Método de avaliação é obrigatório'); return }

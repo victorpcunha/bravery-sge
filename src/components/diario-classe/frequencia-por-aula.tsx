@@ -128,9 +128,6 @@ export default function FrequenciaPorAula({ turmaId, alunos, disciplinas }: Prop
     const key = `${alunoId}_${horarioId}_${dataAula}`
     const current = frequencias.get(key) || null
     const newVal = nextStatus(current)
-
-    if (!schoolId) return
-
     const savingKey = `${key}_${newVal}`
     setSalvando(prev => new Set(prev).add(savingKey))
 
@@ -162,7 +159,6 @@ export default function FrequenciaPorAula({ turmaId, alunos, disciplinas }: Prop
   }
 
   const handleMarcarTodos = async (horarioId: string, dataAula: string, presente: boolean) => {
-    if (!schoolId) return
     const status = presente ? 'P' : null
     const alunosValidos = alunos.filter(aluno => {
       if (aluno.data_matricula && dataAula < aluno.data_matricula) return false

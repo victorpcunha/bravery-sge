@@ -91,7 +91,7 @@ export async function getIndicadoresDaTurma(
 }
 
 export async function salvarAvaliacaoIndicador(
-  schoolId: string,
+  schoolId: string | null,
   turmaId: string,
   alunoId: string,
   indicadorId: string,

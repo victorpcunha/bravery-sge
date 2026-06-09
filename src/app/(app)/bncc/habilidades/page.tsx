@@ -63,7 +63,6 @@ export default function HabilidadesPage() {
   }, [disciplina, etapa])
 
   async function loadDisciplinas() {
-    if (!schoolId) return
     try {
       const supabase = getSupabaseClient()
       const { data } = await supabase
@@ -80,7 +79,6 @@ export default function HabilidadesPage() {
   }
 
   async function loadEtapas() {
-    if (!schoolId) return
     try {
       const supabase = getSupabaseClient()
       const { data } = await supabase
@@ -175,7 +173,7 @@ export default function HabilidadesPage() {
   const totalUnidades = Object.keys(groupedByUnidade).length
 
   return (
-    <div className="container mx-auto py-8 px-4 md:pl-64">
+    <div className="container mx-auto py-8 px-4">
       <div className="mb-8 animate-fade-in-up">
         <div className="flex items-center justify-between">
           <div>

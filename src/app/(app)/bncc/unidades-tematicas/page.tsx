@@ -50,7 +50,6 @@ export default function UnidadesTematicasPage() {
   }, [disciplina, etapa])
 
   async function loadDisciplinas() {
-    if (!schoolId) return
     try {
       const supabase = getSupabaseClient()
       const { data } = await supabase
@@ -67,7 +66,6 @@ export default function UnidadesTematicasPage() {
   }
 
   async function loadEtapas() {
-    if (!schoolId) return
     try {
       const supabase = getSupabaseClient()
       const { data } = await supabase
@@ -160,7 +158,7 @@ export default function UnidadesTematicasPage() {
   const totalHabilidades = unidades.reduce((acc, u) => acc + u.habilidades_count, 0)
 
   return (
-    <div className="container mx-auto py-8 px-4 md:pl-64">
+    <div className="container mx-auto py-8 px-4">
       <div className="mb-8 animate-fade-in-up">
         <div className="flex items-center justify-between">
           <div>

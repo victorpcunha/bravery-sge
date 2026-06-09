@@ -3,7 +3,6 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/components/providers/auth-provider'
-import { Sidebar } from '@/components/layout/sidebar'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -30,17 +29,14 @@ export default function FuncoesPage() {
   }, [user, authLoading, router])
 
   useEffect(() => {
-    if (!schoolId) return
     inicializarFuncoesPadrao(schoolId).catch(() => { /* já existem */ })
   }, [schoolId])
 
   useEffect(() => {
-    if (!schoolId) return
     loadFuncoes()
   }, [schoolId])
 
   const loadFuncoes = async () => {
-    if (!schoolId) return
     setLoading(true)
     try {
       const data = await getFuncoes(schoolId, false)
@@ -94,7 +90,7 @@ export default function FuncoesPage() {
     }
   }
 
-  if (authLoading || !schoolId) {
+  if (authLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
@@ -107,8 +103,7 @@ export default function FuncoesPage() {
 
   return (
     <>
-      <Sidebar />
-      <div className="md:pl-64 container mx-auto py-8 px-4">
+      <div className=" container mx-auto py-8 px-4">
         <div className="flex items-center justify-between mb-8">
           <div className="animate-fade-in-up">
             <div className="flex items-center gap-3">

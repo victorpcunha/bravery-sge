@@ -4,7 +4,6 @@ import { useState, useEffect } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { useAuth } from '@/components/providers/auth-provider'
 import { usePermissoes } from '@/hooks/use-permissoes'
-import { Sidebar } from '@/components/layout/sidebar'
 import { getAlunosDaTurmaComPeriodo, getDisciplinasDiario, gerarNumeroChamada, getMetodoAvaliacaoDaTurma, getTurmaDiarioInfo, type AlunoMatriculado, type TurmaDiarioInfo } from '@/lib/actions/diario-classe'
 import FrequenciaPorDia from '@/components/diario-classe/frequencia-por-dia'
 import FrequenciaPorAula from '@/components/diario-classe/frequencia-por-aula'
@@ -89,9 +88,7 @@ export default function TurmaDiarioPage() {
   const quantidadePeriodosNumerico = metodo?.quantidade_periodos_numerico || 4
 
   return (
-    <>
-      <Sidebar />
-      <div className="md:pl-64 container mx-auto py-8 px-4 max-w-5xl">
+      <div className="container mx-auto py-8 px-4 max-w-5xl">
         <Button variant="ghost" className="mb-4" onClick={() => router.push('/gestao-pedagogica/diario-classe')}>
           <ChevronLeft className="h-4 w-4 mr-1" />
           Voltar
@@ -331,6 +328,5 @@ export default function TurmaDiarioPage() {
           </>
         )}
       </div>
-    </>
   )
 }

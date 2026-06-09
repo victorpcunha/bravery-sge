@@ -18,7 +18,7 @@ export type FiltrosConselho = {
 }
 
 type Props = {
-  schoolId: string
+  schoolId: string | null
   onFilter: (filtros: FiltrosConselho) => void
   temPeriodo?: boolean
 }
@@ -35,7 +35,6 @@ export default function ConselhoClasseFiltros({ schoolId, onFilter, temPeriodo =
   const [loadingDisciplinas, setLoadingDisciplinas] = useState(false)
 
   useEffect(() => {
-    if (!schoolId) return
     getAnosLetivosAtivos(schoolId).then(setAnosLetivos).catch(() => {})
   }, [schoolId])
 

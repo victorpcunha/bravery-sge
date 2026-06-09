@@ -4,7 +4,6 @@ import { useState, useEffect } from 'react'
 import { useAuth } from '@/components/providers/auth-provider'
 import { usePermissoes } from '@/hooks/use-permissoes'
 import { getTurmasDaPessoa, type PessoaResumida, type TurmaResumida } from '@/lib/actions/painel-pessoa'
-import { Sidebar } from '@/components/layout/sidebar'
 import FiltroPessoa from '@/components/painel-pessoa/filtro-pessoa'
 import FiltroTurma from '@/components/painel-pessoa/filtro-turma'
 import CardIdentificacao from '@/components/painel-pessoa/card-identificacao'
@@ -38,7 +37,6 @@ export default function PainelAlunoPage() {
 
   const handleSelectPessoa = async (pessoa: PessoaResumida) => {
     setPessoaSelecionada(pessoa)
-    if (!schoolId) return
     setLoadingTurmas(true)
     try {
       const data = await getTurmasDaPessoa(pessoa.id, schoolId, pessoaId)
@@ -58,22 +56,17 @@ export default function PainelAlunoPage() {
 
   if (!permLoaded) {
     return (
-      <>
-        <Sidebar />
-        <div className="md:pl-64 container mx-auto py-8 px-4 max-w-5xl">
+        <div className="container mx-auto py-8 px-4 max-w-5xl">
           <div className="animate-pulse space-y-4">
             <div className="h-8 w-48 bg-muted rounded" />
             <div className="h-10 w-full bg-muted rounded-lg" />
           </div>
         </div>
-      </>
     )
   }
 
   return (
-    <>
-      <Sidebar />
-      <div className="md:pl-64 container mx-auto py-8 px-4 max-w-5xl">
+      <div className="container mx-auto py-8 px-4 max-w-5xl">
         <Button variant="ghost" className="mb-4" onClick={() => router.push('/gestao-usuarios')}>
           <ChevronLeft className="h-4 w-4 mr-1" />
           Voltar
@@ -169,6 +162,5 @@ export default function PainelAlunoPage() {
           </Card>
         )}
       </div>
-    </>
   )
 }
