@@ -7,12 +7,18 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog'
-import { Plus, Pencil, Trash2, Building2, ChevronLeft } from 'lucide-react'
+import { Table, TableHeader, TableBody, TableHead, TableRow, TableCell } from '@/components/ui/table'
+import { Plus, Pencil, Trash2, Building2 } from 'lucide-react'
 import { getFuncoes, createFuncao, updateFuncao, deleteFuncao, inicializarFuncoesPadrao, type FuncaoProfissional } from '@/lib/actions/funcoes-profissionais'
 import { CENSO_FUNCOES } from '@/data/funcoes-censo'
 import { toast } from 'sonner'
+import { PageContainer } from '@/components/layout/page-container'
+import { PageHeader } from '@/components/layout/page-header'
+import { PageSection } from '@/components/layout/page-section'
+import { StatusBadge } from '@/components/feedback/status-badge'
+import { ConfirmDialog } from '@/components/feedback/confirm-dialog'
+import { EmptyState } from '@/components/ui/empty-state'
 
 export default function FuncoesPage() {
   const { user, loading: authLoading, schoolId } = useAuth()
@@ -23,6 +29,7 @@ export default function FuncoesPage() {
   const [editItem, setEditItem] = useState<FuncaoProfissional | null>(null)
   const [formNome, setFormNome] = useState('')
   const [formTipoCenso, setFormTipoCenso] = useState('')
+  const [deleteId, setDeleteId] = useState<string | null>(null)
 
   useEffect(() => {
     if (!authLoading && !user) router.push('/login')
@@ -79,107 +86,98 @@ export default function FuncoesPage() {
     }
   }
 
-  const handleDelete = async (id: string) => {
-    if (!confirm('Excluir esta função permanentemente?')) return
+  const handleDelete = async () => {
+    if (!deleteId) return
     try {
-      await deleteFuncao(id)
+      await deleteFuncao(deleteId)
       toast.success('Função excluída')
       loadFuncoes()
     } catch {
       toast.error('Erro ao excluir')
+    } finally {
+      setDeleteId(null)
     }
   }
 
   if (authLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4" />
-          <p className="text-muted-foreground">Carregando...</p>
+      <PageContainer>
+        <div className="flex items-center justify-center py-24">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4" />
+            <p className="text-muted-foreground">Carregando...</p>
+          </div>
         </div>
-      </div>
+      </PageContainer>
     )
   }
 
   return (
     <>
-      <div className=" container mx-auto py-8 px-4">
-        <div className="flex items-center justify-between mb-8">
-          <div className="animate-fade-in-up">
-            <div className="flex items-center gap-3">
-              <Button variant="ghost" size="icon" onClick={() => router.push('/gestao-usuarios/usuarios')} className="hover:bg-muted">
-                <ChevronLeft className="h-5 w-5" />
-              </Button>
-              <div>
-                <h1 className="text-3xl font-bold text-foreground">Funções</h1>
-                <p className="text-muted-foreground mt-1">
-                  Cadastro de funções profissionais vinculadas ao Censo INEP
-                </p>
-              </div>
-            </div>
-          </div>
-          <Button onClick={handleOpenNew} className="bg-primary hover:bg-primary/90 animate-fade-in-up">
-            <Plus className="mr-2 h-4 w-4" /> Nova Função
-          </Button>
-        </div>
+      <PageContainer>
+        <PageHeader
+          title="Funções"
+          description="Cadastro de funções profissionais vinculadas ao Censo INEP"
+          icon={Building2}
+          breadcrumbs={[
+            { label: 'Gestão de Usuários', href: '/gestao-usuarios/usuarios' },
+            { label: 'Funções' }
+          ]}
+          actions={<Button onClick={handleOpenNew}><Plus className="mr-2 h-4 w-4" /> Nova Função</Button>}
+        />
 
-        <Card className="border-border shadow-[0_2px_8px_rgba(0,0,0,0.06)]">
-          <CardHeader>
-            <CardTitle className="text-lg flex items-center gap-2">
-              <Building2 className="h-5 w-5 text-primary" />
-              Funções cadastradas ({funcoes.length})
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="p-0">
-            {loading ? (
-              <div className="py-12 text-center text-muted-foreground">Carregando...</div>
-            ) : funcoes.length === 0 ? (
-              <div className="py-12 text-center text-muted-foreground">
-                Nenhuma função cadastrada. Clique em "Nova Função".
-              </div>
-            ) : (
-              <div className="overflow-x-auto">
-                <table className="w-full">
-                  <thead>
-                    <tr className="border-b border-border text-xs text-muted-foreground uppercase tracking-wider">
-                      <th className="text-left px-6 py-3 font-medium">Nome</th>
-                      <th className="text-left px-6 py-3 font-medium">Tipo Censo INEP</th>
-                      <th className="text-left px-6 py-3 font-medium">Status</th>
-                      <th className="text-right px-6 py-3 font-medium">Ações</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {funcoes.map(f => {
-                      const censo = CENSO_FUNCOES.find(c => c.codigo === f.tipo_censo)
-                      return (
-                        <tr key={f.id} className="border-b border-border hover:bg-muted/40 transition-colors">
-                          <td className="px-6 py-4 text-sm font-medium">{f.nome}</td>
-                          <td className="px-6 py-4 text-sm text-muted-foreground">
-                            {censo ? `Campo ${censo.codigo} - ${censo.nome}` : f.tipo_censo || '-'}
-                          </td>
-                          <td className="px-6 py-4">
-                            <span className={`text-xs px-2 py-0.5 rounded-full ${f.ativo ? 'bg-success/10 text-success' : 'bg-muted text-muted-foreground'}`}>
-                              {f.ativo ? 'Ativa' : 'Inativa'}
-                            </span>
-                          </td>
-                          <td className="px-6 py-4 text-right">
-                            <Button variant="ghost" size="icon-sm" onClick={() => handleOpenEdit(f)}>
-                              <Pencil className="h-4 w-4" />
-                            </Button>
-                            <Button variant="ghost" size="icon-sm" onClick={() => handleDelete(f.id)}>
-                              <Trash2 className="h-4 w-4 text-destructive" />
-                            </Button>
-                          </td>
-                        </tr>
-                      )
-                    })}
-                  </tbody>
-                </table>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-      </div>
+        {loading ? (
+          <div className="flex items-center justify-center py-12">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
+          </div>
+        ) : funcoes.length === 0 ? (
+          <EmptyState
+            icon={Building2}
+            title="Nenhuma função cadastrada"
+            description="Clique em 'Nova Função' para adicionar."
+            action={<Button onClick={handleOpenNew}><Plus className="mr-2 h-4 w-4" /> Nova Função</Button>}
+          />
+        ) : (
+          <PageSection variant="flush" title={`Funções cadastradas (${funcoes.length})`}>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="text-xs uppercase tracking-wider">Nome</TableHead>
+                  <TableHead className="text-xs uppercase tracking-wider">Tipo Censo INEP</TableHead>
+                  <TableHead className="text-xs uppercase tracking-wider">Status</TableHead>
+                  <TableHead className="text-xs uppercase tracking-wider text-right">Ações</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {funcoes.map(f => {
+                  const censo = CENSO_FUNCOES.find(c => c.codigo === f.tipo_censo)
+                  return (
+                    <TableRow key={f.id}>
+                      <TableCell className="font-medium">{f.nome}</TableCell>
+                      <TableCell className="text-muted-foreground">
+                        {censo ? `Campo ${censo.codigo} - ${censo.nome}` : f.tipo_censo || '-'}
+                      </TableCell>
+                      <TableCell>
+                        <StatusBadge status={f.ativo ? 'success' : 'muted'}>
+                          {f.ativo ? 'Ativa' : 'Inativa'}
+                        </StatusBadge>
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <Button variant="ghost" size="icon-sm" onClick={() => handleOpenEdit(f)}>
+                          <Pencil className="h-4 w-4" />
+                        </Button>
+                        <Button variant="ghost" size="icon-sm" onClick={() => setDeleteId(f.id)}>
+                          <Trash2 className="h-4 w-4 text-destructive" />
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  )
+                })}
+              </TableBody>
+            </Table>
+          </PageSection>
+        )}
+      </PageContainer>
 
       <Dialog open={modalOpen} onOpenChange={setModalOpen}>
         <DialogContent>
@@ -214,6 +212,16 @@ export default function FuncoesPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <ConfirmDialog
+        open={!!deleteId}
+        onOpenChange={(open) => !open && setDeleteId(null)}
+        title="Excluir função"
+        description="Deseja excluir esta função permanentemente? Esta ação não pode ser desfeita."
+        confirmLabel="Excluir"
+        variant="destructive"
+        onConfirm={handleDelete}
+      />
     </>
   )
 }

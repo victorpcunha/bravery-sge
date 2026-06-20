@@ -6,17 +6,21 @@ import { useAuth } from '@/components/providers/auth-provider'
 import { usePermissoes } from '@/hooks/use-permissoes'
 import { Button } from '@/components/ui/button'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
-import { Plus, Search, GraduationCap, Clock, Calendar, Eye, Pencil, Trash2 } from 'lucide-react'
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
+import { Plus, GraduationCap, Calendar, Pencil, Trash2, Eye } from 'lucide-react'
 import { getQuadrosAulas, getAnosLetivosAtivos, deleteQuadroAula, toggleQuadroAulaAtivo } from '@/lib/actions/quadro-aulas'
 import { toast } from 'sonner'
+import { PageContainer } from '@/components/layout/page-container'
+import { PageHeader } from '@/components/layout/page-header'
+import { PageSection } from '@/components/layout/page-section'
+import { StatusBadge } from '@/components/feedback/status-badge'
+import { EmptyState } from '@/components/ui/empty-state'
 
-const STATUS_MAP: Record<string, { label: string; variant: 'default' | 'secondary' | 'outline' | 'destructive' }> = {
-  futuro: { label: 'Futuro', variant: 'outline' },
-  ativo: { label: 'Ativo', variant: 'default' },
-  inativo: { label: 'Inativo', variant: 'secondary' },
-  encerrado: { label: 'Encerrado', variant: 'destructive' },
+const STATUS_MAP: Record<string, { label: string; status: 'success' | 'muted' | 'info' | 'destructive' }> = {
+  futuro: { label: 'Futuro', status: 'info' },
+  ativo: { label: 'Ativo', status: 'success' },
+  inativo: { label: 'Inativo', status: 'muted' },
+  encerrado: { label: 'Encerrado', status: 'destructive' },
 }
 
 const DIAS_NOME = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb']
@@ -93,109 +97,126 @@ export default function QuadrosAulasPage() {
     }
   }
 
-  return (
-    <div className="container mx-auto py-8 px-4">
-      <div className="flex items-center justify-between mb-6">
-        <div>
-          <h1 className="text-xl font-semibold text-foreground">Quadro de Aulas</h1>
-          <p className="text-sm text-muted-foreground mt-0.5">Grade horária das turmas</p>
+  if (authLoading) {
+    return (
+      <PageContainer>
+        <div className="flex items-center justify-center py-16">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
         </div>
-        <Button
-          className="bg-primary hover:bg-primary/90 text-white"
-          onClick={() => router.push('/gestao-turmas/quadro-aulas/cadastro')}
-        >
-          <Plus className="h-4 w-4 mr-1.5" />
-          Novo Quadro de Aula
-        </Button>
-      </div>
+      </PageContainer>
+    )
+  }
 
-      <Card className="border-border shadow-[0_2px_8px_rgba(0,0,0,0.06)]">
-        <CardHeader className="bg-muted/40 border-b border-border">
-          <div className="flex items-center gap-3">
-            <Select value={anoFiltro} onValueChange={setAnoFiltro}>
-              <SelectTrigger className="w-64 border-border">
-                <SelectValue placeholder="Filtrar por ano letivo" />
-              </SelectTrigger>
-              <SelectContent>
-                {anosLetivos.map((ano: any) => (
-                  <SelectItem key={ano.id} value={ano.id}>{ano.descricao}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+  return (
+    <PageContainer>
+      <PageHeader
+        icon={GraduationCap}
+        title="Quadro de Aulas"
+        description="Grade horária das turmas"
+        actions={
+          <Button onClick={() => router.push('/gestao-turmas/quadro-aulas/cadastro')}>
+            <Plus className="h-4 w-4 mr-1.5" />
+            Novo Quadro de Aula
+          </Button>
+        }
+      />
+
+      <PageSection
+        title="Quadros cadastrados"
+        variant="flush"
+        actions={
+          <Select value={anoFiltro} onValueChange={setAnoFiltro}>
+            <SelectTrigger className="w-64">
+              <SelectValue placeholder="Filtrar por ano letivo" />
+            </SelectTrigger>
+            <SelectContent>
+              {anosLetivos.map((ano: any) => (
+                <SelectItem key={ano.id} value={ano.id}>{ano.descricao}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        }
+      >
+        {loading ? (
+          <div className="py-12 flex items-center justify-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
           </div>
-        </CardHeader>
-        <CardContent className="p-0">
-          {loading ? (
-            <div className="p-8 text-center text-muted-foreground text-sm">Carregando...</div>
-          ) : quadros.length === 0 ? (
-            <div className="p-8 text-center text-muted-foreground text-sm">Nenhum quadro de aulas encontrado</div>
-          ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="border-b border-border bg-muted/60">
-                    <th className="text-left px-4 py-3 font-medium text-muted-foreground">Turma</th>
-                    <th className="text-left px-4 py-3 font-medium text-muted-foreground">Ano Letivo</th>
-                    <th className="text-left px-4 py-3 font-medium text-muted-foreground">Vigência</th>
-                    <th className="text-left px-4 py-3 font-medium text-muted-foreground">Status</th>
-                    <th className="text-left px-4 py-3 font-medium text-muted-foreground">Última Alteração</th>
-                    <th className="text-right px-4 py-3 font-medium text-muted-foreground">Ações</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {quadros.map((q: any) => {
-                    const st = STATUS_MAP[q.status] || STATUS_MAP.futuro
-                    return (
-                      <tr key={q.id} className="border-b border-border hover:bg-muted/50 transition-colors">
-                        <td className="px-4 py-3">
-                          <div className="flex items-center gap-2">
-                            <GraduationCap className="h-4 w-4 text-muted-foreground" />
-                            <span className="font-medium text-foreground">
-                              {q.turma?.codigo_inep ? `${q.turma.codigo_inep} - ` : ''}{q.turma?.nome}
-                            </span>
-                          </div>
-                        </td>
-                        <td className="px-4 py-3 text-muted-foreground">{q.academico_anos_letivos?.descricao}</td>
-                        <td className="px-4 py-3">
-                          <div className="flex items-center gap-1.5 text-muted-foreground">
-                            <Calendar className="h-3.5 w-3.5" />
-                            {formatDate(q.data_inicial)} - {formatDate(q.data_final)}
-                          </div>
-                        </td>
-                        <td className="px-4 py-3">
-                          <Badge variant={st.variant}>{st.label}</Badge>
-                        </td>
-                        <td className="px-4 py-3 text-muted-foreground text-xs">
-                          {q.updated_at ? new Date(q.updated_at).toLocaleString('pt-BR') : '-'}
-                        </td>
-                        <td className="px-4 py-3 text-right">
-                          <div className="flex items-center justify-end gap-1">
-                            <Button variant="ghost" size="icon" className="h-8 w-8"
-                              onClick={() => router.push(`/gestao-turmas/quadro-aulas/cadastro?id=${q.id}`)}
-                              title="Visualizar/Editar">
-                              <Eye className="h-4 w-4 text-muted-foreground" />
-                            </Button>
-                            <Button variant="ghost" size="icon" className="h-8 w-8"
-                              onClick={() => handleToggleAtivo(q.id, !q.ativo)}
-                              title={q.ativo ? 'Inativar' : 'Reativar'}>
-                              <Pencil className="h-4 w-4 text-muted-foreground" />
-                            </Button>
-                            <Button variant="ghost" size="icon" className="h-8 w-8"
-                              onClick={() => handleDelete(q.id)}
-                              title="Excluir">
-                              <Trash2 className="h-4 w-4 text-destructive" />
-                            </Button>
-                          </div>
-                        </td>
-                      </tr>
-                    )
-                  })}
-                </tbody>
-              </table>
-            </div>
-          )}
-        </CardContent>
-      </Card>
-    </div>
+        ) : quadros.length === 0 ? (
+          <EmptyState
+            icon={GraduationCap}
+            title="Nenhum quadro de aulas encontrado"
+            description="Crie um novo quadro de aulas para organizar a grade horária da sua escola."
+            action={
+              <Button onClick={() => router.push('/gestao-turmas/quadro-aulas/cadastro')}>
+                <Plus className="h-4 w-4 mr-1.5" />
+                Novo Quadro de Aula
+              </Button>
+            }
+          />
+        ) : (
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Turma</TableHead>
+                <TableHead>Ano Letivo</TableHead>
+                <TableHead>Vigência</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead>Última Alteração</TableHead>
+                <TableHead className="text-right">Ações</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {quadros.map((q: any) => {
+                const st = STATUS_MAP[q.status] || STATUS_MAP.futuro
+                return (
+                  <TableRow key={q.id}>
+                    <TableCell>
+                      <div className="flex items-center gap-2">
+                        <GraduationCap className="h-4 w-4 text-muted-foreground" />
+                        <span className="font-medium">
+                          {q.turma?.codigo_inep ? `${q.turma.codigo_inep} - ` : ''}{q.turma?.nome}
+                        </span>
+                      </div>
+                    </TableCell>
+                    <TableCell className="text-muted-foreground">{q.academico_anos_letivos?.descricao}</TableCell>
+                    <TableCell>
+                      <div className="flex items-center gap-1.5 text-muted-foreground">
+                        <Calendar className="h-3.5 w-3.5" />
+                        {formatDate(q.data_inicial)} - {formatDate(q.data_final)}
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <StatusBadge status={st.status}>{st.label}</StatusBadge>
+                    </TableCell>
+                    <TableCell className="text-muted-foreground text-xs">
+                      {q.updated_at ? new Date(q.updated_at).toLocaleString('pt-BR') : '-'}
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <div className="flex items-center justify-end gap-1">
+                        <Button variant="ghost" size="icon" className="h-8 w-8"
+                          onClick={() => router.push(`/gestao-turmas/quadro-aulas/cadastro?id=${q.id}`)}
+                          title="Visualizar/Editar">
+                          <Eye className="h-4 w-4 text-muted-foreground" />
+                        </Button>
+                        <Button variant="ghost" size="icon" className="h-8 w-8"
+                          onClick={() => handleToggleAtivo(q.id, !q.ativo)}
+                          title={q.ativo ? 'Inativar' : 'Reativar'}>
+                          <Pencil className="h-4 w-4 text-muted-foreground" />
+                        </Button>
+                        <Button variant="ghost" size="icon" className="h-8 w-8"
+                          onClick={() => handleDelete(q.id)}
+                          title="Excluir">
+                          <Trash2 className="h-4 w-4 text-destructive" />
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                )
+              })}
+            </TableBody>
+          </Table>
+        )}
+      </PageSection>
+    </PageContainer>
   )
 }

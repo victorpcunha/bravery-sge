@@ -9,11 +9,14 @@ import { listarTurmasDiario } from '@/lib/actions/diario-classe'
 import { getDisciplinasDiario } from '@/lib/actions/diario-classe'
 import { getAnosLetivosAtivos } from '@/lib/actions/quadro-aulas'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Label } from '@/components/ui/label'
 import { Input } from '@/components/ui/input'
-import { ArrowLeft, Check, GraduationCap, Loader2 } from 'lucide-react'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { PageContainer } from '@/components/layout/page-container'
+import { PageHeader } from '@/components/layout/page-header'
+import { FormCard } from '@/components/layout/form-card'
+import { ArrowLeft, Check, GraduationCap, BookOpen, Loader2 } from 'lucide-react'
 import { toast } from 'sonner'
 
 export default function CriarPlanoEnsinoPage() {
@@ -102,106 +105,97 @@ export default function CriarPlanoEnsinoPage() {
   const turmaSelecionada = turmas.find(t => t.id === turmaId) as any
 
   return (
-      <div className="container mx-auto py-8 px-4 max-w-5xl">
-        <Button variant="ghost" className="mb-4" onClick={() => router.push('/gestao-pedagogica/plano-ensino')}>
-          <ArrowLeft className="h-4 w-4 mr-1" />
-          Voltar
-        </Button>
+    <PageContainer>
+      <PageHeader
+        title="Novo Plano de Ensino"
+        description="Configure o ano letivo, turma e disciplinas do plano"
+        icon={BookOpen}
+        breadcrumbs={[
+          { label: 'Plano de Ensino', href: '/gestao-pedagogica/plano-ensino' },
+          { label: 'Novo Plano' },
+        ]}
+      />
 
-        <h1 className="text-2xl font-bold text-foreground mb-6">Novo Plano de Ensino</h1>
-
-        <div className="space-y-6 max-w-2xl">
-          <Card>
-            <CardHeader><CardTitle className="text-base">Identificação</CardTitle></CardHeader>
-            <CardContent className="space-y-4">
-              <div>
-                <Label className="text-xs font-medium">Ano Letivo</Label>
-                <select
-                  value={anoLetivoId}
-                  onChange={e => { setAnoLetivoId(e.target.value); setTurmaId(''); setSelectedDiscs([]) }}
-                  className="w-full h-10 px-3 rounded-lg border border-border bg-card text-sm mt-1"
-                >
-                  <option value="">Selecione...</option>
-                  {anosLetivos.map((a: any) => (
-                    <option key={a.id} value={a.id}>{a.descricao || a.ano}</option>
-                  ))}
-                </select>
-              </div>
-
-              <div>
-                <Label className="text-xs font-medium">Turma</Label>
-                <select
-                  value={turmaId}
-                  onChange={e => { setTurmaId(e.target.value); setSelectedDiscs([]) }}
-                  className="w-full h-10 px-3 rounded-lg border border-border bg-card text-sm mt-1"
-                  disabled={!anoLetivoId}
-                >
-                  <option value="">Selecione...</option>
-                  {turmas.map((t: any) => (
-                    <option key={t.id} value={t.id}>
-                      {t.nome} — {t.etapa_nome} {t.subetapa_nome ? `(${t.subetapa_nome})` : ''}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            </CardContent>
-          </Card>
-
-          {turmaId && (
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-base flex items-center justify-between">
-                  <span>Disciplinas</span>
-                  {disciplinas.length > 0 && (
-                    <label className="flex items-center gap-2 text-sm font-normal cursor-pointer">
-                      <Checkbox
-                        checked={isInterdisciplinar}
-                        onCheckedChange={(v) => {
-                          setIsInterdisciplinar(!!v)
-                          if (!v && selectedDiscs.length > 1) setSelectedDiscs([selectedDiscs[0]])
-                        }}
-                      />
-                      Plano interdisciplinar
-                    </label>
-                  )}
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                {disciplinas.length === 0 ? (
-                  <p className="text-sm text-muted-foreground">Nenhuma disciplina vinculada a esta turma.</p>
-                ) : (
-                  <div className="space-y-2">
-                    {disciplinas.map(d => {
-                      const checked = selectedDiscs.includes(d.matriz_disciplina_id)
-                      return (
-                        <label key={d.matriz_disciplina_id} className="flex items-center gap-3 p-2 rounded-lg hover:bg-muted cursor-pointer">
-                          <Checkbox
-                            checked={checked}
-                            onCheckedChange={() => toggleDisc(d.matriz_disciplina_id)}
-                          />
-                          <div>
-                            <p className="text-sm font-medium">{d.nome}</p>
-                            <p className="text-xs text-muted-foreground">{d.nome_abreviado}</p>
-                          </div>
-                        </label>
-                      )
-                    })}
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          )}
-
-          <div className="flex justify-end gap-3">
-            <Button variant="outline" onClick={() => router.push('/gestao-pedagogica/plano-ensino')}>
-              Cancelar
-            </Button>
-            <Button onClick={handleSave} disabled={saving || !turmaId || selectedDiscs.length === 0}>
-              {saving ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : <Check className="h-4 w-4 mr-1" />}
-              {saving ? 'Salvando...' : 'Confirmar Plano'}
-            </Button>
+      <div className="space-y-6 max-w-2xl">
+        <FormCard title="Identificação" description="Selecione o ano letivo e a turma">
+          <div>
+            <Label className="text-xs font-medium">Ano Letivo</Label>
+            <Select value={anoLetivoId} onValueChange={v => { setAnoLetivoId(v); setTurmaId(''); setSelectedDiscs([]) }}>
+              <SelectTrigger className="mt-1"><SelectValue placeholder="Selecione..." /></SelectTrigger>
+              <SelectContent>
+                {anosLetivos.map((a: any) => (
+                  <SelectItem key={a.id} value={a.id}>{a.descricao || a.ano}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
+
+          <div>
+            <Label className="text-xs font-medium">Turma</Label>
+            <Select value={turmaId} onValueChange={v => { setTurmaId(v); setSelectedDiscs([]) }} disabled={!anoLetivoId}>
+              <SelectTrigger className="mt-1"><SelectValue placeholder="Selecione..." /></SelectTrigger>
+              <SelectContent>
+                {turmas.map((t: any) => (
+                  <SelectItem key={t.id} value={t.id}>
+                    {t.nome} — {t.etapa_nome} {t.subetapa_nome ? `(${t.subetapa_nome})` : ''}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        </FormCard>
+
+        {turmaId && (
+          <FormCard
+            title="Disciplinas"
+            description={isInterdisciplinar ? 'Plano interdisciplinar — selecione múltiplas disciplinas' : 'Selecione a disciplina do plano'}
+          >
+            {disciplinas.length > 0 && (
+              <label className="flex items-center gap-2 text-sm font-normal cursor-pointer mb-3">
+                <Checkbox
+                  checked={isInterdisciplinar}
+                  onCheckedChange={(v) => {
+                    setIsInterdisciplinar(!!v)
+                    if (!v && selectedDiscs.length > 1) setSelectedDiscs([selectedDiscs[0]])
+                  }}
+                />
+                Plano interdisciplinar
+              </label>
+            )}
+            {disciplinas.length === 0 ? (
+              <p className="text-sm text-muted-foreground">Nenhuma disciplina vinculada a esta turma.</p>
+            ) : (
+              <div className="space-y-2">
+                {disciplinas.map(d => {
+                  const checked = selectedDiscs.includes(d.matriz_disciplina_id)
+                  return (
+                    <label key={d.matriz_disciplina_id} className="flex items-center gap-3 p-2 rounded-lg hover:bg-muted cursor-pointer">
+                      <Checkbox
+                        checked={checked}
+                        onCheckedChange={() => toggleDisc(d.matriz_disciplina_id)}
+                      />
+                      <div>
+                        <p className="text-sm font-medium">{d.nome}</p>
+                        <p className="text-xs text-muted-foreground">{d.nome_abreviado}</p>
+                      </div>
+                    </label>
+                  )
+                })}
+              </div>
+            )}
+          </FormCard>
+        )}
+
+        <div className="flex justify-end gap-3">
+          <Button variant="outline" onClick={() => router.push('/gestao-pedagogica/plano-ensino')}>
+            Cancelar
+          </Button>
+          <Button onClick={handleSave} disabled={saving || !turmaId || selectedDiscs.length === 0}>
+            {saving ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : <Check className="h-4 w-4 mr-1" />}
+            {saving ? 'Salvando...' : 'Confirmar Plano'}
+          </Button>
         </div>
       </div>
+    </PageContainer>
   )
 }

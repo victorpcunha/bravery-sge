@@ -8,11 +8,14 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Separator } from '@/components/ui/separator'
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
+import { PageContainer } from '@/components/layout/page-container'
+import { PageHeader, type BreadcrumbItem } from '@/components/layout/page-header'
+import { FormCard } from '@/components/layout/form-card'
 import { toast } from 'sonner'
 import {
-  Plus, Trash2, ArrowLeft, Save, Calendar, Clock, AlertCircle, Loader2
+  Plus, Trash2, Save, Calendar, Clock, AlertCircle, Loader2, GraduationCap
 } from 'lucide-react'
 import {
   getQuadroAula, createQuadroAula, updateQuadroAula,
@@ -50,7 +53,7 @@ function getDisciplinaFullName(d: any): string {
 
 export default function CadastroQuadroAulaPage() {
   return (
-    <Suspense fallback={<div className="container mx-auto py-8 px-4"><div className="text-center text-muted-foreground py-8">Carregando...</div></div>}>
+    <Suspense fallback={<PageContainer><div className="flex items-center justify-center py-16"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" /></div></PageContainer>}>
       <CadastroForm />
     </Suspense>
   )
@@ -448,286 +451,268 @@ function CadastroForm() {
 
   if (loading) {
     return (
-      <div className="container mx-auto py-8 px-4">
-        <div className="text-center text-muted-foreground py-8">Carregando...</div>
-      </div>
+      <PageContainer>
+        <div className="flex items-center justify-center py-16">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
+        </div>
+      </PageContainer>
     )
   }
 
+  const breadcrumbs: BreadcrumbItem[] = [
+    { label: 'Quadro de Aulas', href: '/gestao-turmas/quadro-aulas', icon: GraduationCap },
+    { label: editId ? 'Editar' : 'Novo' },
+  ]
+
   return (
-    <div className="container mx-auto py-8 px-4">
-      <div className="flex items-center gap-3 mb-6">
-        <Button variant="ghost" size="icon" className="h-9 w-9"
-          onClick={() => router.push('/gestao-turmas/quadro-aulas')}>
-          <ArrowLeft className="h-5 w-5 text-foreground" />
-        </Button>
-        <div>
-          <h1 className="text-xl font-semibold text-foreground">
-            {editId ? 'Editar Quadro de Aulas' : 'Novo Quadro de Aulas'}
-          </h1>
-          <p className="text-sm text-muted-foreground mt-0.5">
-            {editId ? 'Altere as informações do quadro' : 'Preencha os dados para gerar a grade horária'}
-          </p>
-        </div>
-      </div>
+    <PageContainer>
+      <PageHeader
+        title={editId ? 'Editar Quadro de Aulas' : 'Novo Quadro de Aulas'}
+        description={editId ? 'Altere as informações do quadro' : 'Preencha os dados para gerar a grade horária'}
+        breadcrumbs={breadcrumbs}
+      />
 
-      {/* Card Identificação */}
-      <Card className="border-border shadow-[0_2px_8px_rgba(0,0,0,0.06)] mb-6">
-        <CardHeader className="bg-muted/40 border-b border-border">
-          <CardTitle className="text-base font-medium text-foreground flex items-center gap-2">
-            <Calendar className="h-4 w-4" />
-            Identificação
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="p-5">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            {/* Ano Letivo */}
-            <div>
-              <Label className="text-xs text-muted-foreground mb-1 block">Ano Letivo</Label>
-              <Input value={anoLetivoDesc} disabled className="border-border bg-muted" />
-            </div>
-
-            {/* Turma */}
-            <div>
-              <Label className="text-xs text-muted-foreground mb-1 block">Turma <span className="text-destructive">*</span></Label>
-              <Select value={turmaId} onValueChange={handleTurmaChange} disabled={!!editId}>
-                <SelectTrigger className="border-border">
-                  <SelectValue placeholder="Selecione a turma" />
-                </SelectTrigger>
-                <SelectContent>
-                  {turmasAtivas.map((t: any) => (
-                    <SelectItem key={t.id} value={t.id}>
-                      {t.codigo_inep ? `${t.codigo_inep} - ` : ''}{t.nome}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            {/* Data Inicial */}
-            <div>
-              <Label className="text-xs text-muted-foreground mb-1 block">Data Inicial <span className="text-destructive">*</span></Label>
-              <Input
-                type="date"
-                value={dataInicial}
-                min={anoLetivoDataInicio}
-                max={anoLetivoDataTermino}
-                onChange={e => setDataInicial(e.target.value)}
-                className="border-border"
-              />
-              {dataInicial && anoLetivoDataInicio && dataInicial < anoLetivoDataInicio && (
-                <p className="text-[11px] text-destructive mt-0.5">Data anterior ao início do ano letivo</p>
-              )}
-            </div>
-
-            {/* Data Final */}
-            <div>
-              <Label className="text-xs text-muted-foreground mb-1 block">Data Final <span className="text-destructive">*</span></Label>
-              <Input
-                type="date"
-                value={dataFinal}
-                min={anoLetivoDataInicio}
-                max={anoLetivoDataTermino}
-                onChange={e => setDataFinal(e.target.value)}
-                className="border-border"
-              />
-              {dataFinal && anoLetivoDataTermino && dataFinal > anoLetivoDataTermino && (
-                <p className="text-[11px] text-destructive mt-0.5">Data posterior ao término do ano letivo</p>
-              )}
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
-            {/* Tempo de Aula */}
-            <div>
-              <Label className="text-xs text-muted-foreground mb-1 block">Tempo de Aula (minutos) <span className="text-destructive">*</span></Label>
-              <div className="flex items-center gap-2">
-                <Input
-                  type="number"
-                  min={1}
-                  value={tempoAula}
-                  onChange={e => setTempoAula(e.target.value)}
-                  className="border-border w-32"
-                />
-                <span className="text-sm text-muted-foreground">minutos</span>
-              </div>
-            </div>
-          </div>
-
-          {/* Intervalos */}
-          <Separator className="my-4" />
+      <FormCard
+        title="Identificação"
+        description="Ano letivo, turma e vigência"
+        className="mb-6"
+      >
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          {/* Ano Letivo */}
           <div>
-            <div className="flex items-center justify-between mb-3">
-              <Label className="text-xs text-muted-foreground">Intervalos</Label>
-              {intervalos.length < 3 && (
-                <Button variant="outline" size="sm" onClick={addIntervalo}
-                  className="h-8 text-xs border-border">
-                  <Plus className="h-3 w-3 mr-1" />
-                  Adicionar outro intervalo
-                </Button>
-              )}
-            </div>
-            {intervalos.length === 0 ? (
-              <p className="text-sm text-muted-foreground italic">Nenhum intervalo cadastrado</p>
-            ) : (
-              <div className="space-y-2">
-                {intervalos.map((iv, idx) => (
-                  <div key={idx} className="flex items-center gap-3">
-                    <span className="text-xs text-muted-foreground w-6">{idx + 1}.</span>
-                    <Input
-                      type="time"
-                      value={iv.hora_inicial}
-                      onChange={e => updateIntervalo(idx, 'hora_inicial', e.target.value)}
-                      className="border-border w-36"
-                    />
-                    <span className="text-muted-foreground">às</span>
-                    <Input
-                      type="time"
-                      value={iv.hora_final}
-                      onChange={e => updateIntervalo(idx, 'hora_final', e.target.value)}
-                      className="border-border w-36"
-                    />
-                    <Button variant="ghost" size="icon" className="h-8 w-8"
-                      onClick={() => removeIntervalo(idx)}>
-                      <Trash2 className="h-4 w-4 text-destructive" />
-                    </Button>
-                  </div>
+            <Label className="text-xs text-muted-foreground mb-1 block">Ano Letivo</Label>
+            <Input value={anoLetivoDesc} disabled className="border-border bg-muted" />
+          </div>
+
+          {/* Turma */}
+          <div>
+            <Label className="text-xs text-muted-foreground mb-1 block">Turma <span className="text-destructive">*</span></Label>
+            <Select value={turmaId} onValueChange={handleTurmaChange} disabled={!!editId}>
+              <SelectTrigger className="border-border">
+                <SelectValue placeholder="Selecione a turma" />
+              </SelectTrigger>
+              <SelectContent>
+                {turmasAtivas.map((t: any) => (
+                  <SelectItem key={t.id} value={t.id}>
+                    {t.codigo_inep ? `${t.codigo_inep} - ` : ''}{t.nome}
+                  </SelectItem>
                 ))}
-              </div>
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Data Inicial */}
+          <div>
+            <Label className="text-xs text-muted-foreground mb-1 block">Data Inicial <span className="text-destructive">*</span></Label>
+            <Input
+              type="date"
+              value={dataInicial}
+              min={anoLetivoDataInicio}
+              max={anoLetivoDataTermino}
+              onChange={e => setDataInicial(e.target.value)}
+              className="border-border"
+            />
+            {dataInicial && anoLetivoDataInicio && dataInicial < anoLetivoDataInicio && (
+              <p className="text-[11px] text-destructive mt-0.5">Data anterior ao início do ano letivo</p>
             )}
           </div>
 
-          {/* Botão Gerar */}
-          <div className="mt-5 pt-4 border-t border-border">
-            <Button
-              className="bg-primary hover:bg-primary/90 text-white"
-              onClick={handleGerarGrade}
-              disabled={!turmaId}
-            >
-              <Clock className="h-4 w-4 mr-1.5" />
-              Gerar Quadro de Aulas
-            </Button>
-            {!turmaId && (
-              <p className="text-xs text-muted-foreground mt-1.5">Selecione uma turma primeiro</p>
+          {/* Data Final */}
+          <div>
+            <Label className="text-xs text-muted-foreground mb-1 block">Data Final <span className="text-destructive">*</span></Label>
+            <Input
+              type="date"
+              value={dataFinal}
+              min={anoLetivoDataInicio}
+              max={anoLetivoDataTermino}
+              onChange={e => setDataFinal(e.target.value)}
+              className="border-border"
+            />
+            {dataFinal && anoLetivoDataTermino && dataFinal > anoLetivoDataTermino && (
+              <p className="text-[11px] text-destructive mt-0.5">Data posterior ao término do ano letivo</p>
             )}
           </div>
-        </CardContent>
-      </Card>
+        </div>
 
-      {/* Card Quadro de Aulas */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {/* Tempo de Aula */}
+          <div>
+            <Label className="text-xs text-muted-foreground mb-1 block">Tempo de Aula (minutos) <span className="text-destructive">*</span></Label>
+            <div className="flex items-center gap-2">
+              <Input
+                type="number"
+                min={1}
+                value={tempoAula}
+                onChange={e => setTempoAula(e.target.value)}
+                className="border-border w-32"
+              />
+              <span className="text-sm text-muted-foreground">minutos</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Intervalos */}
+        <Separator />
+        <div>
+          <div className="flex items-center justify-between mb-3">
+            <Label className="text-xs text-muted-foreground">Intervalos</Label>
+            {intervalos.length < 3 && (
+              <Button variant="outline" size="sm" onClick={addIntervalo}
+                className="h-8 text-xs border-border">
+                <Plus className="h-3 w-3 mr-1" />
+                Adicionar outro intervalo
+              </Button>
+            )}
+          </div>
+          {intervalos.length === 0 ? (
+            <p className="text-sm text-muted-foreground italic">Nenhum intervalo cadastrado</p>
+          ) : (
+            <div className="space-y-2">
+              {intervalos.map((iv, idx) => (
+                <div key={idx} className="flex items-center gap-3">
+                  <span className="text-xs text-muted-foreground w-6">{idx + 1}.</span>
+                  <Input
+                    type="time"
+                    value={iv.hora_inicial}
+                    onChange={e => updateIntervalo(idx, 'hora_inicial', e.target.value)}
+                    className="border-border w-36"
+                  />
+                  <span className="text-muted-foreground">às</span>
+                  <Input
+                    type="time"
+                    value={iv.hora_final}
+                    onChange={e => updateIntervalo(idx, 'hora_final', e.target.value)}
+                    className="border-border w-36"
+                  />
+                  <Button variant="ghost" size="icon" className="h-8 w-8"
+                    onClick={() => removeIntervalo(idx)}>
+                    <Trash2 className="h-4 w-4 text-destructive" />
+                  </Button>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Botão Gerar */}
+        <div className="pt-2">
+          <Button
+            onClick={handleGerarGrade}
+            disabled={!turmaId}
+          >
+            <Clock className="h-4 w-4 mr-1.5" />
+            Gerar Quadro de Aulas
+          </Button>
+          {!turmaId && (
+            <p className="text-xs text-muted-foreground mt-1.5">Selecione uma turma primeiro</p>
+          )}
+        </div>
+      </FormCard>
+
+      {/* Quadro de Aulas */}
       {gradeGerada && slots.length > 0 && (
-<Card className="border-border shadow-[0_2px_8px_rgba(0,0,0,0.06)] mb-6">
-          <CardHeader className="bg-muted/40 border-b border-border">
-            <CardTitle className="text-base font-medium text-foreground flex items-center gap-2">
-              <Clock className="h-4 w-4" />
-              Quadro de Aulas
-              <span className="text-xs font-normal text-muted-foreground ml-1">
-                ({slots.length} horários gerados)
-              </span>
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="p-0 overflow-x-auto">
-            <table className="w-full text-sm border-collapse">
-              <thead>
-                <tr className="bg-muted/80">
-                  <th className="sticky left-0 bg-muted/80 border-b border-border px-3 py-2.5 text-left text-xs font-medium text-muted-foreground w-28">
-                    Horário
-                  </th>
-                  {diasPresentes.map(dia => (
-                    <th key={dia} className="border-b border-border px-3 py-2.5 text-center text-xs font-medium text-muted-foreground min-w-[160px]">
-                      {DIAS_NOME[dia] || `Dia ${dia}`}
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {uniqueHorarios.map(hr => {
-                  const [hInicio, hFim] = hr.split('-')
-                  return (
-                    <tr key={hr} className="border-b border-border last:border-0">
-                      <td className="sticky left-0 bg-card border-r border-border px-3 py-2 text-xs font-medium text-foreground whitespace-nowrap">
-                        {hInicio} - {hFim}
-                      </td>
-                      {diasPresentes.map(dia => {
-                        const key = getSlotKey(dia, hr)
-                        const cell = gradeCells[key] || { disciplina_id: null, professor_id: null }
-                        const temConflito = conflitos.has(key)
+        <FormCard
+          title={`Quadro de Aulas (${slots.length} horários gerados)`}
+          className="mb-6"
+        >
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead className="sticky left-0 bg-card z-10 text-xs text-muted-foreground w-28">Horário</TableHead>
+                {diasPresentes.map(dia => (
+                  <TableHead key={dia} className="text-center text-xs text-muted-foreground min-w-[160px]">
+                    {DIAS_NOME[dia] || `Dia ${dia}`}
+                  </TableHead>
+                ))}
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {uniqueHorarios.map(hr => {
+                const [hInicio, hFim] = hr.split('-')
+                return (
+                  <TableRow key={hr}>
+                    <TableCell className="sticky left-0 bg-card z-10 font-medium text-xs whitespace-nowrap">
+                      {hInicio} - {hFim}
+                    </TableCell>
+                    {diasPresentes.map(dia => {
+                      const key = getSlotKey(dia, hr)
+                      const cell = gradeCells[key] || { disciplina_id: null, professor_id: null }
+                      const temConflito = conflitos.has(key)
 
-                        return (
-                          <td key={key} className={`px-1.5 py-1 border-r border-border last:border-r-0 ${temConflito ? 'bg-destructive/5' : ''}`}>
-                            <div className="space-y-1 min-w-[140px]">
-                              {/* Disciplina select */}
-                              <Select
-                                value={cell.disciplina_id || ''}
-                                onValueChange={v => handleCellChange(dia, hInicio, 'disciplina_id', v || null)}
-                              >
-                                <SelectTrigger className={`h-7 text-[11px] border-border ${!cell.disciplina_id ? 'text-muted-foreground' : ''}`}>
-                                  <SelectValue placeholder="Disciplina" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  {disciplinasTurma.map((d: any) => (
-                                    <SelectItem key={d.matriz_disciplina_id} value={d.matriz_disciplina_id}
-                                      title={getDisciplinaFullName(d)}>
-                                      {getDisciplinaDisplay(d)}
-                                    </SelectItem>
-                                  ))}
-                                </SelectContent>
-                              </Select>
+                      return (
+                        <TableCell key={key} className={temConflito ? 'bg-destructive/5' : ''}>
+                          <div className="space-y-1 min-w-[140px]">
+                            {/* Disciplina select */}
+                            <Select
+                              value={cell.disciplina_id || ''}
+                              onValueChange={v => handleCellChange(dia, hInicio, 'disciplina_id', v || null)}
+                            >
+                              <SelectTrigger className={`h-7 text-[11px] border-border ${!cell.disciplina_id ? 'text-muted-foreground' : ''}`}>
+                                <SelectValue placeholder="Disciplina" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {disciplinasTurma.map((d: any) => (
+                                  <SelectItem key={d.matriz_disciplina_id} value={d.matriz_disciplina_id}
+                                    title={getDisciplinaFullName(d)}>
+                                    {getDisciplinaDisplay(d)}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
 
-                              {/* Professor select (sempre visível) */}
-                              <Select
-                                value={cell.professor_id || ''}
-                                onValueChange={v => handleCellChange(dia, hInicio, 'professor_id', v || null)}
-                                disabled={!cell.disciplina_id}
-                              >
-                                <SelectTrigger className={`h-7 text-[11px] border-border ${!cell.professor_id ? 'text-muted-foreground' : ''}`}>
-                                  <SelectValue placeholder={cell.disciplina_id ? 'Professor' : '—'} />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  {cell.disciplina_id ? (
-                                    profissionaisTurma
-                                      .filter(p =>
-                                        p.ativo &&
-                                        Array.isArray(p.disciplinas_ids) &&
-                                        p.disciplinas_ids.includes(cell.disciplina_id)
-                                      )
-                                      .map((p: any) => (
-                                        <SelectItem key={p.person_id} value={p.person_id}>
-                                          {p.people?.codigo_pessoa ? `${p.people.codigo_pessoa} - ` : ''}{p.people?.nome_completo || 'Sem nome'}
-                                        </SelectItem>
-                                      ))
-                                  ) : (
-                                    <SelectItem value="_none" disabled>Selecione a disciplina primeiro</SelectItem>
-                                  )}
-                                  {cell.disciplina_id && profissionaisTurma.filter(p =>
-                                    p.ativo &&
-                                    Array.isArray(p.disciplinas_ids) &&
-                                    p.disciplinas_ids.includes(cell.disciplina_id)
-                                  ).length === 0 && (
-                                    <SelectItem value="_none" disabled>Nenhum professor disponível</SelectItem>
-                                  )}
-                                </SelectContent>
-                              </Select>
+                            {/* Professor select (sempre visível) */}
+                            <Select
+                              value={cell.professor_id || ''}
+                              onValueChange={v => handleCellChange(dia, hInicio, 'professor_id', v || null)}
+                              disabled={!cell.disciplina_id}
+                            >
+                              <SelectTrigger className={`h-7 text-[11px] border-border ${!cell.professor_id ? 'text-muted-foreground' : ''}`}>
+                                <SelectValue placeholder={cell.disciplina_id ? 'Professor' : '—'} />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {cell.disciplina_id ? (
+                                  profissionaisTurma
+                                    .filter(p =>
+                                      p.ativo &&
+                                      Array.isArray(p.disciplinas_ids) &&
+                                      p.disciplinas_ids.includes(cell.disciplina_id)
+                                    )
+                                    .map((p: any) => (
+                                      <SelectItem key={p.person_id} value={p.person_id}>
+                                        {p.people?.codigo_pessoa ? `${p.people.codigo_pessoa} - ` : ''}{p.people?.nome_completo || 'Sem nome'}
+                                      </SelectItem>
+                                    ))
+                                ) : (
+                                  <SelectItem value="_none" disabled>Selecione a disciplina primeiro</SelectItem>
+                                )}
+                                {cell.disciplina_id && profissionaisTurma.filter(p =>
+                                  p.ativo &&
+                                  Array.isArray(p.disciplinas_ids) &&
+                                  p.disciplinas_ids.includes(cell.disciplina_id)
+                                ).length === 0 && (
+                                  <SelectItem value="_none" disabled>Nenhum professor disponível</SelectItem>
+                                )}
+                              </SelectContent>
+                            </Select>
 
-                              {temConflito && mensagensConflito[key] && (
-                                <div className="flex items-start gap-1 mt-1">
-                                  <AlertCircle className="h-3 w-3 text-destructive mt-0.5 shrink-0" />
-                                  <p className="text-[11px] text-destructive leading-tight">
-                                    {mensagensConflito[key]}
-                                  </p>
-                                </div>
-                              )}
-                            </div>
-                          </td>
-                        )
-                      })}
-                    </tr>
-                  )
-                })}
-              </tbody>
-            </table>
-          </CardContent>
-        </Card>
+                            {temConflito && mensagensConflito[key] && (
+                              <div className="flex items-start gap-1 mt-1">
+                                <AlertCircle className="h-3 w-3 text-destructive mt-0.5 shrink-0" />
+                                <p className="text-[11px] text-destructive leading-tight">
+                                  {mensagensConflito[key]}
+                                </p>
+                              </div>
+                            )}
+                          </div>
+                        </TableCell>
+                      )
+                    })}
+                  </TableRow>
+                )
+              })}
+            </TableBody>
+          </Table>
+        </FormCard>
       )}
 
       {/* Footer */}
@@ -738,7 +723,6 @@ function CadastroForm() {
             Cancelar
           </Button>
           <Button
-            className="bg-primary hover:bg-primary/90 text-white"
             onClick={handleSalvar}
             disabled={saving}
           >
@@ -751,6 +735,6 @@ function CadastroForm() {
           </Button>
         </div>
       )}
-    </div>
+    </PageContainer>
   )
 }

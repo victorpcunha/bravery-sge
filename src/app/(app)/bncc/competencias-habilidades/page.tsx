@@ -6,6 +6,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Badge } from '@/components/ui/badge'
 import { BookOpen, Lightbulb, ChevronDown, ChevronRight } from 'lucide-react'
+import { PageContainer } from '@/components/layout/page-container'
+import { PageHeader } from '@/components/layout/page-header'
 
 const areaColors: Record<string, string> = {
   'Linguagens e suas tecnologias': 'from-primary to-secondary',
@@ -126,13 +128,13 @@ export default function CompetenciasHabilidadesPage() {
   const compKeys = Object.keys(habilidadesPorComp).sort((a, b) => Number(a) - Number(b))
 
   return (
-    <div className="container mx-auto py-8 px-4">
-      <div className="mb-8 animate-fade-in-up">
-        <h1 className="text-3xl font-bold text-foreground">Competências e Habilidades</h1>
-        <p className="text-muted-foreground mt-1">Habilidades da BNCC do Ensino Médio{isLp && ' — Língua Portuguesa por Campo de Atuação'}</p>
-      </div>
+    <PageContainer>
+      <PageHeader
+        title="Competências e Habilidades"
+        description={`Habilidades da BNCC do Ensino Médio${isLp ? ' — Língua Portuguesa por Campo de Atuação' : ''}`}
+      />
 
-      <Card className="mb-6 border-0 shadow-md card-glass animate-fade-in-up delay-75">
+      <Card className="mb-6 border-0 shadow-sm animate-fade-in-up delay-75">
         <CardContent className="pt-6">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
@@ -142,7 +144,7 @@ export default function CompetenciasHabilidadesPage() {
             <div>
               <label className="text-sm font-medium mb-2 block text-foreground">Área do Conhecimento</label>
               <Select value={selectedArea} onValueChange={setSelectedArea}>
-                <SelectTrigger className="border-2 border-border focus:border-primary [&_svg:not([class*='rotate'])]:rotate-0"><SelectValue placeholder="Selecione" /></SelectTrigger>
+                <SelectTrigger className="border-border focus:border-primary [&_svg:not([class*='rotate'])]:rotate-0"><SelectValue placeholder="Selecione" /></SelectTrigger>
                 <SelectContent position="popper" side="bottom" sideOffset={5}>
                   {areas.map((a: any) => <SelectItem key={a.id} value={a.id}>{a.nome}</SelectItem>)}
                 </SelectContent>
@@ -152,7 +154,7 @@ export default function CompetenciasHabilidadesPage() {
               <div>
                 <label className="text-sm font-medium mb-2 block text-foreground">Componente</label>
                 <Select value={componente} onValueChange={setComponente}>
-                  <SelectTrigger className="border-2 border-border focus:border-primary [&_svg:not([class*='rotate'])]:rotate-0"><SelectValue /></SelectTrigger>
+                  <SelectTrigger className="border-border focus:border-primary [&_svg:not([class*='rotate'])]:rotate-0"><SelectValue /></SelectTrigger>
                   <SelectContent position="popper" side="bottom" sideOffset={5}>
                     <SelectItem value="geral">Geral</SelectItem>
                     <SelectItem value="lingua_portuguesa">Língua Portuguesa</SelectItem>
@@ -165,7 +167,7 @@ export default function CompetenciasHabilidadesPage() {
       </Card>
 
       {!selectedArea ? (
-        <Card className="border-0 shadow-lg card-glass">
+        <Card className="border-0 shadow-sm">
           <CardContent className="flex flex-col items-center justify-center py-16">
             <div className="w-20 h-20 bg-gradient-to-br from-primary/10 to-secondary/10 rounded-2xl flex items-center justify-center mb-6">
               <BookOpen className="h-10 w-10 text-primary" />
@@ -182,12 +184,12 @@ export default function CompetenciasHabilidadesPage() {
           {habilidadesPorCampo.map(campo => {
             const isExp = expandedCampo === campo.value
             return (
-              <Card key={campo.value} className="border-0 shadow-md card-glass overflow-hidden">
+              <Card key={campo.value} className="border-0 shadow-sm overflow-hidden">
                 <CardHeader className="cursor-pointer hover:bg-muted/30" onClick={() => setExpandedCampo(isExp ? null : campo.value)}>
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
                       <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${campoColors[campo.value] || 'from-primary to-secondary'} flex items-center justify-center`}>
-                        <BookOpen className="w-5 h-5 text-white" />
+                        <BookOpen className="w-5 h-5 text-primary-foreground" />
                       </div>
                       <div>
                         <CardTitle className="text-lg font-semibold text-foreground">{campo.label}</CardTitle>
@@ -216,7 +218,7 @@ export default function CompetenciasHabilidadesPage() {
                               {(habs as any[]).map((hab: any, i: number) => (
                                 <div key={hab.codigo + i} className="p-4 rounded-xl border border-border/50 bg-card/50 hover:bg-muted/50">
                                   <div className="flex items-start gap-3">
-                                    <Badge className="shrink-0 font-mono text-xs bg-gradient-to-r from-primary to-secondary text-primary-foreground border-0 mt-0.5">{hab.codigo}</Badge>
+                                    <Badge className="shrink-0 font-mono text-xs bg-primary text-primary-foreground border-0 mt-0.5">{hab.codigo}</Badge>
                                     <p className="text-sm text-foreground leading-relaxed">{hab.descricao}</p>
                                   </div>
                                 </div>
@@ -236,7 +238,7 @@ export default function CompetenciasHabilidadesPage() {
         <div className="space-y-4 animate-fade-in-up">
           <Badge className="bg-primary/10 text-primary text-sm px-4 py-2">{totalHabilidades} habilidade(s)</Badge>
           {compKeys.length === 0 ? (
-            <Card className="border-0 shadow-md card-glass">
+            <Card className="border-0 shadow-sm">
               <CardContent className="text-center py-8"><p className="text-muted-foreground">Nenhuma habilidade encontrada.</p></CardContent>
             </Card>
           ) : (
@@ -245,12 +247,12 @@ export default function CompetenciasHabilidadesPage() {
               const comp = item.competencia
               const isExp = expandedCard === `comp-${compCodigo}`
               return (
-                <Card key={compCodigo} className="border-0 shadow-md card-glass overflow-hidden">
+                <Card key={compCodigo} className="border-0 shadow-sm overflow-hidden">
                   <CardHeader className="cursor-pointer hover:bg-muted/30" onClick={() => setExpandedCard(isExp ? null : `comp-${compCodigo}`)}>
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-3">
                         <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${areaColors[currentArea?.nome || ''] || 'from-primary to-secondary'} flex items-center justify-center`}>
-                          <Lightbulb className="w-5 h-5 text-white" />
+                          <Lightbulb className="w-5 h-5 text-primary-foreground" />
                         </div>
                         <div>
                           <CardTitle className="text-lg font-semibold text-foreground">Competência Específica {compCodigo}</CardTitle>
@@ -272,7 +274,7 @@ export default function CompetenciasHabilidadesPage() {
                         {item.habilidades.map((hab: any, i: number) => (
                           <div key={hab.codigo + i} className="p-4 rounded-xl border border-border/50 bg-card/50 hover:bg-muted/50">
                             <div className="flex items-start gap-3">
-                              <Badge className="shrink-0 font-mono text-xs bg-gradient-to-r from-primary to-secondary text-primary-foreground border-0 mt-0.5">{hab.codigo}</Badge>
+                              <Badge className="shrink-0 font-mono text-xs bg-primary text-primary-foreground border-0 mt-0.5">{hab.codigo}</Badge>
                               <p className="text-sm text-foreground leading-relaxed">{hab.descricao}</p>
                             </div>
                           </div>
@@ -287,9 +289,9 @@ export default function CompetenciasHabilidadesPage() {
         </div>
       )}
 
-      <div className="mt-8 p-5 bg-card/60 backdrop-blur-sm rounded-2xl border border-border/50 shadow-sm">
+      <div className="mt-8 p-5 bg-muted/50 rounded-2xl border border-border">
         <p className="text-sm text-muted-foreground">Fonte: Base Nacional Comum Curricular (BNCC) - 2018</p>
       </div>
-    </div>
+    </PageContainer>
   )
 }

@@ -12,9 +12,11 @@ import CardDesempenho from '@/components/painel-pessoa/card-desempenho'
 import CardQuadroAulas from '@/components/painel-pessoa/card-quadro-aulas'
 import CardHistorico from '@/components/painel-pessoa/card-historico'
 import CardOcorrencias from '@/components/painel-pessoa/card-ocorrencias'
-import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { ChevronLeft, User, Users, GraduationCap } from 'lucide-react'
+import { PageContainer } from '@/components/layout/page-container'
+import { PageHeader } from '@/components/layout/page-header'
+import { PageSection } from '@/components/layout/page-section'
+import { EmptyState } from '@/components/ui/empty-state'
+import { User } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
 
@@ -56,111 +58,103 @@ export default function PainelAlunoPage() {
 
   if (!permLoaded) {
     return (
-        <div className="container mx-auto py-8 px-4 max-w-5xl">
-          <div className="animate-pulse space-y-4">
-            <div className="h-8 w-48 bg-muted rounded" />
-            <div className="h-10 w-full bg-muted rounded-lg" />
-          </div>
+      <PageContainer className="max-w-5xl">
+        <div className="animate-pulse space-y-4">
+          <div className="h-8 w-48 bg-muted rounded" />
+          <div className="h-10 w-full bg-muted rounded-lg" />
         </div>
+      </PageContainer>
     )
   }
 
   return (
-      <div className="container mx-auto py-8 px-4 max-w-5xl">
-        <Button variant="ghost" className="mb-4" onClick={() => router.push('/gestao-usuarios')}>
-          <ChevronLeft className="h-4 w-4 mr-1" />
-          Voltar
-        </Button>
+    <PageContainer className="max-w-5xl">
+      <PageHeader
+        title="Painel do Aluno"
+        description="Visualização completa do aluno"
+        icon={User}
+        breadcrumbs={[
+          { label: 'Gestão de Usuários', href: '/gestao-usuarios' },
+          { label: 'Painel do Aluno' }
+        ]}
+      />
 
-        <h1 className="text-xl font-bold mb-6 flex items-center gap-2">
-          <User className="h-5 w-5" />
-          Painel do Aluno
-        </h1>
+      {schoolId && (
+        <PageSection variant="compact" title="Busca" className="mb-6">
+          <div className="space-y-4">
+            <div>
+              <label className="text-xs text-muted-foreground font-medium mb-1 block">Aluno</label>
+              <FiltroPessoa
+                schoolId={schoolId}
+                pessoaLogadaId={pessoaId}
+                onSelect={handleSelectPessoa}
+                selectedId={pessoaSelecionada?.id}
+              />
+            </div>
 
-        {/* Filtros */}
-        {schoolId && (
-          <Card className="mb-6">
-            <CardContent className="p-4 space-y-4">
-              <div>
-                <label className="text-xs text-muted-foreground font-medium mb-1 block">Aluno</label>
-                <FiltroPessoa
-                  schoolId={schoolId}
-                  pessoaLogadaId={pessoaId}
-                  onSelect={handleSelectPessoa}
-                  selectedId={pessoaSelecionada?.id}
-                />
-              </div>
+            {pessoaSelecionada && turmas.length > 1 && (
+              <FiltroTurma
+                turmas={turmas}
+                selectedId={turmaId}
+                onSelect={setTurmaId}
+                loading={loadingTurmas}
+              />
+            )}
 
-              {pessoaSelecionada && turmas.length > 1 && (
-                <FiltroTurma
-                  turmas={turmas}
-                  selectedId={turmaId}
-                  onSelect={setTurmaId}
-                  loading={loadingTurmas}
-                />
-              )}
-
-              {pessoaSelecionada && turmas.length === 0 && !loadingTurmas && (
-                <p className="text-sm text-muted-foreground py-2">
-                  Aluno sem matrícula ativa no ano letivo vigente.
-                </p>
-              )}
-            </CardContent>
-          </Card>
-        )}
-
-        {/* Cards independentes de turma (FASE 4) */}
-        {pessoaSelecionada && (
-          <div className="mb-6">
-            <CardIdentificacao pessoaId={pessoaSelecionada.id} pessoaLogadaId={pessoaId} />
-          </div>
-        )}
-
-        {pessoaSelecionada && turmaId && (
-          <div className="mb-6">
-            {schoolId && (
-              <CardSaude pessoaId={pessoaSelecionada.id} schoolId={schoolId} pessoaLogadaId={pessoaId} />
+            {pessoaSelecionada && turmas.length === 0 && !loadingTurmas && (
+              <p className="text-sm text-muted-foreground py-2">
+                Aluno sem matrícula ativa no ano letivo vigente.
+              </p>
             )}
           </div>
-        )}
+        </PageSection>
+      )}
 
-        {pessoaSelecionada && turmaId && (
-          <div className="mb-6">
-            <CardDesempenho pessoaId={pessoaSelecionada.id} turmaId={turmaId} pessoaLogadaId={pessoaId} />
-          </div>
-        )}
+      {pessoaSelecionada && (
+        <div className="mb-6">
+          <CardIdentificacao pessoaId={pessoaSelecionada.id} pessoaLogadaId={pessoaId} />
+        </div>
+      )}
 
-        {pessoaSelecionada && turmaId && (
-          <div className="mb-6">
-            <CardQuadroAulas turmaId={turmaId} pessoaLogadaId={pessoaId} />
-          </div>
-        )}
+      {pessoaSelecionada && turmaId && (
+        <div className="mb-6">
+          {schoolId && (
+            <CardSaude pessoaId={pessoaSelecionada.id} schoolId={schoolId} pessoaLogadaId={pessoaId} />
+          )}
+        </div>
+      )}
 
-        {pessoaSelecionada && turmaId && (
-          <div className="mb-6">
-            <CardHistorico pessoaId={pessoaSelecionada.id} schoolId={schoolId!} pessoaLogadaId={pessoaId} />
-          </div>
-        )}
+      {pessoaSelecionada && turmaId && (
+        <div className="mb-6">
+          <CardDesempenho pessoaId={pessoaSelecionada.id} turmaId={turmaId} pessoaLogadaId={pessoaId} />
+        </div>
+      )}
 
-        {pessoaSelecionada && turmaId && (
-          <div className="mb-6">
-            <CardOcorrencias pessoaId={pessoaSelecionada.id} schoolId={schoolId!} pessoaLogadaId={pessoaId} />
-          </div>
-        )}
+      {pessoaSelecionada && turmaId && (
+        <div className="mb-6">
+          <CardQuadroAulas turmaId={turmaId} pessoaLogadaId={pessoaId} />
+        </div>
+      )}
 
-        {!pessoaSelecionada && (
-          <Card>
-            <CardContent className="py-12 text-center">
-              <User className="h-12 w-12 mx-auto text-muted-foreground/20 mb-3" />
-              <p className="text-sm text-muted-foreground">
-                Selecione um aluno para visualizar o painel completo.
-              </p>
-              <p className="text-xs text-muted-foreground/60 mt-1">
-                Digite pelo menos 3 caracteres (nome ou CPF) para buscar.
-              </p>
-            </CardContent>
-          </Card>
-        )}
-      </div>
+      {pessoaSelecionada && turmaId && (
+        <div className="mb-6">
+          <CardHistorico pessoaId={pessoaSelecionada.id} schoolId={schoolId!} pessoaLogadaId={pessoaId} />
+        </div>
+      )}
+
+      {pessoaSelecionada && turmaId && (
+        <div className="mb-6">
+          <CardOcorrencias pessoaId={pessoaSelecionada.id} schoolId={schoolId!} pessoaLogadaId={pessoaId} />
+        </div>
+      )}
+
+      {!pessoaSelecionada && (
+        <EmptyState
+          icon={User}
+          title="Selecione um aluno"
+          description="Digite pelo menos 3 caracteres (nome ou CPF) para buscar."
+        />
+      )}
+    </PageContainer>
   )
 }

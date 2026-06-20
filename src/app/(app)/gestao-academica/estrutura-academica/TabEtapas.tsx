@@ -300,7 +300,7 @@ export function TabEtapas({ schoolId }: TabEtapasProps) {
 
   return (
     <>
-      <Card className="border-0 shadow-md card-glass">
+      <Card className="border-0 shadow-md">
         <CardHeader className="pb-3">
           <CardTitle className="text-lg font-semibold text-foreground">
             Etapas de Ensino
@@ -317,10 +317,10 @@ export function TabEtapas({ schoolId }: TabEtapasProps) {
           <div className="space-y-3">
             {gruposEtapas.map((grupo) => (
               <div key={grupo.titulo} className="rounded-lg border border-border bg-card overflow-hidden">
-                <button
-                  type="button"
+                <Button
+                  variant="ghost"
                   onClick={() => toggleGroup(grupo.titulo)}
-                  className="w-full flex items-center gap-2 text-primary font-medium px-4 py-3 hover:bg-muted transition-colors"
+                  className="w-full justify-start gap-2 text-primary font-medium px-4 py-3"
                 >
                   {openGroups.includes(grupo.titulo) ? (
                     <ChevronDown className="w-4 h-4" />
@@ -328,7 +328,7 @@ export function TabEtapas({ schoolId }: TabEtapasProps) {
                     <ChevronRight className="w-4 h-4" />
                   )}
                   {grupo.titulo}
-                </button>
+                </Button>
                 <div
                   className="transition-all duration-300 ease-in-out"
                   style={{
@@ -386,12 +386,14 @@ export function TabEtapas({ schoolId }: TabEtapasProps) {
                                   className="flex items-center justify-between p-2 bg-muted rounded border border-border"
                                 >
                                   <span className="text-sm text-foreground">{sub.nome}</span>
-                                  <button
-                                    onClick={() => removeSubetapa(etapa.codigo, sub.id)}
-                                    className="text-destructive text-xs hover:underline"
-                                  >
-                                    Remover
-                                  </button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => removeSubetapa(etapa.codigo, sub.id)}
+                            className="text-destructive text-xs"
+                          >
+                            Remover
+                          </Button>
                                 </div>
                               ))}
                             </div>
@@ -420,7 +422,7 @@ export function TabEtapas({ schoolId }: TabEtapasProps) {
                 Nome da Subetapa <span className="text-destructive">*</span>
               </Label>
               <Input 
-                className="border-2 border-border focus:border-primary focus:ring-primary/20 bg-card"
+                className="border-border focus:border-primary focus:ring-primary/20 bg-card"
                 placeholder="Ex: Maternal, 1º Ano, etc."
                 value={novaSubetapaNome}
                 onChange={e => setNovaSubetapaNome(e.target.value)}
@@ -429,20 +431,12 @@ export function TabEtapas({ schoolId }: TabEtapasProps) {
             </div>
           </div>
           <DialogFooter className="mt-4 gap-3">
-            <button
-              type="button"
-              onClick={() => setShowSubetapaModal(false)}
-              className="px-4 py-2 rounded-lg border-2 border-border bg-card text-foreground font-medium text-sm transition-all duration-200 cursor-pointer hover:bg-muted hover:text-foreground"
-            >
+            <Button variant="outline" onClick={() => setShowSubetapaModal(false)}>
               Cancelar
-            </button>
-            <button
-              type="button"
-              onClick={confirmAddSubetapa}
-              className="px-4 py-2 rounded-lg bg-gradient-to-r from-primary to-primary/80 text-white font-medium text-sm transition-all duration-200 cursor-pointer hover:shadow-lg"
-            >
+            </Button>
+            <Button onClick={confirmAddSubetapa}>
               Adicionar
-            </button>
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

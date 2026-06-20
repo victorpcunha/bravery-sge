@@ -5,6 +5,7 @@ import { getAnosLetivosAtivos } from '@/lib/actions/quadro-aulas'
 import { listarTurmasConselho } from '@/lib/actions/conselho-classe'
 import { Button } from '@/components/ui/button'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { FilterBar } from '@/components/layout/filter-bar'
 import { Filter } from 'lucide-react'
 
 type Turma = { id: string; nome: string; turnos: string[] }
@@ -45,35 +46,37 @@ export default function AprovacaoConselhoFiltros({ schoolId, onFilter }: Props) 
   }
 
   return (
-    <div className="flex flex-wrap items-end gap-3 mb-6">
-      <div className="w-44">
-        <label className="text-xs font-medium text-muted-foreground mb-1 block">Ano Letivo</label>
-        <Select value={anoLetivoId} onValueChange={setAnoLetivoId}>
-          <SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger>
-          <SelectContent>
-            {anosLetivos.map((a: any) => (
-              <SelectItem key={a.id} value={a.id}>{a.descricao}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
+    <FilterBar className="mb-6">
+      <div className="flex flex-wrap items-end gap-3">
+        <div className="w-44">
+          <label className="text-xs font-medium text-muted-foreground mb-1 block">Ano Letivo</label>
+          <Select value={anoLetivoId} onValueChange={setAnoLetivoId}>
+            <SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger>
+            <SelectContent>
+              {anosLetivos.map((a: any) => (
+                <SelectItem key={a.id} value={a.id}>{a.descricao}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
 
-      <div className="w-52">
-        <label className="text-xs font-medium text-muted-foreground mb-1 block">Turma</label>
-        <Select value={turmaId} onValueChange={setTurmaId} disabled={!anoLetivoId}>
-          <SelectTrigger><SelectValue placeholder={loadingTurmas ? 'Carregando...' : 'Selecione...'} /></SelectTrigger>
-          <SelectContent>
-            {turmas.map(t => (
-              <SelectItem key={t.id} value={t.id}>{t.nome}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
+        <div className="w-52">
+          <label className="text-xs font-medium text-muted-foreground mb-1 block">Turma</label>
+          <Select value={turmaId} onValueChange={setTurmaId} disabled={!anoLetivoId}>
+            <SelectTrigger><SelectValue placeholder={loadingTurmas ? 'Carregando...' : 'Selecione...'} /></SelectTrigger>
+            <SelectContent>
+              {turmas.map(t => (
+                <SelectItem key={t.id} value={t.id}>{t.nome}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
 
-      <Button onClick={handleFilter} disabled={!anoLetivoId || !turmaId}>
-        <Filter className="h-4 w-4 mr-1" />
-        Filtrar
-      </Button>
-    </div>
+        <Button onClick={handleFilter} disabled={!anoLetivoId || !turmaId}>
+          <Filter className="h-4 w-4 mr-1" />
+          Filtrar
+        </Button>
+      </div>
+    </FilterBar>
   )
 }

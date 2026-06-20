@@ -7,10 +7,15 @@ import { useAuth } from '@/components/providers/auth-provider'
 import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
+import { EmptyState } from '@/components/ui/empty-state'
 import { toast } from 'sonner'
-import { Plus, Search, DoorOpen } from 'lucide-react'
+import { Plus, DoorOpen, GraduationCap } from 'lucide-react'
+import { PageContainer } from '@/components/layout/page-container'
+import { PageHeader } from '@/components/layout/page-header'
+import { PageSection } from '@/components/layout/page-section'
+import { FilterBar } from '@/components/layout/filter-bar'
+import { StatusBadge } from '@/components/feedback/status-badge'
 import { getAnosLetivosAtivos } from '@/lib/actions/quadro-aulas'
 import { getMatriculas, getTurmasAtivas, type FiltrosMatriculas } from '@/lib/actions/matriculas'
 import { getEtapasEnsino } from '@/lib/actions/etapas-ensino'
@@ -21,17 +26,12 @@ function formatData(data: string) {
   return d.toLocaleDateString('pt-BR')
 }
 
-const situacaoColors: Record<string, string> = {
-  Ativo: 'bg-success/10 text-success border-success/20',
-  Transferido: 'bg-info/10 text-info border-info/20',
-  Desistente: 'bg-warning/10 text-warning border-warning/20',
-  'Óbito': 'bg-muted text-foreground border-border',
-  Reclassificado: 'bg-purple-100 text-purple-700 border-purple-200',
-  Remanejado: 'bg-cyan-100 text-cyan-700 border-cyan-200',
-  Aprovado: 'bg-success/10 text-success border-success/20',
-  'Aprovado por conselho de classe': 'bg-lime-100 text-lime-700 border-lime-200',
-  Reprovado: 'bg-destructive/10 text-destructive border-destructive/20',
-  'Reprovado por frequência': 'bg-warning/10 text-warning border-warning/20',
+function mapSituationToStatus(situacao: string): 'success' | 'warning' | 'destructive' | 'info' | 'muted' {
+  if (['Ativo', 'Aprovado', 'Aprovado por conselho de classe'].includes(situacao)) return 'success'
+  if (['Transferido', 'Reclassificado', 'Remanejado'].includes(situacao)) return 'info'
+  if (['Desistente', 'Reprovado por frequência'].includes(situacao)) return 'warning'
+  if (['Reprovado'].includes(situacao)) return 'destructive'
+  return 'muted'
 }
 
 export default function MatriculasPage() {
@@ -113,34 +113,32 @@ export default function MatriculasPage() {
   }
 
   if (authLoading) {
-    return <div className="container mx-auto py-8 px-4"><div className="text-center text-muted-foreground">Carregando...</div></div>
+    return (
+      <PageContainer>
+        <div className="text-center text-muted-foreground py-8">Carregando...</div>
+      </PageContainer>
+    )
   }
 
   return (
-    <div className="container mx-auto py-8 px-4">
-      {/* Header */}
-      <div className="flex items-center justify-between mb-6">
-        <div>
-          <h1 className="text-xl font-semibold text-foreground">Alunos Matriculados</h1>
-          <p className="text-sm text-muted-foreground mt-0.5">
-            Gerencie as matrículas dos alunos nas turmas
-          </p>
-        </div>
-        <Link href="/gestao-academica/matriculas/cadastro">
-          <Button className="bg-primary hover:bg-primary/90 text-white">
-            <Plus className="h-4 w-4 mr-1.5" />
-            Nova Matrícula
-          </Button>
-        </Link>
-      </div>
+    <PageContainer>
+      <PageHeader
+        icon={GraduationCap}
+        title="Alunos Matriculados"
+        description="Gerencie as matrículas dos alunos nas turmas"
+        actions={
+          <Link href="/gestao-academica/matriculas/cadastro">
+            <Button>
+              <Plus className="h-4 w-4" />
+              Nova Matrícula
+            </Button>
+          </Link>
+        }
+      />
 
-      {/* Filtros */}
-      <Card className="border-border shadow-[0_2px_8px_rgba(0,0,0,0.06)] mb-6">
-        <CardHeader className="bg-muted/40 border-b border-border py-3">
-          <CardTitle className="text-sm font-medium text-muted-foreground">Filtros</CardTitle>
-        </CardHeader>
-        <CardContent className="p-4">
-          <div className="flex flex-wrap gap-3">
+      <div className="space-y-6">
+        <PageSection variant="compact" title="Filtros">
+          <FilterBar>
             <div className="w-48">
               <Label className="text-xs text-muted-foreground mb-1 block">Ano Letivo</Label>
               <Select value={filtroAno} onValueChange={v => { setFiltroAno(v); setFiltroTurma(''); setFiltroEtapa('') }}>
@@ -182,69 +180,73 @@ export default function MatriculasPage() {
                 </SelectContent>
               </Select>
             </div>
-          </div>
-        </CardContent>
-      </Card>
+          </FilterBar>
+        </PageSection>
 
-      {/* Listagem */}
-      <Card className="border-border shadow-[0_2px_8px_rgba(0,0,0,0.06)]">
-        <CardHeader className="bg-muted/40 border-b border-border py-3">
-          <CardTitle className="text-sm font-medium text-muted-foreground">
-            {matriculas.length} matrícula{matriculas.length !== 1 ? 's' : ''} encontrada{matriculas.length !== 1 ? 's' : ''}
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="p-0">
+        <PageSection
+          variant="flush"
+          title={`${matriculas.length} matrícula${matriculas.length !== 1 ? 's' : ''} encontrada${matriculas.length !== 1 ? 's' : ''}`}
+        >
           {loading ? (
-            <div className="p-8 text-center text-muted-foreground text-sm">Carregando...</div>
+            <div className="p-12 text-center">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-3" />
+              <p className="text-sm text-muted-foreground">Carregando...</p>
+            </div>
           ) : matriculas.length === 0 ? (
-            <div className="p-8 text-center text-muted-foreground text-sm">
-              <DoorOpen className="h-8 w-8 mx-auto mb-2 text-muted-foreground" />
-              <p>Nenhuma matrícula encontrada.</p>
-              <p className="text-xs mt-1">Clique em "Nova Matrícula" para começar.</p>
-            </div>
+            <EmptyState
+              icon={DoorOpen}
+              title="Nenhuma matrícula encontrada"
+              description='Clique em "Nova Matrícula" para começar.'
+              action={
+                <Link href="/gestao-academica/matriculas/cadastro">
+                  <Button>
+                    <Plus className="h-4 w-4" />
+                    Nova Matrícula
+                  </Button>
+                </Link>
+              }
+            />
           ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="border-b border-border bg-muted/80">
-                    <th className="text-left px-4 py-3 font-medium text-muted-foreground text-xs uppercase">Aluno</th>
-                    <th className="text-left px-4 py-3 font-medium text-muted-foreground text-xs uppercase">Turma</th>
-                    <th className="text-left px-4 py-3 font-medium text-muted-foreground text-xs uppercase">Etapa</th>
-                    <th className="text-left px-4 py-3 font-medium text-muted-foreground text-xs uppercase">Data Matrícula</th>
-                    <th className="text-left px-4 py-3 font-medium text-muted-foreground text-xs uppercase">Situação</th>
-                    <th className="text-right px-4 py-3 font-medium text-muted-foreground text-xs uppercase">Ações</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {matriculas.map((m: any) => (
-                    <tr key={m.id} className="border-b border-border hover:bg-muted/50 transition-colors">
-                      <td className="px-4 py-3">
-                        <div className="font-medium text-foreground">{m.aluno?.nome_completo || '—'}</div>
-                        <div className="text-[11px] text-muted-foreground">{m.aluno?.cpf || ''}</div>
-                      </td>
-                      <td className="px-4 py-3 text-muted-foreground">{m.turma?.nome || '—'}</td>
-                      <td className="px-4 py-3 text-muted-foreground">{m.etapa?.etapa_nome || '—'}</td>
-                      <td className="px-4 py-3 text-muted-foreground">{formatData(m.data_matricula)}</td>
-                      <td className="px-4 py-3">
-                        <Badge variant="outline" className={`text-[11px] px-1.5 py-0 ${situacaoColors[m.situacao] || ''}`}>
-                          {m.situacao}
-                        </Badge>
-                      </td>
-                      <td className="px-4 py-3 text-right">
-                        <Link href={`/gestao-academica/matriculas/cadastro?id=${m.id}`}>
-                          <Button variant="ghost" size="sm" className="h-7 text-xs text-muted-foreground">
-                            Editar
-                          </Button>
-                        </Link>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+            <Table>
+              <TableHeader className="bg-muted">
+                <TableRow>
+                  <TableHead className="text-xs uppercase">Aluno</TableHead>
+                  <TableHead className="text-xs uppercase">Turma</TableHead>
+                  <TableHead className="text-xs uppercase">Etapa</TableHead>
+                  <TableHead className="text-xs uppercase">Data Matrícula</TableHead>
+                  <TableHead className="text-xs uppercase">Situação</TableHead>
+                  <TableHead className="text-xs uppercase text-right">Ações</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {matriculas.map((m: any) => (
+                  <TableRow key={m.id}>
+                    <TableCell>
+                      <div className="font-medium text-foreground">{m.aluno?.nome_completo || '—'}</div>
+                      <div className="text-[11px] text-muted-foreground">{m.aluno?.cpf || ''}</div>
+                    </TableCell>
+                    <TableCell className="text-muted-foreground">{m.turma?.nome || '—'}</TableCell>
+                    <TableCell className="text-muted-foreground">{m.etapa?.etapa_nome || '—'}</TableCell>
+                    <TableCell className="text-muted-foreground">{formatData(m.data_matricula)}</TableCell>
+                    <TableCell>
+                      <StatusBadge status={mapSituationToStatus(m.situacao)} className="text-[11px] px-1.5 py-0">
+                        {m.situacao}
+                      </StatusBadge>
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <Link href={`/gestao-academica/matriculas/cadastro?id=${m.id}`}>
+                        <Button variant="ghost" size="sm" className="h-7 text-xs">
+                          Editar
+                        </Button>
+                      </Link>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
           )}
-        </CardContent>
-      </Card>
-    </div>
+        </PageSection>
+      </div>
+    </PageContainer>
   )
 }

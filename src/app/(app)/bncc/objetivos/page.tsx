@@ -7,9 +7,12 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { Textarea } from '@/components/ui/textarea'
 import { BookOpen, Plus, Search, Edit, Trash2, ChevronDown, ChevronRight } from 'lucide-react'
 import { toast } from 'sonner'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog'
+import { PageContainer } from '@/components/layout/page-container'
+import { PageHeader } from '@/components/layout/page-header'
 
 const etapas = [
   { value: 'creche', label: 'Creche (0-3 anos)' },
@@ -135,26 +138,24 @@ export default function ObjetivosPage() {
   }, {})
 
   return (
-    <div className="container mx-auto py-8 px-4">
-      <div className="mb-8 animate-fade-in-up">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold text-foreground">Objetivos de Aprendizagem e Desenvolvimento</h1>
-            <p className="text-muted-foreground mt-1">Habilidades e competências do Ensino Infantil conforme BNCC</p>
-          </div>
-          <Button className="bg-primary hover:bg-secondary" onClick={openNew}>
+    <PageContainer>
+      <PageHeader
+        title="Objetivos de Aprendizagem e Desenvolvimento"
+        description="Habilidades e competências do Ensino Infantil conforme BNCC"
+        actions={
+          <Button onClick={openNew}>
             <Plus className="w-4 h-4 mr-2" /> Novo Objetivo
           </Button>
-        </div>
-      </div>
+        }
+      />
 
-      <Card className="mb-6 border-0 shadow-md card-glass animate-fade-in-up delay-75">
+      <Card className="mb-6 border-0 shadow-sm animate-fade-in-up delay-75">
         <CardContent className="pt-6">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             <div>
               <label className="text-sm font-medium mb-2 block text-foreground">Etapa de Ensino</label>
               <Select value={etapa} onValueChange={setEtapa}>
-                <SelectTrigger className="border-2 border-border focus:border-primary [&_svg:not([class*='rotate'])]:rotate-0">
+                <SelectTrigger className="border-border focus:border-primary [&_svg:not([class*='rotate'])]:rotate-0">
                   <SelectValue placeholder="Selecione" />
                 </SelectTrigger>
                 <SelectContent position="popper" side="bottom" sideOffset={5}>
@@ -165,7 +166,7 @@ export default function ObjetivosPage() {
             <div className="min-w-0">
               <label className="text-sm font-medium mb-2 block text-foreground">Faixa Etária</label>
               <Select value={faixaEtariaFilter} onValueChange={setFaixaEtariaFilter}>
-                <SelectTrigger className="border-2 border-border focus:border-primary [&_svg:not([class*='rotate'])]:rotate-0 overflow-hidden text-ellipsis whitespace-nowrap">
+                <SelectTrigger className="border-border focus:border-primary [&_svg:not([class*='rotate'])]:rotate-0 overflow-hidden text-ellipsis whitespace-nowrap">
                   <SelectValue placeholder="Selecione" className="overflow-hidden text-ellipsis" />
                 </SelectTrigger>
                 <SelectContent position="popper" side="bottom" sideOffset={5}>
@@ -177,7 +178,7 @@ export default function ObjetivosPage() {
             <div>
               <label className="text-sm font-medium mb-2 block text-foreground">Campo de Experiência</label>
               <Select value={campoExperiencia} onValueChange={setCampoExperiencia}>
-                <SelectTrigger className="border-2 border-border focus:border-primary [&_svg:not([class*='rotate'])]:rotate-0">
+                <SelectTrigger className="border-border focus:border-primary [&_svg:not([class*='rotate'])]:rotate-0">
                   <SelectValue placeholder="Selecione" />
                 </SelectTrigger>
                 <SelectContent position="popper" side="bottom" sideOffset={5}>
@@ -189,10 +190,10 @@ export default function ObjetivosPage() {
             <div className="md:col-span-1">
               <label className="text-sm font-medium mb-2 block text-foreground">Buscar</label>
               <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <input type="text" placeholder="Buscar por código ou descrição..." value={searchTerm}
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground z-10" />
+                <Input placeholder="Buscar por código ou descrição..." value={searchTerm}
                   onChange={e => setSearchTerm(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2 bg-card/80 border border-border rounded-lg focus:border-primary focus:ring-primary/20 outline-none" />
+                  className="pl-10" />
               </div>
             </div>
           </div>
@@ -212,7 +213,7 @@ export default function ObjetivosPage() {
           <p className="text-muted-foreground">Carregando...</p>
         </div>
       ) : filtered.length === 0 ? (
-        <Card className="border-0 shadow-lg card-glass animate-fade-in-up delay-150">
+        <Card className="border-0 shadow-sm animate-fade-in-up delay-150">
           <CardContent className="flex flex-col items-center justify-center py-16">
             <div className="w-20 h-20 bg-gradient-to-br from-primary/10 to-secondary/10 rounded-2xl flex items-center justify-center mb-6">
               <BookOpen className="h-10 w-10 text-primary" />
@@ -226,12 +227,12 @@ export default function ObjetivosPage() {
           {Object.entries(grouped).map(([campo, objs]: [string, any], idx) => {
             const isExp = expandedCampo === campo
             return (
-              <Card key={campo} className="border-0 shadow-md card-glass overflow-hidden animate-fade-in-up" style={{ animationDelay: `${idx * 50}ms` }}>
+              <Card key={campo} className="border-0 shadow-sm overflow-hidden">
                 <CardHeader className="cursor-pointer hover:bg-muted/30 transition-all duration-200" onClick={() => setExpandedCampo(isExp ? null : campo)}>
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
                       <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-secondary flex items-center justify-center">
-                        <BookOpen className="w-5 h-5 text-white" />
+                        <BookOpen className="w-5 h-5 text-primary-foreground" />
                       </div>
                       <div>
                         <CardTitle className="text-lg font-semibold text-foreground">{campo}</CardTitle>
@@ -250,7 +251,7 @@ export default function ObjetivosPage() {
                       <div key={obj.id} className="p-4 rounded-xl border border-border/50 bg-card/50 hover:bg-muted/50 transition-all duration-200">
                         <div className="flex items-start justify-between gap-4">
                           <div className="flex items-start gap-3 flex-1">
-                            <Badge className="shrink-0 font-mono text-xs bg-gradient-to-r from-primary to-secondary text-primary-foreground border-0">
+                            <Badge className="shrink-0 font-mono text-xs bg-primary text-primary-foreground border-0">
                               {obj.codigo_bncc}
                             </Badge>
                             <div className="flex-1">
@@ -290,15 +291,15 @@ export default function ObjetivosPage() {
             </div>
             <div>
               <label className="text-sm font-medium mb-2 block text-foreground">Descrição</label>
-              <textarea value={form.descricao} onChange={e => setForm({ ...form, descricao: e.target.value })}
-                className="w-full px-3 py-2 bg-card/80 border border-border rounded-lg focus:border-primary focus:ring-primary/20 outline-none min-h-[100px]"
+              <Textarea value={form.descricao} onChange={e => setForm({ ...form, descricao: e.target.value })}
+                className="min-h-[100px]"
                 placeholder="Descrição do objetivo" />
             </div>
             <div className="space-y-4">
               <div>
                 <label className="text-sm font-medium mb-2 block text-foreground">Etapa de Ensino</label>
                 <Select value={form.etapa_obj} onValueChange={v => setForm({ ...form, etapa_obj: v, faixa_etaria: (faixas[v] || [])[0] || '' })}>
-                  <SelectTrigger className="border-2 border-border focus:border-primary [&_svg:not([class*='rotate'])]:rotate-0"><SelectValue placeholder="Selecione" /></SelectTrigger>
+                  <SelectTrigger className="border-border focus:border-primary [&_svg:not([class*='rotate'])]:rotate-0"><SelectValue placeholder="Selecione" /></SelectTrigger>
                   <SelectContent position="popper" side="bottom" sideOffset={5}>
                     {etapas.map(e => <SelectItem key={e.value} value={e.value}>{e.label}</SelectItem>)}
                   </SelectContent>
@@ -307,7 +308,7 @@ export default function ObjetivosPage() {
               <div>
                 <label className="text-sm font-medium mb-2 block text-foreground">Campo de Experiência</label>
                 <Select value={form.campo_experiencia} onValueChange={v => setForm({ ...form, campo_experiencia: v })}>
-                  <SelectTrigger className="border-2 border-border focus:border-primary [&_svg:not([class*='rotate'])]:rotate-0"><SelectValue placeholder="Selecione" /></SelectTrigger>
+                  <SelectTrigger className="border-border focus:border-primary [&_svg:not([class*='rotate'])]:rotate-0"><SelectValue placeholder="Selecione" /></SelectTrigger>
                   <SelectContent position="popper" side="bottom" sideOffset={5}>
                     {camposList.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
                   </SelectContent>
@@ -316,7 +317,7 @@ export default function ObjetivosPage() {
               <div>
                 <label className="text-sm font-medium mb-2 block text-foreground">Faixa Etária</label>
                 <Select value={form.faixa_etaria} onValueChange={v => setForm({ ...form, faixa_etaria: v })}>
-                  <SelectTrigger className="border-2 border-border focus:border-primary [&_svg:not([class*='rotate'])]:rotate-0"><SelectValue placeholder="Selecione" /></SelectTrigger>
+                  <SelectTrigger className="border-border focus:border-primary [&_svg:not([class*='rotate'])]:rotate-0"><SelectValue placeholder="Selecione" /></SelectTrigger>
                   <SelectContent position="popper" side="bottom" sideOffset={5}>
                     {(faixas[form.etapa_obj] || []).map(f => <SelectItem key={f} value={f} className="text-sm whitespace-normal">{f}</SelectItem>)}
                   </SelectContent>
@@ -331,16 +332,16 @@ export default function ObjetivosPage() {
                 {saving ? 'Salvando...' : 'Salvar e Registrar Outro'}
               </Button>
             )}
-            <Button className="bg-primary hover:bg-secondary" onClick={() => save(false)} disabled={saving}>
+            <Button onClick={() => save(false)} disabled={saving}>
               {saving ? 'Salvando...' : editando ? 'Atualizar' : 'Salvar e Fechar'}
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
-      <div className="mt-8 p-5 bg-card/60 backdrop-blur-sm rounded-2xl border border-border/50 shadow-sm animate-fade-in-up delay-300">
+      <div className="mt-8 p-5 bg-muted/50 rounded-2xl border border-border">
         <p className="text-sm text-muted-foreground">Fonte: Base Nacional Comum Curricular (BNCC) - 2018</p>
       </div>
-    </div>
+    </PageContainer>
   )
 }

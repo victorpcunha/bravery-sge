@@ -4,13 +4,15 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/components/providers/auth-provider'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Plus, Shield, ShieldOff } from 'lucide-react'
+import { Plus, Shield } from 'lucide-react'
 import { listarPerfis, type Perfil } from '@/lib/actions/perfis'
 import { PerfilFiltros } from '@/components/perfis/perfil-filtros'
 import { PerfilGrid } from '@/components/perfis/perfil-grid'
 import { usePermissoes } from '@/hooks/use-permissoes'
 import { toast } from 'sonner'
+import { PageContainer } from '@/components/layout/page-container'
+import { PageHeader } from '@/components/layout/page-header'
+import { PageSection } from '@/components/layout/page-section'
 
 export default function PerfisPage() {
   const { user, loading: authLoading, schoolId } = useAuth()
@@ -78,31 +80,18 @@ export default function PerfisPage() {
     )
   }
 
-  return (
-      <div className="container mx-auto py-8 px-4">
-        <div className="flex items-center justify-between mb-8">
-          <div className="animate-fade-in-up">
-            <div className="flex items-center gap-3">
-              <div className="p-2.5 rounded-lg bg-primary/10">
-                <Shield className="h-6 w-6 text-primary" />
-              </div>
-              <div>
-                <h1 className="text-3xl font-bold text-foreground">Perfis e Permissões</h1>
-                <p className="text-muted-foreground mt-1">
-                  Gerencie os perfis de acesso e permissões do sistema
-                </p>
-              </div>
-            </div>
-          </div>
-          {pode.criar('gestao-usuarios.perfis') && (
-            <Button
-              onClick={() => router.push('/gestao-usuarios/perfis/novo')}
-              className="bg-primary hover:bg-primary/90 animate-fade-in-up"
-            >
+return (
+      <PageContainer>
+        <PageHeader
+          title="Perfis e Permissões"
+          description="Gerencie os perfis de acesso e permissões do sistema"
+          icon={Shield}
+          actions={pode.criar('gestao-usuarios.perfis') ? (
+            <Button onClick={() => router.push('/gestao-usuarios/perfis/novo')}>
               <Plus className="mr-2 h-4 w-4" /> Novo Perfil
             </Button>
-          )}
-        </div>
+          ) : undefined}
+        />
 
         <PerfilFiltros
           search={search}
@@ -111,24 +100,20 @@ export default function PerfisPage() {
           onSituacaoChange={setSituacao}
         />
 
-        <Card className="border-border shadow-[0_2px_8px_rgba(0,0,0,0.06)]">
-          <CardHeader>
-            <CardTitle className="text-lg flex items-center gap-2">
-              <Shield className="h-5 w-5 text-primary" />
-              Perfis cadastrados ({perfis.length})
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="p-0">
-            <PerfilGrid
-              perfis={perfis}
-              loading={loading}
-              onEdit={handleEdit}
-              onDelete={handleDelete}
-              podeEditar={pode.editar('gestao-usuarios.perfis')}
-              podeExcluir={pode.excluir('gestao-usuarios.perfis')}
-            />
-          </CardContent>
-        </Card>
-      </div>
+        <PageSection
+          title="Perfis cadastrados"
+          actions={<span className="text-sm text-muted-foreground">{perfis.length} registro(s)</span>}
+          variant="flush"
+        >
+          <PerfilGrid
+            perfis={perfis}
+            loading={loading}
+            onEdit={handleEdit}
+            onDelete={handleDelete}
+            podeEditar={pode.editar('gestao-usuarios.perfis')}
+            podeExcluir={pode.excluir('gestao-usuarios.perfis')}
+          />
+        </PageSection>
+      </PageContainer>
   )
 }

@@ -6,9 +6,11 @@ import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Switch } from '@/components/ui/switch'
 import { Separator } from '@/components/ui/separator'
+import { Button } from '@/components/ui/button'
 import { MatrizPermissoes } from './matriz-permissoes'
 import type { Perfil, RecursoComPermissao } from '@/lib/actions/perfis'
 import { Shield, GraduationCap } from 'lucide-react'
+import { FormCard } from '@/components/layout/form-card'
 
 type PerfilFormProps = {
   perfil?: Perfil | null
@@ -74,12 +76,7 @@ export function PerfilForm({ perfil, recursos, onSave, onCancel, saving }: Perfi
 
   return (
     <div className="space-y-6 py-4">
-      {/* Card Identificação */}
-      <div className="border border-border rounded-lg p-5 bg-muted/40 space-y-4">
-        <h3 className="text-sm font-semibold text-foreground uppercase tracking-wider flex items-center gap-2">
-          <Shield className="h-4 w-4 text-primary" />
-          Identificação
-        </h3>
+      <FormCard title="Identificação">
         <div className="space-y-2">
           <Label>Nome do Perfil *</Label>
           <Input
@@ -117,29 +114,20 @@ export function PerfilForm({ perfil, recursos, onSave, onCancel, saving }: Perfi
             <span>Perfil com vínculo em turma (professor)</span>
           </Label>
         </div>
-        {usaVinculoTurma && (
+        {usaVinculoTurma ? (
           <p className="text-xs text-muted-foreground">
             Este perfil terá acesso apenas às turmas vinculadas em <code>turmas_profissionais</code>.
           </p>
-        )}
-        {!usaVinculoTurma && (
+        ) : (
           <p className="text-xs text-muted-foreground">
             Acesso administrativo global a todas as turmas da escola.
           </p>
         )}
-      </div>
+      </FormCard>
 
       <Separator />
 
-      {/* Card Permissões */}
-      <div className="border border-border rounded-lg p-5 bg-muted/40 space-y-4">
-        <h3 className="text-sm font-semibold text-foreground uppercase tracking-wider flex items-center gap-2">
-          <Shield className="h-4 w-4 text-primary" />
-          Permissões de Acesso
-        </h3>
-        <p className="text-xs text-muted-foreground">
-          Configure as permissões por recurso. "Visualizar" é obrigatório para habilitar as demais ações.
-        </p>
+      <FormCard title="Permissões de Acesso" description="Configure as permissões por recurso. &quot;Visualizar&quot; é obrigatório para habilitar as demais ações.">
         <MatrizPermissoes
           recursos={recursos.map(r => ({
             ...r,
@@ -147,26 +135,25 @@ export function PerfilForm({ perfil, recursos, onSave, onCancel, saving }: Perfi
           }))}
           onChange={handlePermChange}
         />
-      </div>
+      </FormCard>
 
       <Separator />
 
       <div className="flex justify-end gap-3">
-        <button
+        <Button
           type="button"
+          variant="outline"
           onClick={onCancel}
-          className="h-9 px-4 text-sm font-medium rounded-lg border border-border text-foreground hover:bg-muted transition-colors"
         >
           Cancelar
-        </button>
-        <button
+        </Button>
+        <Button
           type="button"
           onClick={handleSubmit}
           disabled={!nome.trim() || saving}
-          className="h-9 px-4 text-sm font-medium rounded-lg bg-primary text-white hover:bg-primary/90 disabled:opacity-50 transition-colors"
         >
           {saving ? 'Salvando...' : perfil ? 'Atualizar Perfil' : 'Criar Perfil'}
-        </button>
+        </Button>
       </div>
     </div>
   )

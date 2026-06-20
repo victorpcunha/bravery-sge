@@ -4,8 +4,11 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/components/providers/auth-provider'
 import { PageHeader } from '@/components/layout/page-header'
+import { PageContainer } from '@/components/layout/page-container'
 import { StatCard } from '@/components/ui/stat-card'
 import { PageSection } from '@/components/layout/page-section'
+import { Button } from '@/components/ui/button'
+import Link from 'next/link'
 import { getDashboardData } from '@/lib/actions/schools'
 import { School, Users, GraduationCap, UserCheck, Calendar, ArrowRight } from 'lucide-react'
 
@@ -53,7 +56,7 @@ export default function DashboardPage() {
 
   return (
       <div className="min-h-screen bg-background">
-        <div className="container mx-auto py-8 px-4 max-w-6xl">
+        <PageContainer maxWidth="dashboard">
           <PageHeader
             icon={School}
             title="Dashboard"
@@ -82,21 +85,24 @@ export default function DashboardPage() {
           <PageSection title="Próximos Passos" className="animate-fade-in-up delay-375">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               {nextSteps.map((step) => (
-                <button
+                <Button
                   key={step.href}
-                  onClick={() => router.push(step.href)}
-                  className="flex items-center gap-3 p-3 rounded-lg border border-border hover:border-primary/30 hover:bg-primary/5 transition-all duration-200 group text-left"
+                  variant="ghost"
+                  asChild
+                  className="flex items-center gap-3 p-3 rounded-lg border border-border hover:border-primary/30 hover:bg-primary/5 transition-all duration-200 h-auto justify-start text-left"
                 >
-                  <div className="w-9 h-9 rounded-lg bg-muted flex items-center justify-center shrink-0 group-hover:bg-primary/10 transition-colors">
-                    <step.icon className="w-4 h-4 text-muted-foreground group-hover:text-primary transition-colors" />
-                  </div>
-                  <span className="text-sm font-medium text-foreground/80 group-hover:text-foreground transition-colors flex-1">{step.label}</span>
-                  <ArrowRight className="w-4 h-4 text-muted-foreground/50 group-hover:text-primary group-hover:translate-x-0.5 transition-all" />
-                </button>
+                  <Link href={step.href}>
+                    <div className="w-9 h-9 rounded-lg bg-muted flex items-center justify-center shrink-0 group-hover:bg-primary/10 transition-colors">
+                      <step.icon className="w-4 h-4 text-muted-foreground group-hover:text-primary transition-colors" />
+                    </div>
+                    <span className="text-sm font-medium text-muted-foreground group-hover:text-foreground transition-colors flex-1">{step.label}</span>
+                    <ArrowRight className="w-4 h-4 text-muted-foreground/50 group-hover:text-primary group-hover:translate-x-0.5 transition-all" />
+                  </Link>
+                </Button>
               ))}
             </div>
           </PageSection>
-        </div>
+        </PageContainer>
       </div>
   )
 }

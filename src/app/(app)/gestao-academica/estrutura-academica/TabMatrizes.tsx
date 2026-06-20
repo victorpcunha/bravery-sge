@@ -9,6 +9,7 @@ import { Checkbox } from '@/components/ui/checkbox'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue, SelectLabel, SelectGroup } from '@/components/ui/select'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog'
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog'
+import { EmptyState } from '@/components/ui/empty-state'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Switch } from '@/components/ui/switch'
 import { Separator } from '@/components/ui/separator'
@@ -232,7 +233,7 @@ export function TabMatrizes({ schoolId }: Props) {
 
   if (loading) {
     return (
-      <Card className="border-0 shadow-md card-glass">
+      <Card className="border-0 shadow-md">
         <CardHeader className="pb-3"><CardTitle className="text-lg font-semibold text-foreground">Matrizes Curriculares</CardTitle></CardHeader>
         <CardContent><div className="flex items-center justify-center py-12 animate-pulse"><div className="h-8 w-8 bg-muted rounded-full mb-3"></div><div className="h-4 w-32 bg-muted rounded"></div></div></CardContent>
       </Card>
@@ -240,12 +241,12 @@ export function TabMatrizes({ schoolId }: Props) {
   }
 
   return (
-    <Card className="border-0 shadow-md card-glass">
+    <Card className="border-0 shadow-md">
       <CardHeader className="pb-3 border-b border-border">
         <div className="flex items-center justify-between">
           <CardTitle className="text-lg font-semibold text-foreground">Matrizes Curriculares</CardTitle>
           {!anoEncerrado && anoSelecionado && (
-            <Button size="sm" className="bg-primary hover:bg-primary/90 text-white" onClick={openCreateModal}>
+            <Button size="sm" onClick={openCreateModal}>
               <Plus className="w-4 h-4 mr-1" /> Nova Matriz
             </Button>
           )}
@@ -276,9 +277,9 @@ export function TabMatrizes({ schoolId }: Props) {
 
       <CardContent className="pt-4">
         {!anoSelecionado ? (
-          <EmptyState icon={<Calendar className="w-10 h-10 text-muted-foreground" />} title="Selecione um Ano Letivo" description="Escolha um ano letivo para visualizar as matrizes." />
+          <EmptyState icon={Calendar} title="Selecione um Ano Letivo" description="Escolha um ano letivo para visualizar as matrizes." />
         ) : matrizes.length === 0 ? (
-          <EmptyState icon={<BookOpen className="w-10 h-10 text-muted-foreground" />} title="Nenhuma matriz encontrada" description={anoEncerrado ? 'Ano encerrado, apenas visualização.' : 'Clique em Nova Matriz para criar.'} />
+          <EmptyState icon={BookOpen} title="Nenhuma matriz encontrada" description={anoEncerrado ? 'Ano encerrado, apenas visualização.' : 'Clique em Nova Matriz para criar.'} />
         ) : (
           <div className="grid gap-3">
             {matrizes.map(matriz => (
@@ -408,7 +409,7 @@ export function TabMatrizes({ schoolId }: Props) {
                   {habilidadesManuais.map(h => (
                     <div key={h.id} className="flex items-center justify-between p-2 bg-muted/40 rounded border border-border">
                       <div><span className="text-xs font-medium text-primary">{h.codigo}</span><span className="text-xs text-muted-foreground ml-2">{h.descricao}</span></div>
-                      <button onClick={() => removeHabilidadeManualLocal(h.id)} className="text-xs text-destructive hover:underline">Remover</button>
+                      <Button variant="ghost" size="sm" onClick={() => removeHabilidadeManualLocal(h.id)} className="text-xs text-destructive">Remover</Button>
                     </div>
                   ))}
                 </div>
@@ -466,16 +467,6 @@ export function TabMatrizes({ schoolId }: Props) {
         </AlertDialogContent>
       </AlertDialog>
     </Card>
-  )
-}
-
-function EmptyState({ icon, title, description }: { icon: React.ReactNode; title: string; description: string }) {
-  return (
-    <div className="flex flex-col items-center justify-center py-12 px-4">
-      <div className="w-20 h-20 bg-muted rounded-2xl flex items-center justify-center mb-4">{icon}</div>
-      <h3 className="text-base font-medium text-foreground mb-1">{title}</h3>
-      <p className="text-sm text-muted-foreground text-center max-w-xs">{description}</p>
-    </div>
   )
 }
 

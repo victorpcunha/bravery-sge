@@ -3,6 +3,7 @@
 import { useRef, useCallback } from 'react'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
+import { TableRow, TableCell } from '@/components/ui/table'
 
 type Props = {
   disciplina: {
@@ -31,21 +32,21 @@ export default function ConselhoClasseLinhaDisciplina({ disciplina, onUpdate, re
 
   return (
     <>
-      <tr className="border-b border-muted/50">
-        <td className="py-2 px-3 text-sm">{disciplina.nome}</td>
-        <td className="py-2 px-3 text-sm text-center">
+      <TableRow>
+        <TableCell className="py-2 px-3 text-sm">{disciplina.nome}</TableCell>
+        <TableCell className="py-2 px-3 text-sm text-center">
           {disciplina.frequencia !== null ? `${disciplina.frequencia}%` : '-'}
-        </td>
-        <td className="py-2 px-3 text-sm text-center">
+        </TableCell>
+        <TableCell className="py-2 px-3 text-sm text-center">
           {disciplina.total_faltas !== null ? disciplina.total_faltas : '-'}
-        </td>
-        <td className="py-2 px-3 text-sm text-center">
+        </TableCell>
+        <TableCell className="py-2 px-3 text-sm text-center">
           {disciplina.media_final !== null ? disciplina.media_final.toFixed(2) : '-'}
-        </td>
-        <td className="py-2 px-3 text-sm text-center">
+        </TableCell>
+        <TableCell className="py-2 px-3 text-sm text-center">
           {disciplina.media_periodo !== null ? disciplina.media_periodo.toFixed(2) : '-'}
-        </td>
-        <td className="py-2 px-3">
+        </TableCell>
+        <TableCell className="py-2 px-3">
           {readonly ? (
             <span className="text-sm">{disciplina.nota_conselho?.toFixed(2) ?? '-'}</span>
           ) : (
@@ -60,10 +61,10 @@ export default function ConselhoClasseLinhaDisciplina({ disciplina, onUpdate, re
               placeholder="-"
             />
           )}
-        </td>
-      </tr>
-      <tr className="border-b border-muted/50">
-        <td colSpan={6} className="py-1 px-3">
+        </TableCell>
+      </TableRow>
+      <TableRow>
+        <TableCell colSpan={6} className="py-1 px-3">
           {readonly ? (
             <span className="text-sm">{disciplina.parecer ?? '-'}</span>
           ) : (
@@ -74,8 +75,8 @@ export default function ConselhoClasseLinhaDisciplina({ disciplina, onUpdate, re
               placeholder="Parecer..."
             />
           )}
-        </td>
-      </tr>
+        </TableCell>
+      </TableRow>
     </>
   )
 }

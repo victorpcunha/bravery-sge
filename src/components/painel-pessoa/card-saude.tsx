@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { getSaudeEstudante, type SaudeEstudante } from '@/lib/actions/painel-pessoa'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { StatusBadge } from '@/components/feedback/status-badge'
 import { Heart, Pill, Activity, Loader2, Stethoscope, Brain } from 'lucide-react'
 
 type Props = {
@@ -91,7 +92,7 @@ export default function CardSaude({ pessoaId, schoolId, pessoaLogadaId }: Props)
       <Card>
         <CardHeader className="pb-2">
           <CardTitle className="text-sm flex items-center gap-2">
-            <Heart className="h-4 w-4 text-rose-500" />
+            <Heart className="h-4 w-4 text-destructive" />
             Saúde
           </CardTitle>
         </CardHeader>
@@ -106,7 +107,7 @@ export default function CardSaude({ pessoaId, schoolId, pessoaLogadaId }: Props)
     <Card>
       <CardHeader className="pb-2">
         <CardTitle className="text-sm flex items-center gap-2">
-          <Heart className="h-4 w-4 text-rose-500" />
+          <Heart className="h-4 w-4 text-destructive" />
           Saúde
         </CardTitle>
       </CardHeader>
@@ -118,9 +119,7 @@ export default function CardSaude({ pessoaId, schoolId, pessoaLogadaId }: Props)
             </p>
             <div className="flex flex-wrap gap-1">
               {condicoesAtivas.map(c => (
-                <span key={c} className="text-xs bg-destructive/10 text-destructive border border-destructive/20 rounded px-1.5 py-0.5">
-                  {c}
-                </span>
+                <StatusBadge key={c} status="destructive" className="text-xs">{c}</StatusBadge>
               ))}
             </div>
           </div>
@@ -133,9 +132,7 @@ export default function CardSaude({ pessoaId, schoolId, pessoaLogadaId }: Props)
             </p>
             <div className="flex flex-wrap gap-1">
               {transtornosAtivos.map(t => (
-                <span key={t} className="text-xs bg-warning/10 text-warning border border-warning/20 rounded px-1.5 py-0.5">
-                  {t}
-                </span>
+                <StatusBadge key={t} status="warning" className="text-xs">{t}</StatusBadge>
               ))}
             </div>
           </div>
@@ -148,9 +145,7 @@ export default function CardSaude({ pessoaId, schoolId, pessoaLogadaId }: Props)
             </p>
             <div className="flex flex-wrap gap-1">
               {recursosSaeb.map(r => (
-                <span key={r} className="text-xs bg-info/10 text-info border border-info/20 rounded px-1.5 py-0.5">
-                  {r}
-                </span>
+                <StatusBadge key={r} status="info" className="text-xs">{r}</StatusBadge>
               ))}
             </div>
             {dados?.condicoes && (
@@ -168,7 +163,6 @@ export default function CardSaude({ pessoaId, schoolId, pessoaLogadaId }: Props)
           </div>
         )}
 
-        {/* Condições de saúde sem recursos SAEB, exibe só texto livre */}
         {recursosSaeb.length === 0 && dados?.condicoes && (
           <div>
             <p className="text-xs text-muted-foreground flex items-center gap-1 mb-1">

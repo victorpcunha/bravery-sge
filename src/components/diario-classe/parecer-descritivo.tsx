@@ -147,7 +147,7 @@ export default function ParecerDescritivo({ turmaId, alunos, quantidadePeriodosP
                   <div
                     key={periodo}
                     className={cn(
-                      "rounded-lg border p-3",
+                      "rounded-lg border border-border p-3",
                       isEditing && "border-primary/40 ring-1 ring-primary/20"
                     )}
                   >

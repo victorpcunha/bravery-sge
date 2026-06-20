@@ -18,6 +18,8 @@ import {
   AccordionTrigger,
 } from '@/components/ui/accordion'
 import { Button } from '@/components/ui/button'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { Textarea } from '@/components/ui/textarea'
 import { cn } from '@/lib/utils'
 import { toast } from 'sonner'
 import { Check, Save } from 'lucide-react'
@@ -132,8 +134,8 @@ export default function AvaliacaoIndicadores({
         return next
       })
     } catch (e) {
-      console.error('Erro ao salvar avaliação:', e)
-      toast.error('Erro ao salvar avaliação')
+      console.error('Erro ao salvar avaliacao:', e)
+      toast.error('Erro ao salvar avaliacao')
     } finally {
       setSalvando(false)
     }
@@ -178,8 +180,8 @@ export default function AvaliacaoIndicadores({
         return next
       })
     } catch (e) {
-      console.error('Erro ao salvar observação:', e)
-      toast.error('Erro ao salvar observação')
+      console.error('Erro ao salvar observacao:', e)
+      toast.error('Erro ao salvar observacao')
     }
   }
 
@@ -195,36 +197,37 @@ export default function AvaliacaoIndicadores({
       <div className="flex flex-wrap items-center gap-4 mb-6">
         <div>
           <label className="text-xs font-medium text-muted-foreground block mb-1">
-            Período
+            Periodo
           </label>
-          <select
-            value={periodo}
-            onChange={e => setPeriodo(Number(e.target.value))}
-            className="h-9 px-3 rounded-lg border border-border bg-card text-sm"
-          >
-            {periodos.map(p => (
-              <option key={p} value={p}>
-                {p}º Período
-              </option>
-            ))}
-          </select>
+          <Select value={String(periodo)} onValueChange={v => setPeriodo(Number(v))}>
+            <SelectTrigger>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {periodos.map(p => (
+                <SelectItem key={p} value={String(p)}>
+                  {p}o Periodo
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
         <div>
           <label className="text-xs font-medium text-muted-foreground block mb-1">
             Disciplina / Campo
           </label>
-          <select
-            value={disciplinaId}
-            onChange={e => setDisciplinaId(e.target.value)}
-            className="h-9 px-3 rounded-lg border border-border bg-card text-sm min-w-[180px]"
-          >
-            <option value="">Selecione uma disciplina</option>
-            {disciplinas.map(d => (
-              <option key={d.disciplina_id} value={d.disciplina_id}>
-                {d.nome}
-              </option>
-            ))}
-          </select>
+          <Select value={disciplinaId} onValueChange={setDisciplinaId}>
+            <SelectTrigger className="min-w-[180px]">
+              <SelectValue placeholder="Selecione uma disciplina" />
+            </SelectTrigger>
+            <SelectContent>
+              {disciplinas.map(d => (
+                <SelectItem key={d.disciplina_id} value={d.disciplina_id}>
+                  {d.nome}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
       </div>
 
@@ -265,14 +268,14 @@ export default function AvaliacaoIndicadores({
                     return (
                       <div
                         key={ind.id}
-                        className="rounded-lg border p-3"
+                        className="rounded-lg border border-border p-3"
                       >
                         <div className="flex items-start justify-between mb-2">
                           <div className="flex-1">
                             <p className="text-sm font-medium">
                               {ind.codigo && (
                                 <span className="text-muted-foreground mr-1">
-                                  {ind.codigo} —
+                                  {ind.codigo} {'\u2014'}
                                 </span>
                               )}
                               {ind.descricao}
@@ -290,9 +293,10 @@ export default function AvaliacaoIndicadores({
                             {ind.niveis.map(nivel => {
                               const isSelected = av?.nivel_id === nivel.id
                               return (
-                                <button
+                                <Button
                                   key={nivel.id}
-                                  type="button"
+                                  variant={isSelected ? 'default' : 'outline'}
+                                  size="sm"
                                   disabled={!podeEditar || salvando}
                                   onClick={() =>
                                     handleNivelClick(
@@ -302,10 +306,8 @@ export default function AvaliacaoIndicadores({
                                     )
                                   }
                                   className={cn(
-                                    'inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-medium transition-all cursor-pointer border',
-                                    isSelected
-                                      ? 'bg-primary text-primary-foreground border-primary shadow-sm'
-                                      : 'bg-background text-muted-foreground border-border hover:border-primary/40 hover:text-foreground',
+                                    'text-xs font-medium gap-1',
+                                    !isSelected && 'bg-background text-muted-foreground hover:text-foreground',
                                     (!podeEditar || salvando) &&
                                       'opacity-60 cursor-not-allowed'
                                   )}
@@ -314,7 +316,7 @@ export default function AvaliacaoIndicadores({
                                     <Check className="h-3 w-3" />
                                   )}
                                   {nivel.sigla || nivel.descricao}
-                                </button>
+                                </Button>
                               )
                             })}
                           </div>
@@ -322,13 +324,13 @@ export default function AvaliacaoIndicadores({
 
                         {ind.niveis.length === 0 && (
                           <p className="text-xs text-muted-foreground/50 italic mt-1">
-                            Nenhum nível configurado para este indicador.
+                            Nenhum nivel configurado para este indicador.
                           </p>
                         )}
 
-                        <textarea
+                        <Textarea
                           rows={2}
-                          placeholder="Observação (opcional)"
+                          placeholder="Observacao (opcional)"
                           defaultValue={av?.observacao || ''}
                           disabled={!podeEditar}
                           onBlur={e => {
@@ -338,7 +340,7 @@ export default function AvaliacaoIndicadores({
                             }
                           }}
                           className={cn(
-                            'w-full mt-2 px-2.5 py-1.5 rounded-md text-xs border border-border bg-background resize-none focus:outline-none focus:ring-1 focus:ring-primary/30 transition-all',
+                            'w-full mt-2 text-xs resize-none',
                             !podeEditar && 'opacity-60 cursor-not-allowed'
                           )}
                         />

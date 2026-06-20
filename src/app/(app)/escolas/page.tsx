@@ -2,7 +2,11 @@ import Link from 'next/link'
 import { Plus, School, MapPin, Phone, Mail } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
+import { PageContainer } from '@/components/layout/page-container'
+import { PageHeader } from '@/components/layout/page-header'
+import { EmptyState } from '@/components/ui/empty-state'
+import { StatusBadge } from '@/components/feedback/status-badge'
+import { PageSection } from '@/components/layout/page-section'
 import { getSchools } from '@/lib/actions/schools'
 
 const situacaoFuncionario = {
@@ -28,54 +32,45 @@ export default async function EscolasPage() {
   const schools = await getSchools()
 
   return (
-    <div className="container mx-auto py-8 px-4">
-      <div className="flex items-center justify-between mb-8">
-        <div className="animate-fade-in-up">
-          <h1 className="text-3xl font-bold text-foreground">Escolas</h1>
-          <p className="text-muted-foreground mt-1">
-            Gerencie as unidades escolares (Registro 00)
-          </p>
-        </div>
-        <Button asChild className="bg-primary hover:bg-primary/90 transition-all duration-200 animate-fade-in-up">
-          <Link href="/escolas/novo">
-            <Plus className="mr-2 h-4 w-4" />
-            Nova Escola
-          </Link>
-        </Button>
-      </div>
+    <PageContainer>
+      <PageHeader
+        icon={School}
+        title="Escolas"
+        description="Gerencie as unidades escolares (Registro 00)"
+        actions={
+          <Button asChild>
+            <Link href="/escolas/novo">
+              <Plus className="mr-2 h-4 w-4" />
+              Nova Escola
+            </Link>
+          </Button>
+        }
+      />
 
       {schools.length === 0 ? (
-        <Card className="col-span-full border-0 shadow-md card-glass animate-fade-in-up">
-          <CardContent className="flex flex-col items-center justify-center py-16">
-            <div className="w-20 h-20 bg-muted rounded-2xl flex items-center justify-center mb-6">
-              <School className="h-10 w-10 text-primary" />
-            </div>
-            <h3 className="text-xl font-semibold text-foreground mb-2">Nenhuma escola cadastrada</h3>
-            <p className="text-muted-foreground text-center mb-6 max-w-md">
-              Comece cadastrando sua primeira escola para utilizar o sistema de gestão escolar.
-            </p>
-            <Button asChild className="bg-primary hover:bg-primary/90 shadow-lg shadow-blue-500/20">
+        <EmptyState
+          icon={School}
+          title="Nenhuma escola cadastrada"
+          description="Comece cadastrando sua primeira escola para utilizar o sistema de gestão escolar."
+          action={
+            <Button asChild>
               <Link href="/escolas/novo">Cadastrar Primeira Escola</Link>
             </Button>
-          </CardContent>
-        </Card>
+          }
+        />
       ) : (
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {schools.map((school, index) => (
+          {schools.map((school) => (
             <Link key={school.id} href={`/escolas/${school.id}`}>
-              <Card className="hover:shadow-md transition-all duration-200 cursor-pointer h-full border-0 shadow-sm card-glass group animate-fade-in-up" style={{ animationDelay: `${index * 75}ms` }}>
+              <Card className="hover:shadow-md transition-all duration-200 cursor-pointer h-full group">
                 <CardHeader className="pb-3 pt-4">
                   <div className="flex items-start justify-between gap-2">
                     <CardTitle className="text-lg line-clamp-2 font-semibold text-foreground group-hover:text-primary transition-colors">
                       {school.nome_escola}
                     </CardTitle>
-                    <Badge className={
-                      school.situacao_funcionamento === '1' 
-                        ? "bg-success-light text-success hover:bg-success-light" 
-                        : "bg-muted text-muted-foreground hover:bg-muted"
-                    }>
+                    <StatusBadge status={school.situacao_funcionamento === '1' ? 'success' : 'muted'}>
                       {situacaoFuncionario[school.situacao_funcionamento as keyof typeof situacaoFuncionario] || school.situacao_funcionamento}
-                    </Badge>
+                    </StatusBadge>
                   </div>
                 </CardHeader>
                 <CardContent className="space-y-3 text-sm">
@@ -125,19 +120,19 @@ export default async function EscolasPage() {
         </div>
       )}
 
-      <div className="mt-8 p-5 bg-card/60 backdrop-blur-sm rounded-2xl border border-border/50 shadow-sm animate-fade-in-up delay-300">
-        <div className="flex items-center justify-between">
-          <div>
-            <h4 className="font-semibold text-foreground">Total: {schools.length} escola(s)</h4>
-            <p className="text-sm text-muted-foreground">
-              Estes dados serão enviados ao Censo INEP 2026 (Registro 00)
-            </p>
-          </div>
+      <PageSection
+        title={`Total: ${schools.length} escola(s)`}
+        description="Estes dados serão enviados ao Censo INEP 2026 (Registro 00)"
+        actions={
           <div className="w-10 h-10 bg-muted rounded-lg flex items-center justify-center">
             <School className="w-5 h-5 text-primary" />
           </div>
-        </div>
-      </div>
-    </div>
+        }
+        variant="compact"
+        className="mt-8"
+      >
+        {' '}
+      </PageSection>
+    </PageContainer>
   )
 }

@@ -3,6 +3,8 @@
 import { useState, useCallback } from 'react'
 import { usePermissoes } from '@/hooks/use-permissoes'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { PageHeader } from '@/components/layout/page-header'
+import { EmptyState } from '@/components/ui/empty-state'
 import ConselhoClasseFiltros, { type FiltrosConselho } from '@/components/conselho-classe/conselho-classe-filtros'
 import ConselhoClasseTabela from '@/components/conselho-classe/conselho-classe-tabela'
 import AprovacaoConselhoFiltros, { type FiltrosAprovacao } from '@/components/conselho-classe/aprovacao-conselho-filtros'
@@ -11,7 +13,7 @@ import {
   listarAlunosAbaixoMedia, listarAlunosReprovados, salvarNotaConselho,
   verificarPreRequisitos, type AlunoDesempenho, type AlunoReprovado,
 } from '@/lib/actions/conselho-classe'
-import { AlertCircle } from 'lucide-react'
+import { AlertCircle, GraduationCap } from 'lucide-react'
 import { toast } from 'sonner'
 
 type Props = {
@@ -101,6 +103,8 @@ export default function ConselhoClassePageClient({ schoolId }: Props) {
 
     if (!result.success) {
       toast.error(result.error || 'Erro ao salvar')
+    } else {
+      toast.success('Nota salva com sucesso')
     }
   }, [schoolId, pessoaId, filtrosAtuais])
 
@@ -114,30 +118,31 @@ export default function ConselhoClassePageClient({ schoolId }: Props) {
 
   if (!podeVisualizar) {
     return (
-      <div className="flex flex-col items-center justify-center py-20 text-center">
-        <AlertCircle className="h-12 w-12 text-muted-foreground mb-4" />
-        <h2 className="text-lg font-semibold text-foreground mb-1">Acesso Restrito</h2>
-        <p className="text-sm text-muted-foreground">Você não tem permissão para acessar esta funcionalidade.</p>
-      </div>
+      <EmptyState
+        icon={AlertCircle}
+        title="Acesso Restrito"
+        description="Você não tem permissão para acessar esta funcionalidade."
+      />
     )
   }
 
   if (preReqOk === false) {
     return (
-      <div className="flex flex-col items-center justify-center py-20 text-center">
-        <AlertCircle className="h-12 w-12 text-warning mb-4" />
-        <h2 className="text-lg font-semibold text-foreground mb-1">Conselho de Classe não disponível</h2>
-        <p className="text-sm text-muted-foreground">{preReqErro}</p>
-      </div>
+      <EmptyState
+        icon={AlertCircle}
+        title="Conselho de Classe não disponível"
+        description={preReqErro || ''}
+      />
     )
   }
 
   return (
-    <div>
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-foreground">Conselho de Classe</h1>
-        <p className="text-muted-foreground mt-1">Avalie alunos abaixo da média por período e aprove por conselho</p>
-      </div>
+    <>
+      <PageHeader
+        title="Conselho de Classe"
+        description="Avalie alunos abaixo da média por período e aprove por conselho"
+        icon={GraduationCap}
+      />
 
       <Tabs defaultValue="conselho">
         <TabsList>
@@ -176,6 +181,6 @@ export default function ConselhoClassePageClient({ schoolId }: Props) {
           />
         </TabsContent>
       </Tabs>
-    </div>
+    </>
   )
 }

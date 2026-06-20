@@ -19,7 +19,10 @@ import { type AlunoMatriculado } from '@/lib/actions/diario-classe'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { StatusBadge } from '@/components/feedback/status-badge'
 import { Badge } from '@/components/ui/badge'
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { cn } from '@/lib/utils'
 import { toast } from 'sonner'
 import { Plus, Save, Calculator, Check, X, AlertTriangle } from 'lucide-react'
@@ -97,12 +100,10 @@ export default function AvaliacoesNumericas({
       })
       setDatasAvaliacoes(datas)
 
-      // Auto-calcular desempenho
       try {
         const resultados = await recalcularTurma(turmaId, disciplinaId, quantidadePeriodosNumerico, pessoaId)
         setDesempenhos(resultados)
       } catch {
-        // falha silenciosa no auto-cálculo
       }
     } catch {
       toast.error('Erro ao carregar dados')
@@ -275,22 +276,22 @@ export default function AvaliacoesNumericas({
           <label className="text-xs font-medium text-muted-foreground block mb-1">
             Disciplina
           </label>
-          <select
-            value={disciplinaId}
-            onChange={e => {
-              setDisciplinaId(e.target.value)
-              setSubAba('registro')
-              setDesempenhos([])
-            }}
-            className="h-9 px-3 rounded-lg border border-border bg-card text-sm min-w-[180px]"
-          >
-            <option value="">Selecione...</option>
-            {disciplinas.map(d => (
-              <option key={d.matriz_disciplina_id} value={d.matriz_disciplina_id}>
-                {d.nome}
-              </option>
-            ))}
-          </select>
+          <Select value={disciplinaId} onValueChange={v => {
+            setDisciplinaId(v)
+            setSubAba('registro')
+            setDesempenhos([])
+          }}>
+            <SelectTrigger className="min-w-[180px]">
+              <SelectValue placeholder="Selecione..." />
+            </SelectTrigger>
+            <SelectContent>
+              {disciplinas.map(d => (
+                <SelectItem key={d.matriz_disciplina_id} value={d.matriz_disciplina_id}>
+                  {d.nome}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
         <div className="flex-1" />
         </div>
@@ -310,19 +311,17 @@ export default function AvaliacoesNumericas({
           <div className="space-y-4">
             <div className="flex flex-wrap items-center gap-4">
               {periodos.map(p => (
-                <button
+                <Button
                   key={p}
-                  type="button"
+                  variant={periodo === p ? 'default' : 'ghost'}
+                  size="sm"
                   onClick={() => setPeriodo(p)}
                   className={cn(
-                    'px-3 py-1.5 rounded-md text-sm font-medium transition-all',
-                    periodo === p
-                      ? 'bg-primary text-primary-foreground'
-                      : 'bg-muted text-muted-foreground hover:bg-muted/80'
+                    periodo !== p && 'bg-muted text-muted-foreground hover:bg-muted/80'
                   )}
                 >
                   {p}º Período
-                </button>
+                </Button>
               ))}
             </div>
 
@@ -356,15 +355,15 @@ export default function AvaliacoesNumericas({
               )}
             </div>
 
-            <div className="overflow-x-auto border rounded-lg">
-              <table className="w-full min-w-max text-sm">
-                <thead>
-                  <tr className="border-b bg-muted/50">
-                    <th className="text-left py-2 px-3 min-w-[180px] font-medium">
+            <div className="overflow-x-auto border border-border rounded-lg">
+              <Table className="min-w-max text-sm">
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="text-left py-2 px-3 min-w-[180px] font-medium">
                       Aluno
-                    </th>
+                    </TableHead>
                     {descricoes.map(d => (
-                      <th key={d} className="text-center py-2 px-2 font-medium min-w-[80px]">
+                      <TableHead key={d} className="text-center py-2 px-2 font-medium min-w-[80px]">
                         <div>{d}</div>
                         <input
                           type="date"
@@ -379,14 +378,14 @@ export default function AvaliacoesNumericas({
                           className="mt-1 h-6 w-full text-[10px] px-1 rounded border border-border bg-transparent text-muted-foreground"
                           disabled={!podeEditar}
                         />
-                      </th>
+                      </TableHead>
                     ))}
-                    <th className="text-center py-2 px-2 font-medium min-w-[80px] text-muted-foreground">
+                    <TableHead className="text-center py-2 px-2 font-medium min-w-[80px] text-muted-foreground">
                       Média
-                    </th>
-                  </tr>
-                </thead>
-                <tbody>
+                    </TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
                   {alunos.map((aluno, idx) => {
                     const notasAluno = descricoes
                       .map(d => getNota(aluno.id, d))
@@ -403,22 +402,21 @@ export default function AvaliacoesNumericas({
                         : null
 
                     return (
-                      <tr
+                      <TableRow
                         key={aluno.id}
                         className={cn(
-'border-b border-border',
-                        idx % 2 === 0 && 'bg-card',
-                        idx % 2 === 1 && 'bg-muted/30'
-                      )}
-                    >
-                      <td className="py-2 px-3 text-sm font-medium">
-                        {aluno.nome_completo}
-                      </td>
-                      {descricoes.map(d => {
-                        const nota = getNota(aluno.id, d)
-                        return (
-                          <td key={d} className="py-1 px-1 text-center">
-                            <Input
+                          idx % 2 === 0 && 'bg-card',
+                          idx % 2 === 1 && 'bg-muted/30'
+                        )}
+                      >
+                        <TableCell className="py-2 px-3 text-sm font-medium">
+                          {aluno.nome_completo}
+                        </TableCell>
+                        {descricoes.map(d => {
+                          const nota = getNota(aluno.id, d)
+                          return (
+                            <TableCell key={d} className="py-1 px-1 text-center">
+                              <Input
                                 type="number"
                                 step="0.01"
                                 min="0"
@@ -430,10 +428,10 @@ export default function AvaliacoesNumericas({
                                 disabled={!podeEditar}
                                 className="h-8 w-16 text-center mx-auto text-sm"
                               />
-                            </td>
+                            </TableCell>
                           )
                         })}
-                        <td className="text-center py-2 px-2">
+                        <TableCell className="text-center py-2 px-2">
                           {media !== null && (
                             <span
                               className={cn(
@@ -448,12 +446,12 @@ export default function AvaliacoesNumericas({
                               {media.toFixed(2)}
                             </span>
                           )}
-                        </td>
-                      </tr>
+                        </TableCell>
+                      </TableRow>
                     )
                   })}
-                </tbody>
-              </table>
+                </TableBody>
+              </Table>
             </div>
           </div>
         </TabsContent>
@@ -471,63 +469,62 @@ export default function AvaliacoesNumericas({
               {calculando ? 'Calculando...' : 'Calcular Desempenho'}
             </Button>
           </div>
-          <div className="overflow-x-auto border rounded-lg">
-            <table className="w-full min-w-max text-sm">
-              <thead>
-                <tr className="border-b bg-muted/50">
-                  <th className="text-left py-2 px-3 min-w-[180px] font-medium">
+          <div className="overflow-x-auto border border-border rounded-lg">
+            <Table className="min-w-max text-sm">
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="text-left py-2 px-3 min-w-[180px] font-medium">
                     Aluno
-                  </th>
+                  </TableHead>
                   {periodos.map(p => (
-                    <th key={p} className="text-center py-2 px-2 font-medium min-w-[64px]">
+                    <TableHead key={p} className="text-center py-2 px-2 font-medium min-w-[64px]">
                       {p}º P
-                    </th>
+                    </TableHead>
                   ))}
-                  <th className="text-center py-2 px-2 font-medium min-w-[72px] text-muted-foreground">
+                  <TableHead className="text-center py-2 px-2 font-medium min-w-[72px] text-muted-foreground">
                     Anual
-                  </th>
-                  <th className="text-center py-2 px-2 font-medium min-w-[72px] text-muted-foreground">
+                  </TableHead>
+                  <TableHead className="text-center py-2 px-2 font-medium min-w-[72px] text-muted-foreground">
                     Rec
-                  </th>
-                  <th className="text-center py-2 px-2 font-medium min-w-[72px]">
+                  </TableHead>
+                  <TableHead className="text-center py-2 px-2 font-medium min-w-[72px]">
                     Final
-                  </th>
-                  <th className="text-center py-2 px-2 font-medium min-w-[80px]">
+                  </TableHead>
+                  <TableHead className="text-center py-2 px-2 font-medium min-w-[80px]">
                     Status
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
+                  </TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
                 {alunos.map((aluno, idx) => {
                   const d = getDesempenho(aluno.id)
                   return (
-                    <tr
+                    <TableRow
                       key={aluno.id}
                       className={cn(
-                        'border-b border-border',
                         idx % 2 === 0 && 'bg-card',
                         idx % 2 === 1 && 'bg-muted/30'
                       )}
                     >
-                      <td className="py-2 px-3 text-sm font-medium">
+                      <TableCell className="py-2 px-3 text-sm font-medium">
                         {aluno.nome_completo}
-                      </td>
+                      </TableCell>
                       {periodos.map(p => {
                         const m = d?.medias_periodo[p - 1]
                         return (
-                          <td key={p} className="text-center py-2 px-2 text-sm">
+                          <TableCell key={p} className="text-center py-2 px-2 text-sm">
                             {m !== null && m !== undefined
                               ? m.toFixed(2)
                               : '-'}
-                          </td>
+                          </TableCell>
                         )
                       })}
-                      <td className="text-center py-2 px-2 text-sm font-semibold">
+                      <TableCell className="text-center py-2 px-2 text-sm font-semibold">
                         {d?.media_anual !== null
                           ? d?.media_anual?.toFixed(2)
                           : '-'}
-                      </td>
-                      <td className="text-center py-2 px-2">
+                      </TableCell>
+                      <TableCell className="text-center py-2 px-2">
                         {d?.status === 'recuperacao' || d?.recuperacao !== null ? (
                           <Input
                             type="number"
@@ -544,39 +541,39 @@ export default function AvaliacoesNumericas({
                         ) : (
                           <span className="text-xs text-muted-foreground">-</span>
                         )}
-                      </td>
-                      <td className="text-center py-2 px-2 text-sm font-bold">
+                      </TableCell>
+                      <TableCell className="text-center py-2 px-2 text-sm font-bold">
                         {d?.media_final !== null
                           ? d?.media_final?.toFixed(2)
                           : '-'}
-                      </td>
-                      <td className="text-center py-2 px-2">
+                      </TableCell>
+                      <TableCell className="text-center py-2 px-2">
                         {d?.status === 'aprovado' && (
-                          <Badge className="bg-success/10 text-success hover:bg-success/20">
+                          <StatusBadge status="success">
                             <Check className="h-3 w-3 mr-1" /> Aprovado
-                          </Badge>
+                          </StatusBadge>
                         )}
                         {d?.status === 'recuperacao' && (
-                          <Badge className="bg-warning/10 text-warning hover:bg-warning/20">
+                          <StatusBadge status="warning">
                             <AlertTriangle className="h-3 w-3 mr-1" /> Recuperação
-                          </Badge>
+                          </StatusBadge>
                         )}
                         {d?.status === 'reprovado' && (
-                          <Badge className="bg-destructive/10 text-destructive hover:bg-destructive/20">
+                          <StatusBadge status="destructive">
                             <X className="h-3 w-3 mr-1" /> Reprovado
-                          </Badge>
+                          </StatusBadge>
                         )}
                         {!d?.status && (
                           <span className="text-xs text-muted-foreground">
                             {desempenhos.length > 0 ? '-' : 'Calcule'}
                           </span>
                         )}
-                      </td>
-                    </tr>
+                      </TableCell>
+                    </TableRow>
                   )
                 })}
-              </tbody>
-            </table>
+              </TableBody>
+            </Table>
           </div>
         </TabsContent>
         </Tabs>

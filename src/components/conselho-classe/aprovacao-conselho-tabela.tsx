@@ -3,6 +3,9 @@
 import { useState } from 'react'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Skeleton } from '@/components/ui/skeleton'
+import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/ui/table'
+import { EmptyState } from '@/components/ui/empty-state'
+import { StatusBadge } from '@/components/feedback/status-badge'
 import { AlertCircle, Inbox } from 'lucide-react'
 import { toast } from 'sonner'
 import { alternarAprovacaoConselho } from '@/lib/actions/conselho-classe'
@@ -58,52 +61,52 @@ export default function AprovacaoConselhoTabela({ alunos, loading, error, school
 
   if (error) {
     return (
-      <div className="flex flex-col items-center justify-center py-12 text-center">
-        <AlertCircle className="h-10 w-10 text-destructive mb-3" />
-        <p className="text-sm text-muted-foreground">{error}</p>
-      </div>
+      <EmptyState
+        icon={AlertCircle}
+        title="Erro ao carregar"
+        description={error}
+      />
     )
   }
 
   if (alunos.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center py-12 text-center">
-        <Inbox className="h-10 w-10 text-muted-foreground mb-3" />
-        <p className="text-sm text-muted-foreground">Nenhum aluno reprovado na turma selecionada</p>
-      </div>
+      <EmptyState
+        icon={Inbox}
+        title="Nenhum aluno reprovado"
+        description="Nenhum aluno reprovado na turma selecionada"
+      />
     )
   }
 
   return (
-    <div className="border border-muted rounded-lg overflow-hidden">
-      <table className="w-full">
-        <thead>
-          <tr className="bg-muted/30 text-xs text-muted-foreground">
-            <th className="py-3 px-4 text-left font-medium">Nome Completo</th>
-            <th className="py-3 px-4 text-center font-medium">Situação da Matrícula</th>
-            <th className="py-3 px-4 text-center font-medium">Aprovado por Conselho</th>
-          </tr>
-        </thead>
-        <tbody>
+    <div className="rounded-lg overflow-hidden">
+      <Table>
+        <TableHeader>
+          <TableRow className="bg-muted/30 text-xs text-muted-foreground hover:bg-muted/30">
+            <TableHead className="py-3 px-4 text-left font-medium">Nome Completo</TableHead>
+            <TableHead className="py-3 px-4 text-center font-medium">Situação da Matrícula</TableHead>
+            <TableHead className="py-3 px-4 text-center font-medium">Aprovado por Conselho</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
           {alunos.map(aluno => (
-            <tr key={aluno.matricula_id} className="border-b border-muted/50 last:border-b-0">
-              <td className="py-3 px-4 text-sm">{aluno.nome}</td>
-              <td className="py-3 px-4 text-sm text-center">
-                <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-destructive/10 text-destructive dark:bg-destructive/30">
-                  {aluno.situacao}
-                </span>
-              </td>
-              <td className="py-3 px-4 text-center">
+            <TableRow key={aluno.matricula_id}>
+              <TableCell className="py-3 px-4 text-sm">{aluno.nome}</TableCell>
+              <TableCell className="py-3 px-4 text-sm text-center">
+                <StatusBadge status="destructive">{aluno.situacao}</StatusBadge>
+              </TableCell>
+              <TableCell className="py-3 px-4 text-center">
                 <Checkbox
                   checked={aluno.situacao === 'Aprovado por conselho de classe'}
                   disabled={toggling.has(aluno.matricula_id) || readonly}
                   onCheckedChange={() => handleToggle(aluno)}
                 />
-              </td>
-            </tr>
+              </TableCell>
+            </TableRow>
           ))}
-        </tbody>
-      </table>
+        </TableBody>
+      </Table>
     </div>
   )
 }

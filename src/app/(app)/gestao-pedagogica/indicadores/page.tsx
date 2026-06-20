@@ -3,17 +3,22 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/components/providers/auth-provider'
+import { PageContainer } from '@/components/layout/page-container'
+import { PageHeader } from '@/components/layout/page-header'
+import { PageSection } from '@/components/layout/page-section'
+import { EmptyState } from '@/components/ui/empty-state'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { Textarea } from '@/components/ui/textarea'
 import { Label } from '@/components/ui/label'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog'
+import { ConfirmDialog } from '@/components/feedback/confirm-dialog'
 import { Badge } from '@/components/ui/badge'
 import { toast } from 'sonner'
 import {
-  Plus, Pencil, Trash2, Search, ChevronDown, ChevronRight,
+  Plus, Pencil, Trash2, ChevronDown, ChevronRight,
   AlertCircle, Layers, BookOpen, ListChecks, Import, X
 } from 'lucide-react'
 import {
@@ -370,207 +375,211 @@ export default function IndicadoresPage() {
   const grupos = agruparIndicadores(indicadores, isInfantil)
 
   if (authLoading) {
-    return <div className="container mx-auto py-8 px-4"><div className="text-center text-muted-foreground">Carregando...</div></div>
+    return (
+      <PageContainer>
+        <div className="flex flex-col items-center justify-center py-16 gap-3">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+          <p className="text-sm text-muted-foreground">Carregando...</p>
+        </div>
+      </PageContainer>
+    )
   }
 
   return (
-    <div className="container mx-auto py-8 px-4">
-      {/* Header */}
-      <div className="flex items-center justify-between mb-6">
-        <div>
-          <h1 className="text-xl font-semibold text-foreground">Indicadores de Avaliação</h1>
-          <p className="text-sm text-muted-foreground mt-0.5">
-            Defina os indicadores que os professores utilizarão para avaliar os alunos
-          </p>
-        </div>
-        <div className="flex items-center gap-2">
-          {filtroAno && filtroEtapa && isInfantil && (
-            <Button variant="outline" className="border-border" size="sm"
-              onClick={async () => {
-                try {
-                  setImportando(true)
-                  const result = await importarIndicadoresDaMatriz(schoolId, filtroAno, filtroEtapa)
-                  toast.success(`${result.total} indicadores importados`)
-                  loadIndicadores()
-                } catch (e: any) {
-                  toast.error(e.message || 'Erro ao importar')
-                } finally {
-                  setImportando(false)
-                }
-              }}
-              disabled={importando || !filtroAno || !filtroEtapa}>
-              <Import className="h-4 w-4 mr-1" />
-              Importar da Matriz
+    <PageContainer>
+      <PageHeader
+        title="Indicadores de Avaliação"
+        description="Defina os indicadores que os professores utilizarão para avaliar os alunos"
+        icon={ListChecks}
+        actions={
+          <div className="flex items-center gap-2">
+            {filtroAno && filtroEtapa && isInfantil && (
+              <Button variant="outline" size="sm"
+                onClick={async () => {
+                  try {
+                    setImportando(true)
+                    const result = await importarIndicadoresDaMatriz(schoolId, filtroAno, filtroEtapa)
+                    toast.success(`${result.total} indicadores importados`)
+                    loadIndicadores()
+                  } catch (e: any) {
+                    toast.error(e.message || 'Erro ao importar')
+                  } finally {
+                    setImportando(false)
+                  }
+                }}
+                disabled={importando || !filtroAno || !filtroEtapa}>
+                <Import className="h-4 w-4 mr-1" />
+                Importar da Matriz
+              </Button>
+            )}
+            <Button
+              onClick={openNewDialog}
+              disabled={!filtroAno || !filtroEtapa}>
+              <Plus className="h-4 w-4 mr-1.5" />
+              Novo Indicador
             </Button>
-          )}
-          <Button className="bg-primary hover:bg-primary/90 text-white"
-            onClick={openNewDialog}
-            disabled={!filtroAno || !filtroEtapa}>
-            <Plus className="h-4 w-4 mr-1.5" />
-            Novo Indicador
-          </Button>
-        </div>
-      </div>
+          </div>
+        }
+      />
 
       {/* Filtros */}
-      <Card className="border-border shadow-[0_2px_8px_rgba(0,0,0,0.06)] mb-6">
-        <CardHeader className="bg-muted/40 border-b border-border py-3">
-          <CardTitle className="text-sm font-medium text-muted-foreground">Filtros</CardTitle>
-        </CardHeader>
-        <CardContent className="p-4">
-          <div className="flex flex-wrap gap-3">
-            {/* Ano Letivo */}
-            <div className="w-48">
-              <Label className="text-xs text-muted-foreground mb-1 block">Ano Letivo</Label>
-              <Select value={filtroAno} onValueChange={v => { setFiltroAno(v); setFiltroEtapa(''); }}>
-                <SelectTrigger className="h-9 border-border">
-                  <SelectValue placeholder="Selecione" />
-                </SelectTrigger>
-                <SelectContent>
-                  {anosLetivos.map((a: any) => (
-                    <SelectItem key={a.id} value={a.id}>{a.descricao}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            {/* Etapa */}
-            <div className="w-56">
-              <Label className="text-xs text-muted-foreground mb-1 block">Etapa de Ensino</Label>
-              <Select value={filtroEtapa} onValueChange={handleFiltroEtapaChange}>
-                <SelectTrigger className="h-9 border-border">
-                  <SelectValue placeholder="Selecione" />
-                </SelectTrigger>
-                <SelectContent>
-                  {etapas.map((e: any) => (
-                    <SelectItem key={e.id} value={e.id}>{e.etapa_nome}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            {/* Subetapa */}
-            {subetapas.length > 0 && (
-              <div className="w-48">
-                <Label className="text-xs text-muted-foreground mb-1 block">Subetapa</Label>
-                <Select value={filtroSubetapa} onValueChange={v => setFiltroSubetapa(v === 'all' ? '' : v)}>
-                  <SelectTrigger className="h-9 border-border">
-                    <SelectValue placeholder="Todas" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">Todas</SelectItem>
-                    {subetapas.map((s: any) => (
-                      <SelectItem key={s.id} value={s.id}>{s.nome}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            )}
-
-            {/* Campo de Experiência (Infantil) */}
-            {isInfantil && camposExperiencia.length > 0 && (
-              <div className="w-64">
-                <Label className="text-xs text-muted-foreground mb-1 block">Campo de Experiência</Label>
-                <Select value={filtroCampo} onValueChange={v => { setFiltroCampo(v === 'all' ? '' : v); setFiltroDisciplina('') }}>
-                  <SelectTrigger className="h-9 border-border">
-                    <SelectValue placeholder="Todos" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">Todos</SelectItem>
-                    {camposExperiencia.map(c => (
-                      <SelectItem key={c} value={c}>{formatNome(c)}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            )}
-
-            {/* Disciplina (demais etapas) */}
-            {!isInfantil && disciplinasMatriz.length > 0 && (
-              <div className="w-56">
-                <Label className="text-xs text-muted-foreground mb-1 block">Disciplina</Label>
-                <Select value={filtroDisciplina} onValueChange={v => { setFiltroDisciplina(v === 'all' ? '' : v); setFiltroCampo('') }}>
-                  <SelectTrigger className="h-9 border-border">
-                    <SelectValue placeholder="Todas" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">Todas</SelectItem>
-                    {disciplinasMatriz.map((d: any) => (
-                      <SelectItem key={d.disciplina_id} value={d.disciplina_id}>
-                        {formatNome(d.academico_disciplinas?.nome || 'Sem nome')}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            )}
+      <PageSection variant="compact" title="Filtros" className="mb-6">
+        <div className="flex flex-wrap gap-3">
+          {/* Ano Letivo */}
+          <div className="w-48">
+            <Label className="text-xs text-muted-foreground mb-1 block">Ano Letivo</Label>
+            <Select value={filtroAno} onValueChange={v => { setFiltroAno(v); setFiltroEtapa(''); }}>
+              <SelectTrigger className="h-9">
+                <SelectValue placeholder="Selecione" />
+              </SelectTrigger>
+              <SelectContent>
+                {anosLetivos.map((a: any) => (
+                  <SelectItem key={a.id} value={a.id}>{a.descricao}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
-        </CardContent>
-      </Card>
 
-      {/* Listagem hierárquica */}
-      <Card className="border-border shadow-[0_2px_8px_rgba(0,0,0,0.06)]">
-        <CardHeader className="bg-muted/40 border-b border-border py-3">
-          <CardTitle className="text-sm font-medium text-muted-foreground">
-            {indicadores.length} indicador{indicadores.length !== 1 ? 'es' : ''} encontrado{indicadores.length !== 1 ? 's' : ''}
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="p-0">
-          {loading ? (
-            <div className="p-8 text-center text-muted-foreground text-sm">Carregando...</div>
-          ) : !filtroAno || !filtroEtapa ? (
-            <div className="p-8 text-center text-muted-foreground text-sm">Selecione Ano Letivo e Etapa de Ensino para visualizar os indicadores</div>
-          ) : indicadores.length === 0 ? (
-            <div className="p-8 text-center text-muted-foreground text-sm">
-              <p>Nenhum indicador encontrado.</p>
-              <p className="text-xs mt-1">{isInfantil ? 'Clique em "Importar da Matriz" ou "Novo Indicador" para começar.' : 'Clique em "Novo Indicador" para criar indicadores personalizados para a disciplina.'}</p>
-            </div>
-          ) : (
-            <div className="p-4 space-y-2">
-              {grupos.map(grupo => (
-                <div key={grupo.key} className="border border-border rounded-lg overflow-hidden">
-                  {/* Grupo (Campo/Disciplina) */}
-                  <div
-                    className="flex items-center gap-2 px-3 py-2 bg-muted/80 cursor-pointer hover:bg-muted transition-colors"
-                    onClick={() => toggleGrupo(grupo.key)}
-                  >
-                    {expandedGrupos[grupo.key] ? <ChevronDown className="h-4 w-4 text-muted-foreground" /> : <ChevronRight className="h-4 w-4 text-muted-foreground" />}
-                    <Layers className="h-4 w-4 text-muted-foreground" />
-                    <span className="text-sm font-medium text-foreground">{formatNome(grupo.nome)}</span>
-                    <Badge variant="secondary" className="text-[11px] px-1.5 py-0">{grupo.indicadores.length}</Badge>
-                  </div>
+          {/* Etapa */}
+          <div className="w-56">
+            <Label className="text-xs text-muted-foreground mb-1 block">Etapa de Ensino</Label>
+            <Select value={filtroEtapa} onValueChange={handleFiltroEtapaChange}>
+              <SelectTrigger className="h-9">
+                <SelectValue placeholder="Selecione" />
+              </SelectTrigger>
+              <SelectContent>
+                {etapas.map((e: any) => (
+                  <SelectItem key={e.id} value={e.id}>{e.etapa_nome}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
 
-                  {expandedGrupos[grupo.key] && (
-                    <div className="border-t border-border">
-                      {grupo.subgrupos.length > 0 ? (
-                        grupo.subgrupos.map(sub => (
-                          <div key={sub.key}>
-                            <div
-                              className="flex items-center gap-2 px-6 py-1.5 bg-card cursor-pointer hover:bg-muted/50 transition-colors"
-                              onClick={() => toggleSubgrupo(sub.key)}
-                            >
-                              {expandedSubgrupos[sub.key] ? <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" /> : <ChevronRight className="h-3.5 w-3.5 text-muted-foreground" />}
-                              <span className="text-xs font-medium text-muted-foreground">{sub.nome}</span>
-                              <Badge variant="outline" className="text-[10px] px-1 py-0">{sub.indicadores.length}</Badge>
-                            </div>
-                            {expandedSubgrupos[sub.key] && (
-                              <div className="border-t border-border">
-                                {sub.indicadores.map(ind => renderIndicador(ind))}
-                              </div>
-                            )}
-                          </div>
-                        ))
-                      ) : (
-                        grupo.indicadores.map(ind => renderIndicador(ind))
-                      )}
-                    </div>
-                  )}
-                </div>
-              ))}
+          {/* Subetapa */}
+          {subetapas.length > 0 && (
+            <div className="w-48">
+              <Label className="text-xs text-muted-foreground mb-1 block">Subetapa</Label>
+              <Select value={filtroSubetapa} onValueChange={v => setFiltroSubetapa(v === 'all' ? '' : v)}>
+                <SelectTrigger className="h-9">
+                  <SelectValue placeholder="Todas" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todas</SelectItem>
+                  {subetapas.map((s: any) => (
+                    <SelectItem key={s.id} value={s.id}>{s.nome}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
           )}
-        </CardContent>
-      </Card>
+
+          {/* Campo de Experiência (Infantil) */}
+          {isInfantil && camposExperiencia.length > 0 && (
+            <div className="w-64">
+              <Label className="text-xs text-muted-foreground mb-1 block">Campo de Experiência</Label>
+              <Select value={filtroCampo} onValueChange={v => { setFiltroCampo(v === 'all' ? '' : v); setFiltroDisciplina('') }}>
+                <SelectTrigger className="h-9">
+                  <SelectValue placeholder="Todos" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todos</SelectItem>
+                  {camposExperiencia.map(c => (
+                    <SelectItem key={c} value={c}>{formatNome(c)}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
+
+          {/* Disciplina (demais etapas) */}
+          {!isInfantil && disciplinasMatriz.length > 0 && (
+            <div className="w-56">
+              <Label className="text-xs text-muted-foreground mb-1 block">Disciplina</Label>
+              <Select value={filtroDisciplina} onValueChange={v => { setFiltroDisciplina(v === 'all' ? '' : v); setFiltroCampo('') }}>
+                <SelectTrigger className="h-9">
+                  <SelectValue placeholder="Todas" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todas</SelectItem>
+                  {disciplinasMatriz.map((d: any) => (
+                    <SelectItem key={d.disciplina_id} value={d.disciplina_id}>
+                      {formatNome(d.academico_disciplinas?.nome || 'Sem nome')}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
+        </div>
+      </PageSection>
+
+      {/* Listagem hierárquica */}
+      <PageSection
+        variant="flush"
+        title={`${indicadores.length} indicador${indicadores.length !== 1 ? 'es' : ''} encontrado${indicadores.length !== 1 ? 's' : ''}`}
+      >
+        {loading ? (
+          <div className="flex flex-col items-center justify-center py-16 gap-3">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+            <p className="text-sm text-muted-foreground">Carregando...</p>
+          </div>
+        ) : !filtroAno || !filtroEtapa ? (
+          <EmptyState
+            icon={ListChecks}
+            title="Selecione os filtros"
+            description="Selecione o Ano Letivo e a Etapa de Ensino acima para visualizar os indicadores de avaliação disponíveis."
+          />
+        ) : indicadores.length === 0 ? (
+          <EmptyState
+            icon={ListChecks}
+            title="Nenhum indicador encontrado"
+            description={isInfantil ? 'Utilize "Importar da Matriz" para carregar os indicadores da BNCC ou clique em "Novo Indicador" para criar manualmente.' : 'Clique em "Novo Indicador" para criar indicadores de avaliação personalizados para esta disciplina.'}
+          />
+        ) : (
+          <div className="p-4 space-y-2">
+            {grupos.map(grupo => (
+              <div key={grupo.key} className="border border-border rounded-lg overflow-hidden">
+                {/* Grupo (Campo/Disciplina) */}
+                <div
+                  className="flex items-center gap-2 px-3 py-2 bg-muted cursor-pointer hover:bg-muted/80 transition-colors"
+                  onClick={() => toggleGrupo(grupo.key)}
+                >
+                  {expandedGrupos[grupo.key] ? <ChevronDown className="h-4 w-4 text-muted-foreground" /> : <ChevronRight className="h-4 w-4 text-muted-foreground" />}
+                  <Layers className="h-4 w-4 text-muted-foreground" />
+                  <span className="text-sm font-medium text-foreground">{formatNome(grupo.nome)}</span>
+                  <Badge variant="secondary" className="text-[11px] px-1.5 py-0">{grupo.indicadores.length + grupo.subgrupos.reduce((acc, s) => acc + s.indicadores.length, 0)}</Badge>
+                </div>
+
+                {expandedGrupos[grupo.key] && (
+                  <div className="border-t border-border">
+                    {grupo.subgrupos.length > 0 ? (
+                      grupo.subgrupos.map(sub => (
+                        <div key={sub.key}>
+                          <div
+                            className="flex items-center gap-2 px-6 py-1.5 bg-card cursor-pointer hover:bg-muted/50 transition-colors"
+                            onClick={() => toggleSubgrupo(sub.key)}
+                          >
+                            {expandedSubgrupos[sub.key] ? <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" /> : <ChevronRight className="h-3.5 w-3.5 text-muted-foreground" />}
+                            <span className="text-xs font-medium text-muted-foreground">{sub.nome}</span>
+                            <Badge variant="outline" className="text-[10px] px-1 py-0">{sub.indicadores.length}</Badge>
+                          </div>
+                          {expandedSubgrupos[sub.key] && (
+                            <div className="border-t border-border">
+                              {sub.indicadores.map(ind => renderIndicador(ind))}
+                            </div>
+                          )}
+                        </div>
+                      ))
+                    ) : (
+                      grupo.indicadores.map(ind => renderIndicador(ind))
+                    )}
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+      </PageSection>
 
       {/* Dialog Novo/Editar Indicador */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
@@ -586,7 +595,7 @@ export default function IndicadoresPage() {
                 <Select value={formContexto.ano_letivo_id}
                   onValueChange={v => setFormContexto(p => ({ ...p, ano_letivo_id: v }))}
                   disabled={!!editId}>
-                  <SelectTrigger className="h-9 border-border">
+                  <SelectTrigger className="h-9">
                     <SelectValue placeholder="Selecione" />
                   </SelectTrigger>
                   <SelectContent>
@@ -601,7 +610,7 @@ export default function IndicadoresPage() {
                 <Select value={formContexto.etapa_ensino_id}
                   onValueChange={v => setFormContexto(p => ({ ...p, etapa_ensino_id: v }))}
                   disabled={!!editId}>
-                  <SelectTrigger className="h-9 border-border">
+                  <SelectTrigger className="h-9">
                     <SelectValue placeholder="Selecione" />
                   </SelectTrigger>
                   <SelectContent>
@@ -646,7 +655,7 @@ export default function IndicadoresPage() {
                 <Select value={formContexto.campo_experiencia}
                   onValueChange={v => setFormContexto(p => ({ ...p, campo_experiencia: v }))}
                   disabled={!!editId}>
-                  <SelectTrigger className="h-9 border-border">
+                  <SelectTrigger className="h-9">
                     <SelectValue placeholder="Selecione" />
                   </SelectTrigger>
                   <SelectContent>
@@ -662,7 +671,7 @@ export default function IndicadoresPage() {
                 <Select value={formContexto.disciplina_id}
                   onValueChange={v => setFormContexto(p => ({ ...p, disciplina_id: v }))}
                   disabled={!!editId}>
-                  <SelectTrigger className="h-9 border-border">
+                  <SelectTrigger className="h-9">
                     <SelectValue placeholder="Selecione" />
                   </SelectTrigger>
                   <SelectContent>
@@ -679,8 +688,8 @@ export default function IndicadoresPage() {
             {/* Descrição */}
             <div>
               <Label className="text-xs text-muted-foreground mb-1 block">Descrição do Indicador <span className="text-destructive">*</span></Label>
-              <textarea
-                className="w-full min-h-[80px] border border-border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
+              <Textarea
+                className="min-h-[80px]"
                 value={formData.descricao}
                 onChange={e => setFormData(p => ({ ...p, descricao: e.target.value }))}
                 placeholder="Descreva o critério de avaliação..."
@@ -781,20 +790,20 @@ export default function IndicadoresPage() {
 
                 <div className="flex items-center gap-2">
                   <Input
-                    className="h-8 text-xs border-border flex-1"
+                    className="h-8 text-xs flex-1"
                     placeholder="Descrição do nível..."
                     value={novoNivelDescricao}
                     onChange={e => setNovoNivelDescricao(e.target.value)}
                     onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); adicionarNivelPersonalizado() } }}
                   />
                   <Input
-                    className="h-8 text-xs border-border w-20"
+                    className="h-8 text-xs w-20"
                     placeholder="Sigla"
                     value={novoNivelSigla}
                     onChange={e => setNovoNivelSigla(e.target.value)}
                     onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); adicionarNivelPersonalizado() } }}
                   />
-                  <Button variant="outline" size="sm" className="h-8 border-border text-xs whitespace-nowrap"
+                  <Button variant="outline" size="sm" className="h-8 text-xs whitespace-nowrap"
                     onClick={adicionarNivelPersonalizado}>
                     + Adicionar
                   </Button>
@@ -803,8 +812,8 @@ export default function IndicadoresPage() {
             </div>
           </div>
           <DialogFooter className="gap-2">
-            <Button variant="outline" onClick={() => setDialogOpen(false)} className="border-border">Cancelar</Button>
-            <Button onClick={handleSave} className="bg-primary hover:bg-primary/90 text-white">
+            <Button variant="outline" onClick={() => setDialogOpen(false)}>Cancelar</Button>
+            <Button onClick={handleSave}>
               {editId ? 'Salvar' : 'Salvar'}
             </Button>
           </DialogFooter>
@@ -812,27 +821,17 @@ export default function IndicadoresPage() {
       </Dialog>
 
       {/* Confirm Delete */}
-      <Dialog open={!!deleteConfirmId} onOpenChange={() => setDeleteConfirmId(null)}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle className="text-base">Remover Indicador</DialogTitle>
-          </DialogHeader>
-          <p className="text-sm text-muted-foreground">
-            Tem certeza que deseja remover o indicador?
-          </p>
-          <p className="text-sm text-foreground bg-muted p-2 rounded border border-border italic">
-            &ldquo;{deleteConfirmDesc}&rdquo;
-          </p>
-          <p className="text-xs text-muted-foreground">
-            Esta ação não pode ser desfeita automaticamente.
-          </p>
-          <DialogFooter className="gap-2">
-            <Button variant="outline" onClick={() => setDeleteConfirmId(null)} className="border-border">Cancelar</Button>
-            <Button variant="destructive" onClick={confirmDelete}>Remover</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-    </div>
+      <ConfirmDialog
+        open={!!deleteConfirmId}
+        onOpenChange={() => setDeleteConfirmId(null)}
+        title="Remover Indicador"
+        description={`Tem certeza que deseja remover o indicador?\n\n"${deleteConfirmDesc}"\n\nEsta ação não pode ser desfeita automaticamente.`}
+        confirmLabel="Remover"
+        cancelLabel="Cancelar"
+        variant="destructive"
+        onConfirm={confirmDelete}
+      />
+    </PageContainer>
   )
 
   // Renderizar um indicador na listagem

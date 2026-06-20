@@ -52,7 +52,7 @@ export type Person = {
   tpac: boolean | null
   // Recursos SAEB (36-49)
   auxilio_ledor: boolean | null
-  auxiliary_transcricao: boolean | null
+  auxilio_transcricao: boolean | null
   guia_interprete: boolean | null
   tradutor_libras: boolean | null
   leitura_labial: boolean | null

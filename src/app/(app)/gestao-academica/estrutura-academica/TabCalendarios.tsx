@@ -595,20 +595,21 @@ export function TabCalendarios({ schoolId }: TabCalendariosProps) {
               const dayData = mesData.dias.find(d => d.date.getDate() === i)
               const dayDate = new Date(year, month - 1, i)
               daysArray.push(
-                <button
-                  key={i} 
-                  type="button"
+                <Button
+                  key={i}
+                  variant="ghost"
+                  size="xs"
                   onClick={() => handleDayClick(dayDate)}
-                  className={`h-7 flex items-center justify-center text-xs rounded transition-all duration-150 cursor-pointer ${
+                  className={`h-7 rounded transition-all duration-150 cursor-pointer ${
                     dayData?.isRecesso 
-                      ? 'bg-destructive text-white hover:opacity-80' 
+                      ? 'bg-destructive hover:bg-destructive text-primary-foreground hover:opacity-80' 
                       : dayData?.isLetivo 
-                        ? 'bg-success text-white hover:opacity-80' 
-                        : 'bg-muted text-muted-foreground hover:bg-muted'
+                        ? 'bg-success hover:bg-success text-primary-foreground hover:opacity-80' 
+                        : 'bg-muted text-muted-foreground'
                   }`}
                 >
                   {i}
-                </button>
+                </Button>
               )
             }
             
@@ -655,7 +656,7 @@ export function TabCalendarios({ schoolId }: TabCalendariosProps) {
     <>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* Card: Anos Letivos */}
-        <Card className="border-0 shadow-md card-glass">
+        <Card className="border-0 shadow-md">
           <CardHeader className="pb-3 flex flex-row items-center justify-between">
             <CardTitle className="text-lg font-semibold text-foreground">
               Anos Letivos
@@ -756,7 +757,7 @@ export function TabCalendarios({ schoolId }: TabCalendariosProps) {
         </Card>
 
         {/* Card: Calendários */}
-        <Card className="border-0 shadow-md card-glass">
+        <Card className="border-0 shadow-md">
           <CardHeader className="pb-3 flex flex-row items-center justify-between">
             <CardTitle className="text-lg font-semibold text-foreground">
               Calendários
@@ -820,7 +821,7 @@ export function TabCalendarios({ schoolId }: TabCalendariosProps) {
         </Card>
 
         {/* Card: Visualização */}
-        <Card className="border-0 shadow-md card-glass md:col-span-2">
+        <Card className="border-0 shadow-md md:col-span-2">
           <CardHeader className="pb-3 flex flex-row items-center justify-between">
             <CardTitle className="text-lg font-semibold text-foreground">
               Visualização
@@ -868,7 +869,7 @@ export function TabCalendarios({ schoolId }: TabCalendariosProps) {
                 Descrição <span className="text-destructive">*</span>
               </Label>
               <Input 
-                className="border-2 border-border focus:border-primary focus:ring-primary/20 bg-input"
+                className="border-border focus:border-primary focus:ring-primary/20 bg-background"
                 placeholder="Ex: 2026" 
                 value={anoForm.descricao}
                 onChange={e => setAnoForm({...anoForm, descricao: e.target.value})}
@@ -883,10 +884,10 @@ export function TabCalendarios({ schoolId }: TabCalendariosProps) {
                 value={anoForm.status || ""}
                 onValueChange={(v) => setAnoForm({...anoForm, status: v})}
               >
-                <SelectTrigger className="border-2 border-border focus:border-primary hover:border-primary/30 bg-input w-full">
+                <SelectTrigger className="border-border focus:border-primary hover:border-primary/30 bg-background w-full">
                   <SelectValue placeholder="Selecione uma situação" />
                 </SelectTrigger>
-                <SelectContent className="bg-popover border-2 border-border">
+                <SelectContent className="bg-popover border-border">
                   <SelectItem value="planejamento">Planejamento</SelectItem>
                   <SelectItem value="ativo">Ativo</SelectItem>
                   <SelectItem value="encerramento">Encerramento</SelectItem>
@@ -926,7 +927,7 @@ export function TabCalendarios({ schoolId }: TabCalendariosProps) {
                 Descrição <span className="text-destructive">*</span>
               </Label>
               <Input 
-                className="border-2 border-border focus:border-info focus:ring-info/20 bg-input"
+                className="border-border focus:border-info focus:ring-info/20 bg-background"
                 placeholder="Ex: Calendário Ensino Fundamental" 
                 value={calendarioForm.descricao}
                 onChange={e => setCalendarioForm({...calendarioForm, descricao: e.target.value})}
@@ -971,7 +972,7 @@ export function TabCalendarios({ schoolId }: TabCalendariosProps) {
                 Descrição <span className="text-destructive">*</span>
               </Label>
               <Input 
-                className="border-2 border-border focus:border-ring focus:ring-ring/20 bg-input"
+                className="border-border focus:border-ring focus:ring-ring/20 bg-background"
                 placeholder="Ex: Feriado de Páscoa" 
                 value={eventoForm.descricao}
                 onChange={e => setEventoForm({...eventoForm, descricao: e.target.value})}
@@ -1001,7 +1002,7 @@ export function TabCalendarios({ schoolId }: TabCalendariosProps) {
                     onChange={() => setEventoForm({...eventoForm, tipo: 'dia_letivo'})}
                     className="w-4 h-4 text-ring"
                   />
-                  <span className="text-sm text-foreground/80">Dia Letivo</span>
+                  <span className="text-sm text-muted-foreground">Dia Letivo</span>
                 </label>
               </div>
             </div>

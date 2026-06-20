@@ -4,12 +4,17 @@ import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/components/providers/auth-provider'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Badge } from '@/components/ui/badge'
+import { Card, CardContent } from '@/components/ui/card'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
-import { Badge } from '@/components/ui/badge'
 import { ScrollArea } from '@/components/ui/scroll-area'
-import { Plus, Pencil, Trash2, ClipboardList, AlertCircle } from 'lucide-react'
+import { Plus, Pencil, Trash2, ClipboardList } from 'lucide-react'
+import { PageContainer } from '@/components/layout/page-container'
+import { PageHeader } from '@/components/layout/page-header'
+import { PageSection } from '@/components/layout/page-section'
+import { EmptyState } from '@/components/ui/empty-state'
+import { StatusBadge } from '@/components/feedback/status-badge'
 import { getMetodos, deleteMetodo, type MetodoAvaliacao } from '@/lib/actions/metodos'
 import { MetodosForm } from './MetodosForm'
 import { toast } from 'sonner'
@@ -97,22 +102,20 @@ export default function MetodosAvaliacaoPage() {
 
   return (
     <>
-      <div className=" container mx-auto py-8 px-4">
-        <div className="flex items-center justify-between mb-8">
-          <div className="animate-fade-in-up">
-            <h1 className="text-3xl font-bold text-foreground">Métodos de Avaliação</h1>
-            <p className="text-muted-foreground mt-1">
-              Configure os critérios de avaliação para as matrizes curriculares
-            </p>
-          </div>
-          <Button onClick={handleCreate} className="bg-primary hover:bg-primary/90 transition-all duration-200 animate-fade-in-up">
-            <Plus className="mr-2 h-4 w-4" />
-            Novo Método de Avaliação
-          </Button>
-        </div>
+      <PageContainer>
+        <PageHeader
+          title="Métodos de Avaliação"
+          description="Configure os critérios de avaliação para as matrizes curriculares"
+          actions={
+            <Button onClick={handleCreate}>
+              <Plus className="mr-2 h-4 w-4" />
+              Novo Método de Avaliação
+            </Button>
+          }
+        />
 
         {loading ? (
-          <Card className="border-border shadow-[0_2px_8px_rgba(0,0,0,0.06)] animate-fade-in-up">
+          <Card className="border-border shadow-sm animate-fade-in-up">
             <CardContent className="py-12">
               <div className="space-y-3">
                 {[1, 2, 3].map((i) => (
@@ -122,7 +125,7 @@ export default function MetodosAvaliacaoPage() {
             </CardContent>
           </Card>
         ) : metodos.length === 0 ? (
-          <Card className="border-border shadow-sm card-glass animate-fade-in-up">
+          <Card className="border-border shadow-sm animate-fade-in-up">
             <CardContent className="flex flex-col items-center justify-center py-16">
               <div className="w-20 h-20 bg-muted rounded-2xl flex items-center justify-center mb-6">
                 <ClipboardList className="h-10 w-10 text-muted-foreground" />
@@ -131,14 +134,14 @@ export default function MetodosAvaliacaoPage() {
               <p className="text-muted-foreground text-center mb-6 max-w-md">
                 Crie um método de avaliação para definir os critérios que serão utilizados nas matrizes curriculares.
               </p>
-              <Button onClick={handleCreate} className="bg-primary hover:bg-primary/90 shadow-lg shadow-primary/20">
+              <Button onClick={handleCreate}>
                 <Plus className="mr-2 h-4 w-4" />
                 Novo Método de Avaliação
               </Button>
             </CardContent>
           </Card>
         ) : (
-          <Card className="border-border shadow-[0_2px_8px_rgba(0,0,0,0.06)] animate-fade-in-up">
+          <Card className="border-border shadow-sm animate-fade-in-up">
             <CardContent className="p-0">
               <Table>
                 <TableHeader>
@@ -171,9 +174,9 @@ export default function MetodosAvaliacaoPage() {
                         </div>
                       </TableCell>
                       <TableCell>
-                        <Badge className={metodo.ativo ? 'bg-success/10 text-success' : 'bg-destructive/10 text-destructive'}>
+                        <StatusBadge status={metodo.ativo ? 'success' : 'destructive'}>
                           {metodo.ativo ? 'Ativo' : 'Inativo'}
-                        </Badge>
+                        </StatusBadge>
                       </TableCell>
                       <TableCell className="text-right">
                         <div className="flex justify-end gap-1">
@@ -192,7 +195,7 @@ export default function MetodosAvaliacaoPage() {
             </CardContent>
           </Card>
         )}
-      </div>
+      </PageContainer>
 
       <Dialog open={modalOpen} onOpenChange={setModalOpen}>
         <DialogContent className="max-w-4xl max-h-[90vh]">

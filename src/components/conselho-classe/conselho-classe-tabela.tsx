@@ -2,6 +2,7 @@
 
 import { Skeleton } from '@/components/ui/skeleton'
 import { AlertCircle, Inbox } from 'lucide-react'
+import { EmptyState } from '@/components/ui/empty-state'
 import ConselhoClasseLinhaAluno from './conselho-classe-linha-aluno'
 import type { AlunoDesempenho } from '@/lib/actions/conselho-classe'
 
@@ -26,19 +27,21 @@ export default function ConselhoClasseTabela({ alunos, loading, error, onSalvarN
 
   if (error) {
     return (
-      <div className="flex flex-col items-center justify-center py-12 text-center">
-        <AlertCircle className="h-10 w-10 text-destructive mb-3" />
-        <p className="text-sm text-muted-foreground">{error}</p>
-      </div>
+      <EmptyState
+        icon={AlertCircle}
+        title="Erro ao carregar"
+        description={error}
+      />
     )
   }
 
   if (alunos.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center py-12 text-center">
-        <Inbox className="h-10 w-10 text-muted-foreground mb-3" />
-        <p className="text-sm text-muted-foreground">Nenhum aluno abaixo da média no período selecionado</p>
-      </div>
+      <EmptyState
+        icon={Inbox}
+        title="Nenhum aluno abaixo da média"
+        description="Nenhum aluno abaixo da média no período selecionado"
+      />
     )
   }
 

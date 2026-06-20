@@ -7,6 +7,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue, SelectGr
 import { Badge } from '@/components/ui/badge'
 import { BookOpen, ChevronDown, ChevronRight } from 'lucide-react'
 import { useAuth } from '@/components/providers/auth-provider'
+import { PageContainer } from '@/components/layout/page-container'
+import { PageHeader } from '@/components/layout/page-header'
 
 type EtapaEnsino = {
   id: string
@@ -213,21 +215,19 @@ export default function BNCCConsultaPage() {
   const totalUnicos = new Set(dados.map((d: any) => d.codigo_bncc || d.codigo)).size
 
   return (
-    <div className="container mx-auto py-8 px-4">
-      <div className="mb-8 animate-fade-in-up">
-        <h1 className="text-3xl font-bold text-foreground">Consulta da BNCC</h1>
-        <p className="text-muted-foreground mt-1">
-          Base Nacional Comum Curricular
-        </p>
-      </div>
+    <PageContainer>
+      <PageHeader
+        title="Consulta da BNCC"
+        description="Base Nacional Comum Curricular"
+      />
 
-      <Card className="mb-6 border-0 shadow-md card-glass animate-fade-in-up delay-75">
+      <Card className="mb-6 border-0 shadow-sm animate-fade-in-up delay-75">
         <CardContent className="pt-6">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             <div>
               <label className="text-sm font-medium mb-2 block text-foreground">Etapa de Ensino</label>
               <Select value={etapa} onValueChange={setEtapa}>
-                <SelectTrigger className="border-2 border-border focus:border-primary [&_svg:not([class*='rotate'])]:rotate-0">
+                <SelectTrigger className="border-border focus:border-primary [&_svg:not([class*='rotate'])]:rotate-0">
                   <SelectValue placeholder="Selecione" />
                 </SelectTrigger>
                 <SelectContent position="popper" side="bottom" sideOffset={5}>
@@ -262,7 +262,7 @@ export default function BNCCConsultaPage() {
               <div>
                 <label className="text-sm font-medium mb-2 block text-foreground">Faixa Etária</label>
                 <Select value={faixaEtaria} onValueChange={setFaixaEtaria}>
-                  <SelectTrigger className="border-2 border-border focus:border-primary [&_svg:not([class*='rotate'])]:rotate-0">
+                  <SelectTrigger className="border-border focus:border-primary [&_svg:not([class*='rotate'])]:rotate-0">
                     <SelectValue placeholder="Todas" />
                   </SelectTrigger>
                   <SelectContent position="popper" side="bottom" sideOffset={5}>
@@ -279,7 +279,7 @@ export default function BNCCConsultaPage() {
               <div>
                 <label className="text-sm font-medium mb-2 block text-foreground">Disciplina</label>
                 <Select value={disciplina} onValueChange={setDisciplina}>
-                  <SelectTrigger className="border-2 border-border focus:border-primary [&_svg:not([class*='rotate'])]:rotate-0">
+                  <SelectTrigger className="border-border focus:border-primary [&_svg:not([class*='rotate'])]:rotate-0">
                     <SelectValue placeholder="Todas" />
                   </SelectTrigger>
                   <SelectContent position="popper" side="bottom" sideOffset={5}>
@@ -296,7 +296,7 @@ export default function BNCCConsultaPage() {
               <div>
                 <label className="text-sm font-medium mb-2 block text-foreground">Área do Conhecimento</label>
                 <Select value={areaId} onValueChange={setAreaId}>
-                  <SelectTrigger className="border-2 border-border focus:border-primary [&_svg:not([class*='rotate'])]:rotate-0">
+                  <SelectTrigger className="border-border focus:border-primary [&_svg:not([class*='rotate'])]:rotate-0">
                     <SelectValue placeholder="Todas" />
                   </SelectTrigger>
                   <SelectContent position="popper" side="bottom" sideOffset={5}>
@@ -327,7 +327,7 @@ export default function BNCCConsultaPage() {
           <p className="text-muted-foreground">Carregando...</p>
         </div>
       ) : dados.length === 0 ? (
-        <Card className="border-0 shadow-lg card-glass animate-fade-in-up delay-150">
+        <Card className="border-0 shadow-sm animate-fade-in-up delay-150">
           <CardContent className="flex flex-col items-center justify-center py-16">
             <div className="w-20 h-20 bg-gradient-to-br from-primary/10 to-secondary/10 rounded-2xl flex items-center justify-center mb-6">
               <BookOpen className="h-10 w-10 text-primary" />
@@ -341,7 +341,7 @@ export default function BNCCConsultaPage() {
       ) : (
         <div className="space-y-4">
           {Object.entries(grupos as Record<string, any[]>).map(([grupo, items], idx) => (
-            <Card key={grupo} className="border-0 shadow-md card-glass animate-fade-in-up">
+            <Card key={grupo} className="border-0 shadow-sm animate-fade-in-up">
               <CardHeader
                 className="cursor-pointer hover:bg-muted/50 transition-all duration-200 bg-muted/30"
                 onClick={() => setExpandedGrupo(expandedGrupo === grupo ? null : grupo)}
@@ -363,7 +363,7 @@ export default function BNCCConsultaPage() {
                   {items.map((item: any) => (
                     <div key={item.id || item.codigo} className="p-4 rounded-xl border border-border/50 bg-card/50 hover:bg-muted/50 transition-all duration-200">
                       <div className="flex items-start gap-3">
-                        <Badge className="shrink-0 font-mono text-xs bg-gradient-to-r from-primary to-secondary text-white border-0">
+                        <Badge className="shrink-0 font-mono text-xs bg-primary text-primary-foreground border-0">
                           {item.codigo_bncc || item.codigo}
                         </Badge>
                         <div className="flex-1">
@@ -385,6 +385,6 @@ export default function BNCCConsultaPage() {
           ))}
         </div>
       )}
-    </div>
+    </PageContainer>
   )
 }

@@ -384,7 +384,7 @@ export function MetodosForm({ schoolId, editId, onSaved, onCancel }: Props) {
 
   return (
     <div className="space-y-6 [&_[data-slot='input']]:border-border [&_[data-slot='input']]:focus-visible:border-primary [&_[data-slot='input']]:focus-visible:ring-2 [&_[data-slot='input']]:focus-visible:ring-primary/20 [&_[data-slot='checkbox']]:border-border [&_[data-slot='checkbox']]:data-[state=checked]:border-primary">
-      <Card className="border-border shadow-[0_2px_8px_rgba(0,0,0,0.06)]">
+      <Card className="border-border shadow-sm">
         <CardHeader className="border-b border-border pb-4"><CardTitle className="text-base font-semibold text-foreground">Identificação</CardTitle></CardHeader>
         <CardContent className="space-y-5 px-6 pb-6 pt-0">
           <div className="space-y-2">
@@ -446,7 +446,7 @@ export function MetodosForm({ schoolId, editId, onSaved, onCancel }: Props) {
                       <div className="flex items-center gap-2">
                         <span className="text-sm text-muted-foreground">Períodos:</span>
                         {[1, 2, 3, 4].map((n) => (
-                          <Label key={n} className={`cursor-pointer flex items-center justify-center w-10 h-10 rounded-lg border-2 text-sm font-semibold transition-all duration-150 ${periodValue === n ? 'bg-primary text-white border-primary shadow-sm shadow-primary/20 ring-1 ring-primary/30' : 'border-border text-foreground hover:border-primary hover:text-primary hover:bg-primary/5 hover:shadow-sm'}`}>
+                          <Label key={n} className={`cursor-pointer flex items-center justify-center w-10 h-10 rounded-lg border-2 text-sm font-semibold transition-all duration-150 ${periodValue === n ? 'bg-primary text-primary-foreground border-primary shadow-sm shadow-primary/20 ring-1 ring-primary/30' : 'border-border text-foreground hover:border-primary hover:text-primary hover:bg-primary/5 hover:shadow-sm'}`}>
                             <input
                               type="radio"
                               name={`periodo_${tipo}`}
@@ -469,7 +469,7 @@ export function MetodosForm({ schoolId, editId, onSaved, onCancel }: Props) {
 
       {form.tipos_avaliacao.numerico && (
         <>
-          <Card className="border-border shadow-[0_2px_8px_rgba(0,0,0,0.06)]">
+          <Card className="border-border shadow-sm">
             <CardHeader className="border-b border-border pb-4"><CardTitle className="text-base font-semibold text-foreground">Configuração de Avaliações Numéricas</CardTitle></CardHeader>
             <CardContent className="space-y-5 px-6 pb-6 pt-0">
               <div className="grid grid-cols-2 gap-4">
@@ -568,7 +568,7 @@ export function MetodosForm({ schoolId, editId, onSaved, onCancel }: Props) {
           </Card>
 
           {form.limitar_avaliacoes && (
-            <Card className="border-border shadow-[0_2px_8px_rgba(0,0,0,0.06)]">
+            <Card className="border-border shadow-sm">
               <CardHeader className="border-b border-border pb-4"><CardTitle className="text-base font-semibold text-foreground">Avaliações</CardTitle></CardHeader>
               <CardContent className="space-y-4 px-6 pb-6 pt-0">
                 {form.avaliacoes_list.map((av, i) => (
@@ -630,7 +630,7 @@ export function MetodosForm({ schoolId, editId, onSaved, onCancel }: Props) {
             </Card>
           )}
 
-          <Card className="border-border shadow-[0_2px_8px_rgba(0,0,0,0.06)]">
+          <Card className="border-border shadow-sm">
             <CardHeader className="border-b border-border pb-4"><CardTitle className="text-base font-semibold text-foreground">Aprovações</CardTitle></CardHeader>
             <CardContent className="space-y-5 px-6 pb-6 pt-0">
               <div>
@@ -707,7 +707,7 @@ export function MetodosForm({ schoolId, editId, onSaved, onCancel }: Props) {
             </CardContent>
           </Card>
 
-          <Card className="border-border shadow-[0_2px_8px_rgba(0,0,0,0.06)]">
+          <Card className="border-border shadow-sm">
             <CardHeader className="border-b border-border pb-4"><CardTitle className="text-base font-semibold text-foreground">Configuração de Arredondamento</CardTitle></CardHeader>
             <CardContent className="space-y-5 px-6 pb-6 pt-0">
               <div className="w-1/3 space-y-2">
@@ -770,7 +770,7 @@ export function MetodosForm({ schoolId, editId, onSaved, onCancel }: Props) {
       )}
 
       {form.tipos_avaliacao.parecer && (
-        <Card className="border-border shadow-[0_2px_8px_rgba(0,0,0,0.06)]">
+        <Card className="border-border shadow-sm">
           <CardHeader className="border-b border-border pb-4"><CardTitle className="text-base font-semibold text-foreground">Configuração de Pareceres Descritivos</CardTitle></CardHeader>
           <CardContent>
             <div className="flex items-center gap-2">
@@ -785,7 +785,7 @@ export function MetodosForm({ schoolId, editId, onSaved, onCancel }: Props) {
       )}
 
       {form.tipos_avaliacao.conceito && (
-        <Card className="border-border shadow-[0_2px_8px_rgba(0,0,0,0.06)]">
+        <Card className="border-border shadow-sm">
           <CardHeader className="flex flex-row items-center justify-between border-b border-border pb-4">
             <CardTitle className="text-base font-semibold text-foreground">Configurações de Conceitos</CardTitle>
           </CardHeader>
@@ -837,7 +837,7 @@ export function MetodosForm({ schoolId, editId, onSaved, onCancel }: Props) {
       )}
 
       {form.tipos_avaliacao.nivel && (
-        <Card className="border-border shadow-[0_2px_8px_rgba(0,0,0,0.06)]">
+        <Card className="border-border shadow-sm">
           <CardHeader className="border-b border-border pb-4"><CardTitle className="text-base font-semibold text-foreground">Configuração de Níveis de Desenvolvimento</CardTitle></CardHeader>
           <CardContent>
             <CardNiveisList
@@ -849,9 +849,9 @@ export function MetodosForm({ schoolId, editId, onSaved, onCancel }: Props) {
         </Card>
       )}
 
-      <div className="flex justify-end gap-3 sticky bottom-0 bg-card py-4 px-2 -mx-4 -mb-4 border-t border-border shadow-[0_-4px_12px_rgba(0,0,0,0.04)]">
+      <div className="flex justify-end gap-3 sticky bottom-0 bg-card py-4 px-2 -mx-4 -mb-4 border-t border-border shadow-sm">
         <Button variant="outline" onClick={onCancel} className="border-border hover:bg-muted">Cancelar</Button>
-        <Button onClick={handleSave} disabled={saving} className="bg-primary hover:bg-primary/90 min-w-[140px] shadow-sm shadow-primary/20">
+        <Button onClick={handleSave} disabled={saving} className="min-w-[140px] shadow-sm shadow-primary/20">
           {saving ? 'Salvando...' : form.id ? 'Atualizar' : 'Salvar'}
         </Button>
       </div>
@@ -945,10 +945,11 @@ function CardConceitosList({
                     <input type="color" value={item.cor_fundo} onChange={(e) => update(i, 'cor_fundo', e.target.value)} className="absolute inset-0 opacity-0 cursor-pointer" title="Personalizar cor" />
                   </label>
                   {COLORS_BG.map((cor) => (
-                    <button
+                    <Button
                       key={cor}
-                      type="button"
-                      className={`w-6 h-6 rounded-full border-2 ${item.cor_fundo === cor ? 'border-foreground scale-110' : 'border-border'}`}
+                      variant="ghost"
+                      size="icon-xs"
+                      className={`rounded-full border-2 ${item.cor_fundo === cor ? 'border-foreground scale-110' : 'border-border'}`}
                       style={{ backgroundColor: cor }}
                       onClick={() => update(i, 'cor_fundo', cor)}
                     />
@@ -963,10 +964,11 @@ function CardConceitosList({
                     <input type="color" value={item.cor_letra} onChange={(e) => update(i, 'cor_letra', e.target.value)} className="absolute inset-0 opacity-0 cursor-pointer" title="Personalizar cor" />
                   </label>
                   {COLORS_TEXT.map((cor) => (
-                    <button
+                    <Button
                       key={cor}
-                      type="button"
-                      className={`w-6 h-6 rounded-full border-2 ${item.cor_letra === cor ? 'border-foreground scale-110' : 'border-border'}`}
+                      variant="ghost"
+                      size="icon-xs"
+                      className={`rounded-full border-2 ${item.cor_letra === cor ? 'border-foreground scale-110' : 'border-border'}`}
                       style={{ backgroundColor: cor }}
                       onClick={() => update(i, 'cor_letra', cor)}
                     />
@@ -1039,10 +1041,11 @@ function CardNiveisList({
                     <input type="color" value={item.cor_fundo} onChange={(e) => update(i, 'cor_fundo', e.target.value)} className="absolute inset-0 opacity-0 cursor-pointer" title="Personalizar cor" />
                   </label>
                   {COLORS_BG.map((cor) => (
-                    <button
+                    <Button
                       key={cor}
-                      type="button"
-                      className={`w-6 h-6 rounded-full border-2 ${item.cor_fundo === cor ? 'border-foreground scale-110' : 'border-border'}`}
+                      variant="ghost"
+                      size="icon-xs"
+                      className={`rounded-full border-2 ${item.cor_fundo === cor ? 'border-foreground scale-110' : 'border-border'}`}
                       style={{ backgroundColor: cor }}
                       onClick={() => update(i, 'cor_fundo', cor)}
                     />
@@ -1057,10 +1060,11 @@ function CardNiveisList({
                     <input type="color" value={item.cor_letra} onChange={(e) => update(i, 'cor_letra', e.target.value)} className="absolute inset-0 opacity-0 cursor-pointer" title="Personalizar cor" />
                   </label>
                   {COLORS_TEXT.map((cor) => (
-                    <button
+                    <Button
                       key={cor}
-                      type="button"
-                      className={`w-6 h-6 rounded-full border-2 ${item.cor_letra === cor ? 'border-foreground scale-110' : 'border-border'}`}
+                      variant="ghost"
+                      size="icon-xs"
+                      className={`rounded-full border-2 ${item.cor_letra === cor ? 'border-foreground scale-110' : 'border-border'}`}
                       style={{ backgroundColor: cor }}
                       onClick={() => update(i, 'cor_letra', cor)}
                     />

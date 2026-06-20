@@ -5,8 +5,9 @@ import { getHistoricoSistema, type HistoricoAno } from '@/lib/actions/painel-pes
 import { getConfigEscola } from '@/lib/actions/historico-manual'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
+import { Table, TableHeader, TableBody, TableHead, TableRow, TableCell } from '@/components/ui/table'
 import { ScrollArea } from '@/components/ui/scroll-area'
-import { BookOpen, Loader2, Plus, GraduationCap } from 'lucide-react'
+import { GraduationCap, Loader2, Plus } from 'lucide-react'
 import ModalHistoricoManual from './modal-historico-manual'
 
 type Props = {
@@ -65,30 +66,30 @@ export default function CardHistorico({ pessoaId, schoolId, pessoaLogadaId }: Pr
             <p className="text-sm text-muted-foreground">Nenhum registro de histórico escolar.</p>
           ) : (
             <ScrollArea className="max-h-56">
-              <table className="w-full text-xs">
-                <thead>
-                  <tr className="border-b text-muted-foreground">
-                    <th className="text-left py-1 pr-2">Ano</th>
-                    <th className="text-left py-1 pr-2">Turma</th>
-                    <th className="text-left py-1 pr-2">Etapa</th>
-                    <th className="text-left py-1 pr-2">Freq.</th>
-                    <th className="text-left py-1">Situação</th>
-                  </tr>
-                </thead>
-                <tbody>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="text-xs">Ano</TableHead>
+                    <TableHead className="text-xs">Turma</TableHead>
+                    <TableHead className="text-xs">Etapa</TableHead>
+                    <TableHead className="text-xs">Freq.</TableHead>
+                    <TableHead className="text-xs">Situação</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
                   {historico.map(h => (
-                    <tr key={`${h.ano_letivo_id}-${h.turma_nome}`} className="border-b last:border-0">
-                      <td className="py-1.5 pr-2 font-medium">{h.ano}</td>
-                      <td className="py-1.5 pr-2">{h.turma_nome}</td>
-                      <td className="py-1.5 pr-2">{h.etapa_nome}</td>
-                      <td className="py-1.5 pr-2">
+                    <TableRow key={`${h.ano_letivo_id}-${h.turma_nome}`}>
+                      <TableCell className="font-medium">{h.ano}</TableCell>
+                      <TableCell>{h.turma_nome}</TableCell>
+                      <TableCell>{h.etapa_nome}</TableCell>
+                      <TableCell>
                         {h.frequencia_percentual !== null ? `${h.frequencia_percentual}%` : '-'}
-                      </td>
-                      <td className="py-1.5">{h.situacao || '-'}</td>
-                    </tr>
+                      </TableCell>
+                      <TableCell>{h.situacao || '-'}</TableCell>
+                    </TableRow>
                   ))}
-                </tbody>
-              </table>
+                </TableBody>
+              </Table>
             </ScrollArea>
           )}
         </CardContent>

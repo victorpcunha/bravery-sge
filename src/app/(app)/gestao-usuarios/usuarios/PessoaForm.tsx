@@ -11,6 +11,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 import { DatePicker } from '@/components/ui/date-picker'
 import { Combobox } from '@/components/ui/combobox'
+import { Textarea } from '@/components/ui/textarea'
+import { FormCard } from '@/components/layout/form-card'
 import { paises } from '@/data/paises'
 import { municipios } from '@/data/municipios'
 import { povosIndigenas } from '@/data/povos-indigenas'
@@ -51,7 +53,7 @@ const TRANSTORNO_CAMPOS = [
 
 const RECURSO_CAMPOS = [
   { key: 'auxilio_ledor', label: 'Auxílio Ledor' },
-  { key: 'auxiliary_transcricao', label: 'Auxílio Transcrição' },
+  { key: 'auxilio_transcricao', label: 'Auxílio Transcrição' },
   { key: 'guia_interprete', label: 'Guia-Intérprete' },
   { key: 'tradutor_libras', label: 'Tradutor-Intérprete de Libras' },
   { key: 'leitura_labial', label: 'Leitura Labial' },
@@ -81,16 +83,16 @@ const INCOMPATIVEIS: Record<string, string[]> = {
 }
 
 const DEFICIENCIA_RECURSOS: Record<string, string[]> = {
-  cegueira: ['auxilio_ledor', 'auxiliary_transcricao', 'cd_audio', 'material_braille', 'prova_braille', 'tempo_adicional'],
-  baixa_visao: ['auxilio_ledor', 'auxiliary_transcricao', 'cd_audio', 'nenhum_recurso', 'prova_ampliada', 'prova_superampliada', 'tempo_adicional'],
-  visao_monocular: ['auxilio_ledor', 'auxiliary_transcricao', 'cd_audio', 'nenhum_recurso', 'prova_ampliada', 'prova_superampliada', 'tempo_adicional'],
+  cegueira: ['auxilio_ledor', 'auxilio_transcricao', 'cd_audio', 'material_braille', 'prova_braille', 'tempo_adicional'],
+  baixa_visao: ['auxilio_ledor', 'auxilio_transcricao', 'cd_audio', 'nenhum_recurso', 'prova_ampliada', 'prova_superampliada', 'tempo_adicional'],
+  visao_monocular: ['auxilio_ledor', 'auxilio_transcricao', 'cd_audio', 'nenhum_recurso', 'prova_ampliada', 'prova_superampliada', 'tempo_adicional'],
   surdez: ['leitura_labial', 'nenhum_recurso', 'prova_libras', 'prova_video_libras', 'tempo_adicional', 'tradutor_libras'],
   deficiencia_auditiva: ['leitura_labial', 'nenhum_recurso', 'prova_libras', 'prova_video_libras', 'tempo_adicional', 'tradutor_libras'],
-  surdocegueira: ['auxilio_ledor', 'auxiliary_transcricao', 'cd_audio', 'guia_interprete', 'leitura_labial', 'material_braille', 'prova_braille', 'prova_ampliada', 'prova_libras', 'prova_video_libras', 'prova_superampliada', 'tempo_adicional', 'tradutor_libras'],
-  deficiencia_fisica: ['auxilio_ledor', 'auxiliary_transcricao', 'cd_audio', 'nenhum_recurso', 'tempo_adicional'],
-  deficiencia_intelectual: ['auxilio_ledor', 'auxiliary_transcricao', 'cd_audio', 'nenhum_recurso', 'tempo_adicional'],
-  deficiencia_multipla: ['auxilio_ledor', 'auxiliary_transcricao', 'cd_audio', 'nenhum_recurso', 'tempo_adicional'],
-  tea: ['auxilio_ledor', 'auxiliary_transcricao', 'cd_audio', 'nenhum_recurso', 'tempo_adicional'],
+  surdocegueira: ['auxilio_ledor', 'auxilio_transcricao', 'cd_audio', 'guia_interprete', 'leitura_labial', 'material_braille', 'prova_braille', 'prova_ampliada', 'prova_libras', 'prova_video_libras', 'prova_superampliada', 'tempo_adicional', 'tradutor_libras'],
+  deficiencia_fisica: ['auxilio_ledor', 'auxilio_transcricao', 'cd_audio', 'nenhum_recurso', 'tempo_adicional'],
+  deficiencia_intelectual: ['auxilio_ledor', 'auxilio_transcricao', 'cd_audio', 'nenhum_recurso', 'tempo_adicional'],
+  deficiencia_multipla: ['auxilio_ledor', 'auxilio_transcricao', 'cd_audio', 'nenhum_recurso', 'tempo_adicional'],
+  tea: ['auxilio_ledor', 'auxilio_transcricao', 'cd_audio', 'nenhum_recurso', 'tempo_adicional'],
   altas_habilidades: [],
 }
 
@@ -182,7 +184,7 @@ const defaultForm: FormData = {
   discalculia: false, disgrafia: false, dislalia: false,
   dislexia: false, tdah: false, tpac: false,
   // Recursos SAEB
-  auxilio_ledor: false, auxiliary_transcricao: false, guia_interprete: false,
+  auxilio_ledor: false, auxilio_transcricao: false, guia_interprete: false,
   tradutor_libras: false, leitura_labial: false, prova_ampliada: false,
   prova_superampliada: false, cd_audio: false, prova_libras: false,
   prova_video_libras: false, material_braille: false, prova_braille: false,
@@ -256,6 +258,7 @@ export function PessoaForm({ schoolId: propSchoolId, person, onSaved, onCancel }
       }
       data.data_nascimento = person.data_nascimento?.split('T')[0] || ''
       data.perfil = person.perfil || []
+      data.auxilio_transcricao = (person as any).auxilio_transcricao ?? false
       data.vinculos = []
       if (person.codigo_pessoa) data.codigo_pessoa = person.codigo_pessoa
       setForm(data)
@@ -902,22 +905,19 @@ export function PessoaForm({ schoolId: propSchoolId, person, onSaved, onCancel }
               </div>
 
               {hasDeficiencia && (
-                <Card>
-                  <CardContent className="pt-3 space-y-3">
-                    <Label>Tipos de Deficiência / TEA / AH</Label>
-                    <div className="grid grid-cols-2 gap-2">
-                      {DEFICIENCIA_CAMPOS.map(c => {
-                        const disabled = isDeficienciaDisabled(c.key)
-                        return (
-                          <div key={c.key} className={`flex items-center gap-2 ${disabled ? 'opacity-50' : 'cursor-pointer'}`} onClick={() => toggleDeficiencia(c.key)}>
-                            <Checkbox checked={form[c.key]} disabled={disabled} className="pointer-events-none" />
-                            <span className="text-sm">{c.label}</span>
-                          </div>
-                        )
-                      })}
-                    </div>
-                  </CardContent>
-                </Card>
+                <FormCard title="Tipos de Deficiência / TEA / AH">
+                  <div className="grid grid-cols-2 gap-2">
+                    {DEFICIENCIA_CAMPOS.map(c => {
+                      const disabled = isDeficienciaDisabled(c.key)
+                      return (
+                        <div key={c.key} className={`flex items-center gap-2 ${disabled ? 'opacity-50' : 'cursor-pointer'}`} onClick={() => toggleDeficiencia(c.key)}>
+                          <Checkbox checked={form[c.key]} disabled={disabled} className="pointer-events-none" />
+                          <span className="text-sm">{c.label}</span>
+                        </div>
+                      )
+                    })}
+                  </div>
+                </FormCard>
               )}
 
               <div className="flex items-center gap-2 cursor-pointer" onClick={() => {
@@ -930,47 +930,39 @@ export function PessoaForm({ schoolId: propSchoolId, person, onSaved, onCancel }
               </div>
 
               {hasTranstorno && (
-                <Card>
-                  <CardContent className="pt-3 space-y-3">
-                    <Label>Tipos de Transtorno</Label>
-                    <div className="grid grid-cols-2 gap-2">
-                      {TRANSTORNO_CAMPOS.map(c => (
-                        <div key={c.key} className="flex items-center gap-2 cursor-pointer" onClick={() => set(c.key, !form[c.key])}>
-                          <Checkbox checked={form[c.key]} className="pointer-events-none" />
-                          <span className="text-sm">{c.label}</span>
-                        </div>
-                      ))}
-                    </div>
-                  </CardContent>
-                </Card>
+                <FormCard title="Tipos de Transtorno">
+                  <div className="grid grid-cols-2 gap-2">
+                    {TRANSTORNO_CAMPOS.map(c => (
+                      <div key={c.key} className="flex items-center gap-2 cursor-pointer" onClick={() => set(c.key, !form[c.key])}>
+                        <Checkbox checked={form[c.key]} className="pointer-events-none" />
+                        <span className="text-sm">{c.label}</span>
+                      </div>
+                    ))}
+                  </div>
+                </FormCard>
               )}
 
               {(hasDeficiencia || hasTranstorno) && recursosDisponiveis.length > 0 && (
-                <Card>
-                  <CardContent className="pt-3 space-y-3">
-                    <Label>Recursos de Acessibilidade</Label>
-                    <p className="text-xs text-muted-foreground">Recursos disponíveis conforme a(s) deficiência(s) selecionada(s) (Tabela INEP 2025)</p>
-                    <div className="grid grid-cols-2 gap-2">
-                      {recursosDisponiveis.map(c => (
-                        <div key={c.key} className="flex items-center gap-2 cursor-pointer" onClick={() => toggleRecurso(c.key)}>
-                          <Checkbox checked={form[c.key]} className="pointer-events-none" />
-                          <span className="text-sm">{c.label}</span>
-                        </div>
-                      ))}
-                    </div>
-                  </CardContent>
-                </Card>
+                <FormCard title="Recursos de Acessibilidade" description="Recursos disponíveis conforme a(s) deficiência(s) selecionada(s) (Tabela INEP 2025)">
+                  <div className="grid grid-cols-2 gap-2">
+                    {recursosDisponiveis.map(c => (
+                      <div key={c.key} className="flex items-center gap-2 cursor-pointer" onClick={() => toggleRecurso(c.key)}>
+                        <Checkbox checked={form[c.key]} className="pointer-events-none" />
+                        <span className="text-sm">{c.label}</span>
+                      </div>
+                    ))}
+                  </div>
+                </FormCard>
               )}
             </div>
 
             {/* Outras informações de saúde */}
             <div className="space-y-2">
               <Label>Outras informações de saúde</Label>
-              <textarea
+              <Textarea
                 value={form.medicamentos || ''}
                 onChange={(e) => set('medicamentos', e.target.value)}
                 rows={2}
-                className="w-full px-3 py-2 rounded-lg border border-border bg-card text-sm resize-y"
                 placeholder="Medicamentos de uso contínuo, alergias, condições relevantes para o ambiente escolar"
               />
             </div>
@@ -1106,12 +1098,12 @@ export function PessoaForm({ schoolId: propSchoolId, person, onSaved, onCancel }
                       <div className="flex items-center justify-between">
                         <Label className="text-sm font-semibold">Curso Superior {i}</Label>
                         {i > 1 && (
-                          <button type="button" onClick={() => {
+                          <Button type="button" variant="link" onClick={() => {
                             for (const key of [`curso_superior_${i}`, `ano_conclusao_${i}`, `ies_${i}`, `area_pedagogica_${i}`]) set(key, '')
                             setCursoCount(i - 1)
-                          }} className="text-xs text-destructive hover:text-destructive/80">
+                          }} className="text-xs text-destructive h-auto p-0">
                             Remover
-                          </button>
+                          </Button>
                         )}
                       </div>
                       <div className="grid grid-cols-3 gap-3">
@@ -1119,6 +1111,9 @@ export function PessoaForm({ schoolId: propSchoolId, person, onSaved, onCancel }
                         <div className="space-y-2"><Label className="text-xs">Ano Conclusão</Label><Input type="number" value={form[`ano_conclusao_${i}`] || ''} onChange={(e) => set(`ano_conclusao_${i}`, parseInt(e.target.value) || 0)} /></div>
                         <div className="space-y-2"><Label className="text-xs">IES</Label><Combobox options={IES_OPTIONS} value={form[`ies_${i}`]} onChange={(v) => set(`ies_${i}`, v)} searchThreshold={2} /></div>
                       </div>
+                      {form[`curso_superior_${i}`] && (
+                        <div className="space-y-2"><Label className="text-xs">Área Pedagógica</Label><Combobox options={AREA_CONHECIMENTO_OPTIONS} value={form[`area_pedagogica_${i}`]} onChange={(v) => set(`area_pedagogica_${i}`, v)} searchThreshold={2} /></div>
+                      )}
                     </CardContent>
                   </Card>
                 ))}
@@ -1152,12 +1147,12 @@ export function PessoaForm({ schoolId: propSchoolId, person, onSaved, onCancel }
                       <div className="flex items-center justify-between">
                         <Label className="text-sm font-semibold">Pós-Graduação {i}</Label>
                         {i > 1 && (
-                          <button type="button" onClick={() => {
+                          <Button type="button" variant="link" onClick={() => {
                             for (const key of [`pos_tipo_${i}`, `pos_area_${i}`, `pos_ano_${i}`]) set(key, '')
                             setPosCount(i - 1)
-                          }} className="text-xs text-destructive hover:text-destructive/80">
+                          }} className="text-xs text-destructive h-auto p-0">
                             Remover
-                          </button>
+                          </Button>
                         )}
                       </div>
                       <div className="grid grid-cols-3 gap-3">
@@ -1226,7 +1221,7 @@ export function PessoaForm({ schoolId: propSchoolId, person, onSaved, onCancel }
             )}
 
             {vinculosProfissionais.map((v, idx) => (
-              <Card key={idx} className="border-border shadow-[0_2px_8px_rgba(0,0,0,0.06)]">
+              <Card key={idx} className="shadow-sm">
                 <CardContent className="pt-4 space-y-4">
                   <div className="flex items-center justify-between">
                     <span className="text-sm font-semibold text-primary">Vínculo #{idx + 1}</span>
@@ -1311,8 +1306,8 @@ export function PessoaForm({ schoolId: propSchoolId, person, onSaved, onCancel }
 
                   <div className="space-y-2">
                     <Label>Observações</Label>
-                    <textarea
-                      className="w-full min-h-[60px] rounded-lg border border-border px-3 py-2 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 resize-y"
+                    <Textarea
+                      className="min-h-[60px]"
                       value={v.observacoes || ''}
                       onChange={(e) => updateVinculoProfissionalState(idx, 'observacoes', e.target.value)}
                       placeholder="Observações sobre este vínculo..."
@@ -1346,90 +1341,87 @@ export function PessoaForm({ schoolId: propSchoolId, person, onSaved, onCancel }
               <Input value={form.whatsapp} onChange={(e) => set('whatsapp', e.target.value)} placeholder="(00) 00000-0000" maxLength={11} />
             </div>
 
-            <Card>
-              <CardContent className="pt-4 space-y-3">
-                <Label className="text-sm font-semibold">Vínculo com Alunos</Label>
-                <div className="space-y-2">
-                  <Label className="text-xs">Buscar Aluno</Label>
-                  <Input
-                    placeholder="Digite o nome do aluno (mín. 2 caracteres)"
-                    value={alunosSearch}
-                    onChange={(e) => buscarAlunosHandler(e.target.value)}
-                  />
-                  {alunosOptions.length > 0 && (
-                    <div className="border border-border rounded-lg max-h-40 overflow-y-auto">
-                      {alunosOptions.map(a => (
-                        <button key={a.id} type="button" className="w-full text-left px-3 py-2 text-sm hover:bg-muted transition-colors" onClick={() => adicionarVinculo(a.id)}>
-                          {a.nome_completo}
-                        </button>
-                      ))}
-                    </div>
-                  )}
-                </div>
-
-                {form.vinculos.length > 0 && (
-                  <div className="space-y-2">
-                    {form.vinculos.map((v: any, idx: number) => (
-                      <div key={idx} className="flex items-center justify-between p-3 bg-muted/40 rounded-lg border border-border">
-                        <div className="flex-1 space-y-2">
-                          <span className="text-sm font-medium">{v.aluno_nome}</span>
-                          <div className="flex flex-wrap gap-2">
-                            <Select value={v.tipo_vinculo} onValueChange={(val) => updateVinculo(idx, 'tipo_vinculo', val)}>
-                              <SelectTrigger className="w-36 h-7 text-xs"><SelectValue /></SelectTrigger>
-                              <SelectContent>
-                                {TIPOS_VINCULO.map(t => <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>)}
-                              </SelectContent>
-                            </Select>
-                            <TooltipProvider delayDuration={300}>
-                              <Tooltip>
-                                <TooltipTrigger asChild>
-                                  <div className="flex items-center gap-1 text-xs cursor-pointer" onClick={() => updateVinculo(idx, 'principal', !v.principal)}>
-                                    <Checkbox checked={v.principal} className="size-3 pointer-events-none" />
-                                    Principal
-                                  </div>
-                                </TooltipTrigger>
-                                <TooltipContent className="max-w-56">
-                                  <p>Responsável principal do aluno</p>
-                                </TooltipContent>
-                              </Tooltip>
-                            </TooltipProvider>
-                            <TooltipProvider delayDuration={300}>
-                              <Tooltip>
-                                <TooltipTrigger asChild>
-                                  <div className="flex items-center gap-1 text-xs cursor-pointer" onClick={() => updateVinculo(idx, 'autorizado_retirar', !v.autorizado_retirar)}>
-                                    <Checkbox checked={v.autorizado_retirar} className="size-3 pointer-events-none" />
-                                    Retirar
-                                  </div>
-                                </TooltipTrigger>
-                                <TooltipContent className="max-w-56">
-                                  <p>Autorizado a retirar o aluno da escola</p>
-                                </TooltipContent>
-                              </Tooltip>
-                            </TooltipProvider>
-                            <TooltipProvider delayDuration={300}>
-                              <Tooltip>
-                                <TooltipTrigger asChild>
-                                  <div className="flex items-center gap-1 text-xs cursor-pointer" onClick={() => updateVinculo(idx, 'receber_comunicados', !v.receber_comunicados)}>
-                                    <Checkbox checked={v.receber_comunicados} className="size-3 pointer-events-none" />
-                                    Comunicados
-                                  </div>
-                                </TooltipTrigger>
-                                <TooltipContent className="max-w-56">
-                                  <p>Recebe comunicados escolares sobre o aluno</p>
-                                </TooltipContent>
-                              </Tooltip>
-                            </TooltipProvider>
-                          </div>
-                        </div>
-                        <button type="button" onClick={() => removerVinculo(idx)} className="text-destructive hover:text-destructive/80 text-xs ml-2">
-                          Remover
-                        </button>
-                      </div>
+            <FormCard title="Vínculo com Alunos">
+              <div className="space-y-2">
+                <Label className="text-xs">Buscar Aluno</Label>
+                <Input
+                  placeholder="Digite o nome do aluno (mín. 2 caracteres)"
+                  value={alunosSearch}
+                  onChange={(e) => buscarAlunosHandler(e.target.value)}
+                />
+                {alunosOptions.length > 0 && (
+                  <div className="border border-border rounded-lg max-h-40 overflow-y-auto">
+                    {alunosOptions.map(a => (
+                      <Button key={a.id} variant="ghost" className="w-full justify-start px-3 py-2 text-sm h-auto font-normal" onClick={() => adicionarVinculo(a.id)}>
+                        {a.nome_completo}
+                      </Button>
                     ))}
                   </div>
                 )}
-              </CardContent>
-            </Card>
+              </div>
+
+              {form.vinculos.length > 0 && (
+                <div className="space-y-2">
+                  {form.vinculos.map((v: any, idx: number) => (
+                    <div key={idx} className="flex items-center justify-between p-3 bg-muted/40 rounded-lg border border-border">
+                      <div className="flex-1 space-y-2">
+                        <span className="text-sm font-medium">{v.aluno_nome}</span>
+                        <div className="flex flex-wrap gap-2">
+                          <Select value={v.tipo_vinculo} onValueChange={(val) => updateVinculo(idx, 'tipo_vinculo', val)}>
+                            <SelectTrigger className="w-36 h-7 text-xs"><SelectValue /></SelectTrigger>
+                            <SelectContent>
+                              {TIPOS_VINCULO.map(t => <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>)}
+                            </SelectContent>
+                          </Select>
+                          <TooltipProvider delayDuration={300}>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <div className="flex items-center gap-1 text-xs cursor-pointer" onClick={() => updateVinculo(idx, 'principal', !v.principal)}>
+                                  <Checkbox checked={v.principal} className="size-3 pointer-events-none" />
+                                  Principal
+                                </div>
+                              </TooltipTrigger>
+                              <TooltipContent className="max-w-56">
+                                <p>Responsável principal do aluno</p>
+                              </TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
+                          <TooltipProvider delayDuration={300}>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <div className="flex items-center gap-1 text-xs cursor-pointer" onClick={() => updateVinculo(idx, 'autorizado_retirar', !v.autorizado_retirar)}>
+                                  <Checkbox checked={v.autorizado_retirar} className="size-3 pointer-events-none" />
+                                  Retirar
+                                </div>
+                              </TooltipTrigger>
+                              <TooltipContent className="max-w-56">
+                                <p>Autorizado a retirar o aluno da escola</p>
+                              </TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
+                          <TooltipProvider delayDuration={300}>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <div className="flex items-center gap-1 text-xs cursor-pointer" onClick={() => updateVinculo(idx, 'receber_comunicados', !v.receber_comunicados)}>
+                                  <Checkbox checked={v.receber_comunicados} className="size-3 pointer-events-none" />
+                                  Comunicados
+                                </div>
+                              </TooltipTrigger>
+                              <TooltipContent className="max-w-56">
+                                <p>Recebe comunicados escolares sobre o aluno</p>
+                              </TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
+                        </div>
+                      </div>
+                      <Button type="button" variant="link" onClick={() => removerVinculo(idx)} className="text-destructive text-xs ml-2 h-auto p-0">
+                        Remover
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </FormCard>
           </TabsContent>
         )}
         </div>
@@ -1437,7 +1429,7 @@ export function PessoaForm({ schoolId: propSchoolId, person, onSaved, onCancel }
 
       <div className="bg-card pt-4 pb-2 px-6 flex justify-end gap-3 border-t border-border shrink-0">
         <Button variant="outline" onClick={onCancel} className="border-border">Cancelar</Button>
-        <Button onClick={handleSave} disabled={saving} className="bg-primary hover:bg-primary/90 shadow-sm shadow-primary/20">
+        <Button onClick={handleSave} disabled={saving}>
           {saving ? 'Salvando...' : person ? 'Atualizar' : 'Criar'}
         </Button>
       </div>

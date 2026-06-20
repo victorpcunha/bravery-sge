@@ -3,14 +3,20 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/components/providers/auth-provider'
+import { PageContainer } from '@/components/layout/page-container'
+import { PageHeader } from '@/components/layout/page-header'
+import { PageSection } from '@/components/layout/page-section'
+import { FilterBar } from '@/components/layout/filter-bar'
+import { StatusBadge } from '@/components/feedback/status-badge'
+import { EmptyState } from '@/components/ui/empty-state'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Checkbox } from '@/components/ui/checkbox'
+import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/ui/table'
 import { toast } from 'sonner'
-import { Plus, Pencil, Trash2, Search, ArrowLeft } from 'lucide-react'
+import { Plus, Pencil, Trash2, BookOpen } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 
 interface Disciplina {
@@ -45,7 +51,7 @@ interface ComponenteINEP {
 export default function DisciplinasPage() {
   const { user, schoolId, loading: authLoading } = useAuth()
   const router = useRouter()
-  
+
   const [loadingPage, setLoadingPage] = useState(true)
   const [disciplinas, setDisciplinas] = useState<Disciplina[]>([])
   const [areas, setAreas] = useState<AreaConhecimento[]>([])
@@ -222,196 +228,188 @@ export default function DisciplinasPage() {
   const filteredDisciplinas = disciplinas.filter(d => {
     const matchesSearch = d.nome.toLowerCase().includes(searchTerm.toLowerCase()) ||
       (d.sigla && d.sigla.toLowerCase().includes(searchTerm.toLowerCase()))
-    
+
     if (filtroAtivo === 'ativos') return matchesSearch && d.ativo
     if (filtroAtivo === 'inativos') return matchesSearch && !d.ativo
     return matchesSearch
   })
 
-  const componentesFiltrados = formData.area_codigo 
+  const componentesFiltrados = formData.area_codigo
     ? componentesINEP.filter(c => c.area_codigo === parseInt(formData.area_codigo))
     : componentesINEP
 
   if (authLoading || loadingPage) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
-      </div>
+      <PageContainer>
+        <div className="flex flex-col items-center justify-center py-16 gap-3">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+          <p className="text-sm text-muted-foreground">Carregando...</p>
+        </div>
+      </PageContainer>
     )
   }
 
   if (!user) return null
 
   return (
-    <div className="min-h-screen bg-background">
-      
-      <div className="ml-64 p-8">
-        <div className="max-w-6xl mx-auto">
-          {/* Header */}
-          <div className="mb-8">
-            <div className="flex items-center gap-2 text-sm text-muted-foreground mb-2">
-              <button onClick={() => router.push('/gestao-pedagogica')} className="hover:text-primary">
-                Gestão Pedagógica
-              </button>
-              <span>/</span>
-              <span className="text-primary font-medium">Disciplinas</span>
-            </div>
-            <h1 className="text-2xl font-bold text-primary">Disciplinas</h1>
-            <p className="text-muted-foreground">Gerencie as disciplinas ofertadas pela escola</p>
-          </div>
+    <PageContainer>
+      <PageHeader
+        title="Disciplinas"
+        description="Gerencie as disciplinas ofertadas pela escola"
+        icon={BookOpen}
+        breadcrumbs={[
+          { label: 'Gestão Pedagógica', href: '/gestao-pedagogica' },
+          { label: 'Disciplinas' },
+        ]}
+        actions={
+          <Button onClick={openCreateModal}>
+            <Plus className="h-4 w-4 mr-2" />
+            Nova Disciplina
+          </Button>
+        }
+      />
 
-          {/* Barra de busca e filtros */}
-          <div className="bg-card rounded-lg shadow-sm border border-border p-4 mb-6">
-            <div className="flex items-center gap-4">
-              <div className="flex-1 relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                <Input
-                  placeholder="Buscar por nome ou sigla..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10 border-2 border-border focus:border-primary"
-                />
-              </div>
-              
-              <Select value={filtroAtivo} onValueChange={(v: any) => setFiltroAtivo(v)}>
-                <SelectTrigger className="w-40 border-2 border-border">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="todos">Todas</SelectItem>
-                  <SelectItem value="ativos">Ativas</SelectItem>
-                  <SelectItem value="inativos">Inativas</SelectItem>
-                </SelectContent>
-              </Select>
+      {/* Filtros */}
+      <PageSection variant="compact" title="Filtros" className="mb-6">
+        <FilterBar
+          searchValue={searchTerm}
+          onSearchChange={setSearchTerm}
+          searchPlaceholder="Buscar por nome ou sigla..."
+        >
+          <Select value={filtroAtivo} onValueChange={(v: any) => setFiltroAtivo(v)}>
+            <SelectTrigger className="w-40">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="todos">Todas</SelectItem>
+              <SelectItem value="ativos">Ativas</SelectItem>
+              <SelectItem value="inativos">Inativas</SelectItem>
+            </SelectContent>
+          </Select>
+        </FilterBar>
+      </PageSection>
 
-              <Button 
-                onClick={openCreateModal}
-                className="bg-primary hover:bg-primary/90"
-              >
-                <Plus className="w-4 h-4 mr-2" />
-                Nova Disciplina
-              </Button>
-            </div>
-          </div>
-
-          {/* Lista de Disciplinas */}
-          <div className="bg-card rounded-lg shadow-sm border border-border overflow-hidden">
-            <table className="w-full">
-              <thead className="bg-muted border-b border-border">
-                <tr>
-                  <th className="text-left p-4 text-sm font-semibold text-foreground/80">Nome</th>
-                  <th className="text-left p-4 text-sm font-semibold text-foreground/80">Sigla</th>
-                  <th className="text-left p-4 text-sm font-semibold text-foreground/80">Área</th>
-                  <th className="text-left p-4 text-sm font-semibold text-foreground/80">Código INEP</th>
-                  <th className="text-left p-4 text-sm font-semibold text-foreground/80">Diretriz</th>
-                  <th className="text-center p-4 text-sm font-semibold text-foreground/80">Status</th>
-                  <th className="text-center p-4 text-sm font-semibold text-foreground/80">Ações</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filteredDisciplinas.length === 0 ? (
-                  <tr>
-                    <td colSpan={7} className="p-8 text-center text-muted-foreground">
-                      Nenhuma disciplina encontrada
-                    </td>
-                  </tr>
-                ) : (
-                  filteredDisciplinas.map((disciplina) => (
-                    <tr key={disciplina.id} className="border-b border-border hover:bg-muted">
-                      <td className="p-4">
-                        <div className="flex items-center gap-2">
-                          {disciplina.is_padrao_mec && (
-                            <span className="text-xs bg-accent text-accent-foreground px-2 py-0.5 rounded">MEC</span>
-                          )}
-                          <span className="text-foreground/80 font-medium">{disciplina.nome}</span>
-                        </div>
-                      </td>
-                      <td className="p-4 text-muted-foreground">{disciplina.sigla || '-'}</td>
-                      <td className="p-4 text-muted-foreground">
-                        {areas.find(a => a.id === Number(disciplina.area_codigo))?.nome || '-'}
-                      </td>
-                      <td className="p-4 text-muted-foreground">{disciplina.codigo_inep || '-'}</td>
-                      <td className="p-4 text-muted-foreground">
-                        {disciplina.diretriz_curricular === 'bncc' && 'BNCC'}
-                        {disciplina.diretriz_curricular === 'parte_diversificada' && 'Parte Diversificada'}
-                        {disciplina.diretriz_curricular === 'nenhuma' && '-'}
-                      </td>
-                      <td className="p-4 text-center">
-                        <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
-                          disciplina.ativo 
-                            ? 'bg-success/10 text-success' 
-                            : 'bg-destructive/10 text-destructive'
-                        }`}>
-                          {disciplina.ativo ? 'Ativa' : 'Inativa'}
-                        </span>
-                      </td>
-                      <td className="p-4">
-                        <div className="flex items-center justify-center gap-1">
+      {/* Tabela de Disciplinas */}
+      <PageSection
+        variant="flush"
+        title={`${filteredDisciplinas.length} disciplina${filteredDisciplinas.length !== 1 ? 's' : ''}`}
+      >
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Nome</TableHead>
+              <TableHead>Sigla</TableHead>
+              <TableHead>Área</TableHead>
+              <TableHead>Código INEP</TableHead>
+              <TableHead>Diretriz</TableHead>
+              <TableHead>Status</TableHead>
+              <TableHead className="text-center">Ações</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {filteredDisciplinas.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={7}>
+                  <EmptyState
+                    icon={BookOpen}
+                    title="Nenhuma disciplina encontrada"
+                    description="Crie uma nova disciplina para começar ou ajuste os filtros de busca."
+                    action={
+                      <Button onClick={openCreateModal}>
+                        <Plus className="h-4 w-4 mr-2" />
+                        Nova Disciplina
+                      </Button>
+                    }
+                  />
+                </TableCell>
+              </TableRow>
+            ) : (
+              filteredDisciplinas.map((disciplina) => (
+                <TableRow key={disciplina.id}>
+                  <TableCell>
+                    <div className="flex items-center gap-2">
+                      {disciplina.is_padrao_mec && (
+                        <StatusBadge status="info">MEC</StatusBadge>
+                      )}
+                      <span className="font-medium text-foreground">{disciplina.nome}</span>
+                    </div>
+                  </TableCell>
+                  <TableCell className="text-muted-foreground">{disciplina.sigla || '-'}</TableCell>
+                  <TableCell className="text-muted-foreground">
+                    {areas.find(a => a.id === Number(disciplina.area_codigo))?.nome || '-'}
+                  </TableCell>
+                  <TableCell className="text-muted-foreground">{disciplina.codigo_inep || '-'}</TableCell>
+                  <TableCell className="text-muted-foreground">
+                    {disciplina.diretriz_curricular === 'bncc' && 'BNCC'}
+                    {disciplina.diretriz_curricular === 'parte_diversificada' && 'Parte Diversificada'}
+                    {disciplina.diretriz_curricular === 'nenhuma' && '-'}
+                  </TableCell>
+                  <TableCell>
+                    <StatusBadge status={disciplina.ativo ? 'success' : 'destructive'}>
+                      {disciplina.ativo ? 'Ativa' : 'Inativa'}
+                    </StatusBadge>
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex items-center justify-center gap-1">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => openEditModal(disciplina)}
+                      >
+                        <Pencil className="h-4 w-4" />
+                      </Button>
+                      {!disciplina.is_padrao_mec && (
+                        disciplina.ativo ? (
                           <Button
                             variant="ghost"
-                            size="icon-sm"
-                            className="h-8 w-8 text-muted-foreground hover:text-primary"
-                            onClick={() => openEditModal(disciplina)}
+                            size="icon"
+                            onClick={() => handleInativar(disciplina)}
                           >
-                            <Pencil className="w-4 h-4" />
+                            <Trash2 className="h-4 w-4" />
                           </Button>
-                          {!disciplina.is_padrao_mec && (
-                            disciplina.ativo ? (
-                              <Button
-                                variant="ghost"
-                                size="icon-sm"
-                                className="h-8 w-8 text-muted-foreground hover:text-destructive"
-                                onClick={() => handleInativar(disciplina)}
-                              >
-                                <Trash2 className="w-4 h-4" />
-                              </Button>
-                            ) : (
-                              <Button
-                                variant="ghost"
-                                size="icon-sm"
-                                className="h-8 w-8 text-muted-foreground hover:text-success"
-                                onClick={() => openAtivarModal(disciplina)}
-                              >
-                                <Plus className="w-4 h-4" />
-                              </Button>
-                            )
-                          )}
-                        </div>
-                      </td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </div>
+                        ) : (
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => openAtivarModal(disciplina)}
+                          >
+                            <Plus className="h-4 w-4" />
+                          </Button>
+                        )
+                      )}
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ))
+            )}
+          </TableBody>
+        </Table>
+      </PageSection>
 
       {/* Modal de Criar/Editar */}
       <Dialog open={showModal} onOpenChange={(open) => !open && setShowModal(false)}>
         <DialogContent className="max-w-lg">
           <DialogHeader>
-            <DialogTitle className="text-lg font-semibold text-foreground">
+            <DialogTitle>
               {editando ? 'Editar Disciplina' : 'Nova Disciplina'}
             </DialogTitle>
           </DialogHeader>
 
           <div className="space-y-4 py-4">
             <div>
-              <Label className="text-foreground font-medium block mb-2">
+              <Label className="font-medium block mb-2">
                 Nome <span className="text-destructive">*</span>
               </Label>
               <Input
                 placeholder="Ex: Matemática, Português..."
                 value={formData.nome}
                 onChange={(e) => setFormData(prev => ({ ...prev, nome: e.target.value }))}
-                className="border-2 border-border focus:border-primary"
               />
             </div>
 
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <Label className="text-foreground font-medium block mb-2">
+                <Label className="font-medium block mb-2">
                   Sigla
                 </Label>
                 <Input
@@ -419,19 +417,18 @@ export default function DisciplinasPage() {
                   value={formData.sigla}
                   maxLength={10}
                   onChange={(e) => setFormData(prev => ({ ...prev, sigla: e.target.value.toUpperCase() }))}
-                  className="border-2 border-border focus:border-primary"
                 />
               </div>
 
               <div>
-                <Label className="text-foreground font-medium block mb-2">
+                <Label className="font-medium block mb-2">
                   Área do Conhecimento
                 </Label>
-                <Select 
-                  value={formData.area_codigo} 
+                <Select
+                  value={formData.area_codigo}
                   onValueChange={(value) => setFormData(prev => ({ ...prev, area_codigo: value, codigo_inep: '' }))}
                 >
-                  <SelectTrigger className="border-2 border-border">
+                  <SelectTrigger>
                     <SelectValue placeholder="Selecione a área" />
                   </SelectTrigger>
                   <SelectContent position="popper" sideOffset={5} className="max-h-80 overflow-y-auto">
@@ -447,15 +444,15 @@ export default function DisciplinasPage() {
 
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <Label className="text-foreground font-medium block mb-2">
+                <Label className="font-medium block mb-2">
                   Código INEP
                 </Label>
-                <Select 
-                  value={formData.codigo_inep} 
+                <Select
+                  value={formData.codigo_inep}
                   onValueChange={(value) => setFormData(prev => ({ ...prev, codigo_inep: value }))}
                   disabled={!formData.area_codigo}
                 >
-                  <SelectTrigger className="border-2 border-border">
+                  <SelectTrigger>
                     <SelectValue placeholder={formData.area_codigo ? "Selecione" : "Selecione a área primeiro"} />
                   </SelectTrigger>
                   <SelectContent position="popper" sideOffset={5} className="max-h-80 overflow-y-auto">
@@ -469,14 +466,14 @@ export default function DisciplinasPage() {
               </div>
 
               <div>
-                <Label className="text-foreground font-medium block mb-2">
+                <Label className="font-medium block mb-2">
                   Diretriz Curricular
                 </Label>
-                <Select 
-                  value={formData.diretriz_curricular} 
+                <Select
+                  value={formData.diretriz_curricular}
                   onValueChange={(value) => setFormData(prev => ({ ...prev, diretriz_curricular: value }))}
                 >
-                  <SelectTrigger className="border-2 border-border">
+                  <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -493,11 +490,7 @@ export default function DisciplinasPage() {
             <Button variant="outline" onClick={() => setShowModal(false)}>
               Cancelar
             </Button>
-            <Button 
-              onClick={handleSave}
-              disabled={saving}
-              className="bg-primary hover:bg-primary/90"
-            >
+            <Button onClick={handleSave} disabled={saving}>
               {saving ? 'Salvando...' : 'Salvar'}
             </Button>
           </DialogFooter>
@@ -508,7 +501,7 @@ export default function DisciplinasPage() {
       <Dialog open={showAtivarModal} onOpenChange={(open) => !open && setShowAtivarModal(false)}>
         <DialogContent className="max-w-md">
           <DialogHeader>
-            <DialogTitle className="text-lg font-semibold text-foreground">
+            <DialogTitle>
               Ativar Disciplina
             </DialogTitle>
           </DialogHeader>
@@ -523,15 +516,12 @@ export default function DisciplinasPage() {
             <Button variant="outline" onClick={() => setShowAtivarModal(false)}>
               Cancelar
             </Button>
-            <Button 
-              onClick={handleAtivar}
-              className="bg-success hover:bg-success/90"
-            >
+            <Button onClick={handleAtivar} className="bg-success hover:bg-success/90 text-primary-foreground">
               Ativar
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </div>
+    </PageContainer>
   )
 }

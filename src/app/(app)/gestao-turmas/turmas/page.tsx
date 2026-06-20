@@ -10,13 +10,18 @@ import { Label } from '@/components/ui/label'
 import { Checkbox } from '@/components/ui/checkbox'
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog'
-import { Badge } from '@/components/ui/badge'
 import { Separator } from '@/components/ui/separator'
-import { TooltipProvider, Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip'
-import { Plus, Pencil, Trash2, GraduationCap, Search, ChevronLeft, X, UserPlus, AlertCircle, Clock, Calendar, BookOpen } from 'lucide-react'
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
+import { PageContainer } from '@/components/layout/page-container'
+import { PageHeader } from '@/components/layout/page-header'
+import { PageSection } from '@/components/layout/page-section'
+import { FilterBar } from '@/components/layout/filter-bar'
+import { EmptyState } from '@/components/ui/empty-state'
+import { ConfirmDialog } from '@/components/feedback/confirm-dialog'
+import { Plus, Pencil, Trash2, GraduationCap, X, UserPlus, AlertCircle, Clock, Calendar, BookOpen } from 'lucide-react'
 import { getEtapasEnsino } from '@/lib/actions/etapas-ensino'
+import { COMPATIBILIDADE_MEDIACAO_TURMA_ETAPA } from '@/data/censo/tipo-turma-mediacao'
 import {
   getTurmas, getTurma, createTurma, updateTurma, deleteTurma, toggleTurmaAtiva,
   addProfissionalTurma, updateProfissionalTurma, removeProfissionalTurma,
@@ -74,6 +79,11 @@ type FormData = {
   tipo_curso: string | null
   curso_tecnico_id: string | null
   forma_organizacao: string | null
+  // Censo INEP — campos sem equivalente no sistema
+  etapa_agregada: string | null
+  etapa_codigo: string | null
+  turma_especial: string | null
+  eixo_qualificacao: string | null
 }
 
 export default function TurmasPage() {
@@ -94,6 +104,7 @@ export default function TurmasPage() {
     formacao_alternancia: false, modalidade: '', etapa_ensino_id: '', multietapa: false,
     turnos: [], dias_funcionamento: [], tipos_turma: [], organizacao_curricular: [],
     areas_itinerario: [], tipo_curso: null, curso_tecnico_id: null, forma_organizacao: null,
+    etapa_agregada: null, etapa_codigo: null, turma_especial: null, eixo_qualificacao: null,
   })
 
   const [selectedDisciplinas, setSelectedDisciplinas] = useState<string[]>([])
@@ -112,6 +123,7 @@ export default function TurmasPage() {
   const [profEditId, setProfEditId] = useState<string | null>(null)
   const [profVinculosDisponiveis, setProfVinculosDisponiveis] = useState<any[]>([])
   const [profVinculoDataInicio, setProfVinculoDataInicio] = useState('')
+  const [deleteId, setDeleteId] = useState<string | null>(null)
 
   useEffect(() => {
     if (!authLoading && !user) router.push('/login')
@@ -154,6 +166,7 @@ export default function TurmasPage() {
       formacao_alternancia: false, modalidade: '', etapa_ensino_id: '', multietapa: false,
       turnos: [], dias_funcionamento: [], tipos_turma: [], organizacao_curricular: [],
       areas_itinerario: [], tipo_curso: null, curso_tecnico_id: null, forma_organizacao: null,
+      etapa_agregada: null, etapa_codigo: null, turma_especial: null, eixo_qualificacao: null,
     })
     setSelectedDisciplinas([])
     setMultietapaEtapas([])
@@ -177,6 +190,8 @@ export default function TurmasPage() {
         tipos_turma: t.tipos_turma || [], organizacao_curricular: t.organizacao_curricular || [],
         areas_itinerario: t.areas_itinerario || [], tipo_curso: t.tipo_curso || null,
         curso_tecnico_id: t.curso_tecnico_id || null, forma_organizacao: t.forma_organizacao || null,
+        etapa_agregada: (t as any).etapa_agregada || null, etapa_codigo: (t as any).etapa_codigo || null,
+        turma_especial: (t as any).turma_especial || null, eixo_qualificacao: (t as any).eixo_qualificacao || null,
       })
       setSelectedDisciplinas(result.disciplinas.map((d: any) => d.matriz_disciplina_id))
       setMultietapaEtapas(result.multietapa.map((m: any) => m.etapa_ensino_id))
@@ -245,7 +260,6 @@ export default function TurmasPage() {
   }
 
   const handleDelete = async (id: string) => {
-    if (!confirm('Excluir esta turma permanentemente?')) return
     try {
       await deleteTurma(id, pessoaId)
       toast.success('Turma excluída')
@@ -479,110 +493,109 @@ export default function TurmasPage() {
 
   if (authLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4" />
-          <p className="text-muted-foreground">Carregando...</p>
+      <PageContainer>
+        <div className="flex items-center justify-center py-16">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4" />
+            <p className="text-muted-foreground">Carregando...</p>
+          </div>
         </div>
-      </div>
+      </PageContainer>
     )
   }
 
   return (
     <>
-      <div className=" container mx-auto py-8 px-4">
-        {/* Header */}
-        <div className="flex items-center justify-between mb-8">
-          <div className="animate-fade-in-up">
-            <h1 className="text-3xl font-bold text-foreground">Turmas</h1>
-            <p className="text-muted-foreground mt-1">
-              Cadastro de turmas conforme Registro 20 do Censo Escolar
-            </p>
-          </div>
-          <Button onClick={handleOpenNew} className="bg-primary hover:bg-primary/90 animate-fade-in-up">
-            <Plus className="mr-2 h-4 w-4" /> Nova Turma
-          </Button>
-        </div>
+      <PageContainer>
+        <PageHeader
+          icon={GraduationCap}
+          title="Turmas"
+          description="Cadastro de turmas conforme Registro 20 do Censo Escolar"
+          actions={
+            <Button onClick={handleOpenNew}>
+              <Plus className="mr-2 h-4 w-4" /> Nova Turma
+            </Button>
+          }
+        />
 
-        {/* Search */}
-        <div className="relative mb-6 max-w-md">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input
-            className="pl-10 border-border"
-            placeholder="Buscar turma por nome..."
-            value={search}
-            onChange={e => setSearch(e.target.value)}
-          />
-        </div>
+        <FilterBar
+          searchValue={search}
+          onSearchChange={setSearch}
+          searchPlaceholder="Buscar turma por nome..."
+          className="mb-6"
+        />
 
-        {/* Listing */}
-        <Card className="border-border shadow-[0_2px_8px_rgba(0,0,0,0.06)]">
-          <CardHeader>
-            <CardTitle className="text-lg flex items-center gap-2">
-              <GraduationCap className="h-5 w-5 text-primary" />
-              Turmas cadastradas ({turmas.length})
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="p-0">
-            {loading ? (
-              <div className="py-12 text-center text-muted-foreground">Carregando...</div>
-            ) : turmas.length === 0 ? (
-              <div className="py-12 text-center text-muted-foreground">
-                Nenhuma turma encontrada. Clique em "Nova Turma".
-              </div>
-            ) : (
-              <div className="overflow-x-auto">
-                <table className="w-full">
-                  <thead>
-                    <tr className="border-b border-border text-xs text-muted-foreground uppercase tracking-wider">
-                      <th className="text-left px-6 py-3 font-medium">Nome</th>
-                      <th className="text-left px-6 py-3 font-medium">Modalidade</th>
-                      <th className="text-left px-6 py-3 font-medium">Etapa</th>
-                      <th className="text-left px-6 py-3 font-medium">Turnos</th>
-                      <th className="text-left px-6 py-3 font-medium">Status</th>
-                      <th className="text-right px-6 py-3 font-medium">Ações</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {turmas.map(t => (
-                      <tr key={t.id} className="border-b border-border hover:bg-muted/40 transition-colors">
-                        <td className="px-6 py-4 text-sm font-medium">{t.nome}</td>
-                        <td className="px-6 py-4 text-sm text-muted-foreground">{t.modalidade}</td>
-                        <td className="px-6 py-4 text-sm text-muted-foreground">
-                          {t.academico_etapas_ensino?.etapa_nome || '-'}
-                        </td>
-                        <td className="px-6 py-4 text-sm text-muted-foreground">
-                          {t.turnos?.map((tn: any) => tn.turno).join(', ') || '-'}
-                        </td>
-                        <td className="px-6 py-4">
-                          <button
-                            onClick={() => handleToggleAtiva(t.id, !t.ativo)}
-                            className={`text-xs px-2 py-0.5 rounded-full border transition-colors ${
-                              t.ativo
-                                ? 'bg-success/10 text-success border-success/20 hover:bg-success/20'
-                                : 'bg-muted text-muted-foreground border-border hover:bg-muted'
-                            }`}
-                          >
-                            {t.ativo ? 'Ativa' : 'Inativa'}
-                          </button>
-                        </td>
-                        <td className="px-6 py-4 text-right">
-                          <Button variant="ghost" size="icon-sm" onClick={() => handleOpenEdit(t.id)}>
-                            <Pencil className="h-4 w-4" />
-                          </Button>
-                          <Button variant="ghost" size="icon-sm" onClick={() => handleDelete(t.id)}>
-                            <Trash2 className="h-4 w-4 text-destructive" />
-                          </Button>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-      </div>
+        <PageSection
+          title={`Turmas cadastradas (${turmas.length})`}
+          variant="flush"
+        >
+          {loading ? (
+            <div className="py-12 flex items-center justify-center">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
+            </div>
+          ) : turmas.length === 0 ? (
+            <EmptyState
+              icon={GraduationCap}
+              title="Nenhuma turma encontrada"
+              description='Clique em "Nova Turma" para cadastrar.'
+              action={
+                <Button onClick={handleOpenNew}>
+                  <Plus className="mr-2 h-4 w-4" /> Nova Turma
+                </Button>
+              }
+            />
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="text-xs uppercase tracking-wider">Nome</TableHead>
+                  <TableHead className="text-xs uppercase tracking-wider">Modalidade</TableHead>
+                  <TableHead className="text-xs uppercase tracking-wider">Etapa</TableHead>
+                  <TableHead className="text-xs uppercase tracking-wider">Turnos</TableHead>
+                  <TableHead className="text-xs uppercase tracking-wider">Status</TableHead>
+                  <TableHead className="text-xs uppercase tracking-wider text-right">Ações</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {turmas.map(t => (
+                  <TableRow key={t.id}>
+                    <TableCell className="font-medium">{t.nome}</TableCell>
+                    <TableCell className="text-muted-foreground">{t.modalidade}</TableCell>
+                    <TableCell className="text-muted-foreground">
+                      {t.academico_etapas_ensino?.etapa_nome || '-'}
+                    </TableCell>
+                    <TableCell className="text-muted-foreground">
+                      {t.turnos?.map((tn: any) => tn.turno).join(', ') || '-'}
+                    </TableCell>
+                    <TableCell>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleToggleAtiva(t.id, !t.ativo)}
+                        className={`text-xs px-2 py-0.5 h-auto rounded-full border transition-colors ${
+                          t.ativo
+                            ? 'bg-success/10 text-success border-success/20 hover:bg-success/20'
+                            : 'bg-muted text-muted-foreground border-border hover:bg-muted'
+                        }`}
+                      >
+                        {t.ativo ? 'Ativa' : 'Inativa'}
+                      </Button>
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <Button variant="ghost" size="icon-sm" onClick={() => handleOpenEdit(t.id)}>
+                        <Pencil className="h-4 w-4" />
+                      </Button>
+                      <Button variant="ghost" size="icon-sm" onClick={() => setDeleteId(t.id)}>
+                        <Trash2 className="h-4 w-4 text-destructive" />
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          )}
+        </PageSection>
+      </PageContainer>
 
       {/* Turma Form Dialog */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
@@ -711,7 +724,19 @@ export default function TurmasPage() {
                   <Select value={form.etapa_ensino_id} onValueChange={v => updateForm('etapa_ensino_id', v)}>
                     <SelectTrigger className="border-border"><SelectValue placeholder="Selecione" /></SelectTrigger>
                     <SelectContent>
-                      {etapas.map(e => <SelectItem key={e.id} value={e.id}>{e.etapa_nome}</SelectItem>)}
+                      {etapas.filter(e => {
+                        const mediacaoMap: Record<string, string> = { 'Presencial': '1', 'Semipresencial': '2', 'Educação a Distância - EAD': '3' }
+                        const tipoTurmaMap: Record<string, string> = { 'Curricular': '6', 'Atendimento Educacional Especializado (AEE)': '5', 'Atividade Complementar': '4', 'Outro': '6' }
+                        const med = mediacaoMap[form.tipo_mediacao] || '1'
+                        const tts = form.tipos_turma.map(t => tipoTurmaMap[t] || '6')
+                        if (tts.length === 0) return true  // sem tipo selecionado, mostra todas
+                        const etapaCod = parseInt(e.etapa_codigo || '', 10)
+                        if (isNaN(etapaCod)) return true  // etapa sem código INEP, mostra
+                        return COMPATIBILIDADE_MEDIACAO_TURMA_ETAPA.some(c =>
+                          c.tipo_mediacao === med && tts.includes(c.tipo_turma) &&
+                          (c.etapas_ensino.length === 0 || c.etapas_ensino.includes(etapaCod))
+                        )
+                      }).map(e => <SelectItem key={e.id} value={e.id}>{e.etapa_nome}</SelectItem>)}
                     </SelectContent>
                   </Select>
                 </div>
@@ -1005,6 +1030,35 @@ export default function TurmasPage() {
                 </div>
               )}
             </div>
+
+            {/* Censo INEP (campos sem equivalente) */}
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <Label className="text-xs text-muted-foreground">Etapa Agregada (Censo INEP)</Label>
+                <Input value={form.etapa_agregada || ''} onChange={(e) => updateForm('etapa_agregada', e.target.value)}
+                  placeholder="Ex: 302" className="h-8 text-sm" />
+              </div>
+              <div className="space-y-1.5">
+                <Label className="text-xs text-muted-foreground">Etapa Código (Censo INEP)</Label>
+                <Input value={form.etapa_codigo || ''} onChange={(e) => updateForm('etapa_codigo', e.target.value)}
+                  placeholder="Ex: 14" className="h-8 text-sm" />
+              </div>
+              <div className="space-y-1.5">
+                <Label className="text-xs text-muted-foreground">Turma Especial (Censo INEP)</Label>
+                <Select value={form.turma_especial || ''} onValueChange={(v) => updateForm('turma_especial', v)}>
+                  <SelectTrigger className="h-8 text-sm"><SelectValue placeholder="Não" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="0">Não</SelectItem>
+                    <SelectItem value="1">Sim</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-1.5">
+                <Label className="text-xs text-muted-foreground">Eixo Qualificação (Censo INEP)</Label>
+                <Input value={form.eixo_qualificacao || ''} onChange={(e) => updateForm('eixo_qualificacao', e.target.value)}
+                  placeholder="Código INEP" className="h-8 text-sm" />
+              </div>
+            </div>
           </div>
 
           <Separator />
@@ -1118,6 +1172,21 @@ export default function TurmasPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <ConfirmDialog
+        open={!!deleteId}
+        onOpenChange={(open) => !open && setDeleteId(null)}
+        title="Excluir turma"
+        description="Excluir esta turma permanentemente? Esta ação não pode ser desfeita."
+        confirmLabel="Excluir"
+        variant="destructive"
+        onConfirm={async () => {
+          if (deleteId) {
+            await handleDelete(deleteId)
+            setDeleteId(null)
+          }
+        }}
+      />
     </>
   )
 }

@@ -6,8 +6,11 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
 import { BookOpen, Plus, Search, Edit, Trash2, ChevronDown, ChevronRight } from 'lucide-react'
 import { useAuth } from '@/components/providers/auth-provider'
+import { PageContainer } from '@/components/layout/page-container'
+import { PageHeader } from '@/components/layout/page-header'
 
 type Disciplina = {
   id: string
@@ -173,29 +176,25 @@ export default function HabilidadesPage() {
   const totalUnidades = Object.keys(groupedByUnidade).length
 
   return (
-    <div className="container mx-auto py-8 px-4">
-      <div className="mb-8 animate-fade-in-up">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold text-foreground">Habilidades</h1>
-            <p className="text-muted-foreground mt-1">
-              Habilidades do Ensino Fundamental e Médio conforme BNCC
-            </p>
-          </div>
-          <Button className="bg-primary hover:bg-secondary" disabled>
+    <PageContainer>
+      <PageHeader
+        title="Habilidades"
+        description="Habilidades do Ensino Fundamental e Médio conforme BNCC"
+        actions={
+          <Button disabled>
             <Plus className="w-4 h-4 mr-2" />
             Nova Habilidade
           </Button>
-        </div>
-      </div>
+        }
+      />
 
-      <Card className="mb-6 border-0 shadow-md card-glass animate-fade-in-up delay-75">
+      <Card className="mb-6 border-0 shadow-sm animate-fade-in-up delay-75">
         <CardContent className="pt-6">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             <div>
               <label className="text-sm font-medium mb-2 block text-foreground">Disciplina</label>
               <Select value={disciplina} onValueChange={setDisciplina}>
-                <SelectTrigger className="border-2 border-border focus:border-primary [&_svg:not([class*='rotate'])]:rotate-0">
+                <SelectTrigger className="border-border focus:border-primary [&_svg:not([class*='rotate'])]:rotate-0">
                   <SelectValue placeholder="Selecione" />
                 </SelectTrigger>
                 <SelectContent position="popper" side="bottom" sideOffset={5}>
@@ -210,7 +209,7 @@ export default function HabilidadesPage() {
             <div>
               <label className="text-sm font-medium mb-2 block text-foreground">Etapa de Ensino</label>
               <Select value={etapa} onValueChange={setEtapa}>
-                <SelectTrigger className="border-2 border-border focus:border-primary [&_svg:not([class*='rotate'])]:rotate-0">
+                <SelectTrigger className="border-border focus:border-primary [&_svg:not([class*='rotate'])]:rotate-0">
                   <SelectValue placeholder="Selecione" />
                 </SelectTrigger>
                 <SelectContent position="popper" side="bottom" sideOffset={5}>
@@ -225,13 +224,12 @@ export default function HabilidadesPage() {
             <div className="md:col-span-2">
               <label className="text-sm font-medium mb-2 block text-foreground">Buscar</label>
               <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <input
-                  type="text"
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground z-10" />
+                <Input
                   placeholder="Buscar por código ou descrição..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2 bg-card/80 border border-border rounded-lg focus:border-primary focus:ring-primary/20 outline-none"
+                  className="pl-10"
                 />
               </div>
             </div>
@@ -254,7 +252,7 @@ export default function HabilidadesPage() {
           <p className="text-muted-foreground">Carregando...</p>
         </div>
       ) : habilidades.length === 0 ? (
-        <Card className="border-0 shadow-lg card-glass animate-fade-in-up delay-150">
+        <Card className="border-0 shadow-sm animate-fade-in-up delay-150">
           <CardContent className="flex flex-col items-center justify-center py-16">
             <div className="w-20 h-20 bg-gradient-to-br from-primary/10 to-secondary/10 rounded-2xl flex items-center justify-center mb-6">
               <BookOpen className="h-10 w-10 text-primary" />
@@ -270,11 +268,10 @@ export default function HabilidadesPage() {
           {Object.entries(groupedByUnidade).map(([unidade, objetos], unitIndex) => (
             <Card 
               key={unidade} 
-              className="border-0 shadow-md card-glass animate-fade-in-up"
-              style={{ animationDelay: `${unitIndex * 50}ms` }}
+              className="border-0 shadow-sm"
             >
               <CardHeader 
-                className="cursor-pointer hover:bg-primary-foreground/80 transition-all duration-200 bg-primary-foreground/50"
+                className="cursor-pointer hover:bg-muted/50 transition-all duration-200 bg-muted/30"
                 onClick={() => setExpandedUnidade(expandedUnidade === unidade ? null : unidade)}
               >
                 <div className="flex items-center justify-between">
@@ -302,7 +299,7 @@ export default function HabilidadesPage() {
                   {Object.entries(objetos).map(([objeto, habilidadesObj]) => (
                     <div key={objeto} className="border border-border rounded-xl overflow-hidden">
                       <div 
-                        className="cursor-pointer hover:bg-primary-foreground/80 p-4 bg-card/50 transition-all duration-200"
+                        className="cursor-pointer hover:bg-muted/50 p-4 bg-card/50 transition-all duration-200"
                         onClick={() => setExpandedObjeto(expandedObjeto === objeto ? null : objeto)}
                       >
                         <div className="flex items-center justify-between">
@@ -321,15 +318,15 @@ export default function HabilidadesPage() {
                       </div>
                       
                       {expandedObjeto === objeto && (
-                        <div className="p-4 space-y-3 bg-primary-foreground/30">
+                        <div className="p-4 space-y-3 bg-muted/20">
                           {habilidadesObj.map(h => (
                             <div 
                               key={h.id}
-                              className="p-4 rounded-xl border border-border/50 bg-card/50 hover:bg-primary-foreground/80 transition-all duration-200"
+                              className="p-4 rounded-xl border border-border/50 bg-card/50 hover:bg-muted/50 transition-all duration-200"
                             >
                               <div className="flex items-start justify-between gap-4">
                                 <div className="flex items-start gap-3 flex-1">
-                                  <Badge className="shrink-0 font-mono text-xs bg-gradient-to-r from-primary to-secondary text-white border-0">
+                                  <Badge className="shrink-0 font-mono text-xs bg-primary text-primary-foreground border-0">
                                     {h.codigo_bncc}
                                   </Badge>
                                   <div className="flex-1">
@@ -365,11 +362,11 @@ export default function HabilidadesPage() {
         </div>
       )}
 
-      <div className="mt-8 p-5 bg-card/60 backdrop-blur-sm rounded-2xl border border-border/50 shadow-sm animate-fade-in-up delay-300">
+      <div className="mt-8 p-5 bg-muted/50 rounded-2xl border border-border">
         <p className="text-sm text-muted-foreground">
           Fonte: Base Nacional Comum Curricular (BNCC) - 2018
         </p>
       </div>
-    </div>
+    </PageContainer>
   )
 }

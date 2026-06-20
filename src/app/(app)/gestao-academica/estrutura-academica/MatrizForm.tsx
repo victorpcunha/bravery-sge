@@ -512,7 +512,7 @@ export function MatrizForm({ schoolId, matrizId, onSaved, onCancel }: Props) {
   return (
     <div className="space-y-6 [&_[data-slot='input']]:border-border [&_[data-slot='input']]:focus-visible:border-primary [&_[data-slot='input']]:focus-visible:ring-2 [&_[data-slot='input']]:focus-visible:ring-primary/20 [&_[data-slot='checkbox']]:border-border [&_[data-slot='checkbox']]:data-[state=checked]:border-primary">
       {/* Identificação */}
-      <Card className="border-border shadow-[0_2px_8px_rgba(0,0,0,0.06)]">
+      <Card className="border-border shadow-sm">
         <CardHeader className="border-b border-border pb-4">
           <CardTitle className="text-base font-semibold text-foreground">Identificação</CardTitle>
         </CardHeader>
@@ -633,7 +633,7 @@ export function MatrizForm({ schoolId, matrizId, onSaved, onCancel }: Props) {
 
       {/* Aulas */}
       {form.tipoTurma.includes('regular') && (
-        <Card className="border-border shadow-[0_2px_8px_rgba(0,0,0,0.06)]">
+        <Card className="border-border shadow-sm">
           <CardHeader className="border-b border-border pb-4">
             <CardTitle className="text-base font-semibold text-foreground">Configuração - Turno Regular</CardTitle>
           </CardHeader>
@@ -661,7 +661,7 @@ export function MatrizForm({ schoolId, matrizId, onSaved, onCancel }: Props) {
       )}
 
       {form.tipoTurma.includes('integral') && (
-        <Card className="border-border shadow-[0_2px_8px_rgba(0,0,0,0.06)]">
+        <Card className="border-border shadow-sm">
           <CardHeader className="border-b border-border pb-4">
             <CardTitle className="text-base font-semibold text-foreground">Configuração - Turno Integral</CardTitle>
           </CardHeader>
@@ -690,7 +690,7 @@ export function MatrizForm({ schoolId, matrizId, onSaved, onCancel }: Props) {
 
       {/* Períodos */}
       {periodos.length > 0 && (
-        <Card className="border-border shadow-[0_2px_8px_rgba(0,0,0,0.06)]">
+        <Card className="border-border shadow-sm">
           <CardHeader className="border-b border-border pb-4">
             <div className="flex items-center justify-between">
               <CardTitle className="text-base font-semibold text-foreground">Períodos</CardTitle>
@@ -736,12 +736,12 @@ export function MatrizForm({ schoolId, matrizId, onSaved, onCancel }: Props) {
                               {disc.carga_horaria_integral_minutos && <span className="text-xs text-muted-foreground">Integral: {disc.carga_horaria_integral_minutos}min</span>}
                             </div>
                             <div className="flex items-center gap-1">
-                              <button onClick={(e) => { e.stopPropagation(); openDisciplinaModal(periodo, disc) }} className="text-muted-foreground hover:text-primary transition-colors p-1">
+                              <Button variant="ghost" size="icon-sm" onClick={(e) => { e.stopPropagation(); openDisciplinaModal(periodo, disc) }} className="text-muted-foreground hover:text-primary">
                                 <Pencil className="w-3.5 h-3.5" />
-                              </button>
-                              <button onClick={() => handleDeleteDisciplina(disc.id, periodo.id)} className="text-destructive hover:text-destructive/80 p-1">
+                              </Button>
+                              <Button variant="ghost" size="icon-sm" onClick={() => handleDeleteDisciplina(disc.id, periodo.id)} className="text-destructive hover:text-destructive/80">
                                 <Trash2 className="w-3.5 h-3.5" />
-                              </button>
+                              </Button>
                             </div>
                           </div>
                         ))
@@ -756,7 +756,7 @@ export function MatrizForm({ schoolId, matrizId, onSaved, onCancel }: Props) {
       )}
 
       {/* Footer */}
-      <div className="flex justify-end gap-3 sticky bottom-0 bg-card py-4 px-2 -mx-4 -mb-4 border-t border-border shadow-[0_-4px_12px_rgba(0,0,0,0.04)]">
+      <div className="flex justify-end gap-3 sticky bottom-0 bg-card py-4 px-2 -mx-4 -mb-4 border-t border-border shadow-sm">
         <Button variant="outline" onClick={onCancel} className="border-border hover:bg-muted">Cancelar</Button>
         {periodos.length === 0 ? (
           <Button onClick={handleSave} disabled={saving} className="bg-primary hover:bg-primary/90 min-w-[180px] shadow-sm shadow-primary/20">
@@ -835,22 +835,24 @@ export function MatrizForm({ schoolId, matrizId, onSaved, onCancel }: Props) {
             {discForm.tipoDisciplina === 'base_comum' && (
               <div className="space-y-0">
                 <div className="flex border-b border-border">
-                  <button
-                    type="button"
+                  <Button
+                    variant="ghost"
+                    size="sm"
                     onClick={() => setAbaHabilidades('bncc')}
-                    className={`px-4 py-2 text-xs font-medium transition-colors relative ${abaHabilidades === 'bncc' ? 'text-primary' : 'text-muted-foreground hover:text-foreground'}`}
+                    className={`relative ${abaHabilidades === 'bncc' ? 'text-primary' : 'text-muted-foreground hover:text-foreground'}`}
                   >
                     Habilidades BNCC
                     {abaHabilidades === 'bncc' && <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary" />}
-                  </button>
-                  <button
-                    type="button"
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
                     onClick={() => setAbaHabilidades('outras')}
-                    className={`px-4 py-2 text-xs font-medium transition-colors relative ${abaHabilidades === 'outras' ? 'text-primary' : 'text-muted-foreground hover:text-foreground'}`}
+                    className={`relative ${abaHabilidades === 'outras' ? 'text-primary' : 'text-muted-foreground hover:text-foreground'}`}
                   >
                     Outras Habilidades
                     {abaHabilidades === 'outras' && <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary" />}
-                  </button>
+                  </Button>
                 </div>
 
                 {abaHabilidades === 'bncc' ? (
@@ -859,20 +861,22 @@ export function MatrizForm({ schoolId, matrizId, onSaved, onCancel }: Props) {
                       <div className="flex items-center justify-between">
                         <Label>Habilidades BNCC</Label>
                         <div className="flex gap-2">
-                          <button
-                            type="button"
+                          <Button
+                            variant="link"
+                            size="xs"
                             onClick={() => setDiscForm(prev => ({ ...prev, habilidadesBNCC: habilidadesBNCC.map((h: any) => h.codigo_bncc) }))}
-                            className="text-xs text-primary hover:underline"
+                            className="text-xs"
                           >
                             Selecionar Todos
-                          </button>
-                          <button
-                            type="button"
+                          </Button>
+                          <Button
+                            variant="link"
+                            size="xs"
                             onClick={() => setDiscForm(prev => ({ ...prev, habilidadesBNCC: [] }))}
-                            className="text-xs text-muted-foreground hover:underline"
+                            className="text-xs text-muted-foreground"
                           >
                             Limpar
-                          </button>
+                          </Button>
                         </div>
                       </div>
                       {(() => {
@@ -943,7 +947,7 @@ export function MatrizForm({ schoolId, matrizId, onSaved, onCancel }: Props) {
                         {habilidadesManuais.map(h => (
                           <div key={h.id} className="flex items-center justify-between p-2 bg-muted/40 rounded border border-border">
                             <div><span className="text-xs font-medium text-primary">{h.codigo}</span><span className="text-xs text-muted-foreground ml-2">{h.descricao}</span></div>
-                            <button onClick={() => removeHabilidadeManualLocal(h.id)} className="text-xs text-destructive hover:underline">Remover</button>
+                            <Button variant="link" size="xs" onClick={() => removeHabilidadeManualLocal(h.id)} className="text-xs text-destructive">Remover</Button>
                           </div>
                         ))}
                       </div>
@@ -966,7 +970,7 @@ export function MatrizForm({ schoolId, matrizId, onSaved, onCancel }: Props) {
                     {habilidadesManuais.map(h => (
                       <div key={h.id} className="flex items-center justify-between p-2 bg-muted/40 rounded border border-border">
                         <div><span className="text-xs font-medium text-primary">{h.codigo}</span><span className="text-xs text-muted-foreground ml-2">{h.descricao}</span></div>
-                        <button onClick={() => removeHabilidadeManualLocal(h.id)} className="text-xs text-destructive hover:underline">Remover</button>
+                        <Button variant="link" size="xs" onClick={() => removeHabilidadeManualLocal(h.id)} className="text-xs text-destructive">Remover</Button>
                       </div>
                     ))}
                   </div>

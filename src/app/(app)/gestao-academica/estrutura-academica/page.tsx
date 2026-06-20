@@ -3,6 +3,8 @@
 import { useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/components/providers/auth-provider'
+import { PageContainer } from '@/components/layout/page-container'
+import { PageHeader } from '@/components/layout/page-header'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { CalendarDays, GraduationCap, BookOpen } from 'lucide-react'
 import { TabCalendarios } from './TabCalendarios'
@@ -31,13 +33,11 @@ export default function GestaoAcademicaPage() {
   }
 
   return (
-      <div className="container mx-auto py-8 px-4">
-        <div className="mb-8 animate-fade-in-up">
-          <h1 className="text-3xl font-bold text-foreground">Gestão Acadêmica</h1>
-          <p className="text-muted-foreground mt-1">
-            Configure a estrutura acadêmica da escola
-          </p>
-        </div>
+      <PageContainer>
+        <PageHeader
+          title="Gestão Acadêmica"
+          description="Configure a estrutura acadêmica da escola"
+        />
 
         <Tabs defaultValue="calendarios" className="w-full">
           <TabsList className="grid w-full max-w-md grid-cols-3 mb-8">
@@ -67,6 +67,6 @@ export default function GestaoAcademicaPage() {
             <TabMatrizes schoolId={schoolId} />
           </TabsContent>
         </Tabs>
-      </div>
+      </PageContainer>
   )
 }

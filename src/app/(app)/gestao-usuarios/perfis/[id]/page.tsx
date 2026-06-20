@@ -3,9 +3,11 @@
 import { useState, useEffect, use } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/components/providers/auth-provider'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { ChevronLeft, Shield } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { PageContainer } from '@/components/layout/page-container'
+import { PageHeader } from '@/components/layout/page-header'
+import { PageSection } from '@/components/layout/page-section'
 import {
   buscarPerfil,
   criarPerfil,
@@ -129,39 +131,35 @@ export default function PerfilCadastroPage({ params }: PageProps) {
     )
   }
 
-  return (
-      <div className="container mx-auto py-8 px-4 max-w-5xl">
-        <div className="flex items-center gap-3 mb-8">
-          <Button variant="ghost" size="icon" onClick={() => router.push('/gestao-usuarios/perfis')} className="hover:bg-muted">
-            <ChevronLeft className="h-5 w-5" />
-          </Button>
-          <div>
-            <h1 className="text-3xl font-bold text-foreground">
-              {isNew ? 'Novo Perfil' : 'Editar Perfil'}
-            </h1>
-            <p className="text-muted-foreground mt-1">
-              {isNew ? 'Crie um novo perfil de acesso' : `Editando: ${perfil?.nome || ''}`}
-            </p>
-          </div>
-        </div>
+return (
+      <PageContainer className="max-w-5xl">
+        <PageHeader
+          title={isNew ? 'Novo Perfil' : 'Editar Perfil'}
+          description={isNew ? 'Crie um novo perfil de acesso' : `Editando: ${perfil?.nome || ''}`}
+          icon={Shield}
+          breadcrumbs={[
+            { label: 'Perfis e Permissões', href: '/gestao-usuarios/perfis', icon: Shield },
+            { label: isNew ? 'Novo' : perfil?.nome || '' },
+          ]}
+          actions={
+            <Button variant="ghost" size="icon" onClick={() => router.push('/gestao-usuarios/perfis')} className="hover:bg-muted">
+              <ChevronLeft className="h-5 w-5" />
+            </Button>
+          }
+        />
 
-        <Card className="border-border shadow-[0_2px_8px_rgba(0,0,0,0.06)]">
-          <CardHeader>
-            <CardTitle className="text-lg flex items-center gap-2">
-              <Shield className="h-5 w-5 text-primary" />
-              {isNew ? 'Configurar novo perfil' : 'Editar configurações do perfil'}
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <PerfilForm
-              perfil={perfil}
-              recursos={recursos}
-              onSave={handleSave}
-              onCancel={() => router.push('/gestao-usuarios/perfis')}
-              saving={saving}
-            />
-          </CardContent>
-        </Card>
-      </div>
+        <PageSection
+          title={isNew ? 'Configurar novo perfil' : 'Editar configurações do perfil'}
+          variant="default"
+        >
+          <PerfilForm
+            perfil={perfil}
+            recursos={recursos}
+            onSave={handleSave}
+            onCancel={() => router.push('/gestao-usuarios/perfis')}
+            saving={saving}
+          />
+        </PageSection>
+      </PageContainer>
   )
 }

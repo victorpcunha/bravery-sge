@@ -13,6 +13,7 @@ import {
   type FrequenciaDia,
 } from '@/lib/actions/diario-classe'
 import { Button } from '@/components/ui/button'
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { ChevronLeft, ChevronRight, Check, X, AlertTriangle, CalendarDays } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { toast } from 'sonner'
@@ -180,15 +181,15 @@ export default function FrequenciaPorDia({ turmaId, alunos, disciplinas }: Props
 
       {estatisticas && (
         <div className="grid grid-cols-3 gap-2 mb-4">
-          <div className="rounded-lg border bg-card p-3 text-center">
+          <div className="rounded-lg border border-border bg-card p-3 text-center">
             <div className="text-lg font-bold text-foreground">{estatisticas.totalDiasLetivos}</div>
             <div className="text-[10px] text-muted-foreground">Dias Letivos</div>
           </div>
-          <div className="rounded-lg border bg-card p-3 text-center">
+          <div className="rounded-lg border border-border bg-card p-3 text-center">
             <div className="text-lg font-bold text-success">{estatisticas.diasRegistrados}</div>
             <div className="text-[10px] text-muted-foreground">Dias c/ Registro</div>
           </div>
-          <div className="rounded-lg border bg-card p-3 text-center">
+          <div className="rounded-lg border border-border bg-card p-3 text-center">
             <div className="text-lg font-bold text-warning">{estatisticas.diasPendentes}</div>
             <div className="text-[10px] text-muted-foreground">Dias Pendentes</div>
           </div>
@@ -269,44 +270,43 @@ export default function FrequenciaPorDia({ turmaId, alunos, disciplinas }: Props
             </Button>
           </div>
 
-          <div className="overflow-x-auto border rounded-lg">
-            <table className="w-full min-w-max text-xs">
-              <thead>
-                <tr className="border-b bg-muted/50">
-                  <th className="sticky left-0 bg-muted text-left py-2 px-3 min-w-[180px] z-20 shadow-[2px_0_4px_-2px_rgba(0,0,0,0.1)] font-medium">
+          <div className="overflow-x-auto border border-border rounded-lg">
+            <Table className="min-w-max text-xs">
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="sticky left-0 bg-muted text-left py-2 px-3 min-w-[180px] z-20 font-medium">
                     Aluno
-                  </th>
+                  </TableHead>
                   {dias.map(dia => {
                     const diaSem = nomeDiaSemana(dia)
                     return (
-                      <th
+                      <TableHead
                         key={dia}
                         className="py-2 px-1 text-center font-normal w-8"
                       >
                         <div>{dia}</div>
                         <div className="text-[10px]">{diaSem}</div>
-                      </th>
+                      </TableHead>
                     )
                   })}
-                  <th className="py-2 px-2 text-center font-medium w-16">%</th>
-                </tr>
-              </thead>
-              <tbody>
+                  <TableHead className="py-2 px-2 text-center font-medium w-16">%</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
                 {alunos.map((aluno, idx) => {
                   const percentual = calcPercentual(aluno.id)
                   return (
-                    <tr key={aluno.id} className={cn(
-                      "border-b border-border hover:bg-muted/40",
+                    <TableRow key={aluno.id} className={cn(
                       idx % 2 === 0 && "bg-card",
                       idx % 2 === 1 && "bg-muted/30"
                     )}>
-                      <td className={cn(
-                        "sticky left-0 py-2 px-3 text-sm font-medium z-10 shadow-[2px_0_4px_-2px_rgba(0,0,0,0.08)]",
+                      <TableCell className={cn(
+                        "sticky left-0 py-2 px-3 text-sm font-medium z-10",
                         idx % 2 === 0 && "bg-card",
                         idx % 2 === 1 && "bg-muted/30"
                       )}>
                         {aluno.nome_completo}
-                      </td>
+                      </TableCell>
                       {dias.map(dia => {
                         const key = `${aluno.id}_${dia}`
                         const status = frequencias.get(key) || null
@@ -324,16 +324,18 @@ export default function FrequenciaPorDia({ turmaId, alunos, disciplinas }: Props
                         else if (isAfterSaida) tooltip = 'Aluno não pertence mais à turma nesta data'
 
                         return (
-                          <td key={dia} className={cn(
+                          <TableCell key={dia} className={cn(
                             "py-1 px-0.5 text-center",
                             isOutsidePeriod && "opacity-40"
                           )}>
-                            <button
+                            <Button
                               type="button"
+                              variant="ghost"
+                              size="icon"
                               disabled={disabled}
                               onClick={!isOutsidePeriod ? () => handleToggle(aluno.id, dia) : undefined}
                               className={cn(
-                                "w-7 h-7 rounded-md text-xs font-bold transition-all flex items-center justify-center mx-auto",
+                                "h-7 w-7 rounded-md text-xs font-bold mx-auto",
                                 !disabled && !isOutsidePeriod && "cursor-pointer hover:ring-2 hover:ring-primary/30",
                                 isOutsidePeriod && "cursor-not-allowed",
                                 status === 'P' && "bg-success/10 text-success hover:bg-success/20",
@@ -350,27 +352,27 @@ export default function FrequenciaPorDia({ turmaId, alunos, disciplinas }: Props
                               {status === 'F' && <X className="h-3.5 w-3.5" />}
                               {status === 'FJ' && <AlertTriangle className="h-3.5 w-3.5" />}
                               {!status && '-'}
-                            </button>
-                          </td>
+                            </Button>
+                          </TableCell>
                         )
                       })}
-                      <td className="py-2 px-2 text-center">
+                      <TableCell className="py-2 px-2 text-center">
                         {percentual !== null && (
                           <span className={cn(
                             "text-xs font-semibold",
-percentual >= 75 && "text-success",
-                                percentual >= 50 && percentual < 75 && "text-warning",
-                                percentual < 50 && "text-destructive"
+                            percentual >= 75 && "text-success",
+                            percentual >= 50 && percentual < 75 && "text-warning",
+                            percentual < 50 && "text-destructive"
                           )}>
                             {percentual}%
                           </span>
                         )}
-                      </td>
-                    </tr>
+                      </TableCell>
+                    </TableRow>
                   )
                 })}
-              </tbody>
-            </table>
+              </TableBody>
+            </Table>
           </div>
 
           <div className="flex items-center gap-4 mt-3 text-xs text-muted-foreground flex-wrap">

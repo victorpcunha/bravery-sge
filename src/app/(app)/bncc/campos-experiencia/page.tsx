@@ -6,9 +6,12 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { Textarea } from '@/components/ui/textarea'
 import { BookOpen, Plus, Pencil, Trash2, X, Check } from 'lucide-react'
 import { toast } from 'sonner'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog'
+import { PageContainer } from '@/components/layout/page-container'
+import { PageHeader } from '@/components/layout/page-header'
 
 type Campo = {
   id: string
@@ -98,18 +101,16 @@ export default function CamposExperienciaPage() {
   }
 
   return (
-    <div className="container mx-auto py-8 px-4">
-      <div className="mb-8 animate-fade-in-up">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold text-foreground">Campos de Experiência</h1>
-            <p className="text-muted-foreground mt-1">Os cinco Campos de Experiência da BNCC do Ensino Infantil</p>
-          </div>
-          <Button className="bg-primary hover:bg-secondary" onClick={openNew}>
+    <PageContainer>
+      <PageHeader
+        title="Campos de Experiência"
+        description="Os cinco Campos de Experiência da BNCC do Ensino Infantil"
+        actions={
+          <Button onClick={openNew}>
             <Plus className="w-4 h-4 mr-2" /> Novo Campo
           </Button>
-        </div>
-      </div>
+        }
+      />
 
       {loading ? (
         <div className="text-center py-12">
@@ -118,9 +119,8 @@ export default function CamposExperienciaPage() {
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {campos.map((campo, index) => (
-            <Card key={campo.id} className="border-0 shadow-md card-glass hover:shadow-lg transition-all duration-300 animate-fade-in-up"
-              style={{ animationDelay: `${index * 100}ms` }}>
+          {campos.map((campo) => (
+            <Card key={campo.id} className="border-0 shadow-sm hover:shadow-md transition-all duration-300">
               <CardHeader className="pb-3">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
@@ -173,8 +173,8 @@ export default function CamposExperienciaPage() {
             </div>
             <div>
               <label className="text-sm font-medium mb-2 block text-foreground">Descrição</label>
-              <textarea value={form.descricao} onChange={e => setForm({ ...form, descricao: e.target.value })}
-                className="w-full px-3 py-2 bg-card/80 border border-border rounded-lg focus:border-primary focus:ring-primary/20 outline-none min-h-[80px]"
+              <Textarea value={form.descricao} onChange={e => setForm({ ...form, descricao: e.target.value })}
+                className="min-h-[80px]"
                 placeholder="Descrição do campo de experiência" />
             </div>
             <div>
@@ -188,16 +188,16 @@ export default function CamposExperienciaPage() {
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setShowModal(false)}>Cancelar</Button>
-            <Button className="bg-primary hover:bg-secondary" onClick={save} disabled={saving}>
+            <Button onClick={save} disabled={saving}>
               {saving ? 'Salvando...' : editando ? 'Atualizar' : 'Cadastrar'}
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
-      <div className="mt-8 p-5 bg-card/60 backdrop-blur-sm rounded-2xl border border-border/50 shadow-sm animate-fade-in-up delay-300">
+      <div className="mt-8 p-5 bg-muted/50 rounded-2xl border border-border">
         <p className="text-sm text-muted-foreground">Fonte: Base Nacional Comum Curricular (BNCC) - 2018</p>
       </div>
-    </div>
+    </PageContainer>
   )
 }

@@ -1,4 +1,5 @@
 import { Suspense } from 'react'
+import { PageContainer } from '@/components/layout/page-container'
 import MatriculaCadastroContent from './content'
 
 export default async function MatriculaCadastroPage({
@@ -9,9 +10,9 @@ export default async function MatriculaCadastroPage({
   const params = await searchParams
   return (
     <Suspense fallback={
-      <div className="container mx-auto py-8 px-4">
+      <PageContainer>
         <div className="text-center text-muted-foreground py-8">Carregando...</div>
-      </div>
+      </PageContainer>
     }>
       <MatriculaCadastroContent searchParams={params} />
     </Suspense>

@@ -55,6 +55,36 @@ Sistema de Gestão Escolar completo: turmas, quadro de aulas, indicadores de ava
 
 ## UI & Design System
 
+### Catálogo de Componentes Oficiais
+
+Referência canônica: `specs/002-design-system/catalog.md`
+
+**Layout**:
+- `PageContainer` — `src/components/layout/page-container.tsx` — Container de página com `maxWidth="default"|"dashboard"`
+- `PageHeader` — `src/components/layout/page-header.tsx` — Cabeçalho com título, descrição, ícone, breadcrumbs, ações
+- `PageSection` — `src/components/layout/page-section.tsx` — Seção com `variant="default"|"flush"|"compact"`
+- `FilterBar` — `src/components/layout/filter-bar.tsx` — Barra de filtros com busca (SearchInput) e ações
+- `SearchInput` — `src/components/layout/search-input.tsx` — Campo de busca com ícone
+- `FormCard` — `src/components/layout/form-card.tsx` — Seção de formulário com título e descrição
+
+**Feedback**:
+- `StatusBadge` — `src/components/feedback/status-badge.tsx` — Badge semântico (`success|warning|destructive|info|primary|muted`)
+- `ConfirmDialog` — `src/components/feedback/confirm-dialog.tsx` — Confirmação destrutiva com `variant="destructive"|"warning"`
+- `EmptyState` — `src/components/ui/empty-state.tsx` — Estado vazio com ícone, título, descrição, ação
+- `StatCard` — `src/components/ui/stat-card.tsx` — Card de estatística
+
+**Layouts Oficiais**:
+1. **Listagem**: `PageContainer > PageHeader + PageSection(compact) > FilterBar + PageSection(flush) > Table + EmptyState`
+2. **Cadastro/Edição**: `PageContainer > PageHeader(breadcrumbs) + FormCard(s) + ações`
+3. **Visualização**: `PageContainer > PageHeader(breadcrumbs) + PageSection(s)`
+4. **Dashboard**: `PageContainer(maxWidth="dashboard") > PageHeader + StatCards + PageSections`
+
+**Estados Globais**:
+- **Loading**: Spinner centralizado com `animate-spin rounded-full h-8 w-8 border-b-2 border-primary` + texto `text-muted-foreground`
+- **Error**: `toast.error()` do Sonner para ações; `<EmptyState icon={AlertCircle} ...>` para erros de página
+- **Permission Denied**: `<EmptyState icon={ShieldAlert} title="Sem permissão" ...>`
+- **Empty**: `<EmptyState icon={...} title="..." description="..." action={<Button>...</Button>} />`
+
 ### Regra #1: NUNCA use cores hexadecimais (#XXXXXX) em componentes ou páginas
 Use SEMPRE os tokens Tailwind v4 derivados das CSS variables do `globals.css`:
 
@@ -117,12 +147,32 @@ Use SEMPRE os tokens Tailwind v4 derivados das CSS variables do `globals.css`:
 - Use `from-primary to-accent`, `from-primary to-primary/80`, etc.
 - NUNCA use `from-[#1D3557] to-[#457B9D]` em gradientes.
 
-### Exceções (NÃO trocar hex por token)
-- Cores em data arrays de color picker (`COLORS_BG`, `COLORS_TEXT`) — são conteúdo do banco de dados, não UI.
-- SVG path fills que não são customizáveis pelo tema.
-- Data URIs em gradientes de imagem de fundo.
+### Regra #8: Componentes oficiais do Design System
+- SEMPRE use os componentes oficiais listados acima para layouts, feedback e estados.
+- NUNCA use `container mx-auto py-8 px-4` inline — use `<PageContainer>`.
+- NUNCA use headings manuais (`<h1>` com classes) — use `<PageHeader>`.
+- NUNCA use `card-glass` ou `shadow-[rgba]` — use `<PageSection>` ou `<Card>`.
+- NUNCA use `<button>` nativo para ações — use `<Button>` shadcn.
+- NUNCA use `<table>` nativo com estilos inline — use `<Table>` shadcn.
+- NUNCA use cores hardcoded em badges — use `<StatusBadge>`.
+- NUNCA use `text-white` em botões sobre fundo primary — use `text-primary-foreground` ou Button variante padrão.
 
-### Colunas da tabela `people` importantes
+### Regra #9: Anti-padrões proibidos
+- `text-white` em botões → `text-primary-foreground` ou Button default
+- `shadow-[rgba]` → `shadow-xs`, `shadow-sm`, `shadow-md`
+- `card-glass` → `PageSection` ou `Card`
+- `<button>` nativo → `<Button>` shadcn ou `variant="ghost"`
+- `<table>` nativo → `<Table>` shadcn
+- Heading manual → `<PageHeader>`
+- `shadow-lg shadow-blue-500/20` → `shadow-sm` ou `shadow-md`
+- `bg-purple-100 text-purple-700` → `<StatusBadge>`
+- `ml-64` (sidebar hardcoded) → remover (layout gerencia sidebar)
+- `text-foreground/80` → `text-muted-foreground`
+- `border-2 border-border` → `border-border` (1px padrão)
+- `bg-white` → `bg-card` ou `bg-background`
+- `text-gray-*`, `text-slate-*` → `text-foreground` ou `text-muted-foreground`
+- `border-slate-*` → `border-border`
+- Gradientes hardcoded (`from-[#1D3557] to-[#457B9D]`) → `from-primary to-accent`
 - Nome completo: `nome_completo` (NÃO `name`)
 - Login CPF/email: colunas `cpf`, `email`
 - Contato: `telefone_celular`, `telefone_fixo`
@@ -138,3 +188,11 @@ Use SEMPRE os tokens Tailwind v4 derivados das CSS variables do `globals.css`:
 - Build: `npx next build`
 - Dev: `npx next dev -p 3001`
 <!-- END:project-summary -->
+
+<!-- SPECKIT START -->
+Current plan: specs/002-design-system/plan.md
+Feature: Design System — Padronização Global de UI/UX
+Spec: specs/002-design-system/spec.md
+Data model: specs/002-design-system/data-model.md
+Quickstart: specs/002-design-system/quickstart.md
+<!-- SPECKIT END -->

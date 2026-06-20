@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { buscarPessoasMatriculadas, type PessoaResumida } from '@/lib/actions/painel-pessoa'
 import { Input } from '@/components/ui/input'
+import { Button } from '@/components/ui/button'
 import { Loader2, Search, ChevronDown } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
@@ -77,11 +78,11 @@ export default function FiltroPessoa({ schoolId, pessoaLogadaId, onSelect, selec
       {open && resultados.length > 0 && (
         <div className="absolute z-50 mt-1 w-full bg-popover border border-border rounded-lg shadow-lg max-h-60 overflow-y-auto">
           {resultados.map(p => (
-            <button
+            <Button
               key={p.id}
-              type="button"
+              variant="ghost"
               className={cn(
-                "w-full text-left px-3 py-2.5 text-sm hover:bg-accent transition-colors border-b last:border-b-0 border-border/50",
+                "w-full justify-start h-auto py-2.5 px-3 text-sm font-normal border-b last:border-b-0 border-border/50",
                 selectedId === p.id && "bg-accent font-medium"
               )}
               onClick={() => {
@@ -92,7 +93,7 @@ export default function FiltroPessoa({ schoolId, pessoaLogadaId, onSelect, selec
             >
               <span className="block font-medium">{p.nome_completo}</span>
               {p.cpf && <span className="block text-xs text-muted-foreground mt-0.5">CPF: {p.cpf}</span>}
-            </button>
+            </Button>
           ))}
         </div>
       )}

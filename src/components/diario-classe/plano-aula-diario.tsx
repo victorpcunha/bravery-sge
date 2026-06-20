@@ -72,7 +72,6 @@ export default function PlanoAulaDiario({ turmaId, disciplinas, pessoaId }: Prop
   const [aplicando, setAplicando] = useState<string | null>(null)
   const [removendo, setRemovendo] = useState<string | null>(null)
 
-  // Load days with class for the discipline
   useEffect(() => {
     if (!disciplinaId) return
     setLoadingDias(true)
@@ -82,7 +81,6 @@ export default function PlanoAulaDiario({ turmaId, disciplinas, pessoaId }: Prop
       .finally(() => setLoadingDias(false))
   }, [turmaId, disciplinaId, ano, mes, pessoaId])
 
-  // Load which days have applied plans (for indicators)
   useEffect(() => {
     if (!disciplinaId) return
     listarDiasComPlanoAplicado(turmaId, disciplinaId, ano, mes, pessoaId)
@@ -90,7 +88,6 @@ export default function PlanoAulaDiario({ turmaId, disciplinas, pessoaId }: Prop
       .catch(() => {})
   }, [turmaId, disciplinaId, ano, mes, pessoaId, planosAplicados])
 
-  // Load available plans for this discipline
   useEffect(() => {
     if (!disciplinaId) return
     setLoadingDisponiveis(true)
@@ -100,7 +97,6 @@ export default function PlanoAulaDiario({ turmaId, disciplinas, pessoaId }: Prop
       .finally(() => setLoadingDisponiveis(false))
   }, [turmaId, disciplinaId, pessoaId])
 
-  // Load applied plans for the selected day
   useEffect(() => {
     if (!disciplinaId || !dataSelecionada) return
     setLoadingAplicados(true)
@@ -110,7 +106,6 @@ export default function PlanoAulaDiario({ turmaId, disciplinas, pessoaId }: Prop
       .finally(() => setLoadingAplicados(false))
   }, [turmaId, disciplinaId, dataSelecionada, pessoaId])
 
-  // Ensure selected date stays within days with class
   useEffect(() => {
     if (diasComAula.length > 0 && !diasComAula.includes(dataSelecionada)) {
       setDataSelecionada(diasComAula[0])
@@ -173,7 +168,6 @@ export default function PlanoAulaDiario({ turmaId, disciplinas, pessoaId }: Prop
 
   return (
     <div className="space-y-6">
-      {/* Discipline selector */}
       <div className="flex flex-wrap items-center gap-4">
         <div className="flex flex-col gap-1 min-w-[220px]">
           <label className="text-xs text-muted-foreground font-medium">Disciplina</label>
@@ -204,7 +198,6 @@ export default function PlanoAulaDiario({ turmaId, disciplinas, pessoaId }: Prop
         </p>
       ) : (
         <>
-          {/* Month navigation + day grid */}
           <div>
             <div className="flex items-center justify-between mb-3">
               <Button variant="outline" size="sm" onClick={() => navegarMes(-1)}>
@@ -220,15 +213,16 @@ export default function PlanoAulaDiario({ turmaId, disciplinas, pessoaId }: Prop
                 const diaNum = parseInt(d.split('-')[2], 10)
                 const isSelected = d === dataSelecionada
                 const temPlanos = diasComPlano.has(d)
-                // Need to pass filtered planos to show indicator
                 return (
-                  <button
+                  <Button
                     key={d}
+                    variant="ghost"
+                    size="icon"
                     onClick={() => setDataSelecionada(d)}
                     className={cn(
-                      "relative flex items-center justify-center w-10 h-10 rounded-lg text-sm font-medium transition-colors",
+                      "relative flex items-center justify-center w-10 h-10 rounded-lg text-sm font-medium",
                       isSelected
-                        ? "bg-primary text-primary-foreground shadow-sm"
+                        ? "bg-primary text-primary-foreground shadow-sm hover:bg-primary hover:text-primary-foreground"
                         : "bg-card border border-border hover:border-primary/40 hover:bg-accent text-foreground"
                     )}
                     title={new Date(d + 'T12:00:00').toLocaleDateString('pt-BR')}
@@ -240,14 +234,13 @@ export default function PlanoAulaDiario({ turmaId, disciplinas, pessoaId }: Prop
                         isSelected ? "bg-primary-foreground" : "bg-success"
                       )} />
                     )}
-                  </button>
+                  </Button>
                 )
               })}
             </div>
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* Applied plans for this day */}
             <div>
               <h3 className="text-sm font-medium mb-3 flex items-center gap-2">
                 <CheckCircle2 className="h-4 w-4 text-success" />
@@ -319,7 +312,6 @@ export default function PlanoAulaDiario({ turmaId, disciplinas, pessoaId }: Prop
               )}
             </div>
 
-            {/* Available plans */}
             <div>
               <h3 className="text-sm font-medium mb-3 flex items-center gap-2">
                 <BookOpen className="h-4 w-4 text-info" />

@@ -10,6 +10,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { Textarea } from '@/components/ui/textarea'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Loader2, Save } from 'lucide-react'
 import { toast } from 'sonner'
@@ -181,8 +182,7 @@ export default function ModalHistoricoManual({ open, onClose, onSuccess, personI
 
           <div>
             <Label className="text-xs">Observações</Label>
-            <textarea {...register('observacoes')} rows={2}
-              className="w-full mt-0.5 px-3 py-2 rounded-lg border border-border bg-card text-sm resize-y" />
+            <Textarea {...register('observacoes')} rows={2} className="mt-0.5 resize-y" />
           </div>
 
           <div className="flex justify-end gap-2 pt-2">

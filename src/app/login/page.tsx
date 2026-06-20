@@ -66,14 +66,14 @@ export default function LoginPage() {
         <div className="text-center mb-8">
           <div className="flex items-center justify-center gap-2 mb-4">
             <div className="w-14 h-14 bg-gradient-to-br from-primary to-accent rounded-2xl flex items-center justify-center shadow-lg shadow-blue-500/20">
-              <School className="w-8 h-8 text-white" />
+              <School className="w-8 h-8 text-primary-foreground" />
             </div>
           </div>
           <h1 className="text-2xl font-bold text-foreground">Bravery SGE</h1>
           <p className="text-muted-foreground">Sistema de Gestão Escolar</p>
         </div>
 
-        <Card className="border-0 shadow-xl card-glass">
+        <Card className="border-0 shadow-xl">
           <div className="h-1.5 bg-gradient-to-r from-primary via-accent to-ring rounded-t-lg" />
           <CardHeader className="pb-2">
             <CardTitle className="text-xl font-semibold text-foreground">Acessar Sistema</CardTitle>

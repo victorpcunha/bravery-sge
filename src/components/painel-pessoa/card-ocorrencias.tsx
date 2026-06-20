@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import { getOcorrencias, type Ocorrencia } from '@/lib/actions/painel-pessoa'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { ScrollArea } from '@/components/ui/scroll-area'
-import { Badge } from '@/components/ui/badge'
+import { StatusBadge } from '@/components/feedback/status-badge'
 import { AlertCircle, Loader2 } from 'lucide-react'
 
 type Props = {
@@ -13,9 +13,13 @@ type Props = {
   pessoaLogadaId: string | null
 }
 
-const COR_TIPO: Record<string, string> = {
-  disciplinar: 'bg-destructive/10 text-destructive border-destructive/20',
-  pedagogica: 'bg-warning/10 text-warning border-warning/20',
+const STATUS_TIPO: Record<string, 'destructive' | 'warning'> = {
+  disciplinar: 'destructive',
+  pedagogica: 'warning',
+}
+
+function statusTipo(tipo: string): 'destructive' | 'warning' | 'muted' {
+  return STATUS_TIPO[tipo] || 'muted'
 }
 
 export default function CardOcorrencias({ pessoaId, schoolId, pessoaLogadaId }: Props) {
@@ -43,7 +47,7 @@ export default function CardOcorrencias({ pessoaId, schoolId, pessoaLogadaId }: 
     <Card>
       <CardHeader className="pb-2">
         <CardTitle className="text-sm flex items-center gap-2">
-          <AlertCircle className="h-4 w-4 text-rose-500" />
+          <AlertCircle className="h-4 w-4 text-destructive" />
           Ocorrências
         </CardTitle>
       </CardHeader>
@@ -54,11 +58,9 @@ export default function CardOcorrencias({ pessoaId, schoolId, pessoaLogadaId }: 
           <ScrollArea className="max-h-64">
             <div className="space-y-2">
               {ocorrencias.map(o => (
-                <div key={o.id} className="rounded-lg border p-3 text-sm space-y-1">
+                <div key={o.id} className="rounded-lg border border-border p-3 text-sm space-y-1">
                   <div className="flex items-center justify-between gap-2">
-                    <Badge variant="outline" className={`text-xs px-1.5 py-0 ${COR_TIPO[o.tipo] || ''}`}>
-                      {o.tipo}
-                    </Badge>
+                    <StatusBadge status={statusTipo(o.tipo)} className="text-xs">{o.tipo}</StatusBadge>
                     <span className="text-xs text-muted-foreground">
                       {new Date(o.data_ocorrencia).toLocaleDateString('pt-BR')}
                     </span>

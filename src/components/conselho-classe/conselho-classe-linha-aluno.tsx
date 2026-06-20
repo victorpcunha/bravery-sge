@@ -2,6 +2,8 @@
 
 import { useState } from 'react'
 import { ChevronDown, ChevronRight } from 'lucide-react'
+import { Button } from '@/components/ui/button'
+import { Table, TableHeader, TableBody, TableRow, TableHead } from '@/components/ui/table'
 import ConselhoClasseLinhaDisciplina from './conselho-classe-linha-disciplina'
 import type { DisciplinaDesempenho } from '@/lib/actions/conselho-classe'
 
@@ -19,10 +21,11 @@ export default function ConselhoClasseLinhaAluno({ aluno, onSalvarNota, readonly
   const [expanded, setExpanded] = useState(false)
 
   return (
-    <div className="border border-muted rounded-lg overflow-hidden">
-      <button
+    <div className="border border-border rounded-lg overflow-hidden">
+      <Button
+        variant="ghost"
         onClick={() => setExpanded(!expanded)}
-        className="w-full flex items-center gap-3 px-4 py-3 hover:bg-muted/30 transition-colors text-left"
+        className="w-full flex items-center gap-3 px-4 py-3 hover:bg-muted/30 transition-colors text-left rounded-none h-auto"
       >
         {expanded ? (
           <ChevronDown className="h-4 w-4 text-muted-foreground shrink-0" />
@@ -33,22 +36,22 @@ export default function ConselhoClasseLinhaAluno({ aluno, onSalvarNota, readonly
         <span className="text-xs text-muted-foreground bg-muted px-2 py-0.5 rounded-full">
           {aluno.disciplinas.length} {aluno.disciplinas.length === 1 ? 'disciplina' : 'disciplinas'}
         </span>
-      </button>
+      </Button>
 
       {expanded && (
-        <div className="border-t border-muted">
-          <table className="w-full">
-            <thead>
-              <tr className="bg-muted/30 text-xs text-muted-foreground">
-                <th className="py-2 px-3 text-left font-medium">Disciplina</th>
-                <th className="py-2 px-3 text-center font-medium">Frequência</th>
-                <th className="py-2 px-3 text-center font-medium">Faltas</th>
-                <th className="py-2 px-3 text-center font-medium">Média Final</th>
-                <th className="py-2 px-3 text-center font-medium">Média Período</th>
-                <th className="py-2 px-3 text-center font-medium">Nota Conselho</th>
-              </tr>
-            </thead>
-            <tbody>
+        <div className="border-t border-border">
+          <Table>
+            <TableHeader>
+              <TableRow className="bg-muted/30 text-xs text-muted-foreground hover:bg-muted/30">
+                <TableHead className="py-2 px-3 text-left font-medium">Disciplina</TableHead>
+                <TableHead className="py-2 px-3 text-center font-medium">Frequência</TableHead>
+                <TableHead className="py-2 px-3 text-center font-medium">Faltas</TableHead>
+                <TableHead className="py-2 px-3 text-center font-medium">Média Final</TableHead>
+                <TableHead className="py-2 px-3 text-center font-medium">Média Período</TableHead>
+                <TableHead className="py-2 px-3 text-center font-medium">Nota Conselho</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
               {aluno.disciplinas.map(disc => (
                 <ConselhoClasseLinhaDisciplina
                   key={disc.disciplina_id}
@@ -59,8 +62,8 @@ export default function ConselhoClasseLinhaAluno({ aluno, onSalvarNota, readonly
                   readonly={readonly}
                 />
               ))}
-            </tbody>
-          </table>
+            </TableBody>
+          </Table>
         </div>
       )}
     </div>

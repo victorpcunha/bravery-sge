@@ -15,6 +15,8 @@ import {
 } from '@/lib/actions/diario-classe'
 import { listarPlanoAulaPorMes, type PlanoAula } from '@/lib/actions/plano-ensino'
 import { Button } from '@/components/ui/button'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { ChevronLeft, ChevronRight, Check, X, AlertTriangle, BookOpen } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { toast } from 'sonner'
@@ -54,12 +56,9 @@ export default function FrequenciaPorAula({ turmaId, alunos, disciplinas }: Prop
   const { schoolId } = useAuth()
   const [salvando, setSalvando] = useState<Set<string>>(new Set())
 
-  // Plano de Ensino — indicator only
   const [planos, setPlanos] = useState<PlanoAula[]>([])
 
   const { pessoaId } = usePermissoes(schoolId || '')
-
-  const disciplinaSelecionada = disciplinas.find(d => d.matriz_disciplina_id === disciplinaId)
 
   const carregar = useCallback(async () => {
     if (!disciplinaId || !turmaId) {
@@ -240,18 +239,18 @@ export default function FrequenciaPorAula({ turmaId, alunos, disciplinas }: Prop
           <label className="text-xs font-medium text-muted-foreground block mb-1">
             Disciplina
           </label>
-          <select
-            value={disciplinaId}
-            onChange={e => setDisciplinaId(e.target.value)}
-            className="h-9 px-3 rounded-lg border border-border bg-card text-sm min-w-[200px]"
-          >
-            <option value="">Selecione uma disciplina</option>
-            {disciplinas.map(d => (
-              <option key={d.matriz_disciplina_id} value={d.matriz_disciplina_id}>
-                {d.nome}
-              </option>
-            ))}
-          </select>
+          <Select value={disciplinaId} onValueChange={setDisciplinaId}>
+            <SelectTrigger className="min-w-[200px]">
+              <SelectValue placeholder="Selecione uma disciplina" />
+            </SelectTrigger>
+            <SelectContent>
+              {disciplinas.map(d => (
+                <SelectItem key={d.matriz_disciplina_id} value={d.matriz_disciplina_id}>
+                  {d.nome}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
 
         <div className="flex items-center gap-2 ml-auto">
@@ -289,7 +288,7 @@ export default function FrequenciaPorAula({ turmaId, alunos, disciplinas }: Prop
         </div>
       ) : aulas.length === 0 ? (
         <div className="py-12 text-center text-muted-foreground">
-          <p className="text-sm">Nenhuma aula encontrada para {disciplinaSelecionada?.nome || 'esta disciplina'} neste mês.</p>
+          <p className="text-sm">Nenhuma aula encontrada para esta disciplina neste mês.</p>
           <p className="text-xs mt-1">Verifique o quadro de horários da turma.</p>
         </div>
       ) : (
@@ -298,58 +297,58 @@ export default function FrequenciaPorAula({ turmaId, alunos, disciplinas }: Prop
             <div className="text-xs text-muted-foreground mb-3">Carregando indicadores...</div>
           ) : estatisticas && (
             <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-2 mb-4">
-              <div className="rounded-lg border bg-card p-3 text-center">
+              <div className="rounded-lg border border-border bg-card p-3 text-center">
                 <div className="text-lg font-bold text-foreground">{estatisticas.totalDiasLetivos}</div>
                 <div className="text-[10px] text-muted-foreground">Dias Letivos</div>
               </div>
-              <div className="rounded-lg border bg-card p-3 text-center">
+              <div className="rounded-lg border border-border bg-card p-3 text-center">
                 <div className="text-lg font-bold text-foreground">{estatisticas.diasDisciplina ?? '-'}</div>
                 <div className="text-[10px] text-muted-foreground">Dias da Disciplina</div>
               </div>
-              <div className="rounded-lg border bg-card p-3 text-center">
+              <div className="rounded-lg border border-border bg-card p-3 text-center">
                 <div className="text-lg font-bold text-success">{estatisticas.diasRegistrados}</div>
                 <div className="text-[10px] text-muted-foreground">Dias c/ Registro</div>
               </div>
-              <div className="rounded-lg border bg-card p-3 text-center">
+              <div className="rounded-lg border border-border bg-card p-3 text-center">
                 <div className="text-lg font-bold text-warning">{estatisticas.diasPendentes}</div>
                 <div className="text-[10px] text-muted-foreground">Dias Pendentes</div>
               </div>
-              <div className="rounded-lg border bg-card p-3 text-center">
+              <div className="rounded-lg border border-border bg-card p-3 text-center">
                 <div className="text-lg font-bold text-foreground">{estatisticas.totalAulas ?? '-'}</div>
                 <div className="text-[10px] text-muted-foreground">Aulas no Quadro</div>
               </div>
-              <div className="rounded-lg border bg-card p-3 text-center">
+              <div className="rounded-lg border border-border bg-card p-3 text-center">
                 <div className="text-lg font-bold text-success">{estatisticas.aulasRegistradas ?? '-'}</div>
                 <div className="text-[10px] text-muted-foreground">Aulas c/ Registro</div>
               </div>
-              <div className="rounded-lg border bg-card p-3 text-center">
+              <div className="rounded-lg border border-border bg-card p-3 text-center">
                 <div className="text-lg font-bold text-warning">{estatisticas.aulasPendentes ?? '-'}</div>
                 <div className="text-[10px] text-muted-foreground">Aulas Pendentes</div>
               </div>
             </div>
           )}
-          <div className="overflow-x-auto border rounded-lg">
-            <table className="w-full min-w-max text-xs">
-              <thead>
-                <tr className="border-b bg-muted/50">
-                  <th
+          <div className="overflow-x-auto border border-border rounded-lg">
+            <Table className="min-w-max text-xs">
+              <TableHeader>
+                <TableRow>
+                  <TableHead
                     rowSpan={2}
-                    className="sticky left-0 bg-muted text-left py-2 px-3 min-w-[180px] z-20 shadow-[2px_0_4px_-2px_rgba(0,0,0,0.1)]"
+                    className="sticky left-0 bg-muted text-left py-2 px-3 min-w-[180px] z-20"
                   >
                     Aluno
-                  </th>
+                  </TableHead>
                   {aulasPorData.map(grupo => (
-                    <th
+                    <TableHead
                       key={grupo.data}
                       colSpan={grupo.aulas.length}
                       className="py-2 px-1 text-center font-medium border-l border-border"
                     >
                       <div className="text-xs capitalize">{grupo.diaSemana}</div>
                       <div className="text-sm font-bold">{formatarDataCurta(grupo.data)}</div>
-                    </th>
+                    </TableHead>
                   ))}
-                </tr>
-                <tr className="border-b bg-muted/30">
+                </TableRow>
+                <TableRow>
                   {aulasPorData.map(grupo =>
                     grupo.aulas.map((aula) => {
                       const alunosValidosAula = alunos.filter(al => {
@@ -365,7 +364,7 @@ export default function FrequenciaPorAula({ turmaId, alunos, disciplinas }: Prop
                       const hasPlano = !!getPlanoDaData(aula.data)
 
                       return (
-                        <th
+                        <TableHead
                           key={`${aula.horario_id}_${aula.data}`}
                           className={cn(
                             "py-1.5 px-1 text-center font-normal text-muted-foreground border-l border-border min-w-[64px] transition-colors group relative",
@@ -384,26 +383,25 @@ export default function FrequenciaPorAula({ turmaId, alunos, disciplinas }: Prop
                             onClick={() => !isFuture && handleMarcarTodos(aula.horario_id, aula.data, !allPresent)}
                             title={isFuture ? 'Data futura' : (allPresent ? 'Clique para limpar todos' : 'Clique para marcar todos como presente')}
                           />
-                        </th>
+                        </TableHead>
                       )
                     })
                   )}
-                </tr>
-              </thead>
-              <tbody>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
                 {alunos.map((aluno, idx) => (
-                  <tr key={aluno.id} className={cn(
-                    "border-b border-border hover:bg-muted/40",
+                  <TableRow key={aluno.id} className={cn(
                     idx % 2 === 0 && "bg-card",
                     idx % 2 === 1 && "bg-muted/30"
                   )}>
-                    <td className={cn(
-                      "sticky left-0 py-2 px-3 text-sm font-medium z-20 shadow-[2px_0_8px_-4px_rgba(0,0,0,0.12)]",
+                    <TableCell className={cn(
+                      "sticky left-0 py-2 px-3 text-sm font-medium z-10",
                       idx % 2 === 0 && "bg-card",
                       idx % 2 === 1 && "bg-muted/30"
                     )}>
                       {aluno.nome_completo}
-                    </td>
+                    </TableCell>
                       {aulasPorData.map(grupo =>
                         grupo.aulas.map(aula => {
                           const key = `${aluno.id}_${aula.horario_id}_${aula.data}`
@@ -421,16 +419,18 @@ export default function FrequenciaPorAula({ turmaId, alunos, disciplinas }: Prop
                           else if (isAfterSaida) tooltip = 'Aluno não pertence mais à turma nesta data'
 
                           return (
-                            <td key={key} className={cn(
+                            <TableCell key={key} className={cn(
                               "py-1 px-0.5 text-center border-l border-border",
                               isOutsidePeriod && "opacity-40"
                             )}>
-                              <button
+                              <Button
                                 type="button"
+                                variant="ghost"
+                                size="icon"
                                 disabled={disabled}
                                 onClick={!isOutsidePeriod ? () => handleToggle(aluno.id, aula.horario_id, aula.data) : undefined}
                                 className={cn(
-                                  "w-7 h-7 rounded-md text-xs font-bold transition-all flex items-center justify-center mx-auto",
+                                  "h-7 w-7 rounded-md text-xs font-bold mx-auto",
                                   !disabled && !isOutsidePeriod && "cursor-pointer hover:ring-2 hover:ring-primary/30",
                                   isOutsidePeriod && "cursor-not-allowed",
                                   status === 'P' && "bg-success/10 text-success hover:bg-success/20",
@@ -447,15 +447,15 @@ export default function FrequenciaPorAula({ turmaId, alunos, disciplinas }: Prop
                               {status === 'F' && <X className="h-3.5 w-3.5" />}
                               {status === 'FJ' && <AlertTriangle className="h-3.5 w-3.5" />}
                               {!status && '-'}
-                            </button>
-                          </td>
+                            </Button>
+                          </TableCell>
                         )
                       })
                     )}
-                  </tr>
+                  </TableRow>
                 ))}
-              </tbody>
-            </table>
+              </TableBody>
+            </Table>
           </div>
 
           <div className="flex items-center gap-4 mt-3 text-xs text-muted-foreground flex-wrap">

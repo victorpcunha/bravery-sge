@@ -6,8 +6,11 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
 import { BookOpen, Plus, Search, ChevronDown, ChevronRight } from 'lucide-react'
 import { useAuth } from '@/components/providers/auth-provider'
+import { PageContainer } from '@/components/layout/page-container'
+import { PageHeader } from '@/components/layout/page-header'
 
 type Disciplina = {
   id: string
@@ -191,29 +194,25 @@ export default function ObjetosConhecimentoPage() {
   const totalHabilidades = objetos.reduce((acc, obj) => acc + obj.habilidades_count, 0)
 
   return (
-    <div className="container mx-auto py-8 px-4">
-      <div className="mb-8 animate-fade-in-up">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold text-foreground">Objetos de Conhecimento</h1>
-            <p className="text-muted-foreground mt-1">
-              Objetos de Conhecimento do Ensino Fundamental e Médio conforme BNCC
-            </p>
-          </div>
-          <Button className="bg-primary hover:bg-secondary" disabled>
+    <PageContainer>
+      <PageHeader
+        title="Objetos de Conhecimento"
+        description="Objetos de Conhecimento do Ensino Fundamental e Médio conforme BNCC"
+        actions={
+          <Button disabled>
             <Plus className="w-4 h-4 mr-2" />
             Novo Objeto
           </Button>
-        </div>
-      </div>
+        }
+      />
 
-      <Card className="mb-6 border-0 shadow-md card-glass animate-fade-in-up delay-75">
+      <Card className="mb-6 border-0 shadow-sm animate-fade-in-up delay-75">
         <CardContent className="pt-6">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             <div>
               <label className="text-sm font-medium mb-2 block text-foreground">Disciplina</label>
               <Select value={disciplina} onValueChange={setDisciplina}>
-                <SelectTrigger className="border-2 border-border focus:border-primary [&_svg:not([class*='rotate'])]:rotate-0">
+                <SelectTrigger className="border-border focus:border-primary [&_svg:not([class*='rotate'])]:rotate-0">
                   <SelectValue placeholder="Selecione" />
                 </SelectTrigger>
                 <SelectContent position="popper" side="bottom" sideOffset={5}>
@@ -228,7 +227,7 @@ export default function ObjetosConhecimentoPage() {
             <div>
               <label className="text-sm font-medium mb-2 block text-foreground">Etapa de Ensino</label>
               <Select value={etapa} onValueChange={setEtapa}>
-                <SelectTrigger className="border-2 border-border focus:border-primary [&_svg:not([class*='rotate'])]:rotate-0">
+                <SelectTrigger className="border-border focus:border-primary [&_svg:not([class*='rotate'])]:rotate-0">
                   <SelectValue placeholder="Selecione" />
                 </SelectTrigger>
                 <SelectContent position="popper" side="bottom" sideOffset={5}>
@@ -243,13 +242,12 @@ export default function ObjetosConhecimentoPage() {
             <div className="md:col-span-2">
               <label className="text-sm font-medium mb-2 block text-foreground">Buscar</label>
               <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <input
-                  type="text"
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground z-10" />
+                <Input
                   placeholder="Buscar objeto de conhecimento..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2 bg-card/80 border border-border rounded-lg focus:border-primary focus:ring-primary/20 outline-none"
+                  className="pl-10"
                 />
               </div>
             </div>
@@ -272,7 +270,7 @@ export default function ObjetosConhecimentoPage() {
           <p className="text-muted-foreground">Carregando...</p>
         </div>
       ) : objetos.length === 0 ? (
-        <Card className="border-0 shadow-lg card-glass animate-fade-in-up delay-150">
+        <Card className="border-0 shadow-sm animate-fade-in-up delay-150">
           <CardContent className="flex flex-col items-center justify-center py-16">
             <div className="w-20 h-20 bg-gradient-to-br from-primary/10 to-secondary/10 rounded-2xl flex items-center justify-center mb-6">
               <BookOpen className="h-10 w-10 text-primary" />
@@ -288,11 +286,10 @@ export default function ObjetosConhecimentoPage() {
           {Object.entries(groupedByUnidade).map(([unidade, data], index) => (
             <Card 
               key={unidade} 
-              className="border-0 shadow-md card-glass animate-fade-in-up"
-              style={{ animationDelay: `${index * 50}ms` }}
+              className="border-0 shadow-sm"
             >
               <CardHeader 
-                className="cursor-pointer hover:bg-primary-foreground/80 transition-all duration-200 bg-primary-foreground/50"
+                className="cursor-pointer hover:bg-muted/50 transition-all duration-200 bg-muted/30"
                 onClick={() => setExpandedUnidade(expandedUnidade === unidade ? null : unidade)}
               >
                 <div className="flex items-center justify-between">
@@ -320,7 +317,7 @@ export default function ObjetosConhecimentoPage() {
                   {data.objetos.map(obj => (
                     <div 
                       key={obj.id}
-                      className="p-4 rounded-xl border border-border/50 bg-card/50 hover:bg-primary-foreground/80 transition-all duration-200"
+                      className="p-4 rounded-xl border border-border/50 bg-card/50 hover:bg-muted/50 transition-all duration-200"
                     >
                       <div className="flex items-center justify-between">
                         <p className="text-sm font-medium text-foreground">{obj.objeto_conhecimento}</p>
@@ -337,11 +334,11 @@ export default function ObjetosConhecimentoPage() {
         </div>
       )}
 
-      <div className="mt-8 p-5 bg-card/60 backdrop-blur-sm rounded-2xl border border-border/50 shadow-sm animate-fade-in-up delay-300">
+      <div className="mt-8 p-5 bg-muted/50 rounded-2xl border border-border">
         <p className="text-sm text-muted-foreground">
           Fonte: Base Nacional Comum Curricular (BNCC) - 2018
         </p>
       </div>
-    </div>
+    </PageContainer>
   )
 }

@@ -20,6 +20,7 @@ import {
   Moon,
   PanelLeft,
   PanelRight,
+  FileText,
 } from 'lucide-react'
 import {
   Sidebar,
@@ -41,6 +42,13 @@ const modules = [
     title: 'Dashboard',
     href: '/',
     icon: LayoutDashboard,
+  },
+  {
+    title: 'Escolas',
+    icon: School,
+    submenu: [
+      { title: 'Unidade Escolar', href: '/escolas' },
+    ],
   },
   {
     title: 'Gestão de Usuários',
@@ -93,11 +101,16 @@ const modules = [
       { title: 'Competências e Habilidades', href: '/bncc/competencias-habilidades' },
     ],
   },
+  {
+    title: 'Censo Escolar',
+    href: '/censo-escolar',
+    icon: FileText,
+  },
 ]
 
 export function AppSidebar() {
   const pathname = usePathname()
-  const { signOut, user } = useAuth()
+  const { signOut, user, schoolId, isSuperAdmin } = useAuth()
   const { theme, setTheme } = useTheme()
   const { state, toggleSidebar } = useSidebar()
   const [mounted, setMounted] = useState(false)
@@ -175,9 +188,11 @@ export function AppSidebar() {
             <SidebarGroupContent>
               <SidebarMenu>
                 {modules.map((module) => {
-                  const isActive = module.href
-                    ? (pathname === module.href || (module.href !== '/' && pathname.startsWith(module.href)))
-                    : false
+                  const isActive = module.title === 'Escolas'
+                    ? pathname.startsWith('/escolas')
+                    : module.href
+                      ? (pathname === module.href || (module.href !== '/' && pathname.startsWith(module.href)))
+                      : false
 
                   const hasSubmenu = module.submenu && module.submenu.length > 0
                   const submenuOpen = hasSubmenu && openSubmenu === module.title
@@ -190,7 +205,33 @@ export function AppSidebar() {
 
                   return (
                     <SidebarMenuItem key={module.title}>
-                      {module.href ? (
+                      {/* Escolas: link direto para gestor de uma escola; submenu para Super Admin */}
+                      {module.title === 'Escolas' && !isSuperAdmin && schoolId ? (
+                        <Link
+                          href={`/escolas/${schoolId}`}
+                          className={cn(
+                            'relative flex items-center gap-3 px-3 py-2.5 rounded-md text-sm font-medium transition-colors w-full',
+                            effectivelyCollapsed && 'justify-center px-2 gap-0',
+                            effectiveActive
+                              ? 'bg-sidebar-accent/15 text-sidebar-foreground'
+                              : 'text-sidebar-foreground/60 hover:text-sidebar-foreground hover:bg-sidebar-accent/10'
+                          )}
+                        >
+                          {!effectivelyCollapsed && effectiveActive && (
+                            <span className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-5 bg-sidebar-primary rounded-full" />
+                          )}
+                          <module.icon className={cn(
+                            'h-4 w-4 shrink-0',
+                            effectiveActive ? 'text-sidebar-foreground' : ''
+                          )} />
+                          <span className={cn(
+                            'truncate transition-opacity duration-200',
+                            effectivelyCollapsed ? 'opacity-0 invisible w-0' : 'opacity-100 visible'
+                          )}>
+                            Escola
+                          </span>
+                        </Link>
+                      ) : module.href ? (
                         <Link
                           href={module.href}
                           className={cn(
