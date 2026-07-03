@@ -191,6 +191,7 @@ export async function getMovimentacoes(matriculaId: string) {
 }
 
 export async function salvarMovimentacoes(
+  pessoaId: string,
   matriculaId: string,
   movimentacoes: {
     id?: string
@@ -202,6 +203,9 @@ export async function salvarMovimentacoes(
     removido?: boolean
   }[]
 ) {
+  const { validarPermissaoServer } = await import('./perfis')
+  await validarPermissaoServer(pessoaId, 'gestao-academica.matriculas.movimentacoes', 'editar')
+
   const pendentes = movimentacoes.filter(m => !m.removido)
 
   // Remover movimentações marcadas para exclusão

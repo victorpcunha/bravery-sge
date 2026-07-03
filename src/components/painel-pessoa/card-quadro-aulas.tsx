@@ -71,15 +71,15 @@ export default function CardQuadroAulas({ turmaId, pessoaLogadaId }: Props) {
   const diasUteis = [1, 2, 3, 4, 5]
 
   return (
-    <Card>
-      <CardHeader className="pb-2">
-        <CardTitle className="text-sm flex items-center gap-2">
-          <Calendar className="h-4 w-4 text-info" />
-          Quadro de Aulas
-        </CardTitle>
-      </CardHeader>
-      <CardContent>
-        <Table>
+<Card>
+        <CardHeader className="pb-3">
+          <CardTitle className="text-base font-semibold flex items-center gap-2">
+            <Calendar className="h-4 w-4 text-info" />
+            Quadro de Aulas
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="py-4">
+          <Table className="border border-border rounded-lg overflow-hidden">
           <TableHeader>
             <TableRow>
               <TableHead className="sticky left-0 bg-muted z-10 text-xs uppercase tracking-wider">Horário</TableHead>

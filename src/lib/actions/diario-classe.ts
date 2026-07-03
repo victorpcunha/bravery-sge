@@ -315,7 +315,7 @@ export async function registrarFrequenciaDia(
 
   if (pessoaId) {
     const { validarPermissaoServer } = await import('./perfis')
-    await validarPermissaoServer(pessoaId, 'gestao-pedagogica.diario-classe', 'editar')
+    await validarPermissaoServer(pessoaId, 'gestao-pedagogica.diario-classe.frequencia', 'editar')
   }
 
   if (status) {
@@ -362,7 +362,7 @@ export async function registrarFrequenciaDia(
 }
 
 export async function listarFrequenciasDia(turmaId: string, ano: number, mes: number, pessoaId?: string | null) {
-  await validarPermRead('gestao-pedagogica.diario-classe', pessoaId)
+  await validarPermRead('gestao-pedagogica.diario-classe.frequencia', pessoaId)
   const primeiroDia = `${ano}-${String(mes).padStart(2, '0')}-01`
   const dataFim = new Date(ano, mes, 0)
   const ultimoDia = `${ano}-${String(mes).padStart(2, '0')}-${String(dataFim.getDate()).padStart(2, '0')}`
@@ -566,7 +566,7 @@ export async function registrarFrequenciaAula(
 
     if (pessoaId) {
       const { validarPermissaoServer } = await import('./perfis')
-      await validarPermissaoServer(pessoaId, 'gestao-pedagogica.diario-classe', 'editar')
+      await validarPermissaoServer(pessoaId, 'gestao-pedagogica.diario-classe.frequencia', 'editar')
     }
 
     const { data: horario } = await supabase
@@ -635,7 +635,7 @@ export async function listarFrequenciasAula(
   mes: number,
   pessoaId?: string | null
 ): Promise<FrequenciaAula[]> {
-  await validarPermRead('gestao-pedagogica.diario-classe', pessoaId)
+  await validarPermRead('gestao-pedagogica.diario-classe.frequencia', pessoaId)
 
   const primeiroDia = `${ano}-${String(mes).padStart(2, '0')}-01`
   const dataFim = new Date(ano, mes, 0)
@@ -671,7 +671,7 @@ export async function getEstatisticasFrequencia(
   disciplinaId?: string,
   pessoaId?: string | null
 ): Promise<EstatisticasFrequencia> {
-  await validarPermRead('gestao-pedagogica.diario-classe', pessoaId)
+  await validarPermRead('gestao-pedagogica.diario-classe.frequencia', pessoaId)
 
   const quadro = await supabase
     .from('quadro_aulas')

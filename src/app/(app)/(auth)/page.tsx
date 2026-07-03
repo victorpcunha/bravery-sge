@@ -3,26 +3,32 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/components/providers/auth-provider'
-import { PageHeader } from '@/components/layout/page-header'
 import { PageContainer } from '@/components/layout/page-container'
+import { PageHeader } from '@/components/layout/page-header'
 import { StatCard } from '@/components/ui/stat-card'
-import { PageSection } from '@/components/layout/page-section'
-import { Button } from '@/components/ui/button'
-import Link from 'next/link'
-import { getDashboardData } from '@/lib/actions/schools'
-import { School, Users, GraduationCap, UserCheck, Calendar, ArrowRight } from 'lucide-react'
-
-const nextSteps = [
-  { icon: School, label: 'Cadastrar dados da escola', href: '/escolas' },
-  { icon: Users, label: 'Cadastrar docentes', href: '/docentes' },
-  { icon: GraduationCap, label: 'Criar turmas', href: '/gestao-turmas/turmas' },
-  { icon: UserCheck, label: 'Matricular alunos', href: '/gestao-academica/matriculas' },
-]
+import { getDashboardData, type DashboardData } from '@/lib/actions/dashboard'
+import { School, Users, GraduationCap, UserCheck, BookOpen, AlertTriangle } from 'lucide-react'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import AlunosPorEtapaChart from '@/components/dashboard/alunos-por-etapa-chart'
+import AlunosPorTipoChart from '@/components/dashboard/alunos-por-tipo-chart'
+import AlunosPorDeficienciaChart from '@/components/dashboard/alunos-por-deficiencia-chart'
+import AlunosPorTranstornoChart from '@/components/dashboard/alunos-por-transtorno-chart'
+import AlunosPorModalidadeChart from '@/components/dashboard/alunos-por-modalidade-chart'
+import AlunosPorTurnoChart from '@/components/dashboard/alunos-por-turno-chart'
+import { OcupacaoCard } from '@/components/dashboard/ocupacao-card'
+import { FrequenciaMediaCard } from '@/components/dashboard/frequencia-media-card'
+import { RiscoEvasaoTable } from '@/components/dashboard/risco-evasao-table'
+import { AniversariantesList } from '@/components/dashboard/aniversariantes-list'
+import { TurmasSemProfessorList } from '@/components/dashboard/turmas-sem-professor-list'
+import OcupacaoPorTurmaChart from '@/components/dashboard/ocupacao-por-turma-chart'
+import FrequenciaPorTurmaChart from '@/components/dashboard/frequencia-por-turma-chart'
 
 export default function DashboardPage() {
   const { user, loading, schoolId, isSuperAdmin, allSchools } = useAuth()
   const router = useRouter()
-  const [counts, setCounts] = useState({ turmas: 0, alunos: 0 })
+  const [data, setData] = useState<DashboardData | null>(null)
+  const [error, setError] = useState<string | null>(null)
+  const [selectedSchoolId, setSelectedSchoolId] = useState<string | null>(null)
 
   useEffect(() => {
     if (!loading && !user) {
@@ -32,8 +38,13 @@ export default function DashboardPage() {
 
   useEffect(() => {
     if (!user) return
-    getDashboardData(schoolId).then(setCounts).catch(() => {})
-  }, [user, schoolId])
+    const effectiveId = selectedSchoolId ?? schoolId
+    getDashboardData(effectiveId)
+      .then(setData)
+      .catch((err) => {
+        setError(err.message || 'Erro ao carregar dados do dashboard')
+      })
+  }, [user, schoolId, selectedSchoolId])
 
   if (loading) {
     return (
@@ -50,59 +61,136 @@ export default function DashboardPage() {
     return null
   }
 
+  if (error) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="text-center">
+          <AlertTriangle className="h-10 w-10 text-destructive mx-auto mb-4" />
+          <p className="text-foreground font-medium">Erro ao carregar dashboard</p>
+          <p className="text-muted-foreground text-sm mt-1">{error}</p>
+        </div>
+      </div>
+    )
+  }
+
   const schoolName = isSuperAdmin
-    ? 'Visão Global'
+    ? selectedSchoolId
+      ? allSchools.find(s => s.id === selectedSchoolId)?.nome_escola || 'Escola'
+      : 'Visão Global'
     : allSchools.find(s => s.id === schoolId)?.nome_escola || 'Escola'
 
+  const titulo = data?.anoLetivo
+    ? `Dashboard — Ano Letivo ${data.anoLetivo.descricao}`
+    : 'Dashboard'
+
   return (
-      <div className="min-h-screen bg-background">
-        <PageContainer maxWidth="dashboard">
-          <PageHeader
-            icon={School}
-            title="Dashboard"
-            description={`Olá, ${user.email?.split('@')[0]}! Bem-vindo ao Bravery SGE`}
-          />
+    <div className="min-h-screen bg-background">
+      <PageContainer maxWidth="dashboard">
+        <PageHeader
+          icon={School}
+          title={titulo}
+          description={`Olá, ${user.email?.split('@')[0]}! Bem-vindo ao Bravery SGE`}
+        />
 
-          {/* Welcome */}
-          <div className="mb-8 p-5 rounded-xl bg-primary/5 border border-primary/10 animate-fade-in-up delay-75">
-            <p className="text-sm text-muted-foreground">
-              {isSuperAdmin
-                ? <>Você está no modo <strong className="text-foreground">Super Admin</strong>. Escola atual: <strong className="text-foreground">{schoolName}</strong></>
-                : <>Você está logado no sistema de gestão escolar. Escola: <strong className="text-foreground">{schoolName}</strong></>
-              }
-            </p>
-          </div>
-
-          {/* Stats */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-            <StatCard icon={Users} value={0} label="Docentes" variant="default" className="animate-fade-in-up delay-75" />
-            <StatCard icon={GraduationCap} value={counts.turmas} label="Turmas" variant="default" className="animate-fade-in-up delay-150" />
-            <StatCard icon={UserCheck} value={counts.alunos} label="Alunos" variant="default" className="animate-fade-in-up delay-225" />
-            <StatCard icon={Calendar} value="2026" label="Ano Letivo" variant="success" className="animate-fade-in-up delay-300" />
-          </div>
-
-          {/* Next Steps */}
-          <PageSection title="Próximos Passos" className="animate-fade-in-up delay-375">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              {nextSteps.map((step) => (
-                <Button
-                  key={step.href}
-                  variant="ghost"
-                  asChild
-                  className="flex items-center gap-3 p-3 rounded-lg border border-border hover:border-primary/30 hover:bg-primary/5 transition-all duration-200 h-auto justify-start text-left"
-                >
-                  <Link href={step.href}>
-                    <div className="w-9 h-9 rounded-lg bg-muted flex items-center justify-center shrink-0 group-hover:bg-primary/10 transition-colors">
-                      <step.icon className="w-4 h-4 text-muted-foreground group-hover:text-primary transition-colors" />
-                    </div>
-                    <span className="text-sm font-medium text-muted-foreground group-hover:text-foreground transition-colors flex-1">{step.label}</span>
-                    <ArrowRight className="w-4 h-4 text-muted-foreground/50 group-hover:text-primary group-hover:translate-x-0.5 transition-all" />
-                  </Link>
-                </Button>
-              ))}
+        {isSuperAdmin && (
+          <div className="mb-8 space-y-3">
+            <div className="p-5 rounded-xl bg-primary/5 border border-primary/10">
+              <p className="text-sm text-muted-foreground">
+                Você está no modo <strong className="text-foreground">Super Admin</strong>. Escola atual: <strong className="text-foreground">{schoolName}</strong>
+              </p>
             </div>
-          </PageSection>
-        </PageContainer>
-      </div>
+            <div className="max-w-xs">
+              <Select
+                value={selectedSchoolId ?? '__all__'}
+                onValueChange={(v) => setSelectedSchoolId(v === '__all__' ? null : v)}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Todas as escolas" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="__all__">Todas as escolas</SelectItem>
+                  {allSchools.map(s => (
+                    <SelectItem key={s.id} value={s.id}>{s.nome_escola}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+        )}
+
+        {/* Stats Cards */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+          <StatCard
+            icon={Users}
+            value={data?.docentes ?? 0}
+            label="Docentes"
+            variant="default"
+          />
+          <StatCard
+            icon={GraduationCap}
+            value={data?.turmas ?? 0}
+            label="Turmas"
+            variant="default"
+          />
+          <StatCard
+            icon={UserCheck}
+            value={data?.alunos ?? 0}
+            label="Alunos"
+            variant="default"
+          />
+          <StatCard
+            icon={BookOpen}
+            value={data?.matriculas ?? 0}
+            label="Matrículas"
+            variant="default"
+          />
+        </div>
+
+        {/* Aniversariantes */}
+        <div className="mb-6">
+          <AniversariantesList data={data?.aniversariantes ?? []} />
+        </div>
+
+        {/* Alunos por Etapa + Tipo de Turma */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+          <AlunosPorEtapaChart data={data?.alunosPorEtapa ?? []} />
+          <AlunosPorTipoChart data={data?.alunosPorTipoTurma ?? []} />
+        </div>
+
+        {/* Deficiência + Transtorno */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+          <AlunosPorDeficienciaChart data={data?.alunosPorDeficiencia ?? []} />
+          <AlunosPorTranstornoChart data={data?.alunosPorTranstorno ?? []} />
+        </div>
+
+        {/* Ocupação + Frequência */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+          <OcupacaoCard data={data?.ocupacao ?? { capacidadeTotal: 0, matriculasAtivas: 0 }} />
+          <FrequenciaMediaCard data={data?.frequenciaMedia ?? null} />
+        </div>
+
+        {/* Modalidade + Turno */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+          <AlunosPorModalidadeChart data={data?.alunosPorModalidade ?? []} />
+          <AlunosPorTurnoChart data={data?.alunosPorTurno ?? []} />
+        </div>
+
+        {/* Ocupação por Turma + Frequência por Turma */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+          <OcupacaoPorTurmaChart data={data?.ocupacaoPorTurma ?? []} />
+          <FrequenciaPorTurmaChart data={data?.frequenciaPorTurma ?? []} />
+        </div>
+
+        {/* Risco de Evasão */}
+        <div className="mb-6">
+          <RiscoEvasaoTable data={data?.riscoEvasao ?? []} />
+        </div>
+
+        {/* Turmas sem Professor */}
+        <div className="mb-6">
+          <TurmasSemProfessorList data={data?.turmasSemProfessor ?? []} />
+        </div>
+      </PageContainer>
+    </div>
   )
 }

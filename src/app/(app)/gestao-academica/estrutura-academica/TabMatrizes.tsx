@@ -14,7 +14,8 @@ import { ScrollArea } from '@/components/ui/scroll-area'
 import { Switch } from '@/components/ui/switch'
 import { Separator } from '@/components/ui/separator'
 import { toast } from 'sonner'
-import { Plus, BookOpen, Calendar, GraduationCap, Clock, Users, Trash2, Pencil, ChevronDown, ChevronRight, Copy, X } from 'lucide-react'
+import { Plus, BookOpen, Calendar, GraduationCap, Clock, Users, Trash2, Pencil, ChevronDown, ChevronRight, Copy, X, ShieldAlert } from 'lucide-react'
+import { usePermissoes } from '@/hooks/use-permissoes'
 import { getAnosLetivos, AnoLetivo } from '@/lib/actions/calendarios'
 import {
   getMatrizes, getDisciplinas, toggleMatrizAtiva, deleteMatriz, getMetodosAvaliacao,
@@ -28,6 +29,8 @@ import { MatrizForm } from './MatrizForm'
 interface Props { schoolId: string | null }
 
 export function TabMatrizes({ schoolId }: Props) {
+  const { pode, loaded: permLoaded } = usePermissoes(schoolId)
+
   const [anosLetivos, setAnosLetivos] = useState<AnoLetivo[]>([])
   const [etapas, setEtapas] = useState<EtapaEnsino[]>([])
   const [matrizes, setMatrizes] = useState<MatrizCurricular[]>([])
@@ -231,12 +234,22 @@ export function TabMatrizes({ schoolId }: Props) {
     setHabilidadesManuais(prev => prev.filter(h => h.id !== id))
   }
 
-  if (loading) {
+  if (loading || !permLoaded) {
     return (
       <Card className="border-0 shadow-md">
         <CardHeader className="pb-3"><CardTitle className="text-lg font-semibold text-foreground">Matrizes Curriculares</CardTitle></CardHeader>
         <CardContent><div className="flex items-center justify-center py-12 animate-pulse"><div className="h-8 w-8 bg-muted rounded-full mb-3"></div><div className="h-4 w-32 bg-muted rounded"></div></div></CardContent>
       </Card>
+    )
+  }
+
+  if (!pode.visualizar('gestao-academica.estrutura-academica.matrizes')) {
+    return (
+      <EmptyState
+        icon={ShieldAlert}
+        title="Sem permissão"
+        description="Você não tem permissão para acessar Matrizes Curriculares."
+      />
     )
   }
 

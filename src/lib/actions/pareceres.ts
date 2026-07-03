@@ -27,7 +27,7 @@ export async function salvarParecer(
 ) {
   if (pessoaId) {
     const { validarPermissaoServer } = await import('./perfis')
-    await validarPermissaoServer(pessoaId, 'gestao-pedagogica.diario-classe', 'editar')
+    await validarPermissaoServer(pessoaId, 'gestao-pedagogica.diario-classe.parecer', 'editar')
   }
 
   const { data: existing } = await supabase
@@ -74,7 +74,7 @@ export async function listarPareceres(alunoId: string) {
 }
 
 export async function listarPareceresDaTurma(turmaId: string, pessoaId?: string | null) {
-  await validarPermRead('gestao-pedagogica.diario-classe', pessoaId)
+  await validarPermRead('gestao-pedagogica.diario-classe.parecer', pessoaId)
   const { data: matriculas, error: errMat } = await supabase
     .from('academico_matriculas')
     .select('aluno_id')

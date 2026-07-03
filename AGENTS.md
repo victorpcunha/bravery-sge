@@ -190,9 +190,9 @@ Use SEMPRE os tokens Tailwind v4 derivados das CSS variables do `globals.css`:
 <!-- END:project-summary -->
 
 <!-- SPECKIT START -->
-Current plan: specs/002-design-system/plan.md
-Feature: Design System — Padronização Global de UI/UX
-Spec: specs/002-design-system/spec.md
-Data model: specs/002-design-system/data-model.md
-Quickstart: specs/002-design-system/quickstart.md
+Current plan: specs/004-historico-escolar/plan.md
+Feature: Histórico Escolar — Painel do Aluno
+Spec: specs/004-historico-escolar/spec.md
+Data model: specs/004-historico-escolar/data-model.md
+Quickstart: specs/004-historico-escolar/quickstart.md
 <!-- SPECKIT END -->

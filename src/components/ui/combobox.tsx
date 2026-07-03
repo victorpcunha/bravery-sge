@@ -66,7 +66,7 @@ export function Combobox({
 
   return (
     <div className={cn('space-y-2', className)}>
-      {label && <label className="text-foreground font-medium block text-sm">{label}</label>}
+      {label && <label className="text-foreground font-medium block text-sm leading-none">{label}</label>}
       <Popover open={open && !disabled} onOpenChange={setOpen}>
         <PopoverTrigger asChild>
           <Button

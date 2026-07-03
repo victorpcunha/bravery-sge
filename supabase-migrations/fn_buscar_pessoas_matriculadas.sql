@@ -21,7 +21,7 @@ BEGIN
   RETURN QUERY
   SELECT DISTINCT p.id, p.nome_completo, p.cpf
   FROM people p
-  WHERE p.school_id = p_school_id
+  WHERE (p_school_id IS NULL OR p.school_id = p_school_id)
     AND (
       p.nome_completo ILIKE '%' || p_termo || '%'
       OR (p_cpf_digits IS NOT NULL AND p.cpf ILIKE '%' || p_cpf_digits || '%')
@@ -31,7 +31,7 @@ BEGIN
       FROM academico_matriculas m
       JOIN academico_anos_letivos an ON an.id = m.ano_letivo_id
       WHERE m.aluno_id = p.id
-        AND m.school_id = p_school_id
+        AND (p_school_id IS NULL OR m.school_id = p_school_id)
         AND m.ativo = true
         AND an.status = 'ativo'
     )

@@ -124,7 +124,7 @@ export async function salvarNota(
   try {
     if (pessoaId) {
       const { validarPermissaoServer } = await import('./perfis')
-      await validarPermissaoServer(pessoaId, 'gestao-pedagogica.diario-classe', 'editar')
+      await validarPermissaoServer(pessoaId, 'gestao-pedagogica.diario-classe.avaliacoes', 'editar')
     }
 
     if (notaId) {
@@ -162,7 +162,7 @@ export async function salvarNota(
 }
 
 export async function listarNotas(turmaId: string, periodo: number, disciplinaId: string, pessoaId?: string | null) {
-  await validarPermRead('gestao-pedagogica.diario-classe', pessoaId)
+  await validarPermRead('gestao-pedagogica.diario-classe.avaliacoes', pessoaId)
   const { data, error } = await supabase
     .from('academico_notas')
     .select('id, aluno_id, disciplina_id, periodo, valor, descricao, data_aplicacao')
@@ -189,7 +189,7 @@ export async function salvarRecuperacao(
   try {
     if (pessoaId) {
       const { validarPermissaoServer } = await import('./perfis')
-      await validarPermissaoServer(pessoaId, 'gestao-pedagogica.diario-classe', 'editar')
+      await validarPermissaoServer(pessoaId, 'gestao-pedagogica.diario-classe.avaliacoes', 'editar')
     }
 
     if (recId) {
@@ -226,7 +226,7 @@ export async function salvarRecuperacao(
 }
 
 export async function listarRecuperacoes(turmaId: string, disciplinaId: string, pessoaId?: string | null) {
-  await validarPermRead('gestao-pedagogica.diario-classe', pessoaId)
+  await validarPermRead('gestao-pedagogica.diario-classe.avaliacoes', pessoaId)
   const { data, error } = await supabase
     .from('academico_recuperacoes')
     .select('id, aluno_id, disciplina_id, periodo, tipo, valor')
@@ -238,7 +238,7 @@ export async function listarRecuperacoes(turmaId: string, disciplinaId: string, 
 }
 
 export async function getDescricoesNotas(turmaId: string, periodo: number, disciplinaId: string, pessoaId?: string | null) {
-  await validarPermRead('gestao-pedagogica.diario-classe', pessoaId)
+  await validarPermRead('gestao-pedagogica.diario-classe.avaliacoes', pessoaId)
   const { data, error } = await supabase
     .from('academico_notas')
     .select('descricao, data_aplicacao')
@@ -432,7 +432,7 @@ export async function recalcularTurma(
   quantidadePeriodos: number,
   pessoaId?: string | null
 ) {
-  await validarPermRead('gestao-pedagogica.diario-classe', pessoaId)
+  await validarPermRead('gestao-pedagogica.diario-classe.avaliacoes', pessoaId)
   const { data: matriculas } = await supabase
     .from('academico_matriculas')
     .select('aluno_id')

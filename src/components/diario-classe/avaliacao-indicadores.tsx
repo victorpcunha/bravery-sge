@@ -185,7 +185,7 @@ export default function AvaliacaoIndicadores({
     }
   }
 
-  const podeEditar = pode.editar('gestao-pedagogica.diario-classe')
+  const podeEditar = pode.editar('gestao-pedagogica.diario-classe.indicadores')
 
   const periodos = Array.from(
     { length: quantidadePeriodosNivel || 4 },

@@ -3,7 +3,7 @@
 import { getSupabaseAdmin } from '@/lib/auth'
 import { type PlanoAula } from './plano-ensino'
 
-const RESOURCE = 'gestao-pedagogica.diario-classe'
+const RESOURCE = 'gestao-pedagogica.diario-classe.planos'
 const supabase = getSupabaseAdmin()
 
 async function validarPermRead(pessoaId?: string | null) {

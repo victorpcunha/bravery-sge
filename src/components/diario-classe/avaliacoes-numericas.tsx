@@ -66,7 +66,7 @@ export default function AvaliacoesNumericas({
   const [datasAvaliacoes, setDatasAvaliacoes] = useState<Map<string, string>>(new Map())
 
   const { pessoaId, pode } = usePermissoes(schoolId || '')
-  const podeEditar = pode.editar('gestao-pedagogica.diario-classe')
+  const podeEditar = pode.editar('gestao-pedagogica.diario-classe.avaliacoes')
 
   const carregar = useCallback(async () => {
     if (!disciplinaId || !turmaId) return

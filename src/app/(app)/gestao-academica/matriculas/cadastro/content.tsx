@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { useAuth } from '@/components/providers/auth-provider'
+import { usePermissoes } from '@/hooks/use-permissoes'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -55,6 +56,8 @@ export default function MatriculaCadastroContent({ searchParams }: { searchParam
   const router = useRouter()
   const editId = searchParams?.id
   const { user, schoolId, loading: authLoading } = useAuth()
+  const { pode, pessoaId } = usePermissoes(schoolId || '')
+  const podeMovimentar = pode.editar('gestao-academica.matriculas.movimentacoes')
   const isEditing = !!editId
 
   const [loading, setLoading] = useState(true)
@@ -498,6 +501,7 @@ export default function MatriculaCadastroContent({ searchParams }: { searchParam
         // Salvar movimentações
         if (movimentacoes.length > 0) {
           await salvarMovimentacoes(
+            pessoaId || '',
             editId,
             movimentacoes.map(m => ({
               id: m.id?.startsWith('temp_') ? undefined : m.id,
@@ -537,6 +541,7 @@ export default function MatriculaCadastroContent({ searchParams }: { searchParam
         // Salvar movimentações (se houver)
         if (movimentacoes.length > 0) {
           await salvarMovimentacoes(
+            pessoaId || '',
             (nova as any).id,
             movimentacoes.map(m => ({
               tipo: m.tipo,
@@ -863,6 +868,7 @@ export default function MatriculaCadastroContent({ searchParams }: { searchParam
         {isEditing && (
           <FormCard title="Movimentações">
             {/* Botões de movimentação (bloqueados após salvar mov) */}
+            {podeMovimentar && (
             <div className="flex flex-wrap gap-2">
               <Button variant="outline" size="sm" className="border-border text-xs"
                 onClick={() => abrirModalTransferencia()} disabled={movSalvas}>
@@ -881,6 +887,7 @@ export default function MatriculaCadastroContent({ searchParams }: { searchParam
                 Desistir
               </Button>
             </div>
+            )}
 
             {/* Histórico de movimentações */}
             {movimentacoes.length > 0 && (
@@ -904,7 +911,7 @@ export default function MatriculaCadastroContent({ searchParams }: { searchParam
                             <p className="text-[11px] text-muted-foreground mt-0.5 italic">{mov.observacoes}</p>
                           )}
                         </div>
-                        {!movSalvas && (
+                        {!movSalvas && podeMovimentar && (
                           <div className="flex items-center gap-1">
                             <Button variant="ghost" size="icon" className="h-6 w-6"
                               onClick={() => {

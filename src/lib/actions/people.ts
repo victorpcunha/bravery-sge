@@ -28,6 +28,8 @@ export type Person = {
   telefone_celular: string | null
   telefone_fixo: string | null
   whatsapp: string | null
+  telefone_secundario: string | null
+  email_responsavel: string | null
   ativo: boolean
   // Deficiência / TEA / AH (17-28)
   deficiencia: boolean | null
@@ -92,6 +94,19 @@ export type Person = {
   area_pedagogica_1: string | null
   area_pedagogica_2: string | null
   area_pedagogica_3: string | null
+  // Curso Superior — campos extras
+  curso_situacao_1: string | null
+  curso_situacao_2: string | null
+  curso_situacao_3: string | null
+  curso_data_termino_1: string | null
+  curso_data_termino_2: string | null
+  curso_data_termino_3: string | null
+  curso_data_inicio_1: string | null
+  curso_data_inicio_2: string | null
+  curso_data_inicio_3: string | null
+  curso_carga_horaria_1: string | null
+  curso_carga_horaria_2: string | null
+  curso_carga_horaria_3: string | null
   // Pós-Graduação (70-88)
   pos_tipo_1: string | null
   pos_area_1: string | null
@@ -157,7 +172,7 @@ export async function getPeople(schoolId: string | null, search?: string, perfil
   let query = supabase
     .from('people')
     .select('*')
-    .order('nome_completo', { ascending: true })
+    .order('codigo_pessoa', { ascending: true })
 
   if (schoolId) query = query.eq('school_id', schoolId)
 
@@ -379,6 +394,19 @@ export async function getPessoaPorCpf(cpf: string, schoolId?: string | null) {
 
   if (error) throw error
   return data
+}
+
+export async function getPessoaPorInep(inepId: string, schoolId: string) {
+  const { data, error } = await supabase
+    .from('people')
+    .select('id')
+    .eq('inep_id', inepId)
+    .eq('school_id', schoolId)
+    .eq('ativo', true)
+    .maybeSingle()
+
+  if (error) throw error
+  return data as { id: string } | null
 }
 
 function validarSenha(senha: string): string | null {

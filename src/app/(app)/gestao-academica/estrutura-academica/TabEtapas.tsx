@@ -7,8 +7,10 @@ import { Switch } from '@/components/ui/switch'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog'
+import { EmptyState } from '@/components/ui/empty-state'
 import { toast } from 'sonner'
-import { Plus, ChevronDown, ChevronRight } from 'lucide-react'
+import { Plus, ChevronDown, ChevronRight, ShieldAlert } from 'lucide-react'
+import { usePermissoes } from '@/hooks/use-permissoes'
 import { supabase } from '@/lib/supabase'
 
 interface TabEtapasProps {
@@ -101,6 +103,8 @@ interface SubetapasData {
 }
 
 export function TabEtapas({ schoolId }: TabEtapasProps) {
+  const { pode, loaded: permLoaded } = usePermissoes(schoolId)
+
   const [etapasAtivas, setEtapasAtivas] = useState<EtapaAtiva>({})
   const [subetapas, setSubetapas] = useState<SubetapasData>({})
   const [showSubetapaModal, setShowSubetapaModal] = useState(false)
@@ -295,6 +299,31 @@ export function TabEtapas({ schoolId }: TabEtapasProps) {
       prev.includes(titulo)
         ? prev.filter(t => t !== titulo)
         : [...prev, titulo]
+    )
+  }
+
+  if (!permLoaded) {
+    return (
+      <Card className="border-0 shadow-md">
+        <CardHeader className="pb-3">
+          <CardTitle className="text-lg font-semibold text-foreground">Etapas de Ensino</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="flex items-center justify-center py-8">
+            <span className="text-sm text-muted-foreground">Carregando...</span>
+          </div>
+        </CardContent>
+      </Card>
+    )
+  }
+
+  if (!pode.visualizar('gestao-academica.estrutura-academica.etapas')) {
+    return (
+      <EmptyState
+        icon={ShieldAlert}
+        title="Sem permissão"
+        description="Você não tem permissão para acessar Etapas de Ensino."
+      />
     )
   }
 

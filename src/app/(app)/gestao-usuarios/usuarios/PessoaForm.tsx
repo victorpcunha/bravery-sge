@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Checkbox } from '@/components/ui/checkbox'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 import { DatePicker } from '@/components/ui/date-picker'
@@ -20,7 +20,7 @@ import { cursosSuperiores } from '@/data/cursos-superiores'
 import { iesList } from '@/data/ies'
 import { areasConhecimento } from '@/data/areas-conhecimento'
 import { areasPosGraduacao } from '@/data/areas-pos-graduacao'
-import { Plus, Trash2 } from 'lucide-react'
+import { Plus, Trash2, X } from 'lucide-react'
 import { toast } from 'sonner'
 import { useAuth } from '@/components/providers/auth-provider'
 import { createPerson, updatePerson, Person, getVinculosResponsavel, vincularResponsavel, desvincularResponsavel, buscarAlunos, criarAuthUser, salvarSaudeEstudante } from '@/lib/actions/people'
@@ -135,12 +135,14 @@ function formatCPF(digits: string): string {
   return `${d.slice(0, 3)}.${d.slice(3, 6)}.${d.slice(6, 9)}-${d.slice(9)}`
 }
 
-const PAIS_OPTIONS = paises.map(p => ({ value: String(p.codigo), label: p.nome, searchLabel: `${p.nome} ${p.nacionalidade}` }))
+const PAIS_OPTIONS = paises
+  .filter(p => [32, 68, 76, 170, 328, 254, 600, 604, 740, 858, 862].includes(p.codigo))
+  .map(p => ({ value: String(p.codigo), label: p.nome, searchLabel: p.nome }))
 const MUNICIPIO_OPTIONS = municipios.map(m => ({ value: String(m.codigo), label: `${m.nome} - ${m.nomeUF}`, searchLabel: `${m.nome} ${m.nomeUF}` }))
 const POVO_OPTIONS = povosIndigenas.map(p => ({ value: String(p.codigo), label: `${p.codigo} - ${p.nome}`, searchLabel: `${p.nome} ${p.codigo}` }))
 const CURSO_OPTIONS = cursosSuperiores.map(c => ({ value: c.codigo, label: `${c.codigo} - ${c.nome}`, searchLabel: `${c.nome} ${c.codigo}` }))
 const IES_OPTIONS = iesList.map(i => ({ value: String(i.codigo), label: `${i.codigo} - ${i.nome}`, searchLabel: `${i.nome}` }))
-const AREA_CONHECIMENTO_OPTIONS = areasConhecimento.filter(a => a.codigo).map(a => ({ value: String(a.codigo), label: `${a.codigo} - ${a.nome}`, searchLabel: `${a.nome}` }))
+const AREA_CONHECIMENTO_OPTIONS = areasConhecimento.filter(a => typeof a.codigo === 'number').map(a => ({ value: String(a.codigo), label: `${a.codigo} - ${a.nome}`, searchLabel: `${a.nome}` }))
 const AREA_POS_OPTIONS = areasPosGraduacao.map(a => ({ value: String(a.codigo), label: `${a.codigo} - ${a.nome}`, searchLabel: `${a.nome}` }))
 
 interface Props {
@@ -173,6 +175,8 @@ const defaultForm: FormData = {
   telefone_celular: '',
   telefone_fixo: '',
   whatsapp: '',
+  telefone_secundario: '',
+  email_responsavel: '',
   // Deficiência
   deficiencia: false,
   cegueira: false, baixa_visao: false, visao_monocular: false,
@@ -192,7 +196,7 @@ const defaultForm: FormData = {
   // Condições de Saúde
   medicamentos: '',
   // Endereço
-  pais_residencia: '', cep: '',
+  pais_residencia: '76', cep: '',
   municipio_residencia: '', zona_residencia: '', localizacao_diferenciada: '',
   bairro: '', logradouro: '', numero: '', complemento: '', referencia: '',
   // Escolaridade
@@ -200,7 +204,10 @@ const defaultForm: FormData = {
   curso_superior_1: '', ano_conclusao_1: 0, ies_1: '',
   curso_superior_2: '', ano_conclusao_2: 0, ies_2: '',
   curso_superior_3: '', ano_conclusao_3: 0, ies_3: '',
-  area_pedagogica_1: '', area_pedagogica_2: '', area_pedagogica_3: '',
+  curso_situacao_1: '', curso_situacao_2: '', curso_situacao_3: '',
+  curso_carga_horaria_1: '', curso_carga_horaria_2: '', curso_carga_horaria_3: '',
+  curso_data_termino_1: '', curso_data_termino_2: '', curso_data_termino_3: '',
+  curso_data_inicio_1: '', curso_data_inicio_2: '', curso_data_inicio_3: '',
   // Pós
   pos_tipo_1: '', pos_area_1: '', pos_ano_1: 0,
   pos_tipo_2: '', pos_area_2: '', pos_ano_2: 0,
@@ -222,6 +229,7 @@ const defaultForm: FormData = {
   vinculos: [] as any[],
   alunosBusca: [] as { id: string; nome_completo: string }[],
   perfil_id: null,
+  perfis_acesso: [] as string[],
   permitir_acesso: false,
   senha: '',
   confirmacao_senha: '',
@@ -376,6 +384,29 @@ export function PessoaForm({ schoolId: propSchoolId, person, onSaved, onCancel }
     if (!form.perfil || form.perfil.length === 0) { toast.error('Selecione pelo menos um perfil'); return }
     if (isAluno && !form.cpf && !form.certidao_nascimento?.trim()) { toast.error('Informe CPF ou Matrícula da Certidão de Nascimento'); return }
     if (apenasResponsavel && !form.cpf) { toast.error('CPF é obrigatório para Responsável'); return }
+    if (form.inep_id?.trim() && schoolId) {
+      try {
+        const { getPessoaPorInep } = await import('@/lib/actions/people')
+        const duplicado = await getPessoaPorInep(form.inep_id.trim(), schoolId)
+        if (duplicado && duplicado.id !== person?.id) {
+          toast.error('Já existe uma pessoa cadastrada com esta Identificação INEP')
+          return
+        }
+      } catch { /* ignora erro de rede */ }
+    }
+    // Campos obrigatórios da Identificação
+    if (isAluno || isProfissionalOuGestor) {
+      if (!form.data_nascimento) { toast.error('Data de nascimento é obrigatória'); return }
+      if (!form.sexo) { toast.error('Sexo é obrigatório'); return }
+      if (!form.cor_raca) { toast.error('Cor/Raça é obrigatória'); return }
+      if (!form.nacionalidade) { toast.error('Nacionalidade é obrigatória'); return }
+      if (!form.pais_nacionalidade) { toast.error('País de nacionalidade é obrigatório'); return }
+      if (form.nacionalidade === '1' && !form.municipio_nascimento) { toast.error('Município de nascimento é obrigatório'); return }
+      if (form.filiacao_declarada === '1' && !form.filiacao_1) { toast.error('Filiação 1 (mãe) é obrigatória'); return }
+      if (form.filiacao_declarada === '1' && !form.filiacao_2) { toast.error('Filiação 2 (pai) é obrigatória'); return }
+    }
+    if (isAluno && !form.whatsapp) { toast.error('Telefone principal (WhatsApp) é obrigatório'); return }
+    if (isProfissionalOuGestor && !form.email?.trim()) { toast.error('E-mail é obrigatório para Profissional/Gestor'); return }
     if (isAluno || isProfissionalOuGestor) {
       if (!form.pais_residencia) { toast.error('País de residência é obrigatório'); return }
       if (form.pais_residencia === '76') {
@@ -384,8 +415,9 @@ export function PessoaForm({ schoolId: propSchoolId, person, onSaved, onCancel }
         if (!form.logradouro) { toast.error('Logradouro é obrigatório'); return }
         if (!form.numero) { toast.error('Número é obrigatório'); return }
         if (!form.bairro) { toast.error('Bairro é obrigatório'); return }
-        if (!form.zona_residencia) { toast.error('Zona de residência é obrigatória'); return }
       }
+      if (!form.zona_residencia) { toast.error('Zona de residência é obrigatória'); return }
+      if (!form.localizacao_diferenciada) { toast.error('Localização diferenciada é obrigatória'); return }
     }
     if (isProfissionalOuGestor) {
       if (!form.escolaridade) { toast.error('Escolaridade é obrigatória para Profissional/Gestor'); return }
@@ -395,6 +427,28 @@ export function PessoaForm({ schoolId: propSchoolId, person, onSaved, onCancel }
       }
       const temFormacao = FORMACAO_CAMPOS.some(c => form[c.key])
       if (!form.sem_formacao && !temFormacao) { toast.error('Informe a Formação Continuada ou marque "Nenhuma"'); return }
+    }
+    if (isProfissionalOuGestor) {
+      if ((form.escolaridade === '6' || form.escolaridade === '7') && !form.tipo_ensino_medio) {
+        toast.error('Tipo de Ensino Médio Cursado é obrigatório'); return
+      }
+      if (form.escolaridade === '6') {
+        for (let i = 1; i <= cursoCount; i++) {
+          if (!form[`curso_superior_${i}`]) continue
+          const situacao = form[`curso_situacao_${i}`]
+          if (!situacao) { toast.error(`Situação do Curso Superior ${i} é obrigatória`); return }
+          if (situacao === 'concluido' && !form[`curso_data_termino_${i}`]) { toast.error(`Data de Término do Curso Superior ${i} é obrigatória`); return }
+          if (situacao === 'cursando' && !form[`curso_data_inicio_${i}`]) { toast.error(`Data de Início do Curso Superior ${i} é obrigatória`); return }
+        }
+      }
+      // Pós-Graduação
+      if (form.escolaridade === '6' && !form.sem_pos) {
+        for (let i = 1; i <= posCount; i++) {
+          if (!form[`pos_tipo_${i}`]) { toast.error(`Tipo da Pós-Graduação ${i} é obrigatório`); return }
+          if (!form[`pos_ano_${i}`]) { toast.error(`Ano de Conclusão da Pós-Graduação ${i} é obrigatório`); return }
+          if (!form[`pos_area_${i}`]) { toast.error(`Área da Pós-Graduação ${i} é obrigatória`); return }
+        }
+      }
     }
     if (form.deficiencia) {
       const algumaDef = DEFICIENCIA_CAMPOS.some(c => form[c.key])
@@ -413,6 +467,21 @@ export function PessoaForm({ schoolId: propSchoolId, person, onSaved, onCancel }
 
     if (!schoolId) { toast.error('Escola não selecionada'); return }
 
+    // Vínculos Profissionais
+    if (isProfissionalOuGestor && vinculosProfissionais.length > 0) {
+      for (let i = 0; i < vinculosProfissionais.length; i++) {
+        const v = vinculosProfissionais[i]
+        const idx = i + 1
+        if (!v.regime_contratacao) { toast.error(`Regime de Contratação do Vínculo ${idx} é obrigatório`); return }
+        if (!v.funcao_id) { toast.error(`Função do Vínculo ${idx} é obrigatória`); return }
+        if (!v.situacao) { toast.error(`Situação do Vínculo ${idx} é obrigatória`); return }
+        if (!v.data_inicio) { toast.error(`Data de Início do Vínculo ${idx} é obrigatória`); return }
+        if (!v.carga_horaria) { toast.error(`Carga Horária do Vínculo ${idx} é obrigatória`); return }
+        if (v.situacao === '2' && !v.data_inicio_afastamento) { toast.error(`Data de Início do Afastamento do Vínculo ${idx} é obrigatória`); return }
+        if (v.situacao === '3' && !v.data_termino) { toast.error(`Data de Término do Vínculo ${idx} é obrigatória`); return }
+      }
+    }
+
     setSaving(true)
     try {
       const payload: any = { ...form, school_id: schoolId }
@@ -427,6 +496,12 @@ export function PessoaForm({ schoolId: propSchoolId, person, onSaved, onCancel }
       delete payload.permitir_acesso
       delete payload.senha
       delete payload.confirmacao_senha
+      delete payload.telefone_secundario
+      delete payload.email_responsavel
+      delete payload.perfis_acesso
+      for (let i = 1; i <= 3; i++) {
+        delete payload[`area_pedagogica_${i}`]
+      }
 
       const healthMedicamentos = payload.medicamentos
       delete payload.medicamentos
@@ -647,15 +722,15 @@ export function PessoaForm({ schoolId: propSchoolId, person, onSaved, onCancel }
         </div>
       )}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="flex flex-col flex-1 min-h-0">
-        <div className="px-6 shrink-0">
-          <TabsList className="w-full flex-wrap h-auto">
+        <div className="px-6 pt-4 shrink-0">
+          <TabsList className="w-full flex-wrap h-auto gap-1">
           <TabsTrigger value="identificacao">Identificação</TabsTrigger>
           {isAluno && <TabsTrigger value="acessibilidade">Condições de Saúde</TabsTrigger>}
           {!isResponsavel && <TabsTrigger value="endereco">Endereço</TabsTrigger>}
           {isProfissionalOuGestor && <TabsTrigger value="escolaridade">Escolaridade</TabsTrigger>}
           {isProfissionalOuGestor && <TabsTrigger value="posgraduacao">Pós-Graduação</TabsTrigger>}
-          {isProfissionalOuGestor && <TabsTrigger value="formacao">Formação Continuada</TabsTrigger>}
-          {isProfissionalOuGestor && <TabsTrigger value="vinculo">Vínculo Profissional</TabsTrigger>}
+          {isProfissionalOuGestor && <TabsTrigger value="formacao">Formações</TabsTrigger>}
+          {isProfissionalOuGestor && <TabsTrigger value="vinculo" className="whitespace-normal leading-tight">Vínculo Profissional</TabsTrigger>}
           {isResponsavel && <TabsTrigger value="contato">Contato/Vínculos</TabsTrigger>}
         </TabsList>
         </div>
@@ -664,33 +739,44 @@ export function PessoaForm({ schoolId: propSchoolId, person, onSaved, onCancel }
         {/* ===== ABA IDENTIFICAÇÃO ===== */}
         <TabsContent value="identificacao" className="space-y-5">
           <div className="space-y-2">
-            <Label>Perfis *</Label>
-            <p className="text-xs text-muted-foreground">A pessoa pode ter múltiplos perfis (ex: Profissional e Responsável)</p>
-            <div className="flex flex-wrap gap-4 pt-1">
-              {perfis.map(p => {
-                const isChecked = (form.perfil as string[]).includes(p.value)
-                return (
-                  <div key={p.value} className="flex items-center gap-2 cursor-pointer" onClick={() => {
-                    const current = form.perfil as string[]
-                    if (isChecked) {
-                      set('perfil', current.filter((x: string) => x !== p.value))
-                    } else {
-                      set('perfil', [...current, p.value])
-                    }
-                  }}>
-                    <Checkbox checked={isChecked} className="pointer-events-none" />
-                    <span className="text-sm">{p.label}</span>
-                  </div>
-                )
-              })}
+            <div className="flex items-start justify-between gap-4 flex-wrap">
+              <div>
+                <Label>Perfis *</Label>
+                <p className="text-xs text-muted-foreground">A pessoa pode ter múltiplos perfis (ex: Profissional e Responsável)</p>
+                <div className="flex flex-wrap gap-4 pt-1">
+                  {perfis.map(p => {
+                    const isChecked = (form.perfil as string[]).includes(p.value)
+                    return (
+                      <div key={p.value} className="flex items-center gap-2 cursor-pointer" onClick={() => {
+                        const current = form.perfil as string[]
+                        if (isChecked) {
+                          set('perfil', current.filter((x: string) => x !== p.value))
+                        } else {
+                          set('perfil', [...current, p.value])
+                        }
+                      }}>
+                        <Checkbox checked={isChecked} className="pointer-events-none" />
+                        <span className="text-sm">{p.label}</span>
+                      </div>
+                    )
+                  })}
+                </div>
+              </div>
+              <div>
+                <Label>Código da Pessoa</Label>
+                <div className="w-[100px] pt-1">
+                  <Input value={form.codigo_pessoa ?? ''} placeholder={person ? '' : 'Auto'} disabled className="bg-muted text-muted-foreground cursor-not-allowed" />
+                </div>
+              </div>
             </div>
           </div>
 
+          <div className="space-y-2">
+            <Label>Nome Completo *</Label>
+            <Input value={form.nome_completo} onChange={(e) => set('nome_completo', e.target.value)} placeholder="Nome completo" />
+          </div>
+
           <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label>Código da Pessoa</Label>
-              <Input value={form.codigo_pessoa ?? ''} placeholder={person ? '' : 'Gerado automaticamente'} disabled className="bg-muted text-muted-foreground cursor-not-allowed" />
-            </div>
             <div className="space-y-2">
               <Label>CPF {isResponsavel && '*'}</Label>
               <Input
@@ -709,21 +795,9 @@ export function PessoaForm({ schoolId: propSchoolId, person, onSaved, onCancel }
             )}
           </div>
 
-          {!isAluno && !apenasResponsavel && (
-            <div className="space-y-2">
-              <Label>E-mail</Label>
-              <Input type="email" value={form.email} onChange={(e) => set('email', e.target.value)} placeholder="email@exemplo.com" />
-            </div>
-          )}
-
-          <div className="space-y-2">
-            <Label>Nome Completo *</Label>
-            <Input value={form.nome_completo} onChange={(e) => set('nome_completo', e.target.value)} placeholder="Nome completo" />
-          </div>
-
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label>Data de Nascimento</Label>
+              <Label>Data de Nascimento *</Label>
               <DatePicker
                 value={form.data_nascimento || ''}
                 onChange={(v) => set('data_nascimento', v)}
@@ -731,7 +805,7 @@ export function PessoaForm({ schoolId: propSchoolId, person, onSaved, onCancel }
               />
             </div>
             <div className="space-y-2">
-              <Label>Sexo</Label>
+              <Label>Sexo *</Label>
               <Select value={form.sexo} onValueChange={(v) => set('sexo', v)}>
                 <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
                 <SelectContent>
@@ -746,7 +820,7 @@ export function PessoaForm({ schoolId: propSchoolId, person, onSaved, onCancel }
             <>
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label>Cor/Raça</Label>
+                  <Label>Cor/Raça *</Label>
                   <Select value={form.cor_raca} onValueChange={(v) => set('cor_raca', v)}>
                     <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
                     <SelectContent>
@@ -765,7 +839,7 @@ export function PessoaForm({ schoolId: propSchoolId, person, onSaved, onCancel }
                   )}
                 </div>
                 <div className="space-y-2">
-                  <Label>Nacionalidade</Label>
+                  <Label>Nacionalidade *</Label>
                   <Select value={form.nacionalidade} onValueChange={(v) => set('nacionalidade', v)}>
                     <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
                     <SelectContent>
@@ -781,7 +855,7 @@ export function PessoaForm({ schoolId: propSchoolId, person, onSaved, onCancel }
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Combobox
-                      label="País de Nacionalidade"
+                      label="País de Nacionalidade *"
                       options={PAIS_OPTIONS}
                       value={form.pais_nacionalidade || ''}
                       onChange={(v) => set('pais_nacionalidade', v)}
@@ -792,7 +866,7 @@ export function PessoaForm({ schoolId: propSchoolId, person, onSaved, onCancel }
                   {form.nacionalidade === '1' && (
                     <div className="space-y-2">
                       <Combobox
-                        label="Município de Nascimento"
+                        label="Município de Nascimento *"
                         options={MUNICIPIO_OPTIONS}
                         value={form.municipio_nascimento || ''}
                         onChange={(v) => set('municipio_nascimento', v)}
@@ -819,16 +893,79 @@ export function PessoaForm({ schoolId: propSchoolId, person, onSaved, onCancel }
               {form.filiacao_declarada === '1' && (
                 <div className="grid grid-cols-2 gap-4 mt-2">
                   <div className="space-y-2">
-                    <Label>Filiação 1 (mãe)</Label>
+                    <Label>Filiação 1 (mãe) *</Label>
                     <Input value={form.filiacao_1} onChange={(e) => set('filiacao_1', e.target.value)} />
                   </div>
                   <div className="space-y-2">
-                    <Label>Filiação 2 (pai)</Label>
+                    <Label>Filiação 2 (pai) *</Label>
                     <Input value={form.filiacao_2} onChange={(e) => set('filiacao_2', e.target.value)} />
                   </div>
                 </div>
               )}
             </div>
+          )}
+
+          {isAluno && (
+            <div className="space-y-4 mt-5">
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>Telefone principal (WhatsApp) *</Label>
+                  <Input
+                    value={form.whatsapp || ''}
+                    onChange={(e) => set('whatsapp', e.target.value.replace(/\D/g, '').slice(0, 11))}
+                    placeholder="(00) 00000-0000"
+                    inputMode="numeric"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Telefone secundário</Label>
+                  <Input
+                    value={form.telefone_secundario || ''}
+                    onChange={(e) => set('telefone_secundario', e.target.value.replace(/\D/g, '').slice(0, 11))}
+                    placeholder="(00) 00000-0000"
+                    inputMode="numeric"
+                  />
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label>E-mail do responsável</Label>
+                <Input
+                  type="email"
+                  value={form.email_responsavel || ''}
+                  onChange={(e) => set('email_responsavel', e.target.value)}
+                  placeholder="email@exemplo.com"
+                />
+              </div>
+            </div>
+          )}
+
+          {!isAluno && !apenasResponsavel && (
+            <>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>Telefone principal (WhatsApp)</Label>
+                  <Input
+                    value={form.whatsapp || ''}
+                    onChange={(e) => set('whatsapp', e.target.value.replace(/\D/g, '').slice(0, 11))}
+                    placeholder="(00) 00000-0000"
+                    inputMode="numeric"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Telefone secundário</Label>
+                  <Input
+                    value={form.telefone_secundario || ''}
+                    onChange={(e) => set('telefone_secundario', e.target.value.replace(/\D/g, '').slice(0, 11))}
+                    placeholder="(00) 00000-0000"
+                    inputMode="numeric"
+                  />
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label>E-mail *</Label>
+                <Input type="email" value={form.email} onChange={(e) => set('email', e.target.value)} placeholder="email@exemplo.com" />
+              </div>
+            </>
           )}
 
           {!isAluno && !apenasResponsavel && (
@@ -846,15 +983,13 @@ export function PessoaForm({ schoolId: propSchoolId, person, onSaved, onCancel }
               </div>
 
               {form.permitir_acesso && (
-                <div className="ml-6 space-y-4 p-4 border rounded-lg bg-muted">
-                  <div className="space-y-2">
-                    <Label>Nome de acesso</Label>
-                    <Input value={form.email} onChange={(e) => set('email', e.target.value)} placeholder="email@exemplo.com" />
-                  </div>
+                <div className="ml-6 space-y-4">
+                  <p className="text-sm text-muted-foreground">O acesso ao sistema é feito com o e-mail cadastrado ou com o CPF.</p>
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <Label>Senha</Label>
-                      <Input type="password" value={form.senha} onChange={(e) => set('senha', e.target.value)} placeholder="Mínimo 10 caracteres + maiúscula, minúscula, número, especial" />
+                      <Input type="password" value={form.senha} onChange={(e) => set('senha', e.target.value)} placeholder="Digite a senha" />
+                      <p className="text-xs text-muted-foreground mt-1">Mínimo 10 caracteres: 1 maiúscula, 1 minúscula, 1 número e 1 caractere especial.</p>
                     </div>
                     <div className="space-y-2">
                       <Label>Confirmação de senha</Label>
@@ -863,16 +998,25 @@ export function PessoaForm({ schoolId: propSchoolId, person, onSaved, onCancel }
                   </div>
                   <div className="space-y-2">
                     <Label>Perfil de acesso</Label>
-                    <p className="text-xs text-muted-foreground">Define as permissões do usuário no sistema (configurado em Perfis e Permissões)</p>
-                    <Select value={form.perfil_id || '__none__'} onValueChange={(v) => set('perfil_id', v === '__none__' ? null : v)}>
-                      <SelectTrigger className="border-border"><SelectValue placeholder="Selecione um perfil de acesso" /></SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="__none__">Sem perfil de acesso</SelectItem>
-                        {perfisAcesso.map(p => (
-                          <SelectItem key={p.id} value={p.id}>{p.nome}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                    <p className="text-xs text-muted-foreground">Define as permissões do usuário no sistema</p>
+                    <div className="flex flex-wrap gap-3 pt-1">
+                      {perfisAcesso.map(p => {
+                        const checked = form.perfis_acesso && (form.perfis_acesso as string[]).includes(p.id)
+                        return (
+                          <div key={p.id} className="flex items-center gap-2 cursor-pointer" onClick={() => {
+                            const current = (form.perfis_acesso as string[]) || []
+                            if (checked) {
+                              set('perfis_acesso', current.filter(x => x !== p.id))
+                            } else {
+                              set('perfis_acesso', [...current, p.id])
+                            }
+                          }}>
+                            <Checkbox checked={checked || false} className="pointer-events-none" />
+                            <span className="text-sm">{p.nome}</span>
+                          </div>
+                        )
+                      })}
+                    </div>
                   </div>
                 </div>
               )}
@@ -901,7 +1045,7 @@ export function PessoaForm({ schoolId: propSchoolId, person, onSaved, onCancel }
                 if (!next) for (const c of DEFICIENCIA_CAMPOS) set(c.key, false)
               }}>
                 <Checkbox checked={form.deficiencia} className="pointer-events-none" />
-                <Label className="text-sm cursor-pointer">Pessoa com Deficiência, TEA ou Altas Habilidades</Label>
+                <Label className="text-sm cursor-pointer">Possui Deficiência, TEA ou Altas Habilidades</Label>
               </div>
 
               {hasDeficiencia && (
@@ -926,7 +1070,7 @@ export function PessoaForm({ schoolId: propSchoolId, person, onSaved, onCancel }
                 if (!next) for (const c of TRANSTORNO_CAMPOS) set(c.key, false)
               }}>
                 <Checkbox checked={form.transtorno_aprendizagem} className="pointer-events-none" />
-                <Label className="text-sm cursor-pointer">Pessoa com Transtornos que Impactam a Aprendizagem</Label>
+                <Label className="text-sm cursor-pointer">Possui Transtornos que impactam a aprendizagem</Label>
               </div>
 
               {hasTranstorno && (
@@ -963,6 +1107,7 @@ export function PessoaForm({ schoolId: propSchoolId, person, onSaved, onCancel }
                 value={form.medicamentos || ''}
                 onChange={(e) => set('medicamentos', e.target.value)}
                 rows={2}
+                className="border-border"
                 placeholder="Medicamentos de uso contínuo, alergias, condições relevantes para o ambiente escolar"
               />
             </div>
@@ -974,7 +1119,7 @@ export function PessoaForm({ schoolId: propSchoolId, person, onSaved, onCancel }
           <TabsContent value="endereco" className="space-y-5 ">
             <div className="space-y-2">
               <Combobox
-                label="País de Residência"
+                label="País de Residência *"
                 options={PAIS_OPTIONS}
                 value={form.pais_residencia || ''}
                 onChange={(v) => set('pais_residencia', v)}
@@ -985,12 +1130,12 @@ export function PessoaForm({ schoolId: propSchoolId, person, onSaved, onCancel }
               <>
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label>CEP</Label>
+                    <Label>CEP *</Label>
                     <Input value={form.cep} onChange={(e) => set('cep', e.target.value)} placeholder="00000-000" maxLength={8} />
                   </div>
                   <div className="space-y-2">
                     <Combobox
-                      label="Município de Residência"
+                      label="Município de Residência *"
                       options={MUNICIPIO_OPTIONS}
                       value={form.municipio_residencia || ''}
                       onChange={(v) => set('municipio_residencia', v)}
@@ -1002,18 +1147,18 @@ export function PessoaForm({ schoolId: propSchoolId, person, onSaved, onCancel }
 
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label>Logradouro</Label>
+                    <Label>Logradouro *</Label>
                     <Input value={form.logradouro} onChange={(e) => set('logradouro', e.target.value)} placeholder="Rua, Avenida..." />
                   </div>
                   <div className="space-y-2">
-                    <Label>Número</Label>
+                    <Label>Número *</Label>
                     <Input value={form.numero} onChange={(e) => set('numero', e.target.value)} placeholder="Nº" />
                   </div>
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label>Bairro</Label>
+                    <Label>Bairro *</Label>
                     <Input value={form.bairro} onChange={(e) => set('bairro', e.target.value)} placeholder="Bairro" />
                   </div>
                   <div className="space-y-2">
@@ -1030,7 +1175,7 @@ export function PessoaForm({ schoolId: propSchoolId, person, onSaved, onCancel }
                 {!isResponsavel && (
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
-                      <Label>Zona de Residência</Label>
+                      <Label>Zona de Residência *</Label>
                       <Select value={form.zona_residencia} onValueChange={(v) => set('zona_residencia', v)}>
                         <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
                         <SelectContent>
@@ -1040,7 +1185,7 @@ export function PessoaForm({ schoolId: propSchoolId, person, onSaved, onCancel }
                       </Select>
                     </div>
                     <div className="space-y-2">
-                      <Label>Localização Diferenciada</Label>
+                      <Label>Localização Diferenciada *</Label>
                       <Select value={form.localizacao_diferenciada} onValueChange={(v) => set('localizacao_diferenciada', v)}>
                         <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
                         <SelectContent>
@@ -1062,33 +1207,34 @@ export function PessoaForm({ schoolId: propSchoolId, person, onSaved, onCancel }
         {/* ===== ABA ESCOLARIDADE ===== */}
         {isProfissionalOuGestor && (
           <TabsContent value="escolaridade" className="space-y-5 ">
-            <div className="space-y-2">
-              <Label>Maior Nível de Escolaridade Concluído</Label>
-              <Select value={form.escolaridade} onValueChange={(v) => set('escolaridade', v)}>
-                <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="1">Não concluiu o Ensino Fundamental</SelectItem>
-                  <SelectItem value="2">Ensino Fundamental</SelectItem>
-                  <SelectItem value="7">Ensino Médio</SelectItem>
-                  <SelectItem value="6">Educação Superior</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            {(form.escolaridade === '6' || form.escolaridade === '7') && (
+            <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label>Tipo de Ensino Médio Cursado</Label>
-                <Select value={form.tipo_ensino_medio} onValueChange={(v) => set('tipo_ensino_medio', v)}>
+                <Label>Maior Nível de Escolaridade Concluído *</Label>
+                <Select value={form.escolaridade} onValueChange={(v) => set('escolaridade', v)}>
                   <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="1">Formação Geral</SelectItem>
-                    <SelectItem value="2">Modalidade Normal (Magistério)</SelectItem>
-                    <SelectItem value="3">Curso Técnico</SelectItem>
-                    <SelectItem value="4">Magistério Indígena</SelectItem>
+                    <SelectItem value="1">Não concluiu o Ensino Fundamental</SelectItem>
+                    <SelectItem value="2">Ensino Fundamental</SelectItem>
+                    <SelectItem value="7">Ensino Médio</SelectItem>
+                    <SelectItem value="6">Educação Superior</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
-            )}
+              {(form.escolaridade === '6' || form.escolaridade === '7') && (
+                <div className="space-y-2">
+                  <Label>Tipo de Ensino Médio Cursado *</Label>
+                  <Select value={form.tipo_ensino_medio} onValueChange={(v) => set('tipo_ensino_medio', v)}>
+                    <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="1">Formação Geral</SelectItem>
+                      <SelectItem value="2">Modalidade Normal (Magistério)</SelectItem>
+                      <SelectItem value="3">Curso Técnico</SelectItem>
+                      <SelectItem value="4">Magistério Indígena</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
+            </div>
 
             {form.escolaridade === '6' && (
               <>
@@ -1098,31 +1244,56 @@ export function PessoaForm({ schoolId: propSchoolId, person, onSaved, onCancel }
                       <div className="flex items-center justify-between">
                         <Label className="text-sm font-semibold">Curso Superior {i}</Label>
                         {i > 1 && (
-                          <Button type="button" variant="link" onClick={() => {
-                            for (const key of [`curso_superior_${i}`, `ano_conclusao_${i}`, `ies_${i}`, `area_pedagogica_${i}`]) set(key, '')
+                          <Button type="button" variant="ghost" size="icon-sm" onClick={() => {
+                            for (const key of [`curso_superior_${i}`, `ano_conclusao_${i}`, `ies_${i}`]) set(key, '')
                             setCursoCount(i - 1)
-                          }} className="text-xs text-destructive h-auto p-0">
-                            Remover
+                          }}>
+                            <Trash2 className="h-4 w-4 text-destructive" />
                           </Button>
                         )}
                       </div>
-                      <div className="grid grid-cols-3 gap-3">
-                        <div className="space-y-2"><Label className="text-xs">Curso</Label><Combobox options={CURSO_OPTIONS} value={form[`curso_superior_${i}`]} onChange={(v) => set(`curso_superior_${i}`, v)} searchThreshold={2} /></div>
-                        <div className="space-y-2"><Label className="text-xs">Ano Conclusão</Label><Input type="number" value={form[`ano_conclusao_${i}`] || ''} onChange={(e) => set(`ano_conclusao_${i}`, parseInt(e.target.value) || 0)} /></div>
-                        <div className="space-y-2"><Label className="text-xs">IES</Label><Combobox options={IES_OPTIONS} value={form[`ies_${i}`]} onChange={(v) => set(`ies_${i}`, v)} searchThreshold={2} /></div>
+                      <div className="space-y-2"><Label className="text-xs">Curso</Label><Combobox options={CURSO_OPTIONS} value={form[`curso_superior_${i}`]} onChange={(v) => set(`curso_superior_${i}`, v)} searchThreshold={2} /></div>
+                      <div className="space-y-2"><Label className="text-xs">Instituição de Ensino Superior</Label><Combobox options={IES_OPTIONS} value={form[`ies_${i}`]} onChange={(v) => set(`ies_${i}`, v)} searchThreshold={2} /></div>
+                      <div className="grid grid-cols-3 gap-4">
+                        <div className="space-y-2">
+                          <Label className="text-xs">Situação *</Label>
+                          <Select value={form[`curso_situacao_${i}`]} onValueChange={(v) => set(`curso_situacao_${i}`, v)}>
+                            <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="concluido">Concluído</SelectItem>
+                              <SelectItem value="cursando">Cursando</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        {form[`curso_situacao_${i}`] === 'concluido' && (
+                          <div className="space-y-2">
+                            <Label className="text-xs">Data de Término *</Label>
+                            <Input type="date" value={form[`curso_data_termino_${i}`] || ''} onChange={(e) => set(`curso_data_termino_${i}`, e.target.value)} />
+                          </div>
+                        )}
+                        {form[`curso_situacao_${i}`] === 'cursando' && (
+                          <div className="space-y-2">
+                            <Label className="text-xs">Data de Início *</Label>
+                            <Input type="date" value={form[`curso_data_inicio_${i}`] || ''} onChange={(e) => set(`curso_data_inicio_${i}`, e.target.value)} />
+                          </div>
+                        )}
+                        {form[`curso_situacao_${i}`] === 'concluido' && (
+                          <div className="space-y-2">
+                            <Label className="text-xs">Carga Horária</Label>
+                            <Input type="text" placeholder="HHHH:MM" pattern="\d{4}:\d{2}" value={form[`curso_carga_horaria_${i}`] || ''} onChange={(e) => set(`curso_carga_horaria_${i}`, e.target.value)} />
+                          </div>
+                        )}
                       </div>
-                      {form[`curso_superior_${i}`] && (
-                        <div className="space-y-2"><Label className="text-xs">Área Pedagógica</Label><Combobox options={AREA_CONHECIMENTO_OPTIONS} value={form[`area_pedagogica_${i}`]} onChange={(v) => set(`area_pedagogica_${i}`, v)} searchThreshold={2} /></div>
-                      )}
                     </CardContent>
                   </Card>
                 ))}
                 {cursoCount < 3 && (
-                  <Button type="button" variant="outline" className="border-border" onClick={() => setCursoCount(c => c + 1)}>
-                    + Adicionar outro curso superior
+                  <Button variant="outline" size="sm" onClick={() => setCursoCount(c => c + 1)}>
+                    <Plus className="mr-2 h-4 w-4" /> Adicionar curso superior
                   </Button>
                 )}
               </>
+
             )}
           </TabsContent>
         )}
@@ -1147,16 +1318,16 @@ export function PessoaForm({ schoolId: propSchoolId, person, onSaved, onCancel }
                       <div className="flex items-center justify-between">
                         <Label className="text-sm font-semibold">Pós-Graduação {i}</Label>
                         {i > 1 && (
-                          <Button type="button" variant="link" onClick={() => {
+                          <Button type="button" variant="ghost" size="icon-sm" onClick={() => {
                             for (const key of [`pos_tipo_${i}`, `pos_area_${i}`, `pos_ano_${i}`]) set(key, '')
                             setPosCount(i - 1)
-                          }} className="text-xs text-destructive h-auto p-0">
-                            Remover
+                          }}>
+                            <Trash2 className="h-4 w-4 text-destructive" />
                           </Button>
                         )}
                       </div>
-                      <div className="grid grid-cols-3 gap-3">
-                        <div>
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-2">
                           <Label className="text-xs">Tipo</Label>
                           <Select value={form[`pos_tipo_${i}`]} onValueChange={(v) => set(`pos_tipo_${i}`, v)}>
                             <SelectTrigger><SelectValue placeholder="Tipo" /></SelectTrigger>
@@ -1167,15 +1338,25 @@ export function PessoaForm({ schoolId: propSchoolId, person, onSaved, onCancel }
                             </SelectContent>
                           </Select>
                         </div>
-                        <div className="space-y-2"><Label className="text-xs">Área</Label><Combobox options={AREA_POS_OPTIONS} value={form[`pos_area_${i}`]} onChange={(v) => set(`pos_area_${i}`, v)} searchThreshold={2} /></div>
                         <div className="space-y-2"><Label className="text-xs">Ano Conclusão</Label><Input type="number" value={form[`pos_ano_${i}`] || ''} onChange={(e) => set(`pos_ano_${i}`, parseInt(e.target.value) || 0)} /></div>
+                      </div>
+                      <div className="space-y-2">
+                        <Label className="text-xs">Área</Label>
+                        <Select value={form[`pos_area_${i}`]} onValueChange={(v) => set(`pos_area_${i}`, v)}>
+                          <SelectTrigger><SelectValue placeholder="Selecione a área" /></SelectTrigger>
+                          <SelectContent>
+                            {AREA_POS_OPTIONS.map(a => (
+                              <SelectItem key={a.value} value={a.value}>{a.label}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
                       </div>
                     </CardContent>
                   </Card>
                 ))}
                 {!form.sem_pos && posCount < 6 && (
-                  <Button type="button" variant="outline" className="border-border" onClick={() => setPosCount(c => c + 1)}>
-                    + Adicionar outra pós-graduação
+                  <Button variant="outline" size="sm" onClick={() => setPosCount(c => c + 1)}>
+                    <Plus className="mr-2 h-4 w-4" /> Adicionar pós-graduação
                   </Button>
                 )}
               </>
@@ -1185,22 +1366,71 @@ export function PessoaForm({ schoolId: propSchoolId, person, onSaved, onCancel }
           </TabsContent>
         )}
 
-        {/* ===== ABA FORMAÇÃO CONTINUADA ===== */}
+        {/* ===== ABA FORMAÇÕES ===== */}
         {isProfissionalOuGestor && (
-          <TabsContent value="formacao" className="space-y-5 ">
-            <Label>Formação Continuada (mín. 80h)</Label>
-            <div className="grid grid-cols-2 gap-2">
-              {FORMACAO_CAMPOS.map(c => (
-                <div key={c.key} className="flex items-center gap-2 cursor-pointer" onClick={() => marcaFormacao(c.key)}>
-                  <Checkbox checked={form[c.key]} className="pointer-events-none" />
-                  <span className="text-sm">{c.label}</span>
+          <TabsContent value="formacao" className="space-y-5">
+
+            <FormCard title="Formação Continuada" description="Cursos de formação continuada com mínimo de 80h">
+              <div className="flex items-center gap-2 pb-3 cursor-pointer" onClick={nenhumaFormacao}>
+                <Checkbox checked={form.sem_formacao} className="pointer-events-none" />
+                <Label className="text-sm cursor-pointer">Nenhum</Label>
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                {FORMACAO_CAMPOS.map(c => (
+                  <div key={c.key} className="flex items-center gap-2 cursor-pointer" onClick={() => marcaFormacao(c.key)}>
+                    <Checkbox checked={form[c.key]} className="pointer-events-none" />
+                    <span className="text-sm">{c.label}</span>
+                  </div>
+                ))}
+              </div>
+            </FormCard>
+
+            {form.escolaridade === '6' && (
+              <FormCard title="Formação Pedagógica" description="Censo 2026 — Campos 67 a 69">
+                <div className="space-y-4">
+                  {(() => {
+                    const grupos = [
+                      { nome: 'Linguagens', codigos: [6, 7, 8, 30, 9, 27, 23, 31, 10, 11] },
+                      { nome: 'Matemática', codigos: [3] },
+                      { nome: 'Ciências da Natureza', codigos: [1, 2, 4, 5] },
+                      { nome: 'Ciências Humanas e Sociais', codigos: [12, 13, 14, 28, 29] },
+                      { nome: 'Outras áreas', codigos: [16, 17, 25, 26, 32, 33, 99] },
+                    ]
+                    return [1, 2, 3].map(i => {
+                      const visible = i === 1 || (i === 2 && form.area_pedagogica_1) || (i === 3 && form.area_pedagogica_2)
+                      if (!visible) return null
+                      return (
+                        <div key={i} className="space-y-2">
+                          <Label>Área do Conhecimento {i}</Label>
+                          <div className="flex items-center gap-2">
+                            <Select value={form[`area_pedagogica_${i}`] || ''} onValueChange={(v) => set(`area_pedagogica_${i}`, v)}>
+                              <SelectTrigger className="flex-1"><SelectValue placeholder="Selecione" /></SelectTrigger>
+                              <SelectContent>
+                                {grupos.map(g => (
+                                  <SelectGroup key={g.nome}>
+                                    <SelectLabel>{g.nome}</SelectLabel>
+                                    {AREA_CONHECIMENTO_OPTIONS
+                                      .filter(a => g.codigos.includes(Number(a.value)) && a.value !== '32' && a.value !== '99')
+                                      .map(a => (
+                                        <SelectItem key={a.value} value={a.value}>{a.label}</SelectItem>
+                                      ))}
+                                  </SelectGroup>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                            {form[`area_pedagogica_${i}`] && (
+                              <Button variant="ghost" size="icon-xs" onClick={() => set(`area_pedagogica_${i}`, '')}>
+                                <X className="h-3.5 w-3.5 text-muted-foreground" />
+                              </Button>
+                            )}
+                          </div>
+                        </div>
+                      )
+                    })
+                  })()}
                 </div>
-              ))}
-            </div>
-            <div className="flex items-center gap-2 pt-2 cursor-pointer" onClick={nenhumaFormacao}>
-              <Checkbox checked={form.sem_formacao} className="pointer-events-none" />
-              <Label className="text-sm cursor-pointer">Nenhum</Label>
-            </div>
+              </FormCard>
+            )}
           </TabsContent>
         )}
 
@@ -1221,10 +1451,9 @@ export function PessoaForm({ schoolId: propSchoolId, person, onSaved, onCancel }
             )}
 
             {vinculosProfissionais.map((v, idx) => (
-              <Card key={idx} className="shadow-sm">
-                <CardContent className="pt-4 space-y-4">
+              <div key={idx} className="border border-border rounded-lg p-4 space-y-4">
                   <div className="flex items-center justify-between">
-                    <span className="text-sm font-semibold text-primary">Vínculo #{idx + 1}</span>
+                    <span className="text-sm font-semibold">Vínculo {idx + 1}</span>
                     <Button variant="ghost" size="icon-sm" onClick={() => removerVinculoProfissional(idx)}>
                       <Trash2 className="h-4 w-4 text-destructive" />
                     </Button>
@@ -1277,44 +1506,41 @@ export function PessoaForm({ schoolId: propSchoolId, person, onSaved, onCancel }
                       <Input type="date" value={v.data_inicio || ''} onChange={(e) => updateVinculoProfissionalState(idx, 'data_inicio', e.target.value)} />
                     </div>
                     <div className="space-y-2">
-                      <Label>Carga Horária Semanal</Label>
+                      <Label>Carga Horária Semanal *</Label>
                       <Input type="number" value={v.carga_horaria || ''} onChange={(e) => updateVinculoProfissionalState(idx, 'carga_horaria', e.target.value ? Number(e.target.value) : null)} min={0} max={60} />
                     </div>
                   </div>
 
                   {v.situacao === '2' && (
-                    <div className="grid grid-cols-2 gap-4 p-3 bg-warning/5 rounded-lg border border-warning/20">
+                    <div className="grid grid-cols-2 gap-4">
                       <div className="space-y-2">
-                        <Label className="text-warning">Data de Início do Afastamento *</Label>
+                        <Label>Data de Início do Afastamento *</Label>
                         <Input type="date" value={v.data_inicio_afastamento || ''} onChange={(e) => updateVinculoProfissionalState(idx, 'data_inicio_afastamento', e.target.value)} />
                       </div>
                       <div className="space-y-2">
-                        <Label className="text-warning">Data de Término do Afastamento</Label>
+                        <Label>Data de Término do Afastamento</Label>
                         <Input type="date" value={v.data_termino_afastamento || ''} onChange={(e) => updateVinculoProfissionalState(idx, 'data_termino_afastamento', e.target.value)} />
                       </div>
                     </div>
                   )}
 
                   {v.situacao === '3' && (
-                    <div className="p-3 bg-destructive/5 rounded-lg border border-destructive/20">
-                      <div className="space-y-2">
-                        <Label className="text-destructive">Data de Término *</Label>
-                        <Input type="date" value={v.data_termino || ''} onChange={(e) => updateVinculoProfissionalState(idx, 'data_termino', e.target.value)} />
-                      </div>
+                    <div className="space-y-2">
+                      <Label>Data de Término *</Label>
+                      <Input type="date" value={v.data_termino || ''} onChange={(e) => updateVinculoProfissionalState(idx, 'data_termino', e.target.value)} />
                     </div>
                   )}
 
                   <div className="space-y-2">
                     <Label>Observações</Label>
                     <Textarea
-                      className="min-h-[60px]"
+                      className="border-border min-h-[60px]"
                       value={v.observacoes || ''}
                       onChange={(e) => updateVinculoProfissionalState(idx, 'observacoes', e.target.value)}
                       placeholder="Observações sobre este vínculo..."
                     />
                   </div>
-                </CardContent>
-              </Card>
+                </div>
             ))}
           </TabsContent>
         )}

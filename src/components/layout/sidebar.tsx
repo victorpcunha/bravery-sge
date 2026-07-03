@@ -5,6 +5,7 @@ import { usePathname } from 'next/navigation'
 import { cn } from '@/lib/utils'
 import { useAuth } from '@/components/providers/auth-provider'
 import { useTheme } from 'next-themes'
+import { usePermissoes } from '@/hooks/use-permissoes'
 import { useEffect, useState } from 'react'
 import {
   School,
@@ -46,65 +47,73 @@ const modules = [
   {
     title: 'Escolas',
     icon: School,
+    recurso: null,
     submenu: [
-      { title: 'Unidade Escolar', href: '/escolas' },
+      { title: 'Unidade Escolar', href: '/escolas', recurso: null },
     ],
   },
   {
     title: 'Gestão de Usuários',
     icon: Users,
+    recurso: null,
     submenu: [
-      { title: 'Usuários', href: '/gestao-usuarios/usuarios' },
-      { title: 'Funções', href: '/gestao-usuarios/funcoes' },
-      { title: 'Perfis e Permissões', href: '/gestao-usuarios/perfis' },
-      { title: 'Painel do Aluno', href: '/gestao-usuarios/painel-aluno' },
+      { title: 'Usuários', href: '/gestao-usuarios/usuarios', recurso: 'gestao-usuarios.usuarios' },
+      { title: 'Funções', href: '/gestao-usuarios/funcoes', recurso: 'gestao-usuarios.funcoes' },
+      { title: 'Perfis e Permissões', href: '/gestao-usuarios/perfis', recurso: 'gestao-usuarios.perfis' },
+      { title: 'Painel do Aluno', href: '/gestao-usuarios/painel-aluno', recurso: 'gestao-usuarios.painel-aluno' },
     ],
   },
   {
     title: 'Gestão de Turmas',
     icon: GraduationCap,
+    recurso: null,
     submenu: [
-      { title: 'Turmas', href: '/gestao-turmas/turmas' },
-      { title: 'Quadro de Aulas', href: '/gestao-turmas/quadro-aulas' },
+      { title: 'Turmas', href: '/gestao-turmas/turmas', recurso: 'gestao-turmas.turmas' },
+      { title: 'Quadro de Aulas', href: '/gestao-turmas/quadro-aulas', recurso: 'gestao-turmas.quadro-aulas' },
     ],
   },
   {
     title: 'Gestão Acadêmica',
     icon: Calendar,
+    recurso: null,
     submenu: [
-      { title: 'Estrutura Acadêmica', href: '/gestao-academica/estrutura-academica' },
-      { title: 'Métodos de Avaliação', href: '/gestao-academica/metodos' },
-      { title: 'Alunos Matriculados', href: '/gestao-academica/matriculas' },
+      { title: 'Estrutura Acadêmica', href: '/gestao-academica/estrutura-academica', recurso: 'gestao-academica.estrutura-academica' },
+      { title: 'Métodos de Avaliação', href: '/gestao-academica/metodos', recurso: 'gestao-academica.metodos' },
+      { title: 'Alunos Matriculados', href: '/gestao-academica/matriculas', recurso: 'gestao-academica.matriculas' },
     ],
   },
   {
     title: 'Gestão Pedagógica',
     icon: BookOpen,
+    recurso: null,
     submenu: [
-      { title: 'Indicadores de Avaliação', href: '/gestao-pedagogica/indicadores' },
-      { title: 'Diário de Classe', href: '/gestao-pedagogica/diario-classe' },
-      { title: 'Plano de Ensino', href: '/gestao-pedagogica/plano-ensino' },
-      { title: 'Conselho de Classe', href: '/gestao-pedagogica/conselho-classe' },
+      { title: 'Indicadores de Avaliação', href: '/gestao-pedagogica/indicadores', recurso: 'gestao-pedagogica.indicadores' },
+      { title: 'Disciplinas', href: '/gestao-pedagogica/disciplinas', recurso: 'gestao-pedagogica.disciplinas' },
+      { title: 'Diário de Classe', href: '/gestao-pedagogica/diario-classe', recurso: 'gestao-pedagogica.diario-classe' },
+      { title: 'Plano de Ensino', href: '/gestao-pedagogica/plano-ensino', recurso: 'gestao-pedagogica.plano-ensino' },
+      { title: 'Conselho de Classe', href: '/gestao-pedagogica/conselho-classe', recurso: 'gestao-pedagogica.conselho-classe' },
     ],
   },
   {
     title: 'BNCC',
     icon: BookOpen,
+    recurso: null,
     submenu: [
-      { title: 'Consulta da BNCC', href: '/bncc/consulta' },
-      { title: 'Campos de Experiência', href: '/bncc/campos-experiencia' },
-      { title: 'Objetivos de Aprendizagem', href: '/bncc/objetivos' },
-      { title: 'Habilidades', href: '/bncc/habilidades' },
-      { title: 'Objetos de Conhecimento', href: '/bncc/objetos-conhecimento' },
-      { title: 'Unidades Temáticas', href: '/bncc/unidades-tematicas' },
-      { title: 'Áreas do Conhecimento', href: '/bncc/areas-conhecimento' },
-      { title: 'Competências e Habilidades', href: '/bncc/competencias-habilidades' },
+      { title: 'Consulta da BNCC', href: '/bncc/consulta', recurso: 'bncc.consulta' },
+      { title: 'Campos de Experiência', href: '/bncc/campos-experiencia', recurso: 'bncc.campos-experiencia' },
+      { title: 'Objetivos de Aprendizagem', href: '/bncc/objetivos', recurso: 'bncc.objetivos' },
+      { title: 'Habilidades', href: '/bncc/habilidades', recurso: 'bncc.habilidades' },
+      { title: 'Objetos de Conhecimento', href: '/bncc/objetos-conhecimento', recurso: 'bncc.objetos-conhecimento' },
+      { title: 'Unidades Temáticas', href: '/bncc/unidades-tematicas', recurso: 'bncc.unidades-tematicas' },
+      { title: 'Áreas do Conhecimento', href: '/bncc/areas-conhecimento', recurso: 'bncc.areas-conhecimento' },
+      { title: 'Competências e Habilidades', href: '/bncc/competencias-habilidades', recurso: 'bncc.competencias-habilidades' },
     ],
   },
   {
     title: 'Censo Escolar',
     href: '/censo-escolar',
     icon: FileText,
+    recurso: 'censo-escolar',
   },
 ]
 
@@ -116,8 +125,17 @@ export function AppSidebar() {
   const [mounted, setMounted] = useState(false)
   const [openSubmenu, setOpenSubmenu] = useState<string | null>(null)
   const [isHovering, setIsHovering] = useState(false)
+  const { loaded: permLoaded, pode, isSetup } = usePermissoes(schoolId)
 
   const effectivelyCollapsed = state === 'collapsed' && !isHovering
+
+  const showAll = !permLoaded || isSuperAdmin || isSetup
+
+  const isVisible = (recurso: string | null | undefined): boolean => {
+    if (showAll) return true
+    if (!recurso) return true
+    return pode.visualizar(recurso)
+  }
 
   useEffect(() => {
     setMounted(true)
@@ -140,6 +158,21 @@ export function AppSidebar() {
     await signOut()
     window.location.href = '/login'
   }
+
+  const visibleModules = modules.filter(module => {
+    if (!module.submenu) {
+      return isVisible(module.recurso)
+    }
+    const visibleChildren = module.submenu.filter(s => isVisible(s.recurso))
+    if (visibleChildren.length === 0) return false
+    return true
+  }).map(module => {
+    if (!module.submenu) return module
+    return {
+      ...module,
+      submenu: module.submenu.filter(s => isVisible(s.recurso)),
+    }
+  })
 
   return (
     <Sidebar collapsible="icon" variant="sidebar">
@@ -187,7 +220,7 @@ export function AppSidebar() {
             </SidebarGroupLabel>
             <SidebarGroupContent>
               <SidebarMenu>
-                {modules.map((module) => {
+                {visibleModules.map((module) => {
                   const isActive = module.title === 'Escolas'
                     ? pathname.startsWith('/escolas')
                     : module.href

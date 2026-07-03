@@ -11,10 +11,12 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog'
 import { Separator } from '@/components/ui/separator'
 import { toast } from 'sonner'
-import { Plus, BookOpen, Trash2, Pencil, Calendar, GraduationCap, Clock, Users, ChevronDown, ChevronRight, Copy } from 'lucide-react'
+import { Plus, BookOpen, Trash2, Pencil, Calendar, GraduationCap, Clock, Users, ChevronDown, ChevronRight, Copy, ShieldAlert } from 'lucide-react'
 import { DatePickerDual } from '@/components/ui/date-picker'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 import { Info } from 'lucide-react'
+import { EmptyState } from '@/components/ui/empty-state'
+import { usePermissoes } from '@/hooks/use-permissoes'
 import { getAnosLetivos, AnoLetivo } from '@/lib/actions/calendarios'
 import {
   getMetodosAvaliacao, createMatriz, updateMatriz,
@@ -93,6 +95,8 @@ const TURNOS = ['matutino', 'vespertino', 'noturno'] as const
 const TIPOS_TURMA = ['regular', 'integral'] as const
 
 export function MatrizForm({ schoolId, matrizId, onSaved, onCancel }: Props) {
+  const { pode, loaded: permLoaded } = usePermissoes(schoolId)
+
   const [form, setForm] = useState<FormData>({ ...defaultForm })
   const [saving, setSaving] = useState(false)
   const [anosLetivos, setAnosLetivos] = useState<AnoLetivo[]>([])
@@ -509,6 +513,27 @@ export function MatrizForm({ schoolId, matrizId, onSaved, onCancel }: Props) {
   }
 
   /* --- Render --- */
+  if (!permLoaded) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+          <p className="text-muted-foreground">Carregando...</p>
+        </div>
+      </div>
+    )
+  }
+
+  if (!pode.visualizar('gestao-academica.estrutura-academica.matrizes')) {
+    return (
+      <EmptyState
+        icon={ShieldAlert}
+        title="Sem permissão"
+        description="Você não tem permissão para acessar Matrizes Curriculares."
+      />
+    )
+  }
+
   return (
     <div className="space-y-6 [&_[data-slot='input']]:border-border [&_[data-slot='input']]:focus-visible:border-primary [&_[data-slot='input']]:focus-visible:ring-2 [&_[data-slot='input']]:focus-visible:ring-primary/20 [&_[data-slot='checkbox']]:border-border [&_[data-slot='checkbox']]:data-[state=checked]:border-primary">
       {/* Identificação */}

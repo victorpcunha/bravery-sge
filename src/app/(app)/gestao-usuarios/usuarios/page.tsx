@@ -4,9 +4,10 @@ import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/components/providers/auth-provider'
 import { Button } from '@/components/ui/button'
-import { Card, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card } from '@/components/ui/card'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog'
-import { Plus, Pencil, Trash2, ToggleLeft, RotateCcw, UserCheck, Users } from 'lucide-react'
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
+import { Plus, Pencil, Trash2, ToggleLeft, UserCheck, Users } from 'lucide-react'
 import { getPeople, deletePerson, inativarPessoa, reativarPessoa, type Person } from '@/lib/actions/people'
 import { PessoaForm } from './PessoaForm'
 import { toast } from 'sonner'
@@ -15,7 +16,9 @@ import { PageHeader } from '@/components/layout/page-header'
 import { FilterBar } from '@/components/layout/filter-bar'
 import { PageSection } from '@/components/layout/page-section'
 import { StatusBadge } from '@/components/feedback/status-badge'
+import { ConfirmDialog } from '@/components/feedback/confirm-dialog'
 import { EmptyState } from '@/components/ui/empty-state'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 
 const perfilLabels: Record<string, string> = {
   aluno: 'Aluno',
@@ -39,8 +42,15 @@ const PERFIS = [
   { value: 'responsavel', label: 'Responsável' },
 ]
 
+function formatCpf(cpf: string | null) {
+  if (!cpf) return '—'
+  const d = cpf.replace(/\D/g, '')
+  if (d.length !== 11) return cpf
+  return `${d.slice(0, 3)}.${d.slice(3, 6)}.${d.slice(6, 9)}-${d.slice(9)}`
+}
+
 export default function UsuariosPage() {
-  const { user, loading: authLoading, schoolId } = useAuth()
+  const { user, loading: authLoading, schoolId, isSuperAdmin, allSchools } = useAuth()
   const router = useRouter()
   const [pessoas, setPessoas] = useState<Person[]>([])
   const [loading, setLoading] = useState(true)
@@ -51,6 +61,8 @@ export default function UsuariosPage() {
   const [deleting, setDeleting] = useState<string | null>(null)
   const [inativando, setInativando] = useState<string | null>(null)
   const [mostrarInativos, setMostrarInativos] = useState(false)
+  const [deleteTarget, setDeleteTarget] = useState<Person | null>(null)
+  const [selectedSchoolId, setSelectedSchoolId] = useState<string | null>(null)
 
   useEffect(() => {
     if (!authLoading && !user) router.push('/login')
@@ -59,24 +71,25 @@ export default function UsuariosPage() {
   const loadPessoas = useCallback(async () => {
     setLoading(true)
     try {
-      const data = await getPeople(schoolId, search || undefined, perfilFiltro || undefined, mostrarInativos)
+      const effectiveId = isSuperAdmin ? selectedSchoolId : schoolId
+      const data = await getPeople(effectiveId, search || undefined, perfilFiltro || undefined, mostrarInativos)
       setPessoas(data)
     } catch {
       toast.error('Erro ao carregar usuários')
     } finally {
       setLoading(false)
     }
-  }, [schoolId, search, perfilFiltro, mostrarInativos])
+  }, [schoolId, isSuperAdmin, selectedSchoolId, search, perfilFiltro, mostrarInativos])
 
   useEffect(() => { loadPessoas() }, [loadPessoas])
 
-  const handleDelete = async (id: string) => {
-    if (!confirm('Tem certeza? Esta ação é permanente e não pode ser desfeita.')) return
-    if (!confirm('Confirmar exclusão permanente de todos os dados deste usuário?')) return
-    setDeleting(id)
+  const handleDelete = async () => {
+    if (!deleteTarget) return
+    setDeleting(deleteTarget.id)
     try {
-      await deletePerson(id)
+      await deletePerson(deleteTarget.id)
       toast.success('Usuário excluído permanentemente')
+      setDeleteTarget(null)
       loadPessoas()
     } catch {
       toast.error('Erro ao excluir usuário')
@@ -145,20 +158,30 @@ export default function UsuariosPage() {
           title="Usuários"
           description="Cadastro único de usuários (Registro 30 INEP)"
           icon={Users}
-          actions={
-            <Button onClick={handleCreate}>
-              <Plus className="mr-2 h-4 w-4" />
-              Novo Usuário
-            </Button>
-          }
         />
 
-        <PageSection variant="compact" title="Filtros" className="mb-6 animate-fade-in-up">
+        <PageSection variant="compact" title="Filtros" className="mb-6">
           <FilterBar
             searchValue={search}
             onSearchChange={setSearch}
             searchPlaceholder="Buscar por nome..."
           >
+            {isSuperAdmin && allSchools.length > 0 && (
+              <Select
+                value={selectedSchoolId ?? '__all__'}
+                onValueChange={(v) => setSelectedSchoolId(v === '__all__' ? null : v)}
+              >
+                <SelectTrigger className="w-auto min-w-[180px] h-9">
+                  <SelectValue placeholder="Todas as escolas" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="__all__">Todas as escolas</SelectItem>
+                  {allSchools.map(s => (
+                    <SelectItem key={s.id} value={s.id}>{s.nome_escola}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
             <div className="flex gap-2 flex-wrap">
               {PERFIS.map(p => (
                 <Button
@@ -183,15 +206,15 @@ export default function UsuariosPage() {
         </PageSection>
 
         {loading ? (
-          <Card className="shadow-sm animate-fade-in-up">
+          <Card className="shadow-sm">
             <div className="p-6 space-y-3">
               {[1, 2, 3].map(i => (
-                <div key={i} className="h-16 bg-muted rounded-lg animate-pulse" />
+                <div key={i} className="h-10 bg-muted rounded-lg animate-pulse" />
               ))}
             </div>
           </Card>
         ) : pessoas.length === 0 ? (
-          <Card className="shadow-sm animate-fade-in-up">
+          <Card className="shadow-sm">
             <EmptyState
               icon={Users}
               title="Nenhum usuário cadastrado"
@@ -205,79 +228,71 @@ export default function UsuariosPage() {
             />
           </Card>
         ) : (
-          <div className="space-y-3">
-            {pessoas.map((pessoa) => (
-              <Card
-                key={pessoa.id}
-                className="shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer group"
-              >
-                <CardHeader className="pb-3">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center">
-                        <span className="text-sm font-bold text-primary">{pessoa.nome_completo?.charAt(0) || '?'}</span>
-                      </div>
-                      <div>
-                        <CardTitle className="text-lg font-semibold text-foreground group-hover:text-primary transition-colors">
-                          {pessoa.nome_completo}
-                        </CardTitle>
-                        <div className="flex items-center gap-2 mt-0.5">
-                          {pessoa.cpf && <span className="text-xs text-muted-foreground">CPF: {pessoa.cpf}</span>}
-                          {pessoa.codigo_pessoa && (
-                            <span className="text-xs text-muted-foreground">
-                              #{pessoa.codigo_pessoa}
-                            </span>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-2">
+          <PageSection variant="flush" title={`${pessoas.length} usuário(s)`} actions={
+            <Button onClick={handleCreate} size="sm">
+              <Plus className="mr-2 h-4 w-4" />
+              Novo Usuário
+            </Button>
+          }>
+            <div className="px-4">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Nome Completo</TableHead>
+                  <TableHead>CPF</TableHead>
+                  <TableHead>INEP</TableHead>
+                  <TableHead>Tipo</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead className="w-[90px]">Ações</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {pessoas.map((pessoa) => (
+                  <TableRow key={pessoa.id}>
+                    <TableCell>
+                      <span className="font-medium text-foreground">{pessoa.nome_completo}</span>
+                      {pessoa.codigo_pessoa && (
+                        <span className="text-xs text-muted-foreground ml-2">#{pessoa.codigo_pessoa}</span>
+                      )}
+                    </TableCell>
+                    <TableCell className="text-muted-foreground">{formatCpf(pessoa.cpf)}</TableCell>
+                    <TableCell className="text-muted-foreground">{pessoa.inep_id || '—'}</TableCell>
+                    <TableCell>
                       <div className="flex gap-1 flex-wrap">
                         {(pessoa.perfil || []).map(p => (
                           <StatusBadge key={p} status={perfilStatusMap[p] || 'muted'}>
                             {perfilLabels[p] || p}
                           </StatusBadge>
                         ))}
-                        {!pessoa.ativo && (
-                          <StatusBadge status="muted">Inativo</StatusBadge>
-                        )}
                       </div>
-                      <Button variant="ghost" size="icon-sm" onClick={() => handleEdit(pessoa)}>
-                        <Pencil className="h-4 w-4" />
-                      </Button>
-                      {pessoa.ativo ? (
-                        <Button variant="ghost" size="icon-sm" onClick={() => handleInativar(pessoa.id)} disabled={inativando === pessoa.id}>
-                          <ToggleLeft className="h-4 w-4 text-warning" />
+                    </TableCell>
+                    <TableCell>
+                      <StatusBadge status={pessoa.ativo ? 'success' : 'destructive'}>
+                        {pessoa.ativo ? 'Ativo' : 'Inativo'}
+                      </StatusBadge>
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex items-center gap-0.5">
+                        <Button variant="ghost" size="icon-sm" onClick={() => handleEdit(pessoa)}>
+                          <Pencil className="h-4 w-4" />
                         </Button>
-                      ) : (
-                        <Button variant="ghost" size="icon-sm" onClick={() => handleReativar(pessoa.id)} disabled={inativando === pessoa.id}>
-                          <RotateCcw className="h-4 w-4 text-success" />
+                        <Button
+                          variant="ghost"
+                          size="icon-sm"
+                          onClick={() => setDeleteTarget(pessoa)}
+                          disabled={deleting === pessoa.id}
+                        >
+                          <Trash2 className="h-4 w-4 text-destructive" />
                         </Button>
-                      )}
-                      <Button variant="ghost" size="icon-sm" onClick={() => handleDelete(pessoa.id)} disabled={deleting === pessoa.id}>
-                        <Trash2 className="h-4 w-4 text-destructive" />
-                      </Button>
-                    </div>
-                  </div>
-                </CardHeader>
-              </Card>
-            ))}
-          </div>
-        )}
-
-        <PageSection
-          title={`Total: ${pessoas.length} usuário(s)`}
-          description="Dados enviados ao Censo INEP 2026 (Registro 30 - 110 campos)"
-          variant="compact"
-          className="mt-6 animate-fade-in-up"
-          actions={
-            <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center">
-              <UserCheck className="w-5 h-5 text-primary" />
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
             </div>
-          }
-        >
-          {' '}
-        </PageSection>
+          </PageSection>
+        )}
       </PageContainer>
 
       <Dialog open={modalOpen} onOpenChange={(open) => { if (!open) { setModalOpen(false); setEditPerson(null) }}}>
@@ -296,6 +311,17 @@ export default function UsuariosPage() {
           />
         </DialogContent>
       </Dialog>
+
+      <ConfirmDialog
+        open={!!deleteTarget}
+        onOpenChange={(open) => { if (!open) setDeleteTarget(null) }}
+        title="Excluir usuário"
+        description="Tem certeza? Esta ação é permanente e não pode ser desfeita. Todos os dados deste usuário serão excluídos."
+        confirmLabel="Excluir"
+        variant="destructive"
+        onConfirm={handleDelete}
+        loading={!!deleting}
+      />
     </>
   )
 }

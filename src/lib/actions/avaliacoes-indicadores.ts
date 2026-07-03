@@ -39,7 +39,7 @@ export async function getIndicadoresDaTurma(
   disciplinaId?: string,
   pessoaId?: string | null
 ) {
-  await validarPermRead('gestao-pedagogica.diario-classe', pessoaId)
+  await validarPermRead('gestao-pedagogica.diario-classe.indicadores', pessoaId)
   const { data: turma, error: err1 } = await supabase
     .from('turmas')
     .select('school_id, ano_letivo_id, etapa_ensino_id')
@@ -102,7 +102,7 @@ export async function salvarAvaliacaoIndicador(
 ) {
   if (pessoaId) {
     const { validarPermissaoServer } = await import('./perfis')
-    await validarPermissaoServer(pessoaId, 'gestao-pedagogica.diario-classe', 'editar')
+    await validarPermissaoServer(pessoaId, 'gestao-pedagogica.diario-classe.indicadores', 'editar')
   }
 
   const { data: existing } = await supabase
@@ -146,7 +146,7 @@ export async function listarAvaliacoesIndicadores(
   periodo: number,
   pessoaId?: string | null
 ) {
-  await validarPermRead('gestao-pedagogica.diario-classe', pessoaId)
+  await validarPermRead('gestao-pedagogica.diario-classe.indicadores', pessoaId)
   const { data, error } = await supabase
     .from('academico_avaliacoes_indicadores')
     .select('id, aluno_id, indicador_id, periodo, nivel_id, observacao')

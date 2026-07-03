@@ -9,8 +9,10 @@ import { DatePickerDual } from '@/components/ui/date-picker'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog'
+import { EmptyState } from '@/components/ui/empty-state'
 import { toast } from 'sonner'
-import { Plus, Trash2, Calendar } from 'lucide-react'
+import { Plus, Trash2, Calendar, ShieldAlert } from 'lucide-react'
+import { usePermissoes } from '@/hooks/use-permissoes'
 import { 
   getAnosLetivos, 
   createAnoLetivo, 
@@ -79,6 +81,8 @@ function getMesesDoPeriodo(inicio: string, termino: string): string[] {
 }
 
 export function TabCalendarios({ schoolId }: TabCalendariosProps) {
+  const { pode, loaded: permLoaded } = usePermissoes(schoolId)
+
   const [anosLetivos, setAnosLetivos] = useState<AnoLetivo[]>([])
   const [calendarios, setCalendarios] = useState<Calendario[]>([])
   const [eventos, setEventos] = useState<EventoCalendario[]>([])
@@ -641,7 +645,7 @@ export function TabCalendarios({ schoolId }: TabCalendariosProps) {
     )
   }
 
-  if (loadingData) {
+  if (loadingData || !permLoaded) {
     return (
       <div className="flex items-center justify-center h-64">
         <div className="text-center">
@@ -649,6 +653,16 @@ export function TabCalendarios({ schoolId }: TabCalendariosProps) {
           <p className="text-muted-foreground">Carregando...</p>
         </div>
       </div>
+    )
+  }
+
+  if (!pode.visualizar('gestao-academica.estrutura-academica.calendarios')) {
+    return (
+      <EmptyState
+        icon={ShieldAlert}
+        title="Sem permissão"
+        description="Você não tem permissão para acessar Calendários."
+      />
     )
   }
 

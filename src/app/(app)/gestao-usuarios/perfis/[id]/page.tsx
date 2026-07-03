@@ -137,13 +137,9 @@ return (
           title={isNew ? 'Novo Perfil' : 'Editar Perfil'}
           description={isNew ? 'Crie um novo perfil de acesso' : `Editando: ${perfil?.nome || ''}`}
           icon={Shield}
-          breadcrumbs={[
-            { label: 'Perfis e Permissões', href: '/gestao-usuarios/perfis', icon: Shield },
-            { label: isNew ? 'Novo' : perfil?.nome || '' },
-          ]}
           actions={
-            <Button variant="ghost" size="icon" onClick={() => router.push('/gestao-usuarios/perfis')} className="hover:bg-muted">
-              <ChevronLeft className="h-5 w-5" />
+            <Button variant="outline" size="sm" onClick={() => router.push('/gestao-usuarios/perfis')}>
+              <ChevronLeft className="mr-2 h-4 w-4" /> Voltar
             </Button>
           }
         />

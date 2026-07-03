@@ -97,7 +97,7 @@ export default function ParecerDescritivo({ turmaId, alunos, quantidadePeriodosP
     }
   }
 
-  const podeEditar = pode.editar('gestao-pedagogica.diario-classe')
+  const podeEditar = pode.editar('gestao-pedagogica.diario-classe.parecer')
 
   const periodos = Array.from({ length: quantidadePeriodosParecer || 4 }, (_, i) => i + 1)
 

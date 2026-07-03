@@ -2,12 +2,15 @@
 
 import { useState, useEffect } from 'react'
 import { getDadosPessoais, type DadosPessoais } from '@/lib/actions/painel-pessoa'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { User, Calendar, Hash, MapPin, Phone, Mail, Loader2 } from 'lucide-react'
+import { Card, CardContent } from '@/components/ui/card'
+import { StatusBadge } from '@/components/feedback/status-badge'
+import { User, Calendar, Hash, MapPin, Phone, Mail, Loader2, Venus, Mars } from 'lucide-react'
 
 type Props = {
   pessoaId: string
   pessoaLogadaId: string | null
+  situacao?: string | null
+  turmaNome?: string | null
 }
 
 function calcularIdade(dataNasc: string | null): number | null {
@@ -20,7 +23,15 @@ function calcularIdade(dataNasc: string | null): number | null {
   return idade
 }
 
-export default function CardIdentificacao({ pessoaId, pessoaLogadaId }: Props) {
+function situacaoBadge(situacao: string): { status: 'success' | 'warning' | 'destructive' | 'info' | 'muted'; label: string } {
+  const s = situacao.toLowerCase()
+  if (s === 'ativo' || s === 'aprovado' || s === 'aprovado por conselho de classe') return { status: 'success', label: situacao }
+  if (s === 'transferido' || s === 'remanejado' || s === 'reclassificado') return { status: 'info', label: situacao }
+  if (s === 'reprovado' || s === 'reprovado por frequência' || s === 'desistente' || s === 'óbito') return { status: 'destructive', label: situacao }
+  return { status: 'muted', label: situacao }
+}
+
+export default function CardIdentificacao({ pessoaId, pessoaLogadaId, situacao, turmaNome }: Props) {
   const [dados, setDados] = useState<DadosPessoais | null>(null)
   const [loading, setLoading] = useState(true)
 
@@ -35,8 +46,9 @@ export default function CardIdentificacao({ pessoaId, pessoaLogadaId }: Props) {
   if (loading) {
     return (
       <Card>
-        <CardHeader><CardTitle className="text-sm flex items-center gap-2"><User className="h-4 w-4" />Identificação</CardTitle></CardHeader>
-        <CardContent><Loader2 className="h-4 w-4 animate-spin text-muted-foreground" /></CardContent>
+        <CardContent className="py-6 flex items-center justify-center">
+          <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+        </CardContent>
       </Card>
     )
   }
@@ -44,38 +56,71 @@ export default function CardIdentificacao({ pessoaId, pessoaLogadaId }: Props) {
   if (!dados) return null
 
   const idade = calcularIdade(dados.data_nascimento)
-
-  const linhas = [
-    { label: 'Nome', valor: dados.nome_completo, icon: User },
-    { label: 'Nascimento', valor: dados.data_nascimento ? new Date(dados.data_nascimento + 'T12:00:00').toLocaleDateString('pt-BR') : null, icon: Calendar },
-    { label: 'Idade', valor: idade !== null ? `${idade} anos` : null, icon: Calendar },
-    { label: 'Sexo', valor: dados.sexo || null, icon: User },
-    { label: 'CPF', valor: dados.cpf || null, icon: Hash },
-    { label: 'Endereço', valor: [dados.logradouro, dados.bairro].filter(Boolean).join(' - ') || null, icon: MapPin },
-    { label: 'Celular', valor: dados.telefone_celular || null, icon: Phone },
-    { label: 'Telefone', valor: dados.telefone_fixo || null, icon: Phone },
-    { label: 'E-mail', valor: dados.email || null, icon: Mail },
-  ]
+  const badge = situacao ? situacaoBadge(situacao) : null
 
   return (
     <Card>
-      <CardHeader className="pb-2">
-        <CardTitle className="text-sm flex items-center gap-2">
-          <User className="h-4 w-4 text-info" />
-          Identificação
-        </CardTitle>
-      </CardHeader>
-      <CardContent>
-        <div className="space-y-2">
-          {linhas.map(l => l.valor ? (
-            <div key={l.label} className="flex items-start gap-2 text-sm">
-              <l.icon className="h-3.5 w-3.5 mt-0.5 text-muted-foreground shrink-0" />
-              <div>
-                <span className="text-xs text-muted-foreground">{l.label}: </span>
-                <span>{l.valor}</span>
-              </div>
+      <CardContent className="py-6">
+        <div className="flex items-start justify-between mb-4">
+          <div className="flex items-center gap-3">
+            <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+              <User className="h-6 w-6 text-primary" />
             </div>
-          ) : null)}
+            <div>
+              <h2 className="text-lg font-bold text-foreground leading-tight">{dados.nome_completo}</h2>
+              {turmaNome && <p className="text-sm text-muted-foreground mt-0.5">{turmaNome}</p>}
+            </div>
+          </div>
+          {badge && (
+            <StatusBadge status={badge.status} className="text-xs">
+              {badge.label}
+            </StatusBadge>
+          )}
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-2 mt-2">
+          <div className="flex items-center gap-2 text-sm">
+            <Calendar className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+            <span className="text-xs text-muted-foreground">Nascimento:</span>
+            <span className="font-medium">{dados.data_nascimento ? new Date(dados.data_nascimento + 'T12:00:00').toLocaleDateString('pt-BR') : '—'}</span>
+            {idade !== null && <span className="text-xs text-muted-foreground">({idade} anos)</span>}
+          </div>
+
+          <div className="flex items-center gap-2 text-sm">
+            {dados.sexo?.toLowerCase() === 'masculino' ? <Mars className="h-3.5 w-3.5 text-muted-foreground shrink-0" /> : <Venus className="h-3.5 w-3.5 text-muted-foreground shrink-0" />}
+            <span className="text-xs text-muted-foreground">Sexo:</span>
+            <span className="font-medium">{dados.sexo || '—'}</span>
+          </div>
+
+          <div className="flex items-center gap-2 text-sm">
+            <Hash className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+            <span className="text-xs text-muted-foreground">CPF:</span>
+            <span className="font-medium">{dados.cpf || '—'}</span>
+          </div>
+
+          <div className="flex items-center gap-2 text-sm">
+            <Phone className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+            <span className="text-xs text-muted-foreground">Celular:</span>
+            <span className="font-medium">{dados.telefone_celular || '—'}</span>
+          </div>
+
+          <div className="flex items-start gap-2 text-sm col-span-1 md:col-span-2">
+            <MapPin className="h-3.5 w-3.5 text-muted-foreground shrink-0 mt-0.5" />
+            <span className="text-xs text-muted-foreground">Endereço:</span>
+            <span className="font-medium">{[dados.logradouro, dados.bairro].filter(Boolean).join(' - ') || '—'}</span>
+          </div>
+
+          <div className="flex items-center gap-2 text-sm">
+            <Phone className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+            <span className="text-xs text-muted-foreground">Telefone:</span>
+            <span className="font-medium">{dados.telefone_fixo || '—'}</span>
+          </div>
+
+          <div className="flex items-center gap-2 text-sm">
+            <Mail className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+            <span className="text-xs text-muted-foreground">E-mail:</span>
+            <span className="font-medium truncate">{dados.email || '—'}</span>
+          </div>
         </div>
       </CardContent>
     </Card>
