@@ -1,7 +1,7 @@
 # Design System Catalog — Componentes Oficiais
 
 **Feature**: 002-design-system
-**Date**: 2026-06-11
+**Date**: 2026-07-10 (v2 — codifica Visual Language v1.0.0)
 **Status**: Referência canônica para implementações futuras
 
 ## Layouts Oficiais
@@ -14,20 +14,99 @@
     title="..."
     description="..."
     icon={...}
-    actions={<Button>Nova</Button>}
   />
-  <PageSection variant="compact">
+  <PageSection variant="compact" title="Filtros" className="mb-6">
     <FilterBar searchValue={search} onSearchChange={setSearch}>
-      <Select>...</Select>
-      <Button>Nova</Button>
+      <Select>...</Select>  {/* escola (superadmin), ano letivo, etc. */}
+      <div className="flex gap-2 flex-wrap">
+        <Button variant={active ? 'default' : 'outline'} size="sm">Filtro Rápido</Button>
+      </div>
     </FilterBar>
   </PageSection>
-  <PageSection title="..." variant="flush">
-    <Table>...</Table>
-    {data.length === 0 && <EmptyState ... />}
+  {/* Loading state */}
+  <Card className="shadow-sm"><div className="p-6 space-y-3">
+    {[1,2,3].map(i => <div key={i} className="h-10 bg-muted rounded-lg animate-pulse" />)}
+  </div></Card>
+  {/* Empty state */}
+  <Card className="shadow-sm">
+    <EmptyState icon={...} title="..." description="..." action={<Button>Nova</Button>} />
+  </Card>
+  {/* Data state — botão "Nova" vai no PageSection actions, NÃO no PageHeader */}
+  <PageSection variant="flush" title="N registro(s)" actions={
+    <Button size="sm"><Plus /> Nova</Button>
+  }>
+    <div className="px-4">
+      <Table>
+        <TableHeader><TableRow>
+          <TableHead>Nome</TableHead>
+          <TableHead>Coluna</TableHead>
+          <TableHead>Status</TableHead>
+          <TableHead className="w-[90px]">Ações</TableHead>
+        </TableRow></TableHeader>
+        <TableBody>
+          {items.map(item => (
+            <TableRow key={item.id}>
+              <TableCell><span className="font-medium text-foreground">{item.nome}</span></TableCell>
+              <TableCell className="text-muted-foreground">{item.coluna}</TableCell>
+              <TableCell><StatusBadge status={item.ativo ? 'success' : 'muted'}>...</StatusBadge></TableCell>
+              <TableCell>
+                <div className="flex items-center gap-0.5">
+                  <Button variant="ghost" size="icon-sm"><Pencil /></Button>
+                  <Button variant="ghost" size="icon-sm"><Trash2 className="text-destructive" /></Button>
+                </div>
+              </TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+    </div>
   </PageSection>
 </PageContainer>
 ```
+
+### Layout de Listagem com Modal (formulário em Dialog)
+
+Para CRUDs onde o formulário abre num modal em vez de página separada:
+
+```
+{/* Page content (list) */}
+<Dialog open={dialogOpen} onOpenChange={...}>
+  <DialogContent className="max-w-4xl max-h-[90vh] flex flex-col p-0 gap-0">
+    <DialogHeader className="px-6 pt-6 pb-0 shrink-0">
+      <DialogTitle>Editar / Nova</DialogTitle>
+      <DialogDescription>...</DialogDescription>
+    </DialogHeader>
+    <NomeForm
+      schoolId={...} editId={editId}
+      onSaved={handleSaved} onCancel={() => setDialogOpen(false)}
+    />
+  </DialogContent>
+</Dialog>
+<ConfirmDialog ... />  {/* exclusão */}
+```
+
+**Estrutura do componente de formulário (NomeForm.tsx):**
+
+```
+ {/* Body scrollável */}
+ <div className="flex-1 overflow-y-auto px-6 py-4">
+   <FormCard title="..." description="...">
+     ...campos...
+   </FormCard>
+ </div>
+ {/* Footer fixo */}
+ <div className="shrink-0 border-t border-border px-6 py-3 flex justify-end gap-2 bg-muted/30">
+   <Button variant="outline" onClick={onCancel}>Cancelar</Button>
+   <Button form="form-id" type="submit">Salvar</Button>
+ </div>
+```
+
+Key points:
+- `DialogContent` usa `p-0 gap-0` para zerar padding/gap padrão
+- `DialogHeader` é `shrink-0` (não rola)
+- Body é `flex-1 overflow-y-auto`
+- Footer é `shrink-0 border-t` (fixo no fundo)
+- Botão "Nova" vai no `PageSection actions`, NÃO no `PageHeader` ou `FilterBar`
 
 ### Layout de Cadastro/Edição
 
@@ -240,3 +319,125 @@ Use escala Tailwind: `shadow-xs`, `shadow-sm`, `shadow-md`, `shadow-lg`
 Use `text-primary-foreground` (ou variante padrão do Button que já usa a cor correta).
 
 **Proibido**: `text-white` em botões sobre fundo primary
+
+## Design Tokens v2 (Visual Language v2.0.0)
+
+### Tokens de Cor (Light Mode)
+
+| Token | Valor | Uso |
+|-------|-------|-----|
+| `--primary` | `#1F88EB` | Marca, botão primário, logo, ring |
+| `--primary-foreground` | `#FFFFFF` | Texto sobre primary |
+| `--accent` | `#4FC3D7` | Foco de inputs, interação complementar (cianês) |
+| `--accent-foreground` | `#0A2540` | Texto sobre accent |
+| `--secondary` | `#1A6FC2` | Botão secundário, charts (deep blue) |
+| `--secondary-foreground` | `#FFFFFF` | Texto sobre secondary |
+| `--background` | `#F6F8FA` | Fundo da página (slate-50) |
+| `--card` | `#FFFFFF` | Fundo de card/superfície |
+| `--foreground` | `#1E293B` | Texto principal (slate-800) |
+| `--muted` | `#F1F5F9` | Fundo de seções/zonas (slate-100) |
+| `--muted-foreground` | `#64748B` | Texto secundário (slate-500) |
+| `--border` | `#E2E8F0` | Bordas padrão (slate-200) |
+| `--ring` | `#1F88EB` | Cor de foco (= primary) |
+| `--destructive` | `#DC2626` | Erro/destruição |
+| `--success` | `#16A34A` | Sucesso |
+| `--warning` | `#D97706` | Atenção |
+| `--info` | `#1F88EB` | Informação (= primary) |
+| `--sidebar` | `#FAFBFC` | Fundo da sidebar (quase branco) |
+| `--sidebar-foreground` | `#1E293B` | Texto da sidebar |
+| `--sidebar-primary` | `#1F88EB` | Item ativo da sidebar |
+| `--sidebar-accent` | `#F1F5F9` | Hover da sidebar (muted) |
+
+**Regras**:
+- `--primary` (`#1F88EB`) é a cor de marca — botão primário, logo, links, ring.
+- `--accent` (`#4FC3D7`) é a cor complementar — foco de inputs, seleção, destaque interativo.
+- `--secondary` (`#1A6FC2`) é a cor de apoio — botão secundário, charts.
+- `--info` acompanha `--primary` (blue).
+- `--ring` acompanha `--primary` (blue).
+- Sidebar é **branca** em light mode, **slate-950** em dark mode.
+
+### Tokens de Cor (Dark Mode)
+
+| Token | Valor |
+|-------|-------|
+| `--primary` | `#1F88EB` (preservado) |
+| `--accent` | `#4FC3D7` (preservado) |
+| `--secondary` | `#4FC3D7` (cianês como apoio em dark) |
+| `--background` | `#0F172A` (slate-950) |
+| `--card` | `#1E293B` (slate-800) |
+| `--border` | `#334155` (slate-700) |
+| `--sidebar` | `#0F172A` (slate-950) |
+| `--sidebar-primary` | `#1F88EB` (preservado) |
+
+### Escala de Radius (6 níveis)
+
+| Token | Valor | Tailwind | Uso |
+|-------|-------|----------|-----|
+| `--radius-sm` | 6px | `rounded-sm` | Inputs, badges, chips, tags |
+| `--radius-md` | 8px | `rounded-md` | Botões, itens de menu, tabs |
+| `--radius-lg` | 12px | `rounded-lg` | Cards, modais, popovers, dropdowns |
+| `--radius-xl` | 16px | `rounded-xl` | Cards hero, seções de destaque |
+| `--radius-2xl` | 24px | `rounded-2xl` | Containers decorativos (avatar, banner, hero) |
+| `--radius-full` | 9999px | `rounded-full` | Pills, avatares, overlay circular |
+
+**Regras**:
+- Valores explícitos — **proibido** `calc()` para radius.
+- `--radius` (sem sufixo) = 12px — alias de `--radius-lg` para compatibilidade com `rounded-lg`.
+- `--radius-3xl` e `--radius-4xl` foram removidos — não existem na escala oficial.
+
+### Escala Tipográfica (9 níveis)
+
+| Token | Tamanho | Peso | Line-height | Uso |
+|-------|---------|------|-------------|-----|
+| `--text-display` | 36px | 700 | 1.2 | KPI principal, título de dashboard |
+| `--text-title` | 28px | 700 | 1.2 | Título de página (PageHeader) |
+| `--text-heading` | 20px | 600 | 1.3 | Subtítulo de seção (PageSection) |
+| `--text-subheading` | 16px | 600 | 1.4 | Headline de card, nome em lista |
+| `--text-body` | 15px | 400 | 1.5 | Texto corrido, descrições |
+| `--text-body-strong` | 15px | 500 | 1.5 | Parágrafo de conclusão, destaque |
+| `--text-label` | 14px | 500 | 1.4 | Rótulos, botões, dados em tabela |
+| `--text-small` | 13px | 400 | 1.4 | Texto secundário, timestamp, legendas |
+| `--text-caption` | 12px | 400 | 1.3 | Anotação de menor prioridade |
+
+**Uso em componentes** (via arbitrary values):
+- PageHeader title: `text-[28px] font-bold leading-tight`
+- PageHeader description: `text-[15px] leading-normal`
+- PageSection title: `text-[20px] font-semibold leading-snug`
+- PageSection description: `text-[15px]`
+- FormCard title: `text-[20px] font-semibold`
+- FormCard description: `text-[15px]`
+- StatCard value: `text-[36px] font-bold leading-none`
+- StatCard label: `text-[14px] font-medium`
+
+**Anti-padrões tipográficos**:
+- `text-sm` (14px) como corpo padrão de descrições ou parágrafos — usar `text-[15px]`
+- `text-base` (16px) como título de seção — usar `text-[20px]`
+- `text-2xl font-semibold` (24px/600) como título de página — usar `text-[28px] font-bold`
+
+### Fonte Oficial
+
+**Plus Jakarta Sans** — única família tipográfica do sistema.
+- Pesos: 400 (corpo), 500 (rótulos), 600 (subtítulos), 700 (títulos)
+- Proibido: itálico, all-caps, fontes serifadas, `system-ui`
+
+### Movimento (3 durações)
+
+| Token | Duração | Easing | Uso |
+|-------|---------|--------|-----|
+| `--transition-fast` | 150ms | `cubic-bezier(0.4, 0, 0.2, 1)` | Hover, foco, toggle |
+| `--transition` | 200ms | `cubic-bezier(0.4, 0, 0.2, 1)` | Abertura de popover, transição de seção |
+| `--transition-slow` | 300ms | `cubic-bezier(0.4, 0, 0.2, 1)` | Dialog, drawer, tabs de dashboard |
+
+**Proibido**: `ease-in-out` (genérico), `linear` para movimento visível, curvas com overshoot.
+
+### Elevação (5 níveis)
+
+| Nível | Token | Uso |
+|-------|-------|-----|
+| 0 — Flat | `shadow-none` | Fundo de página, fundos de seção |
+| 1 — Resting | `shadow-sm` | Card em repouso (padrão) |
+| 2 — Floating | `shadow-md` | Card em hover, dropdown, popover |
+| 3 — Overlay | `shadow-lg` | Dialog, sheet, modal |
+| 4 — High | `shadow-xl` | Command palette, dialog sobre dialog |
+
+**Regras**: Cards em repouso usam **no máximo** `shadow-sm`. `shadow-md` apenas em hover. `shadow-lg`/`shadow-xl` reservados para overlays.

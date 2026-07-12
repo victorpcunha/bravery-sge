@@ -34,9 +34,9 @@ export function PageSection({ title, description, actions, children, variant = '
     <div className={cn(styles.wrapper, className)}>
       <div className={cn(styles.header, 'flex items-start justify-between gap-4 flex-wrap')}>
         <div className="min-w-0">
-          <h2 className="text-base font-heading font-semibold text-foreground tracking-tight">{title}</h2>
+          <h2 className="text-[20px] font-semibold leading-snug text-foreground tracking-tight">{title}</h2>
           {description && (
-            <p className="text-sm text-muted-foreground mt-0.5">{description}</p>
+            <p className="text-[15px] text-muted-foreground mt-1">{description}</p>
           )}
         </div>
         {actions && (

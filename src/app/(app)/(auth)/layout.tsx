@@ -35,7 +35,7 @@ export default function AuthLayout({
   }
 
   return (
-    <div className="min-h-screen gradient-mesh">
+    <div className="min-h-screen bg-background">
       {children}
     </div>
   )

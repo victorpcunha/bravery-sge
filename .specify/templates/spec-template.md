@@ -8,6 +8,27 @@
 
 **Input**: User description: "$ARGUMENTS"
 
+## Product Experience Principles Applied *(mandatory)*
+
+<!--
+  ACTION REQUIRED:
+  Identify the Product Experience principles that guide this feature.
+
+  Reference the principles defined in:
+  .specify/memory/product-experience.md
+
+  Do not rewrite the principles.
+  Only reference their IDs and briefly explain how each one applies to this feature.
+
+  Reference only the principles that influence design decisions for this feature. Do not include principles that are not used.
+-->
+
+### Applied Principles
+
+- **PE-XXX** — [Brief explanation of how this principle applies to this feature]
+- **PE-XXX** — [Brief explanation of how this principle applies to this feature]
+
+
 ## User Scenarios & Testing *(mandatory)*
 
 <!--

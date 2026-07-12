@@ -56,11 +56,11 @@ export function PageHeader({ title, description, icon: Icon, actions, breadcrumb
             </div>
           )}
           <div className="min-w-0">
-            <h1 className="text-2xl font-heading font-semibold text-foreground tracking-tight truncate">
+            <h1 className="text-[28px] font-bold leading-tight text-foreground tracking-tight truncate">
               {title}
             </h1>
             {description && (
-              <p className="text-sm text-muted-foreground mt-1">{description}</p>
+              <p className="text-[15px] leading-normal text-muted-foreground mt-1.5">{description}</p>
             )}
           </div>
         </div>

@@ -61,11 +61,11 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center gradient-mesh p-4">
+    <div className="min-h-screen flex items-center justify-center bg-background p-4">
       <div className="w-full max-w-md animate-scale-in">
         <div className="text-center mb-8">
           <div className="flex items-center justify-center gap-2 mb-4">
-            <div className="w-14 h-14 bg-gradient-to-br from-primary to-accent rounded-2xl flex items-center justify-center shadow-lg shadow-blue-500/20">
+            <div className="w-14 h-14 bg-gradient-to-br from-primary to-accent rounded-2xl flex items-center justify-center shadow-md">
               <School className="w-8 h-8 text-primary-foreground" />
             </div>
           </div>
@@ -73,8 +73,8 @@ export default function LoginPage() {
           <p className="text-muted-foreground">Sistema de Gestão Escolar</p>
         </div>
 
-        <Card className="border-0 shadow-xl">
-          <div className="h-1.5 bg-gradient-to-r from-primary via-accent to-ring rounded-t-lg" />
+        <Card className="border border-border shadow-lg">
+          <div className="h-1.5 bg-gradient-to-r from-primary to-accent rounded-t-lg" />
           <CardHeader className="pb-2">
             <CardTitle className="text-xl font-semibold text-foreground">Acessar Sistema</CardTitle>
             <CardDescription className="text-muted-foreground">
@@ -101,7 +101,7 @@ export default function LoginPage() {
                           <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                           <Input
                             placeholder="000.000.000-00 ou email@exemplo.com"
-                            className="pl-10 bg-card/80 border-border focus:border-primary focus:ring-primary/20"
+                            className="pl-10 bg-card border-border focus:border-accent focus:ring-accent/20"
                             {...field}
                           />
                         </div>
@@ -123,7 +123,7 @@ export default function LoginPage() {
                           <Input
                             type="password"
                             placeholder="••••••"
-                            className="pl-10 bg-card/80 border-border focus:border-primary focus:ring-primary/20"
+                            className="pl-10 bg-card border-border focus:border-accent focus:ring-accent/20"
                             {...field}
                           />
                         </div>
@@ -133,9 +133,9 @@ export default function LoginPage() {
                   )}
                 />
 
-                <Button 
-                  type="submit" 
-                  className="w-full bg-gradient-to-r from-primary to-primary/80 hover:from-primary/80 hover:to-primary shadow-lg shadow-blue-500/20 hover:shadow-xl hover:shadow-blue-500/30 transition-all duration-200" 
+                <Button
+                  type="submit"
+                  className="w-full transition-all duration-200"
                   disabled={isSubmitting}
                 >
                   {isSubmitting ? (

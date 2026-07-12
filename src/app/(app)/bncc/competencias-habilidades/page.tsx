@@ -131,7 +131,7 @@ export default function CompetenciasHabilidadesPage() {
     <PageContainer>
       <PageHeader
         title="Competências e Habilidades"
-        description={`Habilidades da BNCC do Ensino Médio${isLp ? ' — Língua Portuguesa por Campo de Atuação' : ''}`}
+        description={`Habilidades da BNCC do Ensino Médio${isLp ? ' - Língua Portuguesa por Campo de Atuação' : ''}`}
       />
 
       <Card className="mb-6 border-0 shadow-sm animate-fade-in-up delay-75">

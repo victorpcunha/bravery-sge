@@ -37,8 +37,8 @@ export function StatCard({ icon: Icon, value, label, trend, variant = 'default',
         )}
       </div>
       <div className="mt-3">
-        <p className="text-2xl font-heading font-bold text-foreground tracking-tight">{value}</p>
-        <p className="text-sm text-muted-foreground mt-0.5">{label}</p>
+        <p className="text-[36px] font-bold leading-none text-foreground tracking-tight">{value}</p>
+        <p className="text-[14px] font-medium text-muted-foreground mt-1.5">{label}</p>
       </div>
     </div>
   )

@@ -88,19 +88,26 @@ export async function getAnoLetivoAtivo(schoolId: string | null | null) {
   return data as { id: string; descricao: string; status: string } | null
 }
 
-export async function getTurmas(schoolId: string | null, search?: string, etapaId?: string) {
+export async function getTurmas(
+  schoolId: string | null,
+  search?: string,
+  etapaId?: string,
+  anoLetivoId?: string,
+  tipoTurma?: string,
+) {
   let query = supabase
     .from('turmas')
-    .select('*, academico_etapas_ensino(etapa_nome, etapa_tipo)')
+    .select('*, academico_etapas_ensino(etapa_nome, etapa_tipo, etapa_codigo)')
 
   if (schoolId) query = query.eq('school_id', schoolId)
-
   if (search) query = query.ilike('nome', `%${search}%`)
   if (etapaId) query = query.eq('etapa_ensino_id', etapaId)
+  if (anoLetivoId) query = query.eq('ano_letivo_id', anoLetivoId)
+  if (tipoTurma) query = query.contains('tipos_turma', [tipoTurma])
 
   const { data, error } = await query.order('created_at', { ascending: false })
   if (error) throw error
-  return data as any[]
+  return (data ?? []) as any[]
 }
 
 export async function getTurma(id: string, schoolId?: string | null) {
@@ -148,9 +155,14 @@ export async function createTurma(data: {
   forma_organizacao?: string | null
   disciplinas?: string[]
   multietapa_etapas?: string[]
+  multietapa_subetapas_ids?: string[]
+  etapa_agregada?: string | null
+  etapa_codigo?: string | null
+  turma_especial?: string | null
+  eixo_qualificacao?: string | null
 }, pessoaId?: string | null) {
   await validarPermWrite('gestao-turmas.turmas', 'criar', pessoaId)
-  const { disciplinas, multietapa_etapas, ...turmaData } = data
+  const { disciplinas, multietapa_etapas, multietapa_subetapas_ids, ...turmaData } = data
 
   const { data: turma, error } = await supabase
     .from('turmas')
@@ -164,6 +176,7 @@ export async function createTurma(data: {
       tipos_turma: turmaData.tipos_turma || [],
       organizacao_curricular: turmaData.organizacao_curricular || [],
       areas_itinerario: turmaData.areas_itinerario || [],
+      multietapa_subetapas_ids: multietapa_subetapas_ids || [],
     })
     .select()
     .single()
@@ -215,15 +228,23 @@ export async function updateTurma(id: string, data: {
   forma_organizacao?: string | null
   disciplinas?: string[]
   multietapa_etapas?: string[]
+  multietapa_subetapas_ids?: string[]
+  etapa_agregada?: string | null
+  etapa_codigo?: string | null
+  turma_especial?: string | null
+  eixo_qualificacao?: string | null
 }, pessoaId?: string | null) {
   await validarPermWrite('gestao-turmas.turmas', 'editar', pessoaId)
-  const { disciplinas, multietapa_etapas, ...updateData } = data
+  const { disciplinas, multietapa_etapas, multietapa_subetapas_ids, ...updateData } = data
 
   if (updateData.turnos) {
     updateData.turnos = JSON.parse(JSON.stringify(updateData.turnos)) as any
   }
 
-  const { error } = await supabase.from('turmas').update(updateData).eq('id', id)
+  const { error } = await supabase.from('turmas').update({
+    ...updateData,
+    multietapa_subetapas_ids: multietapa_subetapas_ids || (updateData as any).multietapa_subetapas_ids || [],
+  }).eq('id', id)
   if (error) throw error
 
   // Sincronizar disciplinas
@@ -445,7 +466,7 @@ export async function getAnosLetivosAdmin(schoolId: string | null) {
 
   const { data, error } = await query
   if (error) throw error
-  return data as any[]
+  return (data ?? []) as any[]
 }
 
 export async function getProfissionaisAtivos(schoolId: string | null) {
@@ -460,9 +481,8 @@ export async function getProfissionaisAtivos(schoolId: string | null) {
   const { data, error } = await query
 
   if (error) throw error
-  const all = data as any[] || []
-  return all.filter(p => Array.isArray(p.perfil) && p.perfil.includes('profissional'))
-    .map(p => ({ id: p.id, nome_completo: p.nome_completo, codigo_pessoa: p.codigo_pessoa }))
+  return ((data ?? []) as any[]).filter((p: any) => Array.isArray(p.perfil) && p.perfil.includes('profissional'))
+    .map((p: any) => ({ id: p.id, nome_completo: p.nome_completo, codigo_pessoa: p.codigo_pessoa }))
 }
 
 export async function getVinculosAtivosProfissional(personId: string) {
@@ -473,5 +493,5 @@ export async function getVinculosAtivosProfissional(personId: string) {
     .eq('situacao', '1')
 
   if (error) throw error
-  return data as any[]
+  return (data ?? []) as any[]
 }

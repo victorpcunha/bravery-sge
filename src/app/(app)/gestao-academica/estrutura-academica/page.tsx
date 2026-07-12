@@ -40,17 +40,17 @@ export default function GestaoAcademicaPage() {
         />
 
         <Tabs defaultValue="calendarios" className="w-full">
-          <TabsList className="grid w-full max-w-md grid-cols-3 mb-8">
-            <TabsTrigger value="calendarios" className="gap-2">
-              <CalendarDays className="w-4 h-4" />
+          <TabsList className="inline-flex h-auto rounded-xl bg-muted border border-border p-1 mb-8">
+            <TabsTrigger value="calendarios" className="gap-2 px-5 py-2.5 text-[15px] font-medium rounded-lg text-foreground data-active:bg-primary data-active:text-primary-foreground data-active:shadow-sm">
+              <CalendarDays className="w-5 h-5" />
               Calendários
             </TabsTrigger>
-            <TabsTrigger value="etapas" className="gap-2">
-              <GraduationCap className="w-4 h-4" />
+            <TabsTrigger value="etapas" className="gap-2 px-5 py-2.5 text-[15px] font-medium rounded-lg text-foreground data-active:bg-primary data-active:text-primary-foreground data-active:shadow-sm">
+              <GraduationCap className="w-5 h-5" />
               Etapas
             </TabsTrigger>
-            <TabsTrigger value="matrizes" className="gap-2">
-              <BookOpen className="w-4 h-4" />
+            <TabsTrigger value="matrizes" className="gap-2 px-5 py-2.5 text-[15px] font-medium rounded-lg text-foreground data-active:bg-primary data-active:text-primary-foreground data-active:shadow-sm">
+              <BookOpen className="w-5 h-5" />
               Matrizes
             </TabsTrigger>
           </TabsList>

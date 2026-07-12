@@ -12,7 +12,7 @@ export function FormCard({ title, description, children, className }: FormCardPr
   return (
     <Card className={cn('', className)}>
       <CardHeader>
-        <CardTitle className="text-base font-heading font-semibold">{title}</CardTitle>
+        <CardTitle className="text-[20px] font-semibold">{title}</CardTitle>
         {description && (
           <CardDescription>{description}</CardDescription>
         )}

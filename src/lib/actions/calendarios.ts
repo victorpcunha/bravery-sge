@@ -26,7 +26,7 @@ export type EventoCalendario = {
   id: string
   calendario_id: string
   descricao: string
-  tipo: 'dia_letivo' | 'recesso' | 'nao_letivo'
+  tipo: 'dia_letivo' | 'recesso' | 'nao_letivo' | 'periodo_avaliativo'
   data_inicio: string
   data_termino: string
   etapas: string[]
@@ -234,38 +234,34 @@ export function getDiasLetivosPorMes(dias: { date: Date; diaSemana: number }[], 
       meses[mesKey] = { dias: [], totalLetivos: 0 }
     }
     
-    // Verificar se há evento de recesso ou dia letivo neste dia
+    // Buscar TODOS os eventos que cobrem este dia (find() pega só o primeiro)
     const diaNormalizado = `${dia.date.getFullYear()}-${String(dia.date.getMonth() + 1).padStart(2, '0')}-${String(dia.date.getDate()).padStart(2, '0')}`
-    
-    const eventoNoDia = eventos.find(e => {
+    const eventosDoDia = eventos.filter(e => {
       const dataInicioNorm = e.data_inicio.split('T')[0]
       const dataTerminoNorm = e.data_termino.split('T')[0]
       return diaNormalizado >= dataInicioNorm && diaNormalizado <= dataTerminoNorm
     })
     
-    // Se há evento de dia letivo, dia é letivo independente do dia da semana
-    // Se há evento de recesso, dia não é letivo
-    // Se não há evento, usa a regra padrão (dias de semana são letivos, sáb/dom não são)
     let isLetivo: boolean
     let isRecesso: boolean
     
-    if (eventoNoDia) {
-      if (eventoNoDia.tipo === 'dia_letivo') {
-        isLetivo = true
-        isRecesso = false
-      } else if (eventoNoDia.tipo === 'recesso') {
-        isLetivo = false
-        isRecesso = true
-      } else if (eventoNoDia.tipo === 'nao_letivo') {
-        isLetivo = false
-        isRecesso = false
+    if (eventosDoDia.length > 0) {
+      // Precedência: recesso > dia_letivo > nao_letivo > default
+      const temRecesso = eventosDoDia.some(e => e.tipo === 'recesso')
+      const temDiaLetivo = eventosDoDia.some(e => e.tipo === 'dia_letivo')
+      const temNaoLetivo = eventosDoDia.some(e => e.tipo === 'nao_letivo')
+
+      if (temRecesso) {
+        isLetivo = false; isRecesso = true
+      } else if (temDiaLetivo) {
+        isLetivo = true; isRecesso = false
+      } else if (temNaoLetivo) {
+        isLetivo = false; isRecesso = false
       } else {
-        isLetivo = dia.diaSemana !== 0 && dia.diaSemana !== 6
-        isRecesso = false
+        isLetivo = dia.diaSemana !== 0 && dia.diaSemana !== 6; isRecesso = false
       }
     } else {
-      isLetivo = dia.diaSemana !== 0 && dia.diaSemana !== 6
-      isRecesso = false
+      isLetivo = dia.diaSemana !== 0 && dia.diaSemana !== 6; isRecesso = false
     }
     
     meses[mesKey].dias.push({

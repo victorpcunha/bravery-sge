@@ -36,11 +36,27 @@
 
 **Scale/Scope**: [domain-specific, e.g., 10k users, 1M LOC, 50 screens or NEEDS CLARIFICATION]
 
-## Constitution Check
+## Constitution & Product Experience Check
 
 *GATE: Must pass before Phase 0 research. Re-check after Phase 1 design.*
 
-[Gates determined based on constitution file]
+### Constitution
+
+Confirm that:
+
+- All applicable Constitutional principles have been reviewed.
+- No planned implementation violates the Constitution.
+- Any justified exception is explicitly documented.
+
+### Product Experience
+
+Confirm that:
+
+- The Product Experience principles referenced in `spec.md` have been reviewed.
+- The planned solution supports those principles.
+- No implementation decision contradicts the selected Product Experience principles.
+- Any intentional trade-off has been documented and justified.
+- Every Product Experience principle referenced in `spec.md` is reflected by at least one implementation decision in this plan.
 
 ## Project Structure
 

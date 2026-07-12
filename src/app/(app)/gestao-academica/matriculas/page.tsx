@@ -123,9 +123,9 @@ export default function MatriculasPage() {
   return (
     <PageContainer>
       <PageHeader
-        icon={GraduationCap}
-        title="Alunos Matriculados"
-        description="Gerencie as matrículas dos alunos nas turmas"
+          icon={GraduationCap}
+          title="Alunos Matriculados"
+          description="Gerencie as matrículas dos alunos nas turmas"
         actions={
           <Link href="/gestao-academica/matriculas/cadastro">
             <Button>

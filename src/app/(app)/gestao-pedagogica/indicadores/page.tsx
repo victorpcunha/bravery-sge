@@ -388,9 +388,9 @@ export default function IndicadoresPage() {
   return (
     <PageContainer>
       <PageHeader
-        title="Indicadores de Avaliação"
-        description="Defina os indicadores que os professores utilizarão para avaliar os alunos"
-        icon={ListChecks}
+          title="Indicadores de Avaliação"
+          description="Defina os indicadores que os professores utilizarão para avaliar os alunos"
+          icon={ListChecks}
         actions={
           <div className="flex items-center gap-2">
             {filtroAno && filtroEtapa && isInfantil && (

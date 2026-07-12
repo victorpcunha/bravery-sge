@@ -1,17 +1,28 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { useAuth } from '@/components/providers/auth-provider'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Switch } from '@/components/ui/switch'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog'
 import { EmptyState } from '@/components/ui/empty-state'
 import { toast } from 'sonner'
-import { Plus, ChevronDown, ChevronRight, ShieldAlert } from 'lucide-react'
+import { Plus, ChevronDown, ChevronRight, ShieldAlert, Pencil, Trash2 } from 'lucide-react'
+import { StatusBadge } from '@/components/feedback/status-badge'
 import { usePermissoes } from '@/hooks/use-permissoes'
-import { supabase } from '@/lib/supabase'
+import { getAnosLetivosAtivos } from '@/lib/actions/quadro-aulas'
+import {
+  getTodasEtapasEnsino,
+  upsertEtapaEnsino,
+  getSubetapas,
+  criarSubetapa,
+  atualizarSubetapa,
+  removerSubetapa,
+} from '@/lib/actions/etapas-ensino'
 
 interface TabEtapasProps {
   schoolId: string | null
@@ -103,47 +114,65 @@ interface SubetapasData {
 }
 
 export function TabEtapas({ schoolId }: TabEtapasProps) {
+  const { isSuperAdmin, allSchools } = useAuth()
   const { pode, loaded: permLoaded } = usePermissoes(schoolId)
+
+  const [selectedSchoolId, setSelectedSchoolId] = useState<string | null>(null)
+  const [anosLetivos, setAnosLetivos] = useState<any[]>([])
+  const [anoLetivoId, setAnoLetivoId] = useState<string | null>(null)
 
   const [etapasAtivas, setEtapasAtivas] = useState<EtapaAtiva>({})
   const [subetapas, setSubetapas] = useState<SubetapasData>({})
   const [showSubetapaModal, setShowSubetapaModal] = useState(false)
   const [etapaSelecionada, setEtapaSelecionada] = useState<number | null>(null)
   const [novaSubetapaNome, setNovaSubetapaNome] = useState('')
+  const [editingSubetapa, setEditingSubetapa] = useState<{ etapaCodigo: number; id: string; nome: string } | null>(null)
   const [openGroups, setOpenGroups] = useState<string[]>(['Educação Infantil'])
   const [loading, setLoading] = useState(true)
 
+  const effectiveSchoolId = selectedSchoolId || schoolId
+
   useEffect(() => {
+    if (isSuperAdmin && allSchools.length > 0 && !selectedSchoolId) return
+    if (!effectiveSchoolId) { setLoading(false); return }
+    loadAnosLetivos()
+  }, [effectiveSchoolId, isSuperAdmin, allSchools, selectedSchoolId])
+
+  useEffect(() => {
+    if (!effectiveSchoolId || !anoLetivoId) return
     loadEtapas()
-  }, [schoolId])
+  }, [effectiveSchoolId, anoLetivoId])
+
+  async function loadAnosLetivos() {
+    if (!effectiveSchoolId) return
+    try {
+      const anos = await getAnosLetivosAtivos(effectiveSchoolId)
+      setAnosLetivos(anos)
+      const ativo = anos.find((a: any) => a.status === 'ativo')
+      if (ativo) {
+        setAnoLetivoId(ativo.id)
+      } else if (anos.length > 0) {
+        setAnoLetivoId(anos[0].id)
+      }
+    } catch (error) {
+      console.error('Erro ao carregar anos letivos:', error)
+      setLoading(false)
+    }
+  }
 
   async function loadEtapas() {
+    if (!effectiveSchoolId || !anoLetivoId) return
     try {
       setLoading(true)
-
-      const { data: etapasData, error: etapasError } = await supabase
-        .from('academico_etapas_ensino')
-        .select('*')
-        .eq('school_id', schoolId)
-
-      if (etapasError) throw etapasError
-
+      const etapasData = await getTodasEtapasEnsino(effectiveSchoolId, anoLetivoId)
       const etapasAtivasMap: EtapaAtiva = {}
       const subetapasMap: SubetapasData = {}
 
-      for (const etapa of etapasData || []) {
+      for (const etapa of etapasData) {
         etapasAtivasMap[etapa.etapa_codigo] = etapa.ativa
-
-        const { data: subetapasData } = await supabase
-          .from('academico_subetapas')
-          .select('*')
-          .eq('etapa_ensino_id', etapa.id)
-
-        if (subetapasData && subetapasData.length > 0) {
-          subetapasMap[etapa.etapa_codigo] = subetapasData.map(s => ({
-            id: s.id,
-            nome: s.nome
-          }))
+        const subs = await getSubetapas(etapa.id)
+        if (subs.length > 0) {
+          subetapasMap[etapa.etapa_codigo] = subs.map(s => ({ id: s.id, nome: s.nome }))
         }
       }
 
@@ -157,44 +186,13 @@ export function TabEtapas({ schoolId }: TabEtapasProps) {
   }
 
   async function toggleEtapa(codigo: number) {
+    if (!anoLetivoId) { toast.error('Selecione um ano letivo'); return }
     const novoEstado = !etapasAtivas[codigo]
-
     try {
-      const etapaInfo = gruposEtapas
-        .flatMap(g => g.etapas)
-        .find(e => e.codigo === codigo)
-
+      const etapaInfo = gruposEtapas.flatMap(g => g.etapas).find(e => e.codigo === codigo)
       if (!etapaInfo) return
-
-      const { data: existing } = await supabase
-        .from('academico_etapas_ensino')
-        .select('id')
-        .eq('school_id', schoolId)
-        .eq('etapa_codigo', codigo)
-        .single()
-
-      if (existing) {
-        await supabase
-          .from('academico_etapas_ensino')
-          .update({ ativa: novoEstado })
-          .eq('id', existing.id)
-      } else {
-        await supabase
-          .from('academico_etapas_ensino')
-          .insert({
-            school_id: schoolId,
-            etapa_codigo: codigo,
-            etapa_nome: etapaInfo.nome,
-            etapa_tipo: etapaInfo.tipo,
-            ativa: novoEstado
-          })
-      }
-
-      setEtapasAtivas(prev => ({
-        ...prev,
-        [codigo]: novoEstado
-      }))
-
+      await upsertEtapaEnsino(effectiveSchoolId!, anoLetivoId, codigo, etapaInfo.nome, etapaInfo.tipo, novoEstado)
+      setEtapasAtivas(prev => ({ ...prev, [codigo]: novoEstado }))
       toast.success(novoEstado ? 'Etapa ativada' : 'Etapa desativada')
     } catch (error) {
       console.error('Erro ao salvar etapa:', error)
@@ -205,88 +203,65 @@ export function TabEtapas({ schoolId }: TabEtapasProps) {
   async function handleAddSubetapa(codigo: number) {
     setEtapaSelecionada(codigo)
     setNovaSubetapaNome('')
+    setEditingSubetapa(null)
     setShowSubetapaModal(true)
   }
 
-  async function confirmAddSubetapa() {
-    if (!novaSubetapaNome.trim() || etapaSelecionada === null) return
+  async function handleEditSubetapa(etapaCodigo: number, sub: { id: string; nome: string }) {
+    setEtapaSelecionada(etapaCodigo)
+    setNovaSubetapaNome(sub.nome)
+    setEditingSubetapa({ etapaCodigo, id: sub.id, nome: sub.nome })
+    setShowSubetapaModal(true)
+  }
+
+  async function confirmAddSubetapa(keepOpen: boolean = false) {
+    if (!novaSubetapaNome.trim()) return
 
     try {
-      const etapaInfo = gruposEtapas
-        .flatMap(g => g.etapas)
-        .find(e => e.codigo === etapaSelecionada)
-
-      if (!etapaInfo) return
-
-      const { data: existingEtapa } = await supabase
-        .from('academico_etapas_ensino')
-        .select('id')
-        .eq('school_id', schoolId)
-        .eq('etapa_codigo', etapaSelecionada)
-        .single()
-
-      let etapaId: string
-
-      if (existingEtapa) {
-        etapaId = existingEtapa.id
-      } else {
-        const { data: newEtapa } = await supabase
-          .from('academico_etapas_ensino')
-          .insert({
-            school_id: schoolId,
-            etapa_codigo: etapaSelecionada,
-            etapa_nome: etapaInfo.nome,
-            etapa_tipo: etapaInfo.tipo,
-            ativa: false
-          })
-          .select('id')
-          .single()
-
-        if (!newEtapa) throw new Error('Erro ao criar etapa')
-        etapaId = newEtapa.id
+      if (editingSubetapa) {
+        await atualizarSubetapa(editingSubetapa.id, novaSubetapaNome.trim())
+        setSubetapas(prev => ({
+          ...prev,
+          [editingSubetapa.etapaCodigo]: prev[editingSubetapa.etapaCodigo].map(s =>
+            s.id === editingSubetapa.id ? { ...s, nome: novaSubetapaNome.trim() } : s
+          )
+        }))
+        setShowSubetapaModal(false)
+        setEtapaSelecionada(null)
+        setNovaSubetapaNome('')
+        setEditingSubetapa(null)
+        toast.success('Subetapa atualizada!')
+        return
       }
 
-      const { data: newSubetapa, error } = await supabase
-        .from('academico_subetapas')
-        .insert({
-          etapa_ensino_id: etapaId,
-          nome: novaSubetapaNome.trim()
-        })
-        .select()
-        .single()
-
-      if (error) throw error
-
+      if (!etapaSelecionada || !anoLetivoId) return
+      const etapaInfo = gruposEtapas.flatMap(g => g.etapas).find(e => e.codigo === etapaSelecionada)
+      if (!etapaInfo) return
+      const etapaId = await upsertEtapaEnsino(effectiveSchoolId!, anoLetivoId, etapaSelecionada, etapaInfo.nome, etapaInfo.tipo, false)
+      const newSubetapa = await criarSubetapa(etapaId, novaSubetapaNome.trim())
       setSubetapas(prev => ({
         ...prev,
-        [etapaSelecionada]: [
-          ...(prev[etapaSelecionada] || []),
-          { id: newSubetapa.id, nome: newSubetapa.nome }
-        ]
+        [etapaSelecionada]: [...(prev[etapaSelecionada] || []), { id: newSubetapa.id, nome: newSubetapa.nome }]
       }))
-
-      setShowSubetapaModal(false)
-      setEtapaSelecionada(null)
-      setNovaSubetapaNome('')
-      toast.success('Subetapa adicionada com sucesso!')
+      if (keepOpen) {
+        setNovaSubetapaNome('')
+        toast.success('Subetapa adicionada!')
+      } else {
+        setShowSubetapaModal(false)
+        setEtapaSelecionada(null)
+        setNovaSubetapaNome('')
+        toast.success('Subetapa adicionada!')
+      }
     } catch (error) {
-      console.error('Erro ao adicionar subetapa:', error)
-      toast.error('Erro ao adicionar subetapa')
+      console.error('Erro ao salvar subetapa:', error)
+      toast.error('Erro ao salvar subetapa')
     }
   }
 
   async function removeSubetapa(etapaCodigo: number, subetapaId: string) {
     try {
-      await supabase
-        .from('academico_subetapas')
-        .delete()
-        .eq('id', subetapaId)
-
-      setSubetapas(prev => ({
-        ...prev,
-        [etapaCodigo]: prev[etapaCodigo].filter(s => s.id !== subetapaId)
-      }))
-
+      await removerSubetapa(subetapaId)
+      setSubetapas(prev => ({ ...prev, [etapaCodigo]: prev[etapaCodigo].filter(s => s.id !== subetapaId) }))
       toast.success('Subetapa removida')
     } catch (error) {
       console.error('Erro ao remover subetapa:', error)
@@ -295,177 +270,169 @@ export function TabEtapas({ schoolId }: TabEtapasProps) {
   }
 
   function toggleGroup(titulo: string) {
-    setOpenGroups(prev =>
-      prev.includes(titulo)
-        ? prev.filter(t => t !== titulo)
-        : [...prev, titulo]
-    )
+    setOpenGroups(prev => prev.includes(titulo) ? prev.filter(t => t !== titulo) : [...prev, titulo])
   }
 
   if (!permLoaded) {
     return (
-      <Card className="border-0 shadow-md">
-        <CardHeader className="pb-3">
-          <CardTitle className="text-lg font-semibold text-foreground">Etapas de Ensino</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="flex items-center justify-center py-8">
-            <span className="text-sm text-muted-foreground">Carregando...</span>
-          </div>
-        </CardContent>
+      <Card className="shadow-sm">
+        <CardHeader className="pb-3"><CardTitle className="text-[16px] font-semibold">Etapas de Ensino</CardTitle></CardHeader>
+        <CardContent><div className="flex items-center justify-center py-8"><span className="text-sm text-muted-foreground">Carregando...</span></div></CardContent>
       </Card>
     )
   }
 
   if (!pode.visualizar('gestao-academica.estrutura-academica.etapas')) {
-    return (
-      <EmptyState
-        icon={ShieldAlert}
-        title="Sem permissão"
-        description="Você não tem permissão para acessar Etapas de Ensino."
-      />
-    )
+    return <EmptyState icon={ShieldAlert} title="Sem permissão" description="Você não tem permissão para acessar Etapas de Ensino." />
   }
 
   return (
     <>
-      <Card className="border-0 shadow-md">
-        <CardHeader className="pb-3">
-          <CardTitle className="text-lg font-semibold text-foreground">
-            Etapas de Ensino
-          </CardTitle>
-        </CardHeader>
-        {loading ? (
+      {/* School + Ano Letivo filters */}
+      <div className="mb-6 flex flex-wrap items-end gap-4">
+        {isSuperAdmin && allSchools.length > 0 && (
+          <div className="max-w-md">
+            <Label className="text-xs text-muted-foreground mb-1 block">Escola</Label>
+            <Select value={selectedSchoolId ?? ''} onValueChange={(v) => { setSelectedSchoolId(v); setAnoLetivoId(null); setEtapasAtivas({}); setSubetapas({}) }}>
+              <SelectTrigger className="w-full border-border">
+                <SelectValue placeholder="Selecione uma Escola" />
+              </SelectTrigger>
+              <SelectContent>
+                {allSchools.map((s: any) => <SelectItem key={s.id} value={s.id}>{s.nome_escola}</SelectItem>)}
+              </SelectContent>
+            </Select>
+          </div>
+        )}
+        {(effectiveSchoolId || !isSuperAdmin) && anosLetivos.length > 0 && (
+          <div>
+            <Label className="text-xs text-muted-foreground mb-1 block">Ano Letivo</Label>
+            <Select value={anoLetivoId ?? ''} onValueChange={setAnoLetivoId}>
+              <SelectTrigger className="w-[160px] border-border">
+                <SelectValue placeholder="Selecione" />
+              </SelectTrigger>
+              <SelectContent>
+                {anosLetivos.map((a: any) => <SelectItem key={a.id} value={a.id}>{a.descricao}</SelectItem>)}
+              </SelectContent>
+            </Select>
+          </div>
+        )}
+      </div>
+
+      {isSuperAdmin && !selectedSchoolId ? (
+        <EmptyState icon={ShieldAlert} title="Selecione uma Escola" description="Escolha uma escola para gerenciar as etapas de ensino." />
+      ) : !anoLetivoId ? (
+        <EmptyState icon={ShieldAlert} title="Selecione um Ano Letivo" description="Escolha um ano letivo para visualizar as etapas." />
+      ) : (
+        <Card className="shadow-sm">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-[16px] font-semibold text-foreground">Etapas de Ensino</CardTitle>
+          </CardHeader>
+          {loading ? (
+            <CardContent>
+              <div className="flex items-center justify-center py-8">
+                <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary" />
+                <span className="text-sm text-muted-foreground ml-3">Carregando...</span>
+              </div>
+            </CardContent>
+          ) : (
           <CardContent>
-            <div className="flex items-center justify-center py-8">
-              <span className="text-sm text-muted-foreground">Carregando...</span>
+            <div className="space-y-4">
+              {gruposEtapas.map((grupo) => {
+                const isOpen = openGroups.includes(grupo.titulo)
+                const etapasAtivasNoGrupo = grupo.etapas.filter(e => etapasAtivas[e.codigo] === true).length
+                return (
+                  <div key={grupo.titulo} className="rounded-lg border border-border overflow-hidden">
+                    <button
+                      type="button"
+                      onClick={() => toggleGroup(grupo.titulo)}
+                      className="w-full flex items-center gap-3 px-4 py-3.5 hover:bg-muted/50 transition-colors text-left"
+                    >
+                      <span className="text-muted-foreground">
+                        {isOpen ? <ChevronDown className="w-5 h-5" /> : <ChevronRight className="w-5 h-5" />}
+                      </span>
+                      <span className="text-[15px] font-semibold text-foreground flex-1">{grupo.titulo}</span>
+                      {etapasAtivasNoGrupo > 0 && (
+                        <StatusBadge status="success">{etapasAtivasNoGrupo} ativa{etapasAtivasNoGrupo > 1 ? 's' : ''}</StatusBadge>
+                      )}
+                    </button>
+                    {isOpen && (
+                      <div className="px-4 pb-4 space-y-2 border-t border-border pt-3">
+                        {grupo.etapas.map((etapa) => (
+                          <div key={etapa.codigo}>
+                            <div className="flex items-center gap-4 p-3 rounded-lg border border-border bg-card/50">
+                              <div className="flex items-center gap-2 min-w-[120px]">
+                                <Switch
+                                  checked={etapasAtivas[etapa.codigo] === true}
+                                  onCheckedChange={() => toggleEtapa(etapa.codigo)}
+                                />
+                                <span className={`text-xs font-medium ${etapasAtivas[etapa.codigo] ? 'text-success' : 'text-muted-foreground'}`}>
+                                  {etapasAtivas[etapa.codigo] ? 'Ativo' : 'Inativo'}
+                                </span>
+                              </div>
+                              <span className="text-sm font-medium text-foreground flex-1">{etapa.nome}</span>
+                              <div className="flex items-center gap-3 shrink-0">
+                                <span className="text-xs text-muted-foreground bg-muted px-2 py-0.5 rounded font-mono">
+                                  INEP {etapa.codigo}
+                                </span>
+                                {etapa.aceitaSubetapa && (
+                                  <Button size="xs" variant="outline" onClick={() => handleAddSubetapa(etapa.codigo)}>
+                                    <Plus className="w-3 h-3 mr-1" />Subetapa
+                                  </Button>
+                                )}
+                              </div>
+                            </div>
+
+                            {/* Subetapas desta etapa */}
+                            {subetapas[etapa.codigo] && subetapas[etapa.codigo].length > 0 && (
+                              <div className="mt-1.5 ml-10 space-y-1">
+                                {subetapas[etapa.codigo].map(sub => (
+                                  <div key={sub.id} className="flex items-center justify-between p-2 rounded border border-border bg-muted/30">
+                                    <span className="text-sm text-foreground">{sub.nome}</span>
+                                    <div className="flex items-center gap-0.5">
+                                      <Button variant="ghost" size="icon-sm" onClick={() => handleEditSubetapa(etapa.codigo, sub)} title="Editar">
+                                        <Pencil className="h-4 w-4" />
+                                      </Button>
+                                      <Button variant="ghost" size="icon-sm" onClick={() => removeSubetapa(etapa.codigo, sub.id)} title="Excluir">
+                                        <Trash2 className="h-4 w-4 text-destructive" />
+                                      </Button>
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )
+              })}
             </div>
           </CardContent>
-        ) : (
-        <CardContent>
-          <div className="space-y-3">
-            {gruposEtapas.map((grupo) => (
-              <div key={grupo.titulo} className="rounded-lg border border-border bg-card overflow-hidden">
-                <Button
-                  variant="ghost"
-                  onClick={() => toggleGroup(grupo.titulo)}
-                  className="w-full justify-start gap-2 text-primary font-medium px-4 py-3"
-                >
-                  {openGroups.includes(grupo.titulo) ? (
-                    <ChevronDown className="w-4 h-4" />
-                  ) : (
-                    <ChevronRight className="w-4 h-4" />
-                  )}
-                  {grupo.titulo}
-                </Button>
-                <div
-                  className="transition-all duration-300 ease-in-out"
-                  style={{
-                    display: openGroups.includes(grupo.titulo) ? 'block' : 'none',
-                  }}
-                >
-                  <div className="px-4 pb-4 space-y-3">
-                    {grupo.etapas.map((etapa) => (
-                      <div
-                        key={etapa.codigo}
-                        className="p-3 rounded-lg border border-border bg-card"
-                      >
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-3">
-                            <div className="flex items-center gap-2">
-                              <Switch
-                                checked={etapasAtivas[etapa.codigo] === true}
-                                onCheckedChange={() => toggleEtapa(etapa.codigo)}
-                                className="data-[state=checked]:bg-primary data-[state=unchecked]:bg-border"
-                              />
-                              <span className="text-sm font-medium text-primary">
-                                {etapasAtivas[etapa.codigo] ? 'Ativo' : 'Inativo'}
-                              </span>
-                            </div>
-                            <span className="font-medium text-foreground">
-                              {etapa.nome}
-                            </span>
-                            <span className="text-xs text-muted-foreground bg-muted px-2 py-0.5 rounded">
-                              INEP: {etapa.codigo}
-                            </span>
-                          </div>
-                          {etapa.aceitaSubetapa && (
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              className="text-xs h-7"
-                              onClick={() => handleAddSubetapa(etapa.codigo)}
-                            >
-                              <Plus className="w-3 h-3 mr-1" />
-                              Adicionar Subetapa
-                            </Button>
-                          )}
-                        </div>
+          )}
+        </Card>
+      )}
 
-                        {/* Subetapas */}
-                        {subetapas[etapa.codigo] && subetapas[etapa.codigo].length > 0 && (
-                          <div className="mt-3 border-t border-border pt-3">
-                            <div className="text-xs text-muted-foreground font-medium mb-2">
-                              Subetapas ({subetapas[etapa.codigo].length})
-                            </div>
-                            <div className="space-y-2">
-                              {subetapas[etapa.codigo].map((sub) => (
-                                <div
-                                  key={sub.id}
-                                  className="flex items-center justify-between p-2 bg-muted rounded border border-border"
-                                >
-                                  <span className="text-sm text-foreground">{sub.nome}</span>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => removeSubetapa(etapa.codigo, sub.id)}
-                            className="text-destructive text-xs"
-                          >
-                            Remover
-                          </Button>
-                                </div>
-                              ))}
-                            </div>
-                          </div>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </CardContent>
-        )}
-      </Card>
-
-      {/* Modal: Adicionar Subetapa */}
-      <Dialog open={showSubetapaModal} onOpenChange={setShowSubetapaModal}>
+      {/* Modal: Subetapa (criar/editar) */}
+      <Dialog open={showSubetapaModal} onOpenChange={(open) => { setShowSubetapaModal(open); if (!open) { setEditingSubetapa(null); setEtapaSelecionada(null); setNovaSubetapaNome('') } }}>
         <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle>Adicionar Subetapa</DialogTitle>
-          </DialogHeader>
+          <DialogHeader><DialogTitle>{editingSubetapa ? 'Editar Subetapa' : 'Adicionar Subetapa'}</DialogTitle></DialogHeader>
           <div className="space-y-4">
             <div>
-              <Label className="text-foreground font-medium block mb-2">
-                Nome da Subetapa <span className="text-destructive">*</span>
-              </Label>
-              <Input 
-                className="border-border focus:border-primary focus:ring-primary/20 bg-card"
-                placeholder="Ex: Maternal, 1º Ano, etc."
-                value={novaSubetapaNome}
-                onChange={e => setNovaSubetapaNome(e.target.value)}
-                onKeyDown={e => e.key === 'Enter' && confirmAddSubetapa()}
-              />
+              <Label className="text-foreground font-medium block mb-2">Nome da Subetapa <span className="text-destructive">*</span></Label>
+              <Input className="border-border" placeholder="Ex: Maternal, 1º Ano, etc." value={novaSubetapaNome} onChange={e => setNovaSubetapaNome(e.target.value)} onKeyDown={e => { if (e.key === 'Enter') editingSubetapa ? confirmAddSubetapa() : confirmAddSubetapa(true) }} autoFocus />
             </div>
           </div>
           <DialogFooter className="mt-4 gap-3">
-            <Button variant="outline" onClick={() => setShowSubetapaModal(false)}>
-              Cancelar
-            </Button>
-            <Button onClick={confirmAddSubetapa}>
-              Adicionar
-            </Button>
+            <Button variant="ghost" onClick={() => { setShowSubetapaModal(false); setEditingSubetapa(null); setEtapaSelecionada(null); setNovaSubetapaNome('') }}>Cancelar</Button>
+            {editingSubetapa ? (
+              <Button onClick={() => confirmAddSubetapa()}>Salvar</Button>
+            ) : (
+              <>
+                <Button variant="outline" onClick={() => confirmAddSubetapa(true)}>Adicionar e criar outro</Button>
+                <Button onClick={() => confirmAddSubetapa()}>Adicionar</Button>
+              </>
+            )}
           </DialogFooter>
         </DialogContent>
       </Dialog>

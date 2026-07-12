@@ -131,7 +131,7 @@ export default function PerfilCadastroPage({ params }: PageProps) {
     )
   }
 
-return (
+  return (
       <PageContainer className="max-w-5xl">
         <PageHeader
           title={isNew ? 'Novo Perfil' : 'Editar Perfil'}
