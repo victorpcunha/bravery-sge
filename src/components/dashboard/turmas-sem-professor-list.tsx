@@ -23,20 +23,28 @@ export function TurmasSemProfessorList({ data, className }: TurmasSemProfessorLi
           description="Nenhuma pendência de alocação encontrada."
         />
       ) : (
-        <div className="divide-y divide-border">
+        <div className="space-y-5">
           {data.map((item, i) => (
-            <div key={i} className={cn('py-4', i === 0 && 'pt-0', i === data.length - 1 && 'pb-0')}>
-              <div className="flex items-center gap-2 mb-2">
-                <AlertTriangle className="h-4 w-4 text-warning shrink-0" />
-                <h4 className="text-sm font-semibold text-foreground">{item.turma}</h4>
+            <div
+              key={item.turma}
+              className={cn(
+                'flex flex-col gap-2.5',
+                i > 0 && 'pt-5 border-t border-border'
+              )}
+            >
+              <div className="flex items-center gap-2">
+                <AlertTriangle className="h-4 w-4 text-warning shrink-0" aria-hidden="true" />
+                <h4 className="text-[15px] font-semibold text-foreground truncate">
+                  {item.turma}
+                </h4>
               </div>
-              <div className="flex flex-wrap gap-1.5 ml-6">
+              <ul className="flex flex-col gap-1.5 sm:flex-row sm:flex-wrap sm:gap-1.5 sm:items-center">
                 {item.disciplinas.map((disciplina) => (
-                  <StatusBadge key={disciplina} status="warning">
-                    {disciplina}
-                  </StatusBadge>
+                  <li key={disciplina}>
+                    <StatusBadge status="warning">{disciplina}</StatusBadge>
+                  </li>
                 ))}
-              </div>
+              </ul>
             </div>
           ))}
         </div>

@@ -99,6 +99,7 @@ const modules = [
     icon: BookOpen,
     recurso: null,
     submenu: [
+      { title: 'Direitos de Aprendizagem', href: '/bncc/direitos-aprendizagem', recurso: 'bncc.direitos-aprendizagem' },
       { title: 'Consulta da BNCC', href: '/bncc/consulta', recurso: 'bncc.consulta' },
       { title: 'Campos de Experiência', href: '/bncc/campos-experiencia', recurso: 'bncc.campos-experiencia' },
       { title: 'Objetivos de Aprendizagem', href: '/bncc/objetivos', recurso: 'bncc.objetivos' },

@@ -20,7 +20,7 @@ import {
   Bus, BookOpen, History, AlertCircle, DoorOpen, UserPlus
 } from 'lucide-react'
 import { PageContainer } from '@/components/layout/page-container'
-import { PageHeader, type BreadcrumbItem } from '@/components/layout/page-header'
+import { PageHeader } from '@/components/layout/page-header'
 import { FormCard } from '@/components/layout/form-card'
 import { getAnosLetivosAtivos } from '@/lib/actions/quadro-aulas'
 import {
@@ -79,7 +79,7 @@ export default function MatriculaCadastroContent({ searchParams }: { searchParam
     etapa_ensino_id: '',
     subetapa_id: '',
     forma_ingresso: 'Normal',
-    escolarizacao_externa: '1',
+    escolarizacao_externa: 'Não recebe escolarização fora da escola',
     observacoes: '',
     transporte_responsavel: '1',
     transporte_veiculo_rodoviario: '',
@@ -183,7 +183,7 @@ export default function MatriculaCadastroContent({ searchParams }: { searchParam
         etapa_ensino_id: m.etapa_ensino_id,
         subetapa_id: m.subetapa_id || '',
         forma_ingresso: m.forma_ingresso,
-        escolarizacao_externa: m.escolarizacao_externa || '1',
+        escolarizacao_externa: m.escolarizacao_externa || 'Não recebe escolarização fora da escola',
         observacoes: m.observacoes || '',
         transporte_responsavel: m.transporte_responsavel || '1',
         transporte_veiculo_rodoviario: m.transporte_veiculos?.rodoviario || '',
@@ -572,22 +572,17 @@ export default function MatriculaCadastroContent({ searchParams }: { searchParam
     )
   }
 
-  const breadcrumbs: BreadcrumbItem[] = [
-    { label: 'Alunos Matriculados', href: '/gestao-academica/matriculas' },
-    { label: isEditing ? 'Editar Matrícula' : 'Nova Matrícula' },
-  ]
-
   return (
-    <PageContainer className="relative min-h-screen">
+    <PageContainer>
       <PageHeader
         icon={isEditing ? Pencil : UserPlus}
         title={isEditing ? 'Editar Matrícula' : 'Nova Matrícula'}
         description={isEditing ? 'Edite os dados da matrícula do aluno' : 'Registre um novo aluno na turma'}
-        breadcrumbs={breadcrumbs}
         actions={
           <Link href="/gestao-academica/matriculas">
-            <Button variant="ghost" size="icon" className="h-8 w-8">
-              <ArrowLeft className="h-4 w-4" />
+            <Button variant="outline" size="sm">
+              <ArrowLeft className="mr-2 h-4 w-4" />
+              Voltar
             </Button>
           </Link>
         }
@@ -596,12 +591,12 @@ export default function MatriculaCadastroContent({ searchParams }: { searchParam
       <div className="space-y-6 pb-20">
         {/* Dados da Matrícula */}
         <FormCard title="Dados da Matrícula">
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-3 gap-4">
             <div>
               <Label className="text-xs text-muted-foreground mb-1 block">Ano Letivo</Label>
               <Input value={anoLetivo?.descricao || '—'} disabled className="h-9 border-border bg-muted" />
             </div>
-            <div>
+            <div className="col-span-2">
               <Label className="text-xs text-muted-foreground mb-1 block">Aluno <span className="text-destructive">*</span></Label>
               <Select value={form.aluno_id} onValueChange={v => setForm(p => ({ ...p, aluno_id: v }))} disabled={isEditing}>
                 <SelectTrigger className="h-9 border-border">
@@ -609,7 +604,7 @@ export default function MatriculaCadastroContent({ searchParams }: { searchParam
                 </SelectTrigger>
                 <SelectContent>
                   {alunos.map((a: any) => (
-                    <SelectItem key={a.id} value={a.id}>{a.nome_completo} {a.cpf ? `(${a.cpf})` : ''}</SelectItem>
+                    <SelectItem key={a.id} value={a.id}>{a.nome_completo} — CPF: {a.cpf || 'Não informado'}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
@@ -646,7 +641,7 @@ export default function MatriculaCadastroContent({ searchParams }: { searchParam
             <div>
               <Label className="text-xs text-muted-foreground mb-1 block">Etapa de Ensino <span className="text-destructive">*</span></Label>
               <Select value={form.etapa_ensino_id} onValueChange={handleEtapaChange}
-                disabled={etapasDisponiveis.length === 1}>
+                disabled={!turmas.find((t: any) => t.id === form.turma_id)?.multietapa}>
                 <SelectTrigger className="h-9 border-border">
                   <SelectValue placeholder="Selecione" />
                 </SelectTrigger>
@@ -660,7 +655,7 @@ export default function MatriculaCadastroContent({ searchParams }: { searchParam
             <div>
               <Label className="text-xs text-muted-foreground mb-1 block">Subetapa</Label>
               <Select value={form.subetapa_id} onValueChange={v => setForm(p => ({ ...p, subetapa_id: v }))}
-                disabled={subetapasDisponiveis.length === 0}>
+                disabled={!turmas.find((t: any) => t.id === form.turma_id)?.multietapa || subetapasDisponiveis.length === 0}>
                 <SelectTrigger className="h-9 border-border">
                   <SelectValue placeholder={subetapasDisponiveis.length === 0 ? 'Não aplicável' : 'Selecione'} />
                 </SelectTrigger>
@@ -705,7 +700,7 @@ export default function MatriculaCadastroContent({ searchParams }: { searchParam
           <div>
             <Label className="text-xs text-muted-foreground mb-1 block">Observações</Label>
             <Textarea
-              className="min-h-[60px]"
+              className="min-h-[60px] border-border"
               value={form.observacoes}
               onChange={e => setForm(p => ({ ...p, observacoes: e.target.value }))}
               placeholder="Informações adicionais sobre a matrícula..."
@@ -755,7 +750,8 @@ export default function MatriculaCadastroContent({ searchParams }: { searchParam
           )}
         </FormCard>
 
-        {/* AEE */}
+        {/* AEE - apenas se turma for AEE */}
+        {turmas.find((t: any) => t.id === form.turma_id)?.tipos_turma?.some((t: string) => t.toLowerCase().includes('aee')) && (
         <FormCard title="AEE — Atendimento Educacional Especializado" description="Campos do Censo INEP para Atendimento Educacional Especializado">
           <div className="grid grid-cols-2 gap-x-4 gap-y-1.5">
             {[
@@ -783,25 +779,11 @@ export default function MatriculaCadastroContent({ searchParams }: { searchParam
             ))}
           </div>
         </FormCard>
+        )}
 
         {/* INEP Registro 60 */}
-        <FormCard title="Dados Censo INEP (Registro 60)" description="Campos adicionais do Registro 60 do Censo Escolar">
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <Label className="text-xs text-muted-foreground mb-1 block">Turma Multi (etapa que o aluno cursa)</Label>
-              <Input value={form.turma_multi} onChange={e => setForm(p => ({ ...p, turma_multi: e.target.value }))}
-                placeholder="Código da etapa (ex: 14)" className="h-8 text-sm" />
-            </div>
-            <div>
-              <Label className="text-xs text-muted-foreground mb-1 block">Carga Horária IFTP (horas)</Label>
-              <Input value={form.carga_horaria_iftp} onChange={e => setForm(p => ({ ...p, carga_horaria_iftp: e.target.value }))}
-                placeholder="Horas integralizadas" className="h-8 text-sm" />
-            </div>
-          </div>
-        </FormCard>
-
         {/* Disciplinas */}
-        <FormCard title="Disciplinas">
+        <FormCard title="Dispensa de Disciplinas">
           {disciplinasTurma.length === 0 ? (
             <p className="text-xs text-muted-foreground italic">Selecione uma turma para visualizar as disciplinas</p>
           ) : (
@@ -852,7 +834,7 @@ export default function MatriculaCadastroContent({ searchParams }: { searchParam
               </div>
               <div className="flex-[2]">
                 <Label className="text-[11px] text-muted-foreground mb-0.5 block">Motivo</Label>
-                <Input className="h-8 border-border text-xs" placeholder="Descreva o motivo..."
+                <Input className="h-10 border-border text-xs" placeholder="Descreva o motivo..."
                   value={novaDispensaMotivo} onChange={e => setNovaDispensaMotivo(e.target.value)} />
               </div>
               <Button variant="outline" size="sm" className="h-8 border-border text-xs"

@@ -101,7 +101,7 @@ export async function getMatrizes(schoolId: string | null, anoLetivoId?: string,
 export async function getMatriz(id: string) {
   const { data, error } = await supabase
     .from('academico_matrizes_curriculares')
-    .select('*')
+    .select('*, academico_etapas_ensino(etapa_nome, etapa_tipo), academico_metodos_avaliacao(nome)')
     .eq('id', id)
     .single()
 
@@ -478,7 +478,64 @@ export async function getHabilidadesBNCCSistema(tipoEnsino?: string, componente?
 // ============================================
 
 export async function getHabilidadesBNCCPorDisciplinaEtapa(disciplinaNome: string, etapaEnsino: string) {
-  const { data, error } = await supabase
+  // Mapear etapa_tipo do sistema para os valores usados nas tabelas BNCC
+  const etapaDB = etapaEnsino === 'fundamental_inicial' ? 'anos_iniciais'
+    : etapaEnsino === 'fundamental_final' ? 'anos_finais'
+    : etapaEnsino === 'infantil' ? 'infantil'
+    : etapaEnsino === 'medio' ? 'medio'
+    : etapaEnsino
+
+  // Infantil: dados estão na tabela bncc_objetivos (estrutura plana)
+  if (etapaDB === 'infantil') {
+    let queryInf = supabase
+      .from('bncc_objetivos')
+      .select('codigo_bncc, descricao, campo_experiencia, faixa_etaria')
+      .eq('tipo_ensino', 'infantil')
+      .order('codigo_bncc')
+
+    if (disciplinaNome) {
+      queryInf = queryInf.like('campo_experiencia', `%${disciplinaNome}%`)
+    }
+
+    const { data, error } = await queryInf.limit(200)
+    if (error) throw error
+
+    return ((data as any[]) || []).map(h => ({
+      codigo_bncc: h.codigo_bncc,
+      descricao: h.descricao,
+      unidade_tematica: h.campo_experiencia,
+      objeto_conhecimento: h.faixa_etaria,
+    }))
+  }
+
+  // Medio: dados estão na tabela bncc_habilidades_medio (estrutura diferente)
+  if (etapaDB === 'medio') {
+    const { data, error } = await supabase
+      .from('bncc_habilidades_medio')
+      .select(`
+        codigo, descricao, componente,
+        area:area_id(nome)
+      `)
+      .order('codigo')
+      .limit(200)
+
+    if (error) throw error
+
+    const seen = new Set<string>()
+    return ((data as any[]) || []).filter((h: any) => {
+      if (seen.has(h.codigo)) return false
+      seen.add(h.codigo)
+      return true
+    }).map((h: any) => ({
+      codigo_bncc: h.codigo,
+      descricao: h.descricao,
+      unidade_tematica: h.area?.nome || h.componente || '',
+      objeto_conhecimento: '',
+    }))
+  }
+
+  // Fundamental: dados em bncc_habilidades via inner joins
+  let query = supabase
     .from('bncc_habilidades')
     .select(`
       id, codigo_bncc, descricao, anos,
@@ -489,14 +546,44 @@ export async function getHabilidadesBNCCPorDisciplinaEtapa(disciplinaNome: strin
         )
       )
     `)
-    .eq('objeto_conhecimento.unidade_tematica.disciplina', disciplinaNome)
-    .eq('objeto_conhecimento.unidade_tematica.etapa_ensino', etapaEnsino)
+    .eq('objeto_conhecimento.unidade_tematica.etapa_ensino', etapaDB)
+
+  if (disciplinaNome) {
+    query = query.eq('objeto_conhecimento.unidade_tematica.disciplina', disciplinaNome)
+  }
+
+  const { data, error } = await query.limit(200)
 
   if (error) throw error
 
-  // Deduplicar por codigo_bncc (o inner join pode gerar duplicatas)
+  // Se não encontrou por nome exato, tenta buscar sem o filtro de disciplina
+  let results = (data as any[]) || []
+  if (results.length === 0 && disciplinaNome) {
+    const { data: fallbackData, error: fbError } = await supabase
+      .from('bncc_habilidades')
+      .select(`
+        id, codigo_bncc, descricao, anos,
+        objeto_conhecimento:bncc_objetos_conhecimento!inner(
+          id, objeto_conhecimento,
+          unidade_tematica:bncc_unidades_tematicas!inner(
+            id, unidade_tematica, disciplina
+          )
+        )
+      `)
+      .eq('objeto_conhecimento.unidade_tematica.etapa_ensino', etapaDB)
+      .limit(200)
+    if (!fbError && fallbackData) {
+      // Filtrar client-side por nome de disciplina (case-insensitive)
+      const discLower = disciplinaNome.toLowerCase()
+      results = (fallbackData as any[]).filter((h: any) => {
+        const d = h.objeto_conhecimento?.unidade_tematica?.disciplina || ''
+        return d.toLowerCase() === discLower
+      })
+    }
+  }
+
   const seen = new Set<string>()
-  const deduped = ((data as any[]) || []).filter(h => {
+  const deduped = results.filter((h: any) => {
     if (seen.has(h.codigo_bncc)) return false
     seen.add(h.codigo_bncc)
     return true

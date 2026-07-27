@@ -40,6 +40,7 @@ export type IndicadorNivel = {
 export type FiltrosIndicadores = {
   ano_letivo_id?: string
   etapa_ensino_id?: string
+  etapa_ensino_ids?: string[]
   subetapa_id?: string
   campo_experiencia?: string
   disciplina_id?: string
@@ -56,7 +57,11 @@ export async function getIndicadores(schoolId: string | null, filtros: FiltrosIn
   if (schoolId) query = query.eq('school_id', schoolId)
 
   if (filtros.ano_letivo_id) query = query.eq('ano_letivo_id', filtros.ano_letivo_id)
-  if (filtros.etapa_ensino_id) query = query.eq('etapa_ensino_id', filtros.etapa_ensino_id)
+  if (filtros.etapa_ensino_ids && filtros.etapa_ensino_ids.length > 0) {
+    query = query.in('etapa_ensino_id', filtros.etapa_ensino_ids)
+  } else if (filtros.etapa_ensino_id) {
+    query = query.eq('etapa_ensino_id', filtros.etapa_ensino_id)
+  }
   if (filtros.subetapa_id) query = query.eq('subetapa_id', filtros.subetapa_id)
   if (filtros.campo_experiencia) query = query.eq('campo_experiencia', filtros.campo_experiencia)
   if (filtros.disciplina_id) query = query.eq('disciplina_id', filtros.disciplina_id)

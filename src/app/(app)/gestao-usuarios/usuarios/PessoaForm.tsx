@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useMemo } from 'react'
+import { cn } from '@/lib/utils'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -20,7 +21,7 @@ import { cursosSuperiores } from '@/data/cursos-superiores'
 import { iesList } from '@/data/ies'
 import { areasConhecimento } from '@/data/areas-conhecimento'
 import { areasPosGraduacao } from '@/data/areas-pos-graduacao'
-import { Plus, Trash2, X } from 'lucide-react'
+import { Plus, Trash2, X, Check } from 'lucide-react'
 import { toast } from 'sonner'
 import { useAuth } from '@/components/providers/auth-provider'
 import { createPerson, updatePerson, Person, getVinculosResponsavel, vincularResponsavel, desvincularResponsavel, buscarAlunos, criarAuthUser, salvarSaudeEstudante } from '@/lib/actions/people'
@@ -707,7 +708,7 @@ export function PessoaForm({ schoolId: propSchoolId, person, onSaved, onCancel }
       {isSuperAdmin && !propSchoolId && (
         <div className="px-6 py-3 border-b border-border bg-muted/30">
           <div className="flex items-center gap-3">
-            <Label className="text-sm font-medium shrink-0">Escola:</Label>
+            <Label className="font-medium shrink-0">Escola:</Label>
             <Select value={selectedSchoolId} onValueChange={setSelectedSchoolId}>
               <SelectTrigger className="w-full max-w-sm">
                 <SelectValue placeholder="Selecione a escola" />
@@ -723,16 +724,72 @@ export function PessoaForm({ schoolId: propSchoolId, person, onSaved, onCancel }
       )}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="flex flex-col flex-1 min-h-0">
         <div className="px-6 pt-4 shrink-0">
-          <TabsList className="w-full flex-wrap h-auto gap-1">
-          <TabsTrigger value="identificacao">Identificação</TabsTrigger>
-          {isAluno && <TabsTrigger value="acessibilidade">Condições de Saúde</TabsTrigger>}
-          {!isResponsavel && <TabsTrigger value="endereco">Endereço</TabsTrigger>}
-          {isProfissionalOuGestor && <TabsTrigger value="escolaridade">Escolaridade</TabsTrigger>}
-          {isProfissionalOuGestor && <TabsTrigger value="posgraduacao">Pós-Graduação</TabsTrigger>}
-          {isProfissionalOuGestor && <TabsTrigger value="formacao">Formações</TabsTrigger>}
-          {isProfissionalOuGestor && <TabsTrigger value="vinculo" className="whitespace-normal leading-tight">Vínculo Profissional</TabsTrigger>}
-          {isResponsavel && <TabsTrigger value="contato">Contato/Vínculos</TabsTrigger>}
-        </TabsList>
+          <div className="w-full overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+            <TabsList className="flex h-auto min-h-[48px] w-max sm:w-full gap-1 rounded-lg border border-border bg-card p-1 shadow-xs">
+              <TabsTrigger
+                value="identificacao"
+                className="h-10 min-h-[40px] flex-1 rounded-md px-4 text-[14px] font-semibold text-foreground/80 transition-colors hover:bg-accent/10 hover:text-accent-foreground data-active:bg-primary data-active:text-primary-foreground data-active:shadow-sm data-active:hover:bg-primary data-active:hover:text-primary-foreground"
+              >
+                Identificação
+              </TabsTrigger>
+              {isAluno && (
+                <TabsTrigger
+                  value="acessibilidade"
+                  className="h-10 min-h-[40px] flex-1 rounded-md px-4 text-[14px] font-semibold text-foreground/80 transition-colors hover:bg-accent/10 hover:text-accent-foreground data-active:bg-primary data-active:text-primary-foreground data-active:shadow-sm data-active:hover:bg-primary data-active:hover:text-primary-foreground"
+                >
+                  Condições de Saúde
+                </TabsTrigger>
+              )}
+              {!isResponsavel && (
+                <TabsTrigger
+                  value="endereco"
+                  className="h-10 min-h-[40px] flex-1 rounded-md px-4 text-[14px] font-semibold text-foreground/80 transition-colors hover:bg-accent/10 hover:text-accent-foreground data-active:bg-primary data-active:text-primary-foreground data-active:shadow-sm data-active:hover:bg-primary data-active:hover:text-primary-foreground"
+                >
+                  Endereço
+                </TabsTrigger>
+              )}
+              {isProfissionalOuGestor && (
+                <TabsTrigger
+                  value="escolaridade"
+                  className="h-10 min-h-[40px] flex-1 rounded-md px-4 text-[14px] font-semibold text-foreground/80 transition-colors hover:bg-accent/10 hover:text-accent-foreground data-active:bg-primary data-active:text-primary-foreground data-active:shadow-sm data-active:hover:bg-primary data-active:hover:text-primary-foreground"
+                >
+                  Escolaridade
+                </TabsTrigger>
+              )}
+              {isProfissionalOuGestor && (
+                <TabsTrigger
+                  value="posgraduacao"
+                  className="h-10 min-h-[40px] flex-1 rounded-md px-4 text-[14px] font-semibold text-foreground/80 transition-colors hover:bg-accent/10 hover:text-accent-foreground data-active:bg-primary data-active:text-primary-foreground data-active:shadow-sm data-active:hover:bg-primary data-active:hover:text-primary-foreground"
+                >
+                  Pós-Graduação
+                </TabsTrigger>
+              )}
+              {isProfissionalOuGestor && (
+                <TabsTrigger
+                  value="formacao"
+                  className="h-10 min-h-[40px] flex-1 rounded-md px-4 text-[14px] font-semibold text-foreground/80 transition-colors hover:bg-accent/10 hover:text-accent-foreground data-active:bg-primary data-active:text-primary-foreground data-active:shadow-sm data-active:hover:bg-primary data-active:hover:text-primary-foreground"
+                >
+                  Formações
+                </TabsTrigger>
+              )}
+              {isProfissionalOuGestor && (
+                <TabsTrigger
+                  value="vinculo"
+                  className="h-10 min-h-[40px] flex-1 whitespace-normal leading-tight rounded-md px-4 text-[14px] font-semibold text-foreground/80 transition-colors hover:bg-accent/10 hover:text-accent-foreground data-active:bg-primary data-active:text-primary-foreground data-active:shadow-sm data-active:hover:bg-primary data-active:hover:text-primary-foreground"
+                >
+                  Vínculo Profissional
+                </TabsTrigger>
+              )}
+              {isResponsavel && (
+                <TabsTrigger
+                  value="contato"
+                  className="h-10 min-h-[40px] flex-1 rounded-md px-4 text-[14px] font-semibold text-foreground/80 transition-colors hover:bg-accent/10 hover:text-accent-foreground data-active:bg-primary data-active:text-primary-foreground data-active:shadow-sm data-active:hover:bg-primary data-active:hover:text-primary-foreground"
+                >
+                  Contato/Vínculos
+                </TabsTrigger>
+              )}
+            </TabsList>
+          </div>
         </div>
 
         <div className="flex-1 overflow-y-auto px-6 py-4">
@@ -740,24 +797,36 @@ export function PessoaForm({ schoolId: propSchoolId, person, onSaved, onCancel }
         <TabsContent value="identificacao" className="space-y-5">
           <div className="space-y-2">
             <div className="flex items-start justify-between gap-4 flex-wrap">
-              <div>
-                <Label>Perfis *</Label>
-                <p className="text-xs text-muted-foreground">A pessoa pode ter múltiplos perfis (ex: Profissional e Responsável)</p>
-                <div className="flex flex-wrap gap-4 pt-1">
+              <div className="min-w-0 flex-1">
+                <Label>Tipo de Pessoa *</Label>
+                <p className="text-[13px] text-muted-foreground">A pessoa pode ter múltiplos tipos (ex: Profissional e Responsável)</p>
+                <div className="flex flex-wrap gap-2 pt-2">
                   {perfis.map(p => {
                     const isChecked = (form.perfil as string[]).includes(p.value)
                     return (
-                      <div key={p.value} className="flex items-center gap-2 cursor-pointer" onClick={() => {
-                        const current = form.perfil as string[]
-                        if (isChecked) {
-                          set('perfil', current.filter((x: string) => x !== p.value))
-                        } else {
-                          set('perfil', [...current, p.value])
-                        }
-                      }}>
-                        <Checkbox checked={isChecked} className="pointer-events-none" />
-                        <span className="text-sm">{p.label}</span>
-                      </div>
+                      <button
+                        key={p.value}
+                        type="button"
+                        aria-pressed={isChecked}
+                        onClick={() => {
+                          const current = form.perfil as string[]
+                          if (isChecked) {
+                            set('perfil', current.filter((x: string) => x !== p.value))
+                          } else {
+                            set('perfil', [...current, p.value])
+                          }
+                        }}
+                        className={cn(
+                          'inline-flex items-center gap-2 rounded-full border px-4 h-9 min-h-[36px] text-[14px] font-medium transition-colors',
+                          'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
+                          isChecked
+                            ? 'bg-primary text-primary-foreground border-primary shadow-sm hover:bg-primary hover:text-primary-foreground'
+                            : 'bg-muted/40 text-foreground border-border hover:bg-accent/10 hover:text-accent-foreground'
+                        )}
+                      >
+                        {isChecked && <Check className="h-3.5 w-3.5" aria-hidden="true" />}
+                        {p.label}
+                      </button>
                     )
                   })}
                 </div>
@@ -773,10 +842,15 @@ export function PessoaForm({ schoolId: propSchoolId, person, onSaved, onCancel }
 
           <div className="space-y-2">
             <Label>Nome Completo *</Label>
-            <Input value={form.nome_completo} onChange={(e) => set('nome_completo', e.target.value)} placeholder="Nome completo" />
+            <Input
+              value={form.nome_completo}
+              onChange={(e) => set('nome_completo', e.target.value)}
+              placeholder="Nome completo"
+              aria-required="true"
+            />
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label>CPF {isResponsavel && '*'}</Label>
               <Input
@@ -785,6 +859,7 @@ export function PessoaForm({ schoolId: propSchoolId, person, onSaved, onCancel }
                 placeholder="000.000.000-00"
                 maxLength={14}
                 inputMode="numeric"
+                aria-required={isResponsavel ? 'true' : undefined}
               />
             </div>
             {!apenasResponsavel && (
@@ -795,19 +870,20 @@ export function PessoaForm({ schoolId: propSchoolId, person, onSaved, onCancel }
             )}
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label>Data de Nascimento *</Label>
               <DatePicker
                 value={form.data_nascimento || ''}
                 onChange={(v) => set('data_nascimento', v)}
                 placeholder="dd/mm/aaaa"
+                aria-required="true"
               />
             </div>
             <div className="space-y-2">
               <Label>Sexo *</Label>
               <Select value={form.sexo} onValueChange={(v) => set('sexo', v)}>
-                <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
+                <SelectTrigger aria-required="true"><SelectValue placeholder="Selecione" /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="1">Masculino</SelectItem>
                   <SelectItem value="2">Feminino</SelectItem>
@@ -818,11 +894,11 @@ export function PessoaForm({ schoolId: propSchoolId, person, onSaved, onCancel }
 
           {!apenasResponsavel && (
             <>
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label>Cor/Raça *</Label>
                   <Select value={form.cor_raca} onValueChange={(v) => set('cor_raca', v)}>
-                    <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
+                    <SelectTrigger aria-required="true"><SelectValue placeholder="Selecione" /></SelectTrigger>
                     <SelectContent>
                       <SelectItem value="0">Não Declarada</SelectItem>
                       <SelectItem value="1">Branca</SelectItem>
@@ -841,7 +917,7 @@ export function PessoaForm({ schoolId: propSchoolId, person, onSaved, onCancel }
                 <div className="space-y-2">
                   <Label>Nacionalidade *</Label>
                   <Select value={form.nacionalidade} onValueChange={(v) => set('nacionalidade', v)}>
-                    <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
+                    <SelectTrigger aria-required="true"><SelectValue placeholder="Selecione" /></SelectTrigger>
                     <SelectContent>
                       <SelectItem value="1">Brasileira</SelectItem>
                       <SelectItem value="2">Brasileira - Nascido no Exterior</SelectItem>
@@ -852,7 +928,7 @@ export function PessoaForm({ schoolId: propSchoolId, person, onSaved, onCancel }
               </div>
 
               {form.nacionalidade && (
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Combobox
                       label="País de Nacionalidade *"
@@ -891,7 +967,7 @@ export function PessoaForm({ schoolId: propSchoolId, person, onSaved, onCancel }
                 </SelectContent>
               </Select>
               {form.filiacao_declarada === '1' && (
-                <div className="grid grid-cols-2 gap-4 mt-2">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-2">
                   <div className="space-y-2">
                     <Label>Filiação 1 (mãe) *</Label>
                     <Input value={form.filiacao_1} onChange={(e) => set('filiacao_1', e.target.value)} />
@@ -907,7 +983,7 @@ export function PessoaForm({ schoolId: propSchoolId, person, onSaved, onCancel }
 
           {isAluno && (
             <div className="space-y-4 mt-5">
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label>Telefone principal (WhatsApp) *</Label>
                   <Input
@@ -941,7 +1017,7 @@ export function PessoaForm({ schoolId: propSchoolId, person, onSaved, onCancel }
 
           {!isAluno && !apenasResponsavel && (
             <>
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label>Telefone principal (WhatsApp)</Label>
                   <Input
@@ -963,7 +1039,13 @@ export function PessoaForm({ schoolId: propSchoolId, person, onSaved, onCancel }
               </div>
               <div className="space-y-2">
                 <Label>E-mail *</Label>
-                <Input type="email" value={form.email} onChange={(e) => set('email', e.target.value)} placeholder="email@exemplo.com" />
+                <Input
+                  type="email"
+                  value={form.email}
+                  onChange={(e) => set('email', e.target.value)}
+                  placeholder="email@exemplo.com"
+                  aria-required="true"
+                />
               </div>
             </>
           )}
@@ -979,17 +1061,17 @@ export function PessoaForm({ schoolId: propSchoolId, person, onSaved, onCancel }
                   />
                   <Label htmlFor="permitir-acesso" className="font-medium cursor-pointer">Permitir acesso ao sistema</Label>
                 </div>
-                <p className="text-xs text-muted-foreground ml-6">Cria um usuário para login no sistema</p>
+                <p className="text-[13px] text-muted-foreground ml-6">Cria um usuário para login no sistema</p>
               </div>
 
               {form.permitir_acesso && (
                 <div className="ml-6 space-y-4">
-                  <p className="text-sm text-muted-foreground">O acesso ao sistema é feito com o e-mail cadastrado ou com o CPF.</p>
-                  <div className="grid grid-cols-2 gap-4">
+                  <p className="text-[15px] text-muted-foreground">O acesso ao sistema é feito com o e-mail cadastrado ou com o CPF.</p>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <Label>Senha</Label>
                       <Input type="password" value={form.senha} onChange={(e) => set('senha', e.target.value)} placeholder="Digite a senha" />
-                      <p className="text-xs text-muted-foreground mt-1">Mínimo 10 caracteres: 1 maiúscula, 1 minúscula, 1 número e 1 caractere especial.</p>
+                      <p className="text-[13px] text-muted-foreground mt-1">Mínimo 10 caracteres: 1 maiúscula, 1 minúscula, 1 número e 1 caractere especial.</p>
                     </div>
                     <div className="space-y-2">
                       <Label>Confirmação de senha</Label>
@@ -998,7 +1080,7 @@ export function PessoaForm({ schoolId: propSchoolId, person, onSaved, onCancel }
                   </div>
                   <div className="space-y-2">
                     <Label>Perfil de acesso</Label>
-                    <p className="text-xs text-muted-foreground">Define as permissões do usuário no sistema</p>
+                    <p className="text-[13px] text-muted-foreground">Define as permissões do usuário no sistema</p>
                     <div className="flex flex-wrap gap-3 pt-1">
                       {perfisAcesso.map(p => {
                         const checked = form.perfis_acesso && (form.perfis_acesso as string[]).includes(p.id)
@@ -1030,7 +1112,7 @@ export function PessoaForm({ schoolId: propSchoolId, person, onSaved, onCancel }
                 {!form.cpf && <span className="text-destructive"> *</span>}
               </Label>
               <Input value={form.certidao_nascimento} onChange={(e) => set('certidao_nascimento', e.target.value)} placeholder="30 + 2 caracteres" maxLength={32} />
-              {!form.cpf && <p className="text-xs text-destructive">Obrigatório quando não informado CPF.</p>}
+              {!form.cpf && <p role="alert" className="text-[13px] text-destructive">Obrigatório quando não informado CPF.</p>}
             </div>
           )}
         </TabsContent>
@@ -1045,12 +1127,12 @@ export function PessoaForm({ schoolId: propSchoolId, person, onSaved, onCancel }
                 if (!next) for (const c of DEFICIENCIA_CAMPOS) set(c.key, false)
               }}>
                 <Checkbox checked={form.deficiencia} className="pointer-events-none" />
-                <Label className="text-sm cursor-pointer">Possui Deficiência, TEA ou Altas Habilidades</Label>
+                <Label className="cursor-pointer">Possui Deficiência, TEA ou Altas Habilidades</Label>
               </div>
 
               {hasDeficiencia && (
                 <FormCard title="Tipos de Deficiência / TEA / AH">
-                  <div className="grid grid-cols-2 gap-2">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                     {DEFICIENCIA_CAMPOS.map(c => {
                       const disabled = isDeficienciaDisabled(c.key)
                       return (
@@ -1070,12 +1152,12 @@ export function PessoaForm({ schoolId: propSchoolId, person, onSaved, onCancel }
                 if (!next) for (const c of TRANSTORNO_CAMPOS) set(c.key, false)
               }}>
                 <Checkbox checked={form.transtorno_aprendizagem} className="pointer-events-none" />
-                <Label className="text-sm cursor-pointer">Possui Transtornos que impactam a aprendizagem</Label>
+                <Label className="cursor-pointer">Possui Transtornos que impactam a aprendizagem</Label>
               </div>
 
               {hasTranstorno && (
                 <FormCard title="Tipos de Transtorno">
-                  <div className="grid grid-cols-2 gap-2">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                     {TRANSTORNO_CAMPOS.map(c => (
                       <div key={c.key} className="flex items-center gap-2 cursor-pointer" onClick={() => set(c.key, !form[c.key])}>
                         <Checkbox checked={form[c.key]} className="pointer-events-none" />
@@ -1088,7 +1170,7 @@ export function PessoaForm({ schoolId: propSchoolId, person, onSaved, onCancel }
 
               {(hasDeficiencia || hasTranstorno) && recursosDisponiveis.length > 0 && (
                 <FormCard title="Recursos de Acessibilidade" description="Recursos disponíveis conforme a(s) deficiência(s) selecionada(s) (Tabela INEP 2025)">
-                  <div className="grid grid-cols-2 gap-2">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                     {recursosDisponiveis.map(c => (
                       <div key={c.key} className="flex items-center gap-2 cursor-pointer" onClick={() => toggleRecurso(c.key)}>
                         <Checkbox checked={form[c.key]} className="pointer-events-none" />
@@ -1128,7 +1210,7 @@ export function PessoaForm({ schoolId: propSchoolId, person, onSaved, onCancel }
             </div>
             {form.pais_residencia === '76' && (
               <>
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label>CEP *</Label>
                     <Input value={form.cep} onChange={(e) => set('cep', e.target.value)} placeholder="00000-000" maxLength={8} />
@@ -1145,7 +1227,7 @@ export function PessoaForm({ schoolId: propSchoolId, person, onSaved, onCancel }
                   </div>
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label>Logradouro *</Label>
                     <Input value={form.logradouro} onChange={(e) => set('logradouro', e.target.value)} placeholder="Rua, Avenida..." />
@@ -1156,7 +1238,7 @@ export function PessoaForm({ schoolId: propSchoolId, person, onSaved, onCancel }
                   </div>
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label>Bairro *</Label>
                     <Input value={form.bairro} onChange={(e) => set('bairro', e.target.value)} placeholder="Bairro" />
@@ -1173,7 +1255,7 @@ export function PessoaForm({ schoolId: propSchoolId, person, onSaved, onCancel }
                 </div>
 
                 {!isResponsavel && (
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <Label>Zona de Residência *</Label>
                       <Select value={form.zona_residencia} onValueChange={(v) => set('zona_residencia', v)}>
@@ -1207,7 +1289,7 @@ export function PessoaForm({ schoolId: propSchoolId, person, onSaved, onCancel }
         {/* ===== ABA ESCOLARIDADE ===== */}
         {isProfissionalOuGestor && (
           <TabsContent value="escolaridade" className="space-y-5 ">
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label>Maior Nível de Escolaridade Concluído *</Label>
                 <Select value={form.escolaridade} onValueChange={(v) => set('escolaridade', v)}>
@@ -1242,7 +1324,7 @@ export function PessoaForm({ schoolId: propSchoolId, person, onSaved, onCancel }
                   <Card key={i}>
                     <CardContent className="pt-4 space-y-3">
                       <div className="flex items-center justify-between">
-                        <Label className="text-sm font-semibold">Curso Superior {i}</Label>
+                        <Label className="text-[16px] font-semibold">Curso Superior {i}</Label>
                         {i > 1 && (
                           <Button type="button" variant="ghost" size="icon-sm" onClick={() => {
                             for (const key of [`curso_superior_${i}`, `ano_conclusao_${i}`, `ies_${i}`]) set(key, '')
@@ -1252,11 +1334,11 @@ export function PessoaForm({ schoolId: propSchoolId, person, onSaved, onCancel }
                           </Button>
                         )}
                       </div>
-                      <div className="space-y-2"><Label className="text-xs">Curso</Label><Combobox options={CURSO_OPTIONS} value={form[`curso_superior_${i}`]} onChange={(v) => set(`curso_superior_${i}`, v)} searchThreshold={2} /></div>
-                      <div className="space-y-2"><Label className="text-xs">Instituição de Ensino Superior</Label><Combobox options={IES_OPTIONS} value={form[`ies_${i}`]} onChange={(v) => set(`ies_${i}`, v)} searchThreshold={2} /></div>
-                      <div className="grid grid-cols-3 gap-4">
+                      <div className="space-y-2"><Label>Curso</Label><Combobox options={CURSO_OPTIONS} value={form[`curso_superior_${i}`]} onChange={(v) => set(`curso_superior_${i}`, v)} searchThreshold={2} /></div>
+                      <div className="space-y-2"><Label>Instituição de Ensino Superior</Label><Combobox options={IES_OPTIONS} value={form[`ies_${i}`]} onChange={(v) => set(`ies_${i}`, v)} searchThreshold={2} /></div>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                         <div className="space-y-2">
-                          <Label className="text-xs">Situação *</Label>
+                          <Label>Situação *</Label>
                           <Select value={form[`curso_situacao_${i}`]} onValueChange={(v) => set(`curso_situacao_${i}`, v)}>
                             <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
                             <SelectContent>
@@ -1267,19 +1349,19 @@ export function PessoaForm({ schoolId: propSchoolId, person, onSaved, onCancel }
                         </div>
                         {form[`curso_situacao_${i}`] === 'concluido' && (
                           <div className="space-y-2">
-                            <Label className="text-xs">Data de Término *</Label>
+                            <Label>Data de Término *</Label>
                             <Input type="date" value={form[`curso_data_termino_${i}`] || ''} onChange={(e) => set(`curso_data_termino_${i}`, e.target.value)} />
                           </div>
                         )}
                         {form[`curso_situacao_${i}`] === 'cursando' && (
                           <div className="space-y-2">
-                            <Label className="text-xs">Data de Início *</Label>
+                            <Label>Data de Início *</Label>
                             <Input type="date" value={form[`curso_data_inicio_${i}`] || ''} onChange={(e) => set(`curso_data_inicio_${i}`, e.target.value)} />
                           </div>
                         )}
                         {form[`curso_situacao_${i}`] === 'concluido' && (
                           <div className="space-y-2">
-                            <Label className="text-xs">Carga Horária</Label>
+                            <Label>Carga Horária</Label>
                             <Input type="text" placeholder="HHHH:MM" pattern="\d{4}:\d{2}" value={form[`curso_carga_horaria_${i}`] || ''} onChange={(e) => set(`curso_carga_horaria_${i}`, e.target.value)} />
                           </div>
                         )}
@@ -1309,14 +1391,14 @@ export function PessoaForm({ schoolId: propSchoolId, person, onSaved, onCancel }
                   if (next) for (let i = 1; i <= 6; i++) { set(`pos_tipo_${i}`, ''); set(`pos_area_${i}`, ''); set(`pos_ano_${i}`, 0) }
                 }}>
                   <Checkbox checked={form.sem_pos} className="pointer-events-none" />
-                  <Label className="text-sm cursor-pointer">Não tem pós-graduação concluída</Label>
+                  <Label className="cursor-pointer">Não tem pós-graduação concluída</Label>
                 </div>
 
                 {!form.sem_pos && Array.from({ length: posCount }, (_, i) => i + 1).map(i => (
                   <Card key={i}>
                     <CardContent className="pt-4 space-y-3">
                       <div className="flex items-center justify-between">
-                        <Label className="text-sm font-semibold">Pós-Graduação {i}</Label>
+                        <Label className="text-[16px] font-semibold">Pós-Graduação {i}</Label>
                         {i > 1 && (
                           <Button type="button" variant="ghost" size="icon-sm" onClick={() => {
                             for (const key of [`pos_tipo_${i}`, `pos_area_${i}`, `pos_ano_${i}`]) set(key, '')
@@ -1326,9 +1408,9 @@ export function PessoaForm({ schoolId: propSchoolId, person, onSaved, onCancel }
                           </Button>
                         )}
                       </div>
-                      <div className="grid grid-cols-2 gap-4">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div className="space-y-2">
-                          <Label className="text-xs">Tipo</Label>
+                          <Label>Tipo</Label>
                           <Select value={form[`pos_tipo_${i}`]} onValueChange={(v) => set(`pos_tipo_${i}`, v)}>
                             <SelectTrigger><SelectValue placeholder="Tipo" /></SelectTrigger>
                             <SelectContent>
@@ -1338,10 +1420,10 @@ export function PessoaForm({ schoolId: propSchoolId, person, onSaved, onCancel }
                             </SelectContent>
                           </Select>
                         </div>
-                        <div className="space-y-2"><Label className="text-xs">Ano Conclusão</Label><Input type="number" value={form[`pos_ano_${i}`] || ''} onChange={(e) => set(`pos_ano_${i}`, parseInt(e.target.value) || 0)} /></div>
+                        <div className="space-y-2"><Label>Ano Conclusão</Label><Input type="number" value={form[`pos_ano_${i}`] || ''} onChange={(e) => set(`pos_ano_${i}`, parseInt(e.target.value) || 0)} /></div>
                       </div>
                       <div className="space-y-2">
-                        <Label className="text-xs">Área</Label>
+                        <Label>Área</Label>
                         <Select value={form[`pos_area_${i}`]} onValueChange={(v) => set(`pos_area_${i}`, v)}>
                           <SelectTrigger><SelectValue placeholder="Selecione a área" /></SelectTrigger>
                           <SelectContent>
@@ -1361,7 +1443,7 @@ export function PessoaForm({ schoolId: propSchoolId, person, onSaved, onCancel }
                 )}
               </>
             ) : (
-              <p className="text-sm text-muted-foreground">Disponível apenas para nível superior concluído.</p>
+              <p className="text-[15px] text-muted-foreground">Disponível apenas para nível superior concluído.</p>
             )}
           </TabsContent>
         )}
@@ -1373,9 +1455,9 @@ export function PessoaForm({ schoolId: propSchoolId, person, onSaved, onCancel }
             <FormCard title="Formação Continuada" description="Cursos de formação continuada com mínimo de 80h">
               <div className="flex items-center gap-2 pb-3 cursor-pointer" onClick={nenhumaFormacao}>
                 <Checkbox checked={form.sem_formacao} className="pointer-events-none" />
-                <Label className="text-sm cursor-pointer">Nenhum</Label>
+                <Label className="cursor-pointer">Nenhum</Label>
               </div>
-              <div className="grid grid-cols-2 gap-2">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                 {FORMACAO_CAMPOS.map(c => (
                   <div key={c.key} className="flex items-center gap-2 cursor-pointer" onClick={() => marcaFormacao(c.key)}>
                     <Checkbox checked={form[c.key]} className="pointer-events-none" />
@@ -1438,7 +1520,7 @@ export function PessoaForm({ schoolId: propSchoolId, person, onSaved, onCancel }
         {isProfissionalOuGestor && (
           <TabsContent value="vinculo" className="space-y-4">
             <div className="flex items-center justify-between">
-              <Label className="text-sm font-semibold">Vínculos Profissionais</Label>
+              <Label className="text-[16px] font-semibold">Vínculos Profissionais</Label>
               <Button variant="outline" size="sm" onClick={adicionarVinculoProfissional} className="border-border">
                 <Plus className="mr-1 h-3.5 w-3.5" /> Adicionar Vínculo
               </Button>
@@ -1459,7 +1541,7 @@ export function PessoaForm({ schoolId: propSchoolId, person, onSaved, onCancel }
                     </Button>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <Label>Regime de Contratação *</Label>
                       <Select value={v.regime_contratacao || ''} onValueChange={(val) => updateVinculoProfissionalState(idx, 'regime_contratacao', val)}>
@@ -1485,7 +1567,7 @@ export function PessoaForm({ schoolId: propSchoolId, person, onSaved, onCancel }
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-3 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                     <div className="space-y-2">
                       <Label>Situação *</Label>
                       <Select value={v.situacao || ''} onValueChange={(val) => {
@@ -1512,7 +1594,7 @@ export function PessoaForm({ schoolId: propSchoolId, person, onSaved, onCancel }
                   </div>
 
                   {v.situacao === '2' && (
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div className="space-y-2">
                         <Label>Data de Início do Afastamento *</Label>
                         <Input type="date" value={v.data_inicio_afastamento || ''} onChange={(e) => updateVinculoProfissionalState(idx, 'data_inicio_afastamento', e.target.value)} />
@@ -1552,7 +1634,7 @@ export function PessoaForm({ schoolId: propSchoolId, person, onSaved, onCancel }
               <Label>E-mail</Label>
               <Input type="email" value={form.email} onChange={(e) => set('email', e.target.value)} placeholder="email@exemplo.com" />
             </div>
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label>Telefone Celular *</Label>
                 <Input value={form.telefone_celular} onChange={(e) => set('telefone_celular', e.target.value)} placeholder="(00) 00000-0000" maxLength={11} />
@@ -1569,7 +1651,7 @@ export function PessoaForm({ schoolId: propSchoolId, person, onSaved, onCancel }
 
             <FormCard title="Vínculo com Alunos">
               <div className="space-y-2">
-                <Label className="text-xs">Buscar Aluno</Label>
+                <Label>Buscar Aluno</Label>
                 <Input
                   placeholder="Digite o nome do aluno (mín. 2 caracteres)"
                   value={alunosSearch}
@@ -1594,7 +1676,7 @@ export function PessoaForm({ schoolId: propSchoolId, person, onSaved, onCancel }
                         <span className="text-sm font-medium">{v.aluno_nome}</span>
                         <div className="flex flex-wrap gap-2">
                           <Select value={v.tipo_vinculo} onValueChange={(val) => updateVinculo(idx, 'tipo_vinculo', val)}>
-                            <SelectTrigger className="w-36 h-7 text-xs"><SelectValue /></SelectTrigger>
+                            <SelectTrigger className="w-36 h-7 text-[13px]"><SelectValue /></SelectTrigger>
                             <SelectContent>
                               {TIPOS_VINCULO.map(t => <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>)}
                             </SelectContent>
@@ -1602,7 +1684,7 @@ export function PessoaForm({ schoolId: propSchoolId, person, onSaved, onCancel }
                           <TooltipProvider delayDuration={300}>
                             <Tooltip>
                               <TooltipTrigger asChild>
-                                <div className="flex items-center gap-1 text-xs cursor-pointer" onClick={() => updateVinculo(idx, 'principal', !v.principal)}>
+                                <div className="flex items-center gap-1 text-[13px] cursor-pointer" onClick={() => updateVinculo(idx, 'principal', !v.principal)}>
                                   <Checkbox checked={v.principal} className="size-3 pointer-events-none" />
                                   Principal
                                 </div>
@@ -1615,7 +1697,7 @@ export function PessoaForm({ schoolId: propSchoolId, person, onSaved, onCancel }
                           <TooltipProvider delayDuration={300}>
                             <Tooltip>
                               <TooltipTrigger asChild>
-                                <div className="flex items-center gap-1 text-xs cursor-pointer" onClick={() => updateVinculo(idx, 'autorizado_retirar', !v.autorizado_retirar)}>
+                                <div className="flex items-center gap-1 text-[13px] cursor-pointer" onClick={() => updateVinculo(idx, 'autorizado_retirar', !v.autorizado_retirar)}>
                                   <Checkbox checked={v.autorizado_retirar} className="size-3 pointer-events-none" />
                                   Retirar
                                 </div>
@@ -1628,7 +1710,7 @@ export function PessoaForm({ schoolId: propSchoolId, person, onSaved, onCancel }
                           <TooltipProvider delayDuration={300}>
                             <Tooltip>
                               <TooltipTrigger asChild>
-                                <div className="flex items-center gap-1 text-xs cursor-pointer" onClick={() => updateVinculo(idx, 'receber_comunicados', !v.receber_comunicados)}>
+                                <div className="flex items-center gap-1 text-[13px] cursor-pointer" onClick={() => updateVinculo(idx, 'receber_comunicados', !v.receber_comunicados)}>
                                   <Checkbox checked={v.receber_comunicados} className="size-3 pointer-events-none" />
                                   Comunicados
                                 </div>
@@ -1640,7 +1722,7 @@ export function PessoaForm({ schoolId: propSchoolId, person, onSaved, onCancel }
                           </TooltipProvider>
                         </div>
                       </div>
-                      <Button type="button" variant="link" onClick={() => removerVinculo(idx)} className="text-destructive text-xs ml-2 h-auto p-0">
+                      <Button type="button" variant="link" onClick={() => removerVinculo(idx)} className="text-destructive text-[13px] ml-2 h-auto p-0">
                         Remover
                       </Button>
                     </div>
@@ -1662,3 +1744,4 @@ export function PessoaForm({ schoolId: propSchoolId, person, onSaved, onCancel }
     </div>
   )
 }
+

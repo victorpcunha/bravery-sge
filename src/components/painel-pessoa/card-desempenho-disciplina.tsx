@@ -59,19 +59,21 @@ export default function CardDesempenhoDisciplina({ pessoaId, turmaId, pessoaLoga
   return (
     <Card className="h-full">
       <CardHeader className="pb-3">
-        <div className="flex items-center justify-between">
-          <CardTitle className="text-base font-semibold flex items-center gap-2">
+        <div className="flex items-center justify-between gap-2">
+          <CardTitle className="text-[15px] font-semibold flex items-center gap-2">
             <BarChart3 className="h-4 w-4 text-accent" />
             Desempenho por Disciplina
           </CardTitle>
           {periodos.length > 0 && (
             <Select value={periodo} onValueChange={setPeriodo}>
-              <SelectTrigger size="sm" className="w-[130px] text-xs">
+              <SelectTrigger size="sm" className="w-[130px]">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
                 {periodos.map(p => (
-                  <SelectItem key={p.numero} value={String(p.numero)} className="text-xs">{p.label}</SelectItem>
+                  <SelectItem key={p.numero} value={String(p.numero)}>
+                    {p.label}
+                  </SelectItem>
                 ))}
               </SelectContent>
             </Select>
@@ -82,7 +84,7 @@ export default function CardDesempenhoDisciplina({ pessoaId, turmaId, pessoaLoga
         {loadingPeriodos || loadingGrafico ? (
           <div className="h-64 animate-pulse bg-muted rounded-lg" />
         ) : chartData.length === 0 ? (
-          <p className="text-sm text-muted-foreground text-center py-12">
+          <p className="text-[14px] text-muted-foreground text-center py-12">
             Nenhum dado de desempenho disponível para este período.
           </p>
         ) : (

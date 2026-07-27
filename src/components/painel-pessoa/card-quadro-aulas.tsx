@@ -34,8 +34,15 @@ export default function CardQuadroAulas({ turmaId, pessoaLogadaId }: Props) {
   if (loading) {
     return (
       <Card>
-        <CardHeader><CardTitle className="text-sm flex items-center gap-2"><Calendar className="h-4 w-4" />Quadro de Aulas</CardTitle></CardHeader>
-        <CardContent><Loader2 className="h-4 w-4 animate-spin text-muted-foreground" /></CardContent>
+        <CardHeader>
+          <CardTitle className="text-[15px] flex items-center gap-2">
+            <Calendar className="h-4 w-4" />
+            Quadro de Aulas
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+        </CardContent>
       </Card>
     )
   }
@@ -44,13 +51,13 @@ export default function CardQuadroAulas({ turmaId, pessoaLogadaId }: Props) {
     return (
       <Card>
         <CardHeader className="pb-2">
-          <CardTitle className="text-sm flex items-center gap-2">
+          <CardTitle className="text-[15px] flex items-center gap-2">
             <Calendar className="h-4 w-4 text-info" />
             Quadro de Aulas
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <p className="text-sm text-muted-foreground">Nenhum quadro de aulas configurado para esta turma.</p>
+          <p className="text-[14px] text-muted-foreground">Nenhum quadro de aulas configurado para esta turma.</p>
         </CardContent>
       </Card>
     )
@@ -71,47 +78,49 @@ export default function CardQuadroAulas({ turmaId, pessoaLogadaId }: Props) {
   const diasUteis = [1, 2, 3, 4, 5]
 
   return (
-<Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="text-base font-semibold flex items-center gap-2">
-            <Calendar className="h-4 w-4 text-info" />
-            Quadro de Aulas
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="py-4">
-          <Table className="border border-border rounded-lg overflow-hidden">
-          <TableHeader>
-            <TableRow>
-              <TableHead className="sticky left-0 bg-muted z-10 text-xs uppercase tracking-wider">Horário</TableHead>
-              {diasUteis.map(dia => (
-                <TableHead key={dia} className="text-center text-xs uppercase tracking-wider min-w-[100px]">
-                  {DIAS_SEMANA_LABEL[dia]}
-                </TableHead>
-              ))}
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {horarios.map(horario => (
-              <TableRow key={horario}>
-                <TableCell className="sticky left-0 bg-card z-10 text-xs text-muted-foreground font-mono whitespace-nowrap">
-                  {horario}
-                </TableCell>
-                {diasUteis.map(dia => {
-                  const nome = mapa.get(`${dia}|${horario}`)
-                  return (
-                    <TableCell key={dia} className="text-center text-sm">
-                      {nome ? (
-                        <span className="font-medium text-foreground">{nome}</span>
-                      ) : (
-                        <span className="text-muted-foreground">—</span>
-                      )}
-                    </TableCell>
-                  )
-                })}
+    <Card>
+      <CardHeader className="pb-3">
+        <CardTitle className="text-[15px] font-semibold flex items-center gap-2">
+          <Calendar className="h-4 w-4 text-info" />
+          Quadro de Aulas
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="py-4">
+        <div className="overflow-x-auto rounded-lg border border-border">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead className="sticky left-0 bg-muted z-10 text-[13px] uppercase tracking-wider">Horário</TableHead>
+                {diasUteis.map(dia => (
+                  <TableHead key={dia} className="text-center text-[13px] uppercase tracking-wider min-w-[100px]">
+                    {DIAS_SEMANA_LABEL[dia]}
+                  </TableHead>
+                ))}
               </TableRow>
-            ))}
-          </TableBody>
-        </Table>
+            </TableHeader>
+            <TableBody>
+              {horarios.map(horario => (
+                <TableRow key={horario}>
+                  <TableCell className="sticky left-0 bg-card z-10 text-[13px] text-muted-foreground font-mono whitespace-nowrap">
+                    {horario}
+                  </TableCell>
+                  {diasUteis.map(dia => {
+                    const nome = mapa.get(`${dia}|${horario}`)
+                    return (
+                      <TableCell key={dia} className="text-center text-[14px]">
+                        {nome ? (
+                          <span className="font-medium text-foreground">{nome}</span>
+                        ) : (
+                          <span className="text-muted-foreground">—</span>
+                        )}
+                      </TableCell>
+                    )
+                  })}
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
       </CardContent>
     </Card>
   )

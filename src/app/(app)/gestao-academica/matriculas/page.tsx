@@ -1,252 +1,191 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { useAuth } from '@/components/providers/auth-provider'
 import { Button } from '@/components/ui/button'
-import { Label } from '@/components/ui/label'
+import { Card, CardContent } from '@/components/ui/card'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { Label } from '@/components/ui/label'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
-import { EmptyState } from '@/components/ui/empty-state'
-import { toast } from 'sonner'
-import { Plus, DoorOpen, GraduationCap } from 'lucide-react'
 import { PageContainer } from '@/components/layout/page-container'
 import { PageHeader } from '@/components/layout/page-header'
 import { PageSection } from '@/components/layout/page-section'
 import { FilterBar } from '@/components/layout/filter-bar'
+import { EmptyState } from '@/components/ui/empty-state'
 import { StatusBadge } from '@/components/feedback/status-badge'
+import { Plus, DoorOpen, GraduationCap, Pencil } from 'lucide-react'
+import { getMatriculas } from '@/lib/actions/matriculas'
 import { getAnosLetivosAtivos } from '@/lib/actions/quadro-aulas'
-import { getMatriculas, getTurmasAtivas, type FiltrosMatriculas } from '@/lib/actions/matriculas'
-import { getEtapasEnsino } from '@/lib/actions/etapas-ensino'
+import { toast } from 'sonner'
 
-function formatData(data: string) {
-  if (!data) return ''
-  const d = new Date(data + 'T00:00:00')
-  return d.toLocaleDateString('pt-BR')
+function formatDate(d: string) {
+  if (!d) return ''
+  const [y, m, day] = d.split('T')[0].split('-')
+  if (!y || !m || !day) return d
+  return `${day}/${m}/${y}`
 }
 
-function mapSituationToStatus(situacao: string): 'success' | 'warning' | 'destructive' | 'info' | 'muted' {
-  if (['Ativo', 'Aprovado', 'Aprovado por conselho de classe'].includes(situacao)) return 'success'
-  if (['Transferido', 'Reclassificado', 'Remanejado'].includes(situacao)) return 'info'
-  if (['Desistente', 'Reprovado por frequência'].includes(situacao)) return 'warning'
-  if (['Reprovado'].includes(situacao)) return 'destructive'
-  return 'muted'
+function mapSituacao(status: string): 'success' | 'warning' | 'destructive' | 'muted' | 'info' {
+  const lower = (status || '').toLowerCase()
+  if (lower.includes('ativo') || lower.includes('cursando')) return 'success'
+  if (lower.includes('aprovado') || lower.includes('concluído') || lower.includes('concluido')) return 'success'
+  if (lower.includes('transferido') || lower.includes('remanejado') || lower.includes('reclassificado')) return 'info'
+  if (lower.includes('desist') || lower.includes('abandono') || lower.includes('cancelado')) return 'destructive'
+  if (lower.includes('inativo')) return 'muted'
+  return 'info'
 }
 
-export default function MatriculasPage() {
+const SITUACOES = ['Ativo', 'Transferido', 'Desistente', 'Concluído']
+
+export default function AlunosMatriculadosPage() {
+  const { user, schoolId, isSuperAdmin, allSchools, loading: authLoading } = useAuth()
   const router = useRouter()
-  const { user, schoolId, loading: authLoading } = useAuth()
-
-  const [anosLetivos, setAnosLetivos] = useState<any[]>([])
-  const [turmas, setTurmas] = useState<any[]>([])
-  const [etapas, setEtapas] = useState<any[]>([])
-
-  const [filtroAno, setFiltroAno] = useState('')
-  const [filtroTurma, setFiltroTurma] = useState('')
-  const [filtroEtapa, setFiltroEtapa] = useState('')
-
   const [matriculas, setMatriculas] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
+  const [selectedSchoolId, setSelectedSchoolId] = useState<string | null>(null)
+  const [search, setSearch] = useState('')
+  const [situacaoFilter, setSituacaoFilter] = useState('__all__')
+  const [anoLetivoFiltro, setAnoLetivoFiltro] = useState('')
+  const [anosLetivos, setAnosLetivos] = useState<any[]>([])
+
+  useEffect(() => { if (!authLoading && !user) router.push('/login') }, [user, authLoading, router])
+
+  const effectiveSchoolId = selectedSchoolId || schoolId
 
   useEffect(() => {
-    if (!authLoading && !user) router.push('/login')
-  }, [user, authLoading, router])
-
-  useEffect(() => {
-    if (!user) return
-    loadInitial()
-  }, [user])
-
-  const loadInitial = async () => {
-    try {
-      const [anos, etapasList] = await Promise.all([
-        getAnosLetivosAtivos(schoolId!),
-        getEtapasEnsino(schoolId!),
-      ])
+    if (isSuperAdmin && allSchools.length > 0 && !selectedSchoolId) return
+    if (!effectiveSchoolId) { setLoading(false); return }
+    getAnosLetivosAtivos(effectiveSchoolId).then(anos => {
       setAnosLetivos(anos)
-      setEtapas(etapasList)
       const ativo = anos.find((a: any) => a.status === 'ativo')
-      if (ativo) setFiltroAno(ativo.id)
-    } catch (e) {
-      console.error('Erro init:', e)
-      toast.error('Erro ao carregar dados')
-    } finally {
-      setLoading(false)
-    }
-  }
+      if (ativo) setAnoLetivoFiltro(ativo.id)
+      else if (anos.length > 0) setAnoLetivoFiltro(anos[0].id)
+    })
+  }, [effectiveSchoolId, isSuperAdmin, allSchools, selectedSchoolId])
 
-  useEffect(() => {
-    if (!filtroAno) return
-    loadTurmas()
-  }, [schoolId, filtroAno])
-
-  const loadTurmas = async () => {
-    try {
-      const data = await getTurmasAtivas(schoolId!, filtroAno)
-      setTurmas(data)
-    } catch (e) {
-      console.error('Erro ao carregar turmas:', e)
-    }
-  }
-
-  useEffect(() => {
-    loadMatriculas()
-  }, [schoolId, filtroAno, filtroTurma, filtroEtapa])
-
-  const loadMatriculas = async () => {
+  const loadMatriculas = useCallback(async () => {
+    if (!effectiveSchoolId) return
     setLoading(true)
     try {
-      const filtros: FiltrosMatriculas = {}
-      if (filtroAno) filtros.ano_letivo_id = filtroAno
-      if (filtroTurma) filtros.turma_id = filtroTurma
-      if (filtroEtapa) filtros.etapa_ensino_id = filtroEtapa
-
-      const data = await getMatriculas(schoolId!, filtros)
+      const data = await getMatriculas(effectiveSchoolId, { ano_letivo_id: anoLetivoFiltro || undefined })
       setMatriculas(data)
-    } catch (e) {
-      console.error('Erro ao carregar matrículas:', e)
-      toast.error('Erro ao carregar matrículas')
-    } finally {
-      setLoading(false)
-    }
-  }
+    } catch { toast.error('Erro ao carregar matrículas') }
+    finally { setLoading(false) }
+  }, [effectiveSchoolId, anoLetivoFiltro])
+
+  useEffect(() => { loadMatriculas() }, [loadMatriculas])
+
+  const filtered = matriculas.filter(m => {
+    const nome = m.aluno?.nome_completo || m.pessoa?.nome_completo || ''
+    if (search && !nome.toLowerCase().includes(search.toLowerCase())) return false
+    if (situacaoFilter !== '__all__' && (m.status || 'Ativo') !== situacaoFilter) return false
+    return true
+  })
 
   if (authLoading) {
-    return (
-      <PageContainer>
-        <div className="text-center text-muted-foreground py-8">Carregando...</div>
-      </PageContainer>
-    )
+    return <PageContainer><div className="flex items-center justify-center py-16"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" /></div></PageContainer>
   }
 
   return (
     <PageContainer>
       <PageHeader
-          icon={GraduationCap}
-          title="Alunos Matriculados"
-          description="Gerencie as matrículas dos alunos nas turmas"
-        actions={
-          <Link href="/gestao-academica/matriculas/cadastro">
-            <Button>
-              <Plus className="h-4 w-4" />
-              Nova Matrícula
-            </Button>
-          </Link>
-        }
+        icon={GraduationCap}
+        title="Alunos Matriculados"
+        description="Gerencie as matrículas dos alunos nas turmas"
       />
 
-      <div className="space-y-6">
-        <PageSection variant="compact" title="Filtros">
-          <FilterBar>
-            <div className="w-48">
+      <PageSection variant="compact" title="Filtros" className="mb-6">
+        <FilterBar searchValue={search} onSearchChange={setSearch} searchPlaceholder="Buscar por nome do aluno...">
+          {isSuperAdmin && allSchools.length > 0 && (
+            <Select value={selectedSchoolId ?? ''} onValueChange={(v) => { setSelectedSchoolId(v || null); setAnoLetivoFiltro('') }}>
+              <SelectTrigger className="w-auto min-w-[200px] h-9 border-border">
+                <SelectValue placeholder="Selecione uma Escola" />
+              </SelectTrigger>
+              <SelectContent>
+                {allSchools.map((s: any) => <SelectItem key={s.id} value={s.id}>{s.nome_escola}</SelectItem>)}
+              </SelectContent>
+            </Select>
+          )}
+        </FilterBar>
+        <div className="flex items-end gap-4 flex-wrap mt-3">
+          {anosLetivos.length > 0 && (
+            <div>
               <Label className="text-xs text-muted-foreground mb-1 block">Ano Letivo</Label>
-              <Select value={filtroAno} onValueChange={v => { setFiltroAno(v); setFiltroTurma(''); setFiltroEtapa('') }}>
-                <SelectTrigger className="h-9 border-border">
-                  <SelectValue placeholder="Selecione" />
-                </SelectTrigger>
-                <SelectContent>
-                  {anosLetivos.map((a: any) => (
-                    <SelectItem key={a.id} value={a.id}>{a.descricao}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+            <Select value={anoLetivoFiltro} onValueChange={setAnoLetivoFiltro}>
+              <SelectTrigger className="w-auto min-w-[140px] h-9 border-border">
+                <SelectValue placeholder="Selecione" />
+              </SelectTrigger>
+              <SelectContent>
+                {anosLetivos.map((a: any) => <SelectItem key={a.id} value={a.id}>{a.descricao}</SelectItem>)}
+              </SelectContent>
+            </Select>
             </div>
-            <div className="w-56">
-              <Label className="text-xs text-muted-foreground mb-1 block">Turma</Label>
-              <Select value={filtroTurma} onValueChange={v => { setFiltroTurma(v); setFiltroEtapa('') }}>
-                <SelectTrigger className="h-9 border-border">
-                  <SelectValue placeholder="Todas" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Todas</SelectItem>
-                  {turmas.map((t: any) => (
-                    <SelectItem key={t.id} value={t.id}>{t.nome}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="w-56">
-              <Label className="text-xs text-muted-foreground mb-1 block">Etapa</Label>
-              <Select value={filtroEtapa} onValueChange={v => setFiltroEtapa(v === 'all' ? '' : v)}>
-                <SelectTrigger className="h-9 border-border">
-                  <SelectValue placeholder="Todas" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Todas</SelectItem>
-                  {etapas.map((e: any) => (
-                    <SelectItem key={e.id} value={e.id}>{e.etapa_nome}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          </FilterBar>
-        </PageSection>
+          )}
+          <div>
+            <Label className="text-xs text-muted-foreground mb-1 block">Situação</Label>
+          <Select value={situacaoFilter} onValueChange={setSituacaoFilter}>
+            <SelectTrigger className="w-auto min-w-[140px] h-9 border-border">
+              <SelectValue placeholder="Todas" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="__all__">Todas</SelectItem>
+              {SITUACOES.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+            </SelectContent>
+          </Select>
+          </div>
+        </div>
+      </PageSection>
 
-        <PageSection
-          variant="flush"
-          title={`${matriculas.length} matrícula${matriculas.length !== 1 ? 's' : ''} encontrada${matriculas.length !== 1 ? 's' : ''}`}
-        >
-          {loading ? (
-            <div className="p-12 text-center">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-3" />
-              <p className="text-sm text-muted-foreground">Carregando...</p>
-            </div>
-          ) : matriculas.length === 0 ? (
-            <EmptyState
-              icon={DoorOpen}
-              title="Nenhuma matrícula encontrada"
-              description='Clique em "Nova Matrícula" para começar.'
-              action={
-                <Link href="/gestao-academica/matriculas/cadastro">
-                  <Button>
-                    <Plus className="h-4 w-4" />
-                    Nova Matrícula
-                  </Button>
-                </Link>
-              }
-            />
-          ) : (
+      {isSuperAdmin && !selectedSchoolId ? (
+        <Card className="shadow-sm"><CardContent className="py-16"><EmptyState icon={DoorOpen} title="Selecione uma Escola" description="Escolha uma escola para ver as matrículas." /></CardContent></Card>
+      ) : loading ? (
+        <Card className="shadow-sm"><CardContent className="p-6 space-y-3">{[1,2,3].map(i => <div key={i} className="h-10 bg-muted rounded-lg animate-pulse" />)}</CardContent></Card>
+      ) : filtered.length === 0 ? (
+        <Card className="shadow-sm"><CardContent className="py-16"><EmptyState icon={DoorOpen} title={search ? 'Nenhum aluno encontrado' : 'Nenhuma matrícula'} description={search ? 'Tente outro nome.' : 'Cadastre a primeira matrícula.'} action={<Link href="/gestao-academica/matriculas/cadastro"><Button><Plus className="mr-2 h-4 w-4" />Nova Matrícula</Button></Link>} /></CardContent></Card>
+      ) : (
+        <PageSection variant="flush" title={`${filtered.length} aluno(s) matriculado(s)`} actions={
+          <Link href="/gestao-academica/matriculas/cadastro"><Button size="sm"><Plus className="mr-2 h-4 w-4" />Nova Matrícula</Button></Link>
+        }>
+          <div className="px-4">
             <Table>
-              <TableHeader className="bg-muted">
+              <TableHeader>
                 <TableRow>
-                  <TableHead className="text-xs uppercase">Aluno</TableHead>
-                  <TableHead className="text-xs uppercase">Turma</TableHead>
-                  <TableHead className="text-xs uppercase">Etapa</TableHead>
-                  <TableHead className="text-xs uppercase">Data Matrícula</TableHead>
-                  <TableHead className="text-xs uppercase">Situação</TableHead>
-                  <TableHead className="text-xs uppercase text-right">Ações</TableHead>
+                  <TableHead>Aluno</TableHead>
+                  <TableHead>Turma</TableHead>
+                  <TableHead>Etapa</TableHead>
+                  <TableHead>Data Matrícula</TableHead>
+                  <TableHead>Situação</TableHead>
+                  <TableHead className="w-[90px]">Ações</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {matriculas.map((m: any) => (
-                  <TableRow key={m.id}>
-                    <TableCell>
-                      <div className="font-medium text-foreground">{m.aluno?.nome_completo || '—'}</div>
-                      <div className="text-[11px] text-muted-foreground">{m.aluno?.cpf || ''}</div>
-                    </TableCell>
-                    <TableCell className="text-muted-foreground">{m.turma?.nome || '—'}</TableCell>
-                    <TableCell className="text-muted-foreground">{m.etapa?.etapa_nome || '—'}</TableCell>
-                    <TableCell className="text-muted-foreground">{formatData(m.data_matricula)}</TableCell>
-                    <TableCell>
-                      <StatusBadge status={mapSituationToStatus(m.situacao)} className="text-[11px] px-1.5 py-0">
-                        {m.situacao}
-                      </StatusBadge>
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <Link href={`/gestao-academica/matriculas/cadastro?id=${m.id}`}>
-                        <Button variant="ghost" size="sm" className="h-7 text-xs">
-                          Editar
+                {filtered.map(m => {
+                  const status = m.status || 'Ativo'
+                  return (
+                    <TableRow key={m.id}>
+                      <TableCell>
+                        <span className="font-medium text-foreground">{m.aluno?.nome_completo || m.pessoa?.nome_completo}</span>
+                        {m.aluno?.cpf && <span className="text-[11px] text-muted-foreground block">CPF: {m.aluno.cpf}</span>}
+                      </TableCell>
+                      <TableCell className="text-muted-foreground">{m.turma?.nome || '—'}</TableCell>
+                      <TableCell className="text-muted-foreground">{m.etapa_ensino?.etapa_nome || '—'}</TableCell>
+                      <TableCell className="text-muted-foreground">{formatDate(m.data_matricula)}</TableCell>
+                      <TableCell><StatusBadge status={mapSituacao(status)}>{status}</StatusBadge></TableCell>
+                      <TableCell>
+                        <Button variant="ghost" size="icon-sm" asChild>
+                          <Link href={`/gestao-academica/matriculas/cadastro?id=${m.id}`}><Pencil className="h-4 w-4" /></Link>
                         </Button>
-                      </Link>
-                    </TableCell>
-                  </TableRow>
-                ))}
+                      </TableCell>
+                    </TableRow>
+                  )
+                })}
               </TableBody>
             </Table>
-          )}
+          </div>
         </PageSection>
-      </div>
+      )}
     </PageContainer>
   )
 }

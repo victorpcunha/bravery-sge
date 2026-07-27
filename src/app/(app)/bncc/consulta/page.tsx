@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { getSupabaseClient } from '@/lib/auth'
+import { getEtapasEnsino } from '@/lib/actions/etapas-ensino'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue, SelectGroup, SelectLabel } from '@/components/ui/select'
 import { Badge } from '@/components/ui/badge'
@@ -20,43 +21,18 @@ type EtapaEnsino = {
 type Disciplina = { id: string; nome: string; tipo_ensino: string }
 type AreaConhecimento = { id: string; nome: string }
 
-type Habilidade = {
-  id: string
-  codigo_bncc: string
-  descricao: string
-  anos: string[]
-  etapa_ensino: string
-  objeto_conhecimento: {
-    id: string
-    objeto_conhecimento: string
-    unidade_tematica: {
-      id: string
-      unidade_tematica: string
-      disciplina: string
-    }
-  }
-}
-
-type BNCCObjetivo = {
-  id: string
-  codigo_bncc: string
-  descricao: string
-  faixa_etaria: string
-  campo_experiencia: string
-}
-
-type HabilidadeMedio = {
-  id: string
-  codigo: string
-  descricao: string
-  competencia_codigo: string
-}
-
 function getBroadTipo(tipo: string): 'infantil' | 'fundamental' | 'medio' {
   const t = tipo.toLowerCase()
   if (t.includes('infantil') || t.includes('creche') || t.includes('pre')) return 'infantil'
   if (t.includes('fundamental') || t.includes('ano')) return 'fundamental'
   return 'medio'
+}
+
+function getEtapaDb(nome: string): string {
+  const n = nome?.toLowerCase() || ''
+  if (n.includes('creche')) return 'creche'
+  if (n.includes('pre') || n.includes('pré')) return 'pre-escola'
+  return nome
 }
 
 export default function BNCCConsultaPage() {
@@ -102,18 +78,13 @@ export default function BNCCConsultaPage() {
   }, [etapa, faixaEtaria, disciplina, areaId])
 
   async function loadEtapas() {
-    const supabase = getSupabaseClient()
-    const { data } = await supabase
-      .from('academico_etapas_ensino')
-      .select('id, etapa_nome, etapa_tipo, etapa_codigo')
-      .eq('school_id', schoolId)
-      .eq('ativa', true)
-      .order('etapa_codigo')
-    if (data) {
-      setEtapas(data)
-      if (!etapa && data.length > 0) {
-        setEtapa(data[0].etapa_nome)
-        setEtapaTipo(data[0].etapa_tipo)
+    const data = await getEtapasEnsino(schoolId)
+    if (data && data.length > 0) {
+      const filtered = data.filter(e => !e.etapa_nome?.toLowerCase().includes('unificada'))
+      setEtapas(filtered)
+      if (!etapa && filtered.length > 0) {
+        setEtapa(filtered[0].etapa_nome)
+        setEtapaTipo(filtered[0].etapa_tipo)
       }
     }
   }
@@ -133,7 +104,11 @@ export default function BNCCConsultaPage() {
       .eq('ativo', true)
       .in('nome', nomesBncc)
       .order('nome')
-    if (data) setDisciplinas(data)
+    if (data && data.length > 0) {
+      setDisciplinas(data)
+    } else {
+      setDisciplinas(nomesBncc.map(n => ({ id: n, nome: n, tipo_ensino: '' })))
+    }
   }
 
   async function loadAreas() {
@@ -148,15 +123,15 @@ export default function BNCCConsultaPage() {
 
   async function loadFaixas() {
     const supabase = getSupabaseClient()
+    const etapaDb = getEtapaDb(etapa || '')
     const { data } = await supabase
       .from('bncc_objetivos')
       .select('faixa_etaria')
-      .eq('etapa', etapa)
+      .eq('etapa', etapaDb)
       .not('faixa_etaria', 'is', null)
     if (data) {
       const unique = [...new Set(data.map(d => d.faixa_etaria))].filter(Boolean) as string[]
       setFaixas(unique)
-      if (!faixaEtaria && unique.length > 0) setFaixaEtaria(unique[0])
     }
   }
 
@@ -168,7 +143,7 @@ export default function BNCCConsultaPage() {
 
     try {
       if (tipo === 'infantil') {
-        let q = supabase.from('bncc_objetivos').select('*').eq('etapa', etapa)
+        let q = supabase.from('bncc_objetivos').select('*').eq('etapa', getEtapaDb(etapa))
         if (faixaEtaria) q = q.eq('faixa_etaria', faixaEtaria)
         const { data } = await q
         setDados(data || [])
@@ -184,7 +159,13 @@ export default function BNCCConsultaPage() {
           q = q.eq('objeto_conhecimento.unidade_tematica.disciplina', disciplina)
         }
         const { data } = await q
-        setDados((data || []) as any[])
+        // Filtrar pelo ano escolar no cliente (contorna bug do contains JSONB)
+        const anoMatch = etapa.match(/(\d+)º/)
+        const anoEscolar = anoMatch ? `${anoMatch[1]}º` : null
+        const filtered = anoEscolar
+          ? (data || []).filter((h: any) => Array.isArray(h.anos) && h.anos.includes(anoEscolar))
+          : (data || [])
+        setDados(filtered as any[])
       } else {
         let q = supabase.from('bncc_habilidades_medio')
           .select('id, codigo, descricao, competencia_codigo')
@@ -262,11 +243,10 @@ export default function BNCCConsultaPage() {
               <div>
                 <label className="text-sm font-medium mb-2 block text-foreground">Faixa Etária</label>
                 <Select value={faixaEtaria} onValueChange={setFaixaEtaria}>
-                  <SelectTrigger className="border-border focus:border-primary [&_svg:not([class*='rotate'])]:rotate-0">
-                    <SelectValue placeholder="Todas" />
+                  <SelectTrigger className="border-border focus:border-primary min-w-[240px] [&_svg:not([class*='rotate'])]:rotate-0 [&>span]:truncate">
+                    <SelectValue placeholder="Selecione uma faixa etária" />
                   </SelectTrigger>
                   <SelectContent position="popper" side="bottom" sideOffset={5}>
-                    <SelectItem value="all">Todas</SelectItem>
                     {faixas.map(f => (
                       <SelectItem key={f} value={f}>{f}</SelectItem>
                     ))}
@@ -280,10 +260,9 @@ export default function BNCCConsultaPage() {
                 <label className="text-sm font-medium mb-2 block text-foreground">Disciplina</label>
                 <Select value={disciplina} onValueChange={setDisciplina}>
                   <SelectTrigger className="border-border focus:border-primary [&_svg:not([class*='rotate'])]:rotate-0">
-                    <SelectValue placeholder="Todas" />
+                    <SelectValue placeholder="Selecione uma disciplina" />
                   </SelectTrigger>
                   <SelectContent position="popper" side="bottom" sideOffset={5}>
-                    <SelectItem value="all">Todas</SelectItem>
                     {disciplinas.map(d => (
                       <SelectItem key={d.id} value={d.nome}>{d.nome}</SelectItem>
                     ))}

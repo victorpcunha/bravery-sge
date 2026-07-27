@@ -2,8 +2,6 @@
 
 import { useState } from 'react'
 import { type IndicadoresAvaliados } from '@/lib/actions/painel-pessoa'
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
-import { ScrollArea } from '@/components/ui/scroll-area'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { ChevronDown, ChevronUp } from 'lucide-react'
 
@@ -18,25 +16,36 @@ export default function ExpansaoIndicadores({ data }: Props) {
 
   return (
     <div className="py-2">
-      <div className="flex items-center gap-2 cursor-pointer" onClick={() => setOpen(!open)}>
-        {open ? <ChevronUp className="h-3.5 w-3.5 text-muted-foreground" /> : <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" />}
-        <h4 className="text-xs font-semibold text-foreground">Avaliacao por Indicadores</h4>
-      </div>
+      <button
+        type="button"
+        onClick={() => setOpen(!open)}
+        className="flex items-center gap-2 w-full text-left"
+        aria-expanded={open}
+      >
+        {open ? (
+          <ChevronUp className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
+        ) : (
+          <ChevronDown className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
+        )}
+        <h4 className="text-[14px] font-semibold text-foreground">
+          Avaliação por Indicadores
+        </h4>
+      </button>
 
       {open && (
-        <div className="mt-2 ml-6">
+        <div className="mt-2 ml-0 sm:ml-6">
           {!disciplinas.length ? (
-            <p className="text-xs text-muted-foreground">Nenhum indicador avaliado.</p>
+            <p className="text-[14px] text-muted-foreground">Nenhum indicador avaliado.</p>
           ) : (
             <>
               <div className="mb-3">
                 <Select value={selectedDiscId} onValueChange={setSelectedDiscId}>
-                  <SelectTrigger size="sm" className="text-xs w-full max-w-xs">
+                  <SelectTrigger className="w-full sm:max-w-xs">
                     <SelectValue placeholder="Selecione uma disciplina" />
                   </SelectTrigger>
                   <SelectContent>
                     {disciplinas.map(d => (
-                      <SelectItem key={d.disciplina_id} value={d.disciplina_id} className="text-xs">
+                      <SelectItem key={d.disciplina_id} value={d.disciplina_id}>
                         {d.disciplina_nome}
                       </SelectItem>
                     ))}
@@ -60,35 +69,33 @@ export default function ExpansaoIndicadores({ data }: Props) {
                 const periodosSorted = [...allPeriodos].sort((a, b) => a - b)
 
                 return (
-                  <ScrollArea className="overflow-x-auto">
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead className="text-xs sticky left-0 bg-muted z-10 min-w-[200px]">Indicador</TableHead>
-                          {periodosSorted.map(p => (
-                            <TableHead key={p} className="text-xs text-center">{p}° Per.</TableHead>
+                  <ul className="space-y-2">
+                    {selectedDisc.indicadores.map(ind => (
+                      <li
+                        key={ind.indicador_id}
+                        className="rounded-lg border border-border p-3 space-y-2 min-w-0"
+                      >
+                        <p className="text-[14px] font-medium text-foreground break-words">
+                          {ind.descricao}
+                        </p>
+                        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-1.5">
+                          {ind.periodos.map(p => (
+                            <div
+                              key={p.periodo}
+                              className="flex items-center justify-between gap-1 text-[13px] tabular-nums px-2 py-1 rounded-md border border-border bg-muted/30"
+                            >
+                              <span className="text-muted-foreground font-medium">
+                                {p.periodo}°
+                              </span>
+                              <span className="font-semibold">
+                                {p.nivel_sigla || p.nivel_descricao || '—'}
+                              </span>
+                            </div>
                           ))}
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {selectedDisc.indicadores.map(ind => (
-                          <TableRow key={ind.indicador_id}>
-                            <TableCell className="text-xs sticky left-0 bg-background z-10">
-                              {ind.descricao}
-                            </TableCell>
-                            {periodosSorted.map(p => {
-                              const per = ind.periodos.find(pp => pp.periodo === p)
-                              return (
-                                <TableCell key={p} className="text-xs text-center">
-                                  {per?.nivel_sigla || per?.nivel_descricao || '-'}
-                                </TableCell>
-                              )
-                            })}
-                          </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
-                  </ScrollArea>
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
                 )
               })()}
             </>

@@ -14,7 +14,7 @@ export default function FiltroTurma({ turmas, selectedId, onSelect, loading }: P
   if (loading) {
     return (
       <div className="min-w-[220px]">
-        <label className="text-xs text-muted-foreground font-medium mb-1 block">Turma</label>
+        <label className="text-[14px] text-muted-foreground font-medium mb-1 block">Turma</label>
         <div className="h-9 rounded-lg border border-border bg-muted animate-pulse" />
       </div>
     )
@@ -24,7 +24,7 @@ export default function FiltroTurma({ turmas, selectedId, onSelect, loading }: P
 
   return (
     <div className="min-w-[220px]">
-      <label className="text-xs text-muted-foreground font-medium mb-1 block">Turma</label>
+      <label className="text-[14px] text-muted-foreground font-medium mb-1 block">Turma</label>
       <Select value={selectedId} onValueChange={onSelect} disabled={turmas.length <= 1}>
         <SelectTrigger>
           <SelectValue placeholder="Selecione uma turma" />
@@ -38,7 +38,7 @@ export default function FiltroTurma({ turmas, selectedId, onSelect, loading }: P
         </SelectContent>
       </Select>
       {turmas.length === 1 && (
-        <p className="text-xs text-muted-foreground mt-1">Matrícula única — turma fixa</p>
+        <p className="text-[13px] text-muted-foreground mt-1">Matrícula única — turma fixa</p>
       )}
     </div>
   )

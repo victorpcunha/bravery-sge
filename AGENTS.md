@@ -48,6 +48,38 @@ Sistema de Gestão Escolar completo: turmas, quadro de aulas, indicadores de ava
   - Busca de alunos usa RPC `buscar_pessoas_matriculadas` (SQL) com fallback em duas queries
   - Recurso de permissão: `gestao-usuarios.painel-aluno`
   - Recharts instalado para gráfico de desempenho
+- **Dashboard — Modernização visual (spec 006)**:
+  - Spec + plan + tasks em `specs/006-dashboard-modernizacao/`
+  - **FASE A — Fundação**: novo `<DashboardHero>` (gradiente, saudação, escola, 4 quick actions em 2×2 mobile); `--chart-4` `#8B5CF6` → `#1A6FC2` (deep blue); `PageContainer` `max-w-7xl` em `maxWidth="dashboard"`
+  - **FASE B — StatCards**: prop `size="hero"`, `tabular-nums`; hero metric = Frequência Média; 4 secundárias (Alunos, Matrículas Ativas, Docentes, Turmas)
+  - **FASE B+ — Hero card enriquecido**: novo `<FrequenciaHeroCard>` combinando % grande + top 5 turmas com mais faltas (cor semântica por %)
+  - **FASE C — Gráficos modernos**: `chart-helpers.tsx` (paleta semantic, tooltip com `shadow-lg`/`bg-popover`); 8 charts com `CartesianGrid` + `<Legend>` + gradient primary; ocupação/frequência por turma com cor semântica (success/warning/destructive) e `SemanticLegend`
+  - **FASE C+ — Polimento**: BarCharts `alunos-por-*` com cor única primary (alinha Legend); `useIsMobile()` para Y-axis `width` responsivo; `truncateLabel` para labels longos
+  - **FASE D — Widgets**: `frequencia-media-card.tsx` (tipografia 36px, PieChart 160px), `ocupacao-card.tsx` (`<PageSection>` + cor semântica), `aniversariantes-list.tsx` (`<PageSection>` + `EmptyState`)
+  - **FASE E — Tabs + deep-link**: novo `<DashboardTabs>` (shadcn Tabs + `useSearchParams` + `router.replace`); 4 abas (Visão Geral, Acadêmico, Frequência, Alertas) com URL `?tab=...`
+  - **FASE E+ — Prominência visual das tabs**: `bg-card` + `border` + `shadow-xs` (não `bg-muted/50`); inativa `text-foreground/80 font-semibold`; hover `bg-accent/10`; ativa `bg-primary` + `text-primary-foreground`; redistribuição de conteúdo (Taxa Ocupação e Ocupação por turma → Visão Geral; Etapa e Tipo → Acadêmico; Frequência só com Frequência Média + Frequência por turma)
+  - **FASE G — Acessibilidade**: `prefers-reduced-motion` global; `--muted-foreground` light `#64748B` → `#475569` (4.04:1 → 7.5:1, passa AA); `EmptyState` com `aria-live="polite"` + `role="status"`
+  - **FASE H — Responsividade (PE-6xx)**: `RiscoEvasaoTable` → cards em `<md` + tabela em `≥md`; `TurmasSemProfessorList` → badges empilhados em mobile; áreas de toque ≥ 36px (hero 44, tabs 40, select default 40)
+- **Usuários — Modernização visual (spec 007)**:
+  - Spec + plan + tasks em `specs/007-usuarios-modernizacao/`
+  - **Bug fix mobile menu**: `src/app/(app)/layout.tsx` ganhou header mobile-only com `<SidebarTrigger>` (sticky top-0, blur) — antes o menu era invisível no celular
+  - **FASE A — Fundação da lista**: novo `<Pagination>` (`src/components/ui/pagination.tsx`) com 10/pág client-side, prev/next, contador "Mostrando X a Y de Z", `role="navigation"`; empty state contextual (sem cadastros vs filtro sem resultado); `text-xs` → `text-[13px]` na linha 255
+  - **FASE B — Lista mobile (card-list)**: `<ul>` cards em `<md>` com nome + CPF/INEP + badges + status + 2 botões de ação (`min-h-[44px]`); tabela em `≥md`; paginação compartilhada
+  - **FASE C — Dialog oficial**: `DialogContent` já era `p-0 gap-0 flex flex-col max-h-[90vh]`; ajustei `DialogHeader` com `shrink-0` + `border-b border-border` para não rolar com body; `PessoaForm` já tinha body `flex-1 overflow-y-auto` + footer `shrink-0 border-t`
+  - **FASE D — PessoaForm tipografia**: eliminei todas as ~22 violações de `text-xs` (hints → `text-[13px]`, labels → `text-[14px]` via shadcn default, títulos de seção `text-sm font-semibold` → `text-[16px] font-semibold`); erro de CPF ganhou `role="alert"`
+  - **FASE E — PessoaForm responsivo**: 25 ocorrências de `grid-cols-2` → `grid-cols-1 sm:grid-cols-2`; 2 ocorrências de `grid-cols-3` → `grid-cols-1 sm:grid-cols-2 lg:grid-cols-3`; form rola naturalmente em mobile
+  - **FASE F — Acessibilidade**: `aria-required="true"` em 7 inputs críticos (Nome, CPF condicional, Data Nascimento, Sexo, Cor/Raça, Nacionalidade, E-mail); `role="alert"` em erro de validação; botões do footer do Dialog `h-10` (PE-603)
+  - **Ajustes pré-FASE G**: Tabs do PessoaForm modernizadas (mesmo padrão das tabs da Dashboard — `bg-card` + `border` + `shadow-xs` container, ativa `bg-primary`); campo "Perfis" renomeado para "Tipo de Pessoa" e checkboxes substituídos por **Pills clicáveis** (`<button type="button" aria-pressed>` com ícone `Check` no ativo)
+  - **Pendência consciente**: ~25 outros campos com `*` no label não receberam `aria-required` (escopo reduzido para os 7 críticos que bloqueiam salvamento). Recomendação: spec futura com componente `<FormField required>` que auto-detecta `*`
+- **Perfis e Permissões — Modernização visual (spec 008)**:
+  - Spec + plan + tasks em `specs/008-perfis-modernizacao/`
+  - **FASE A — Fundação da lista**: paginação 10/pág client-side reutilizando `<Pagination>` da spec 007; empty state contextual com `EmptyState` oficial (filtros sem resultado vs sem cadastros); loading com skeleton card; `text-sm` → `text-[14px] tabular-nums` no contador
+  - **FASE B — Lista mobile (card-list)**: `<ul>` cards em `<md>` com nome + descrição (`line-clamp-2`) + badges (Tipo + Situação) + data cadastro + 2 botões de ação (`min-h-[44px]`); tabela em `≥md`; paginação compartilhada
+  - **FASE C — Matriz de permissões mobile**: `<ul>` cards em `<md>` com grid 2x2 de checkboxes (Visualizar, Criar, Editar, Excluir); tabela em `≥md` (sticky left mantido); módulo label `text-sm font-semibold` → `text-[13px] font-semibold uppercase tracking-wider`; `EmptyState` oficial
+  - **FASE D — Form de cadastro**: footer **sticky bottom-0** com `backdrop-blur` e `border-t`, botões `min-h-[40px] sm:min-h-[44px]`; `text-xs` → `text-[13px]` em 3 hints; `aria-required="true"` no Input "Nome do Perfil"; `id` + `htmlFor` ligando Labels aos Inputs; `role="alert"` no aviso de perfil inativo
+  - **FASE E — Acessibilidade**: subsumida pela FASE D; tab cycle via Radix UI
+  - **Notas**: reuso integral do `<Pagination>` da spec 007; matriz com 50+ recursos em mobile fica longa (virtualizar em spec futura)
+  - **Notas**: 0 hex hardcoded; 0 novas deps npm; 11 builds verdes durante execução
 
 ## Known Issues
 - All server actions use `'use server'` + `getSupabaseAdmin()` (service_role, bypass RLS)
@@ -106,7 +138,7 @@ Use SEMPRE os tokens Tailwind v4 derivados das CSS variables do `globals.css`:
 | Fundo de página | `background` / `bg-background` | #F6F8FA |
 | Fundo de card | `card` / `bg-card` | #FFFFFF |
 | Texto principal (slate-800) | `foreground` / `text-foreground` | #1E293B |
-| Texto secundário (slate-500) | `muted-foreground` / `text-muted-foreground` | #64748B |
+| Texto secundário (slate-600) | `muted-foreground` / `text-muted-foreground` | #475569 |
 | Bordas (slate-200) | `border` / `border-border` | #E2E8F0 |
 | Fundo muted (slate-100) | `muted` / `bg-muted` | #F1F5F9 |
 | Foco/destaque (= primary) | `ring` / `bg-ring` / `text-ring` | #1F88EB |

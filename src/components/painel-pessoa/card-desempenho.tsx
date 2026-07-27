@@ -74,8 +74,15 @@ export default function CardDesempenho({ pessoaId, turmaId, pessoaLogadaId }: Pr
   if (loading) {
     return (
       <Card>
-        <CardHeader><CardTitle className="text-sm flex items-center gap-2"><BarChart3 className="h-4 w-4" />Desempenho</CardTitle></CardHeader>
-        <CardContent><Loader2 className="h-4 w-4 animate-spin text-muted-foreground" /></CardContent>
+        <CardHeader>
+          <CardTitle className="text-[15px] flex items-center gap-2">
+            <BarChart3 className="h-4 w-4" />
+            Desempenho
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+        </CardContent>
       </Card>
     )
   }
@@ -83,61 +90,61 @@ export default function CardDesempenho({ pessoaId, turmaId, pessoaLogadaId }: Pr
   return (
     <Card>
       <CardHeader className="pb-2">
-        <CardTitle className="text-sm flex items-center gap-2">
+        <CardTitle className="text-[15px] flex items-center gap-2">
           <BarChart3 className="h-4 w-4 text-success" />
           Desempenho
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
-        {/* Frequência */}
         {criterio && (
           <div>
-            <h4 className="text-xs font-medium text-muted-foreground flex items-center gap-1 mb-2">
+            <h4 className="text-[13px] font-medium text-muted-foreground flex items-center gap-1 mb-2">
               <ClipboardCheck className="h-3 w-3" />
               Frequência
             </h4>
             {criterio === 'por_dia' && freqGeral && (
               <div className="flex items-center gap-3">
-                <span className="text-2xl font-bold">{freqGeral.percentual}%</span>
-                <span className="text-xs text-muted-foreground">
+                <span className="text-[24px] font-bold tabular-nums">{freqGeral.percentual}%</span>
+                <span className="text-[13px] text-muted-foreground">
                   ({freqGeral.presencas} de {freqGeral.total} dias)
                 </span>
               </div>
             )}
             {criterio === 'por_dia' && !freqGeral && (
-              <p className="text-sm text-muted-foreground">Nenhum registro de frequência.</p>
+              <p className="text-[14px] text-muted-foreground">Nenhum registro de frequência.</p>
             )}
             {criterio === 'por_aula' && freqDisc.length > 0 && (
               <div className="space-y-1">
                 {freqDisc.map(f => (
-                  <div key={f.disciplina_id} className="flex items-center justify-between text-sm">
+                  <div key={f.disciplina_id} className="flex items-center justify-between text-[14px]">
                     <span className="text-muted-foreground">{f.disciplina_nome}</span>
-                    <span className="font-medium">{f.percentual}%</span>
+                    <span className="font-medium tabular-nums">{f.percentual}%</span>
                   </div>
                 ))}
               </div>
             )}
             {criterio === 'por_aula' && freqDisc.length === 0 && (
-              <p className="text-sm text-muted-foreground">Nenhum registro de frequência.</p>
+              <p className="text-[14px] text-muted-foreground">Nenhum registro de frequência.</p>
             )}
           </div>
         )}
 
-        {/* Gráfico Comparativo */}
         {periodos.length > 0 && (
           <div>
-            <div className="flex items-center justify-between mb-2">
-              <h4 className="text-xs font-medium text-muted-foreground flex items-center gap-1">
+            <div className="flex items-center justify-between mb-2 gap-2">
+              <h4 className="text-[13px] font-medium text-muted-foreground flex items-center gap-1">
                 <BarChart3 className="h-3 w-3" />
                 Desempenho Comparativo
               </h4>
               <Select value={periodo} onValueChange={setPeriodo}>
-                <SelectTrigger className="w-[130px] h-7 text-xs">
+                <SelectTrigger className="w-[130px] h-7">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
                   {periodos.map(p => (
-                    <SelectItem key={p.numero} value={String(p.numero)}>{p.label}</SelectItem>
+                    <SelectItem key={p.numero} value={String(p.numero)}>
+                      {p.label}
+                    </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
@@ -147,7 +154,7 @@ export default function CardDesempenho({ pessoaId, turmaId, pessoaLogadaId }: Pr
         )}
 
         {!criterio && periodos.length === 0 && (
-          <p className="text-sm text-muted-foreground">
+          <p className="text-[14px] text-muted-foreground">
             Nenhum método de avaliação configurado para esta turma.
           </p>
         )}

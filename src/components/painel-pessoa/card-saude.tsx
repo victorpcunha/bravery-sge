@@ -66,8 +66,15 @@ export default function CardSaude({ pessoaId, schoolId, pessoaLogadaId }: Props)
   if (loading) {
     return (
       <Card>
-        <CardHeader><CardTitle className="text-sm flex items-center gap-2"><Heart className="h-4 w-4" />Saúde</CardTitle></CardHeader>
-        <CardContent><Loader2 className="h-4 w-4 animate-spin text-muted-foreground" /></CardContent>
+        <CardHeader>
+          <CardTitle className="text-[15px] flex items-center gap-2">
+            <Heart className="h-4 w-4" />
+            Saúde
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+        </CardContent>
       </Card>
     )
   }
@@ -91,13 +98,13 @@ export default function CardSaude({ pessoaId, schoolId, pessoaLogadaId }: Props)
     return (
       <Card>
         <CardHeader className="pb-2">
-          <CardTitle className="text-sm flex items-center gap-2">
+          <CardTitle className="text-[15px] flex items-center gap-2">
             <Heart className="h-4 w-4 text-destructive" />
             Saúde
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <p className="text-sm text-muted-foreground">Nenhuma informação de saúde cadastrada.</p>
+          <p className="text-[14px] text-muted-foreground">Nenhuma informação de saúde cadastrada.</p>
         </CardContent>
       </Card>
     )
@@ -106,7 +113,7 @@ export default function CardSaude({ pessoaId, schoolId, pessoaLogadaId }: Props)
   return (
     <Card>
       <CardHeader className="pb-2">
-        <CardTitle className="text-sm flex items-center gap-2">
+        <CardTitle className="text-[15px] flex items-center gap-2">
           <Heart className="h-4 w-4 text-destructive" />
           Saúde
         </CardTitle>
@@ -114,12 +121,14 @@ export default function CardSaude({ pessoaId, schoolId, pessoaLogadaId }: Props)
       <CardContent className="space-y-3">
         {condicoesAtivas.length > 0 && (
           <div>
-            <p className="text-xs text-muted-foreground flex items-center gap-1 mb-1">
+            <p className="text-[13px] text-muted-foreground flex items-center gap-1 mb-1">
               <Stethoscope className="h-3 w-3" /> Deficiências
             </p>
             <div className="flex flex-wrap gap-1">
               {condicoesAtivas.map(c => (
-                <StatusBadge key={c} status="destructive" className="text-xs">{c}</StatusBadge>
+                <StatusBadge key={c} status="destructive">
+                  {c}
+                </StatusBadge>
               ))}
             </div>
           </div>
@@ -127,12 +136,14 @@ export default function CardSaude({ pessoaId, schoolId, pessoaLogadaId }: Props)
 
         {transtornosAtivos.length > 0 && (
           <div>
-            <p className="text-xs text-muted-foreground flex items-center gap-1 mb-1">
+            <p className="text-[13px] text-muted-foreground flex items-center gap-1 mb-1">
               <Brain className="h-3 w-3" /> Transtornos / Neurodesenvolvimento
             </p>
             <div className="flex flex-wrap gap-1">
               {transtornosAtivos.map(t => (
-                <StatusBadge key={t} status="warning" className="text-xs">{t}</StatusBadge>
+                <StatusBadge key={t} status="warning">
+                  {t}
+                </StatusBadge>
               ))}
             </div>
           </div>
@@ -140,35 +151,37 @@ export default function CardSaude({ pessoaId, schoolId, pessoaLogadaId }: Props)
 
         {recursosSaeb.length > 0 && (
           <div>
-            <p className="text-xs text-muted-foreground flex items-center gap-1 mb-1">
-              <Activity className="h-3 w-3" /> Condições de Saúde
+            <p className="text-[13px] text-muted-foreground flex items-center gap-1 mb-1">
+              <Activity className="h-3 w-3" /> Recursos SAEB
             </p>
             <div className="flex flex-wrap gap-1">
               {recursosSaeb.map(r => (
-                <StatusBadge key={r} status="info" className="text-xs">{r}</StatusBadge>
+                <StatusBadge key={r} status="info">
+                  {r}
+                </StatusBadge>
               ))}
             </div>
             {dados?.condicoes && (
-              <p className="text-sm whitespace-pre-wrap mt-2">{dados.condicoes}</p>
+              <p className="text-[14px] whitespace-pre-wrap mt-2">{dados.condicoes}</p>
             )}
           </div>
         )}
 
         {dados?.medicamentos && (
           <div>
-            <p className="text-xs text-muted-foreground flex items-center gap-1 mb-1">
-              <Pill className="h-3 w-3" /> Outras informações de saúde
+            <p className="text-[13px] text-muted-foreground flex items-center gap-1 mb-1">
+              <Pill className="h-3 w-3" /> Medicamentos / Outras informações
             </p>
-            <p className="text-sm whitespace-pre-wrap">{dados.medicamentos}</p>
+            <p className="text-[14px] whitespace-pre-wrap">{dados.medicamentos}</p>
           </div>
         )}
 
         {recursosSaeb.length === 0 && dados?.condicoes && (
           <div>
-            <p className="text-xs text-muted-foreground flex items-center gap-1 mb-1">
+            <p className="text-[13px] text-muted-foreground flex items-center gap-1 mb-1">
               <Activity className="h-3 w-3" /> Condições de Saúde
             </p>
-            <p className="text-sm whitespace-pre-wrap">{dados.condicoes}</p>
+            <p className="text-[14px] whitespace-pre-wrap">{dados.condicoes}</p>
           </div>
         )}
       </CardContent>

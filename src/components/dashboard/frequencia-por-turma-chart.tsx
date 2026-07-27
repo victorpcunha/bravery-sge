@@ -6,12 +6,23 @@ import {
   XAxis,
   YAxis,
   Tooltip,
+  Legend,
+  CartesianGrid,
   ResponsiveContainer,
   Cell,
 } from 'recharts'
 import { BarChart3 } from 'lucide-react'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
 import { EmptyState } from '@/components/ui/empty-state'
+import {
+  corTaxaFrequencia,
+  chartTooltipContentStyle,
+  chartTooltipWrapperStyle,
+  chartLegendFormatter,
+  SemanticLegend,
+  useIsMobile,
+  truncateLabel,
+} from '@/components/dashboard/chart-helpers'
 import { cn } from '@/lib/utils'
 
 type FrequenciaPorTurmaItem = {
@@ -25,15 +36,9 @@ type Props = {
   className?: string
 }
 
-const BAR_COLORS = [
-  'var(--chart-1)',
-  'var(--chart-2)',
-  'var(--chart-3)',
-  'var(--chart-4)',
-  'var(--chart-5)',
-]
-
 export default function FrequenciaPorTurmaChart({ data, className }: Props) {
+  const isMobile = useIsMobile()
+
   if (!data || data.length === 0) {
     return (
       <Card className={className}>
@@ -67,13 +72,15 @@ export default function FrequenciaPorTurmaChart({ data, className }: Props) {
         <CardTitle>Frequência por Turma</CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="h-72">
+        <div className="h-72 sm:h-80">
           <ResponsiveContainer width="100%" height="100%">
             <BarChart
               data={chartData}
               layout="vertical"
-              margin={{ top: 0, right: 16, left: 0, bottom: 0 }}
+              margin={{ top: 8, right: 24, left: 8, bottom: 8 }}
+              barCategoryGap="20%"
             >
+              <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" horizontal={false} />
               <XAxis
                 type="number"
                 domain={[0, 100]}
@@ -88,25 +95,36 @@ export default function FrequenciaPorTurmaChart({ data, className }: Props) {
                 tick={{ fontSize: 12, fill: 'var(--foreground)' }}
                 axisLine={false}
                 tickLine={false}
-                width={80}
+                width={isMobile ? 70 : 90}
+                tickFormatter={(v) => truncateLabel(String(v), isMobile ? 8 : 14)}
               />
               <Tooltip
-                contentStyle={{
-                  fontSize: 13,
-                  borderRadius: 8,
-                  border: '1px solid var(--border)',
-                  backgroundColor: 'var(--card)',
-                  color: 'var(--foreground)',
-                }}
+                contentStyle={chartTooltipContentStyle}
+                wrapperStyle={chartTooltipWrapperStyle}
+                cursor={{ fill: 'var(--muted)', opacity: 0.4 }}
                 formatter={formatterFrequencia}
               />
-              <Bar dataKey="taxa" radius={[0, 6, 6, 0]} maxBarSize={32}>
-                {chartData.map((_, i) => (
-                  <Cell key={i} fill={BAR_COLORS[i % BAR_COLORS.length]} />
+              <Legend
+                verticalAlign="bottom"
+                height={28}
+                iconType="circle"
+                iconSize={8}
+                formatter={chartLegendFormatter}
+              />
+              <Bar dataKey="taxa" radius={[0, 6, 6, 0]} maxBarSize={28} cursor="default" activeBar={false}>
+                {chartData.map((d, i) => (
+                  <Cell key={i} fill={corTaxaFrequencia(d.taxa)} />
                 ))}
               </Bar>
             </BarChart>
           </ResponsiveContainer>
+          <SemanticLegend
+            items={[
+              { label: 'Boa (≥90%)', colorVar: 'var(--success)' },
+              { label: 'Atenção (75-90%)', colorVar: 'var(--warning)' },
+              { label: 'Crítica (<75%)', colorVar: 'var(--destructive)' },
+            ]}
+          />
         </div>
       </CardContent>
     </Card>

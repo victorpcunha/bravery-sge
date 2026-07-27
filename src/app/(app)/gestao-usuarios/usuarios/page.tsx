@@ -1,12 +1,13 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/components/providers/auth-provider'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
+import { Pagination } from '@/components/ui/pagination'
 import { Plus, Pencil, Trash2, ToggleLeft, UserCheck, Users } from 'lucide-react'
 import { getPeople, deletePerson, inativarPessoa, reativarPessoa, type Person } from '@/lib/actions/people'
 import { PessoaForm } from './PessoaForm'
@@ -19,6 +20,8 @@ import { StatusBadge } from '@/components/feedback/status-badge'
 import { ConfirmDialog } from '@/components/feedback/confirm-dialog'
 import { EmptyState } from '@/components/ui/empty-state'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+
+const ITEMS_PER_PAGE = 10
 
 const perfilLabels: Record<string, string> = {
   aluno: 'Aluno',
@@ -63,6 +66,26 @@ export default function UsuariosPage() {
   const [mostrarInativos, setMostrarInativos] = useState(false)
   const [deleteTarget, setDeleteTarget] = useState<Person | null>(null)
   const [selectedSchoolId, setSelectedSchoolId] = useState<string | null>(null)
+  const [currentPage, setCurrentPage] = useState(1)
+
+  const totalPages = Math.max(1, Math.ceil(pessoas.length / ITEMS_PER_PAGE))
+  const paginatedPessoas = useMemo(() => {
+    const start = (currentPage - 1) * ITEMS_PER_PAGE
+    return pessoas.slice(start, start + ITEMS_PER_PAGE)
+  }, [pessoas, currentPage])
+
+  const filtrosAtivos = search.trim() !== '' || perfilFiltro !== '' || mostrarInativos
+
+  const limparFiltros = () => {
+    setSearch('')
+    setPerfilFiltro('')
+    setMostrarInativos(false)
+    setCurrentPage(1)
+  }
+
+  useEffect(() => {
+    setCurrentPage(1)
+  }, [search, perfilFiltro, mostrarInativos, selectedSchoolId])
 
   useEffect(() => {
     if (!authLoading && !user) router.push('/login')
@@ -215,17 +238,30 @@ export default function UsuariosPage() {
           </Card>
         ) : pessoas.length === 0 ? (
           <Card className="shadow-sm">
-            <EmptyState
-              icon={Users}
-              title="Nenhum usuário cadastrado"
-              description="Cadastre usuários para registrar no Censo INEP 2026."
-              action={
-                <Button onClick={handleCreate}>
-                  <Plus className="mr-2 h-4 w-4" />
-                  Novo Usuário
-                </Button>
-              }
-            />
+            {filtrosAtivos ? (
+              <EmptyState
+                icon={Users}
+                title="Nenhum resultado para os filtros aplicados"
+                description="Tente ajustar a busca ou os filtros para encontrar usuários."
+                action={
+                  <Button variant="outline" onClick={limparFiltros}>
+                    Limpar filtros
+                  </Button>
+                }
+              />
+            ) : (
+              <EmptyState
+                icon={Users}
+                title="Nenhum usuário cadastrado"
+                description="Cadastre usuários para registrar no Censo INEP 2026."
+                action={
+                  <Button onClick={handleCreate}>
+                    <Plus className="mr-2 h-4 w-4" />
+                    Novo Usuário
+                  </Button>
+                }
+              />
+            )}
           </Card>
         ) : (
           <PageSection variant="flush" title={`${pessoas.length} usuário(s)`} actions={
@@ -234,70 +270,145 @@ export default function UsuariosPage() {
               Novo Usuário
             </Button>
           }>
-            <div className="px-4">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Nome Completo</TableHead>
-                  <TableHead>CPF</TableHead>
-                  <TableHead>INEP</TableHead>
-                  <TableHead>Tipo</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead className="w-[90px]">Ações</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {pessoas.map((pessoa) => (
-                  <TableRow key={pessoa.id}>
-                    <TableCell>
-                      <span className="font-medium text-foreground">{pessoa.nome_completo}</span>
+            {/* Mobile: lista de cards (PE-602) */}
+            <ul className="block md:hidden space-y-3 p-4">
+              {paginatedPessoas.map((pessoa) => (
+                <li
+                  key={pessoa.id}
+                  className="rounded-lg border border-border bg-card p-4 shadow-xs"
+                >
+                  <div className="flex items-start justify-between gap-3 mb-2">
+                    <div className="min-w-0 flex-1">
+                      <p className="text-[15px] font-semibold text-foreground truncate">
+                        {pessoa.nome_completo}
+                      </p>
                       {pessoa.codigo_pessoa && (
-                        <span className="text-xs text-muted-foreground ml-2">#{pessoa.codigo_pessoa}</span>
+                        <p className="text-[13px] text-muted-foreground mt-0.5">
+                          #{pessoa.codigo_pessoa}
+                        </p>
                       )}
-                    </TableCell>
-                    <TableCell className="text-muted-foreground">{formatCpf(pessoa.cpf)}</TableCell>
-                    <TableCell className="text-muted-foreground">{pessoa.inep_id || '—'}</TableCell>
-                    <TableCell>
-                      <div className="flex gap-1 flex-wrap">
-                        {(pessoa.perfil || []).map(p => (
-                          <StatusBadge key={p} status={perfilStatusMap[p] || 'muted'}>
-                            {perfilLabels[p] || p}
-                          </StatusBadge>
-                        ))}
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <StatusBadge status={pessoa.ativo ? 'success' : 'destructive'}>
-                        {pessoa.ativo ? 'Ativo' : 'Inativo'}
-                      </StatusBadge>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex items-center gap-0.5">
-                        <Button variant="ghost" size="icon-sm" onClick={() => handleEdit(pessoa)}>
-                          <Pencil className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon-sm"
-                          onClick={() => setDeleteTarget(pessoa)}
-                          disabled={deleting === pessoa.id}
-                        >
-                          <Trash2 className="h-4 w-4 text-destructive" />
-                        </Button>
-                      </div>
-                    </TableCell>
+                    </div>
+                    <StatusBadge
+                      status={pessoa.ativo ? 'success' : 'destructive'}
+                      className="shrink-0"
+                    >
+                      {pessoa.ativo ? 'Ativo' : 'Inativo'}
+                    </StatusBadge>
+                  </div>
+                  <div className="flex flex-wrap gap-x-4 gap-y-1 text-[13px] text-muted-foreground tabular-nums mb-3">
+                    <span>{formatCpf(pessoa.cpf)}</span>
+                    <span>INEP {pessoa.inep_id || '—'}</span>
+                  </div>
+                  {(pessoa.perfil || []).length > 0 && (
+                    <div className="flex gap-1 flex-wrap mb-4">
+                      {(pessoa.perfil || []).map(p => (
+                        <StatusBadge key={p} status={perfilStatusMap[p] || 'muted'}>
+                          {perfilLabels[p] || p}
+                        </StatusBadge>
+                      ))}
+                    </div>
+                  )}
+                  <div className="flex gap-2 pt-3 border-t border-border">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleEdit(pessoa)}
+                      className="flex-1 min-h-[44px]"
+                    >
+                      <Pencil className="mr-1.5 h-4 w-4" />
+                      Editar
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setDeleteTarget(pessoa)}
+                      disabled={deleting === pessoa.id}
+                      className="flex-1 min-h-[44px] text-destructive hover:text-destructive"
+                    >
+                      <Trash2 className="mr-1.5 h-4 w-4" />
+                      Excluir
+                    </Button>
+                  </div>
+                </li>
+              ))}
+            </ul>
+
+            {/* Desktop: tabela */}
+            <div className="hidden md:block px-4">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Nome Completo</TableHead>
+                    <TableHead>CPF</TableHead>
+                    <TableHead>INEP</TableHead>
+                    <TableHead>Tipo</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead className="w-[90px]">Ações</TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                </TableHeader>
+                <TableBody>
+                  {paginatedPessoas.map((pessoa) => (
+                    <TableRow key={pessoa.id}>
+                      <TableCell>
+                        <span className="font-medium text-foreground">{pessoa.nome_completo}</span>
+                        {pessoa.codigo_pessoa && (
+                          <span className="text-[13px] text-muted-foreground ml-2">#{pessoa.codigo_pessoa}</span>
+                        )}
+                      </TableCell>
+                      <TableCell className="text-muted-foreground">{formatCpf(pessoa.cpf)}</TableCell>
+                      <TableCell className="text-muted-foreground">{pessoa.inep_id || '—'}</TableCell>
+                      <TableCell>
+                        <div className="flex gap-1 flex-wrap">
+                          {(pessoa.perfil || []).map(p => (
+                            <StatusBadge key={p} status={perfilStatusMap[p] || 'muted'}>
+                              {perfilLabels[p] || p}
+                            </StatusBadge>
+                          ))}
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <StatusBadge status={pessoa.ativo ? 'success' : 'destructive'}>
+                          {pessoa.ativo ? 'Ativo' : 'Inativo'}
+                        </StatusBadge>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-0.5">
+                          <Button variant="ghost" size="icon-sm" onClick={() => handleEdit(pessoa)}>
+                            <Pencil className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon-sm"
+                            onClick={() => setDeleteTarget(pessoa)}
+                            disabled={deleting === pessoa.id}
+                          >
+                            <Trash2 className="h-4 w-4 text-destructive" />
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
             </div>
+            {totalPages > 1 && (
+              <div className="px-6 py-4 border-t border-border">
+                <Pagination
+                  currentPage={currentPage}
+                  totalPages={totalPages}
+                  totalItems={pessoas.length}
+                  itemsPerPage={ITEMS_PER_PAGE}
+                  onPageChange={setCurrentPage}
+                />
+              </div>
+            )}
           </PageSection>
         )}
       </PageContainer>
 
       <Dialog open={modalOpen} onOpenChange={(open) => { if (!open) { setModalOpen(false); setEditPerson(null) }}}>
         <DialogContent className="max-w-4xl max-h-[90vh] flex flex-col p-0 gap-0">
-          <DialogHeader className="px-6 pt-6 pb-0">
+          <DialogHeader className="shrink-0 px-6 pt-6 pb-4 border-b border-border">
             <DialogTitle>{editPerson ? 'Editar Usuário' : 'Novo Usuário'}</DialogTitle>
             <DialogDescription>
               {editPerson ? 'Edite os dados cadastrais.' : 'Preencha os dados cadastrais (Registro 30 INEP).'}

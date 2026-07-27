@@ -13,6 +13,7 @@ import CardEvolucao from '@/components/painel-pessoa/card-evolucao'
 import CardQuadroAulas from '@/components/painel-pessoa/card-quadro-aulas'
 import CardHistorico from '@/components/painel-pessoa/card-historico'
 import CardOcorrencias from '@/components/painel-pessoa/card-ocorrencias'
+import { PainelTabs } from '@/components/painel-pessoa/painel-tabs'
 import { PageContainer } from '@/components/layout/page-container'
 import { PageHeader } from '@/components/layout/page-header'
 import { PageSection } from '@/components/layout/page-section'
@@ -72,10 +73,13 @@ export default function PainelAlunoPage() {
   if (authLoading || !permLoaded) {
     return (
       <PageContainer className="max-w-5xl">
-        <div className="animate-pulse space-y-4">
-          <div className="h-8 w-48 bg-muted rounded" />
-          <div className="h-10 w-full bg-muted rounded-lg" />
-        </div>
+        <PageHeader title="Painel do Aluno" description="Visualização completa do aluno" icon={User} />
+        <PageSection variant="default" title="Carregando...">
+          <div className="space-y-3 animate-pulse">
+            <div className="h-10 w-full bg-muted rounded-lg" />
+            <div className="h-32 w-full bg-muted rounded-lg" />
+          </div>
+        </PageSection>
       </PageContainer>
     )
   }
@@ -86,8 +90,8 @@ export default function PainelAlunoPage() {
   }
 
   const canSearch = isSuperAdmin || !!schoolId
-
   const turmaSelecionadaNome = turmas.find(t => t.id === turmaId)?.nome || null
+  const hasTurma = !!turmaId
 
   return (
     <PageContainer className="max-w-5xl">
@@ -98,10 +102,9 @@ export default function PainelAlunoPage() {
       />
 
       {canSearch && (
-        <PageSection variant="compact" title="Busca" className="mb-8">
-          <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
-            <div className="md:col-span-3">
-              <label className="text-xs text-muted-foreground font-medium mb-1 block">Aluno</label>
+        <PageSection variant="compact" title="Busca" className="mb-6">
+          <div className="grid grid-cols-1 sm:grid-cols-5 gap-4">
+            <div className="sm:col-span-3">
               <FiltroPessoa
                 schoolId={schoolId}
                 pessoaLogadaId={pessoaId}
@@ -109,21 +112,20 @@ export default function PainelAlunoPage() {
                 selectedId={pessoaSelecionada?.id}
               />
             </div>
-            <div className="md:col-span-2">
-              <label className="text-xs text-muted-foreground font-medium mb-1 block">Turma</label>
+            <div className="sm:col-span-2">
               {loadingTurmas ? (
-                <div className="h-9 flex items-center gap-2 text-xs text-muted-foreground">
-                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                  Carregando turmas...
+                <div className="h-9 flex items-center gap-2 text-muted-foreground">
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  <span className="text-[14px]">Carregando turmas...</span>
                 </div>
               ) : pessoaSelecionada && turmas.length > 0 ? (
                 <Select value={turmaId} onValueChange={setTurmaId}>
-                  <SelectTrigger size="sm" className="text-xs">
+                  <SelectTrigger>
                     <SelectValue placeholder="Selecione a turma" />
                   </SelectTrigger>
                   <SelectContent>
                     {turmas.map(t => (
-                      <SelectItem key={t.id} value={t.id} className="text-xs">
+                      <SelectItem key={t.id} value={t.id}>
                         {t.nome} — {t.etapa_nome}
                       </SelectItem>
                     ))}
@@ -131,7 +133,7 @@ export default function PainelAlunoPage() {
                 </Select>
               ) : (
                 <Select disabled>
-                  <SelectTrigger size="sm" className="text-xs">
+                  <SelectTrigger>
                     <SelectValue placeholder="Selecione um aluno" />
                   </SelectTrigger>
                 </Select>
@@ -140,72 +142,114 @@ export default function PainelAlunoPage() {
           </div>
 
           {pessoaSelecionada && turmas.length === 0 && !loadingTurmas && (
-            <p className="text-sm text-muted-foreground py-2 mt-2">
-              Aluno sem matrícula ativa no ano letivo vigente.
-            </p>
+            <div className="mt-4">
+              <EmptyState
+                icon={User}
+                title="Aluno sem matrícula ativa"
+                description="Não há matrículas ativas no ano letivo vigente para este aluno."
+              />
+            </div>
           )}
         </PageSection>
       )}
 
       {pessoaSelecionada && (
-        <div className="mb-8">
-          <CardIdentificacao
-            pessoaId={pessoaSelecionada.id}
-            pessoaLogadaId={pessoaId}
-            situacao={situacao}
-            turmaNome={turmaSelecionadaNome}
-          />
-        </div>
-      )}
+        <PainelTabs hasTurma={hasTurma}>
+          {/* Aba: Visão Geral */}
+          <div className="space-y-6">
+            <PageSection title="Identificação">
+              <CardIdentificacao
+                pessoaId={pessoaSelecionada.id}
+                pessoaLogadaId={pessoaId}
+                situacao={situacao}
+                turmaNome={turmaSelecionadaNome}
+              />
+            </PageSection>
 
-      {pessoaSelecionada && (
-        <div className="mb-8">
-          <CardSaude pessoaId={pessoaSelecionada.id} schoolId={schoolId} pessoaLogadaId={pessoaId} />
-        </div>
-      )}
+            <PageSection title="Saúde">
+              <CardSaude pessoaId={pessoaSelecionada.id} schoolId={schoolId} pessoaLogadaId={pessoaId} />
+            </PageSection>
 
-      {pessoaSelecionada && turmaId && (
-        <div className="mb-8">
-          <CardKpis
-            pessoaId={pessoaSelecionada.id}
-            turmaId={turmaId}
-            schoolId={schoolId}
-            pessoaLogadaId={pessoaId}
-          />
-        </div>
-      )}
+            {hasTurma ? (
+              <PageSection title="Indicadores">
+                <CardKpis
+                  pessoaId={pessoaSelecionada.id}
+                  turmaId={turmaId}
+                  schoolId={schoolId}
+                  pessoaLogadaId={pessoaId}
+                />
+              </PageSection>
+            ) : (
+              <PageSection title="Indicadores">
+                <EmptyState
+                  icon={User}
+                  title="Selecione uma turma"
+                  description="Os indicadores (frequência, desempenho, disciplinas, ocorrências) aparecem quando uma turma é selecionada."
+                />
+              </PageSection>
+            )}
+          </div>
 
-      {pessoaSelecionada && turmaId && (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-          <CardDesempenhoDisciplina
-            pessoaId={pessoaSelecionada.id}
-            turmaId={turmaId}
-            pessoaLogadaId={pessoaId}
-          />
-          <CardEvolucao
-            pessoaId={pessoaSelecionada.id}
-            turmaId={turmaId}
-            pessoaLogadaId={pessoaId}
-          />
-        </div>
-      )}
+          {/* Aba: Desempenho */}
+          {hasTurma ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <PageSection title="Desempenho por Disciplina">
+                <CardDesempenhoDisciplina
+                  pessoaId={pessoaSelecionada.id}
+                  turmaId={turmaId}
+                  pessoaLogadaId={pessoaId}
+                />
+              </PageSection>
+              <PageSection title="Evolução do Desempenho">
+                <CardEvolucao
+                  pessoaId={pessoaSelecionada.id}
+                  turmaId={turmaId}
+                  pessoaLogadaId={pessoaId}
+                />
+              </PageSection>
+            </div>
+          ) : (
+            <EmptyState
+              icon={User}
+              title="Selecione uma turma"
+              description="O desempenho por disciplina e a evolução aparecem quando uma turma é selecionada."
+            />
+          )}
 
-      {pessoaSelecionada && turmaId && (
-        <div className="mb-8">
-          <CardQuadroAulas turmaId={turmaId} pessoaLogadaId={pessoaId} />
-        </div>
-      )}
+          {/* Aba: Acadêmico */}
+          {hasTurma ? (
+            <PageSection title="Quadro de Aulas">
+              <CardQuadroAulas turmaId={turmaId} pessoaLogadaId={pessoaId} />
+            </PageSection>
+          ) : (
+            <EmptyState
+              icon={User}
+              title="Selecione uma turma"
+              description="O quadro de aulas da turma aparece quando uma turma é selecionada."
+            />
+          )}
 
-      {pessoaSelecionada && (
-        <div className="mb-8">
-          <CardHistorico pessoaId={pessoaSelecionada.id} schoolId={schoolId!} pessoaLogadaId={pessoaId} />
-        </div>
-      )}
+          {/* Aba: Histórico */}
+          <div className="space-y-6">
+            <PageSection title="Histórico Escolar">
+              <CardHistorico pessoaId={pessoaSelecionada.id} schoolId={schoolId!} pessoaLogadaId={pessoaId} />
+            </PageSection>
 
-      {pessoaSelecionada && turmaId && (
-        <div className="mb-8">
-          <CardOcorrencias pessoaId={pessoaSelecionada.id} schoolId={schoolId!} pessoaLogadaId={pessoaId} />
-        </div>
+            {hasTurma ? (
+              <PageSection title="Ocorrências">
+                <CardOcorrencias pessoaId={pessoaSelecionada.id} schoolId={schoolId!} pessoaLogadaId={pessoaId} />
+              </PageSection>
+            ) : (
+              <PageSection title="Ocorrências">
+                <EmptyState
+                  icon={User}
+                  title="Selecione uma turma"
+                  description="As ocorrências registradas aparecem quando uma turma é selecionada."
+                />
+              </PageSection>
+            )}
+          </div>
+        </PainelTabs>
       )}
 
       {!pessoaSelecionada && canSearch && (

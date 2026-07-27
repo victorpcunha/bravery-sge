@@ -1,9 +1,12 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/components/providers/auth-provider'
 import { Button } from '@/components/ui/button'
+import { Card } from '@/components/ui/card'
+import { EmptyState } from '@/components/ui/empty-state'
+import { Pagination } from '@/components/ui/pagination'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Plus, Shield } from 'lucide-react'
 import { listarPerfis, type Perfil } from '@/lib/actions/perfis'
@@ -16,6 +19,8 @@ import { PageHeader } from '@/components/layout/page-header'
 import { PageSection } from '@/components/layout/page-section'
 import { ConfirmDialog } from '@/components/feedback/confirm-dialog'
 
+const ITEMS_PER_PAGE = 10
+
 export default function PerfisPage() {
   const { user, loading: authLoading, schoolId, isSuperAdmin, allSchools } = useAuth()
   const router = useRouter()
@@ -26,6 +31,7 @@ export default function PerfisPage() {
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null)
   const [deleting, setDeleting] = useState(false)
   const [selectedSchoolId, setSelectedSchoolId] = useState<string | null>(null)
+  const [currentPage, setCurrentPage] = useState(1)
   const { loaded: permLoaded, pode, pessoaId, isSetup } = usePermissoes(schoolId)
 
   useEffect(() => {
@@ -37,6 +43,10 @@ export default function PerfisPage() {
   useEffect(() => {
     loadPerfis()
   }, [effectiveId, search, situacao])
+
+  useEffect(() => {
+    setCurrentPage(1)
+  }, [search, situacao, selectedSchoolId])
 
   useEffect(() => {
     if (permLoaded && effectiveId && !isSetup && !pode.visualizar('gestao-usuarios.perfis')) {
@@ -56,6 +66,20 @@ export default function PerfisPage() {
     } finally {
       setLoading(false)
     }
+  }
+
+  const totalPages = Math.max(1, Math.ceil(perfis.length / ITEMS_PER_PAGE))
+  const perfisPaginados = useMemo(() => {
+    const start = (currentPage - 1) * ITEMS_PER_PAGE
+    return perfis.slice(start, start + ITEMS_PER_PAGE)
+  }, [perfis, currentPage])
+
+  const filtrosAtivos = search.trim() !== '' || situacao !== 'todas'
+
+  const limparFiltros = () => {
+    setSearch('')
+    setSituacao('todas')
+    setCurrentPage(1)
   }
 
   const handleEdit = (perfil: Perfil) => {
@@ -128,7 +152,7 @@ export default function PerfisPage() {
           variant="flush"
           actions={
             <div className="flex items-center gap-2">
-              <span className="text-sm text-muted-foreground">{perfis.length} registro(s)</span>
+              <span className="text-[14px] text-muted-foreground tabular-nums">{perfis.length} registro(s)</span>
               {pode.criar('gestao-usuarios.perfis') && (
                 <Button onClick={() => router.push('/gestao-usuarios/perfis/novo')} size="sm">
                   <Plus className="mr-2 h-4 w-4" /> Novo Perfil
@@ -137,16 +161,66 @@ export default function PerfisPage() {
             </div>
           }
         >
-          <div className="px-4">
-            <PerfilGrid
-              perfis={perfis}
-              loading={loading}
-              onEdit={handleEdit}
-              onDelete={(id) => setDeleteTarget(id)}
-              podeEditar={pode.editar('gestao-usuarios.perfis')}
-              podeExcluir={pode.excluir('gestao-usuarios.perfis')}
-            />
-          </div>
+          {loading ? (
+            <Card className="shadow-sm">
+              <div className="p-6 space-y-3">
+                {[1, 2, 3].map(i => (
+                  <div key={i} className="h-10 bg-muted rounded-lg animate-pulse" />
+                ))}
+              </div>
+            </Card>
+          ) : perfis.length === 0 ? (
+            <Card className="shadow-sm">
+              {filtrosAtivos ? (
+                <EmptyState
+                  icon={Shield}
+                  title="Nenhum resultado para os filtros aplicados"
+                  description="Tente ajustar a busca ou a situação para encontrar perfis."
+                  action={
+                    <Button variant="outline" onClick={limparFiltros}>
+                      Limpar filtros
+                    </Button>
+                  }
+                />
+              ) : (
+                <EmptyState
+                  icon={Shield}
+                  title="Nenhum perfil cadastrado"
+                  description="Crie perfis para organizar as permissões de acesso ao sistema."
+                  action={
+                    <Button onClick={() => router.push('/gestao-usuarios/perfis/novo')}>
+                      <Plus className="mr-2 h-4 w-4" />
+                      Novo Perfil
+                    </Button>
+                  }
+                />
+              )}
+            </Card>
+          ) : (
+            <>
+              <div className="px-4">
+                <PerfilGrid
+                  perfis={perfisPaginados}
+                  loading={loading}
+                  onEdit={handleEdit}
+                  onDelete={(id) => setDeleteTarget(id)}
+                  podeEditar={pode.editar('gestao-usuarios.perfis')}
+                  podeExcluir={pode.excluir('gestao-usuarios.perfis')}
+                />
+              </div>
+              {totalPages > 1 && (
+                <div className="px-6 py-4 border-t border-border">
+                  <Pagination
+                    currentPage={currentPage}
+                    totalPages={totalPages}
+                    totalItems={perfis.length}
+                    itemsPerPage={ITEMS_PER_PAGE}
+                    onPageChange={setCurrentPage}
+                  />
+                </div>
+              )}
+            </>
+          )}
         </PageSection>
       </PageContainer>
 

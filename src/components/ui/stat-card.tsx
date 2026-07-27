@@ -7,6 +7,7 @@ type StatCardProps = {
   label: string
   trend?: { value: string; positive?: boolean }
   variant?: 'default' | 'success' | 'warning' | 'destructive'
+  size?: 'default' | 'hero'
   className?: string
 }
 
@@ -17,15 +18,34 @@ const variantStyles = {
   destructive: 'bg-destructive/10 text-destructive',
 }
 
-export function StatCard({ icon: Icon, value, label, trend, variant = 'default', className }: StatCardProps) {
+const sizeStyles = {
+  default: {
+    wrapper: 'p-5',
+    iconBox: 'p-2.5 rounded-xl',
+    icon: 'h-5 w-5',
+    value: 'text-[36px]',
+    label: 'text-[14px] mt-1.5',
+  },
+  hero: {
+    wrapper: 'p-6 sm:p-7',
+    iconBox: 'p-3 rounded-2xl',
+    icon: 'h-6 w-6',
+    value: 'text-[44px] sm:text-[48px]',
+    label: 'text-[15px] sm:text-base mt-2',
+  },
+}
+
+export function StatCard({ icon: Icon, value, label, trend, variant = 'default', size = 'default', className }: StatCardProps) {
+  const s = sizeStyles[size]
   return (
     <div className={cn(
-      'rounded-xl border border-border bg-card p-5 shadow-xs transition-all duration-200 hover:shadow-md hover:-translate-y-0.5',
+      'rounded-xl border border-border bg-card shadow-xs transition-all duration-200 hover:shadow-md hover:-translate-y-0.5',
+      s.wrapper,
       className
     )}>
       <div className="flex items-start justify-between">
-        <div className={cn('p-2.5 rounded-xl', variantStyles[variant])}>
-          <Icon className="h-5 w-5" />
+        <div className={cn(s.iconBox, variantStyles[variant])}>
+          <Icon className={s.icon} />
         </div>
         {trend && (
           <span className={cn(
@@ -36,9 +56,16 @@ export function StatCard({ icon: Icon, value, label, trend, variant = 'default',
           </span>
         )}
       </div>
-      <div className="mt-3">
-        <p className="text-[36px] font-bold leading-none text-foreground tracking-tight">{value}</p>
-        <p className="text-[14px] font-medium text-muted-foreground mt-1.5">{label}</p>
+      <div className={cn(size === 'hero' ? 'mt-4' : 'mt-3')}>
+        <p className={cn(
+          'font-bold leading-none text-foreground tracking-tight tabular-nums',
+          s.value
+        )}>
+          {value}
+        </p>
+        <p className={cn('font-medium text-muted-foreground', s.label)}>
+          {label}
+        </p>
       </div>
     </div>
   )

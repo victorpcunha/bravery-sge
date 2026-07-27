@@ -16,6 +16,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog'
 import { ConfirmDialog } from '@/components/feedback/confirm-dialog'
 import { Badge } from '@/components/ui/badge'
+import { PillToggleGroup } from '@/components/ui/pill-toggle'
+import { Switch } from '@/components/ui/switch'
 import { toast } from 'sonner'
 import {
   Plus, Pencil, Trash2, ChevronDown, ChevronRight,
@@ -30,6 +32,7 @@ import {
 } from '@/lib/actions/indicadores'
 import { getEtapasEnsino, getSubetapas } from '@/lib/actions/etapas-ensino'
 import { getAnosLetivosAtivos } from '@/lib/actions/quadro-aulas'
+import { getDisciplinas } from '@/lib/actions/matrizes'
 
 function formatNome(nome: string) {
   if (!nome) return ''
@@ -42,7 +45,7 @@ function formatNome(nome: string) {
 
 export default function IndicadoresPage() {
   const router = useRouter()
-  const { user, schoolId, loading: authLoading } = useAuth()
+  const { user, schoolId, isSuperAdmin, allSchools, loading: authLoading } = useAuth()
 
   // Filtros
   const [anosLetivos, setAnosLetivos] = useState<any[]>([])
@@ -50,6 +53,7 @@ export default function IndicadoresPage() {
   const [subetapas, setSubetapas] = useState<any[]>([])
   const [camposExperiencia, setCamposExperiencia] = useState<string[]>([])
   const [disciplinasMatriz, setDisciplinasMatriz] = useState<any[]>([])
+  const [disciplinasEscola, setDisciplinasEscola] = useState<any[]>([])
 
   const [filtroAno, setFiltroAno] = useState('')
   const [filtroEtapa, setFiltroEtapa] = useState('')
@@ -63,9 +67,12 @@ export default function IndicadoresPage() {
   // Indicadores
   const [indicadores, setIndicadores] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
+  const [selectedSchoolId, setSelectedSchoolId] = useState<string | null>(null)
   const [importando, setImportando] = useState(false)
 
-  // Dialog criação/edição
+  const effectiveSchoolId = selectedSchoolId || schoolId
+
+  // Dialog criacao/edicao
   const [dialogOpen, setDialogOpen] = useState(false)
   const [editId, setEditId] = useState<string | null>(null)
   const [formData, setFormData] = useState({
@@ -73,7 +80,7 @@ export default function IndicadoresPage() {
     periodo_ids: [] as string[],
   })
 
-  // Estado do formulário de criação
+  // Estado do formulario de criacao
   const [formContexto, setFormContexto] = useState({
     ano_letivo_id: '',
     etapa_ensino_id: '',
@@ -82,7 +89,7 @@ export default function IndicadoresPage() {
     disciplina_id: '',
   })
 
-  // Dados auxiliares do formulário
+  // Dados auxiliares do formulario
   const [formSubetapas, setFormSubetapas] = useState<any[]>([])
   const [formPeriodos, setFormPeriodos] = useState<any[]>([])
   const [formOpcoes, setFormOpcoes] = useState<any[]>([])
@@ -90,13 +97,13 @@ export default function IndicadoresPage() {
   const [formDisciplinas, setFormDisciplinas] = useState<any[]>([])
   const [formIsInfantil, setFormIsInfantil] = useState(false)
 
-  // Níveis de Desenvolvimento no formulário
+  // Niveis de Desenvolvimento no formulario
   const [formNiveisMetodo, setFormNiveisMetodo] = useState<string[]>([])
   const [formNiveisPersonalizados, setFormNiveisPersonalizados] = useState<{ id?: string; descricao: string; sigla: string }[]>([])
   const [novoNivelDescricao, setNovoNivelDescricao] = useState('')
   const [novoNivelSigla, setNovoNivelSigla] = useState('')
 
-  // Árvore expansível
+  // Arvore expansivel
   const [expandedGrupos, setExpandedGrupos] = useState<Record<string, boolean>>({})
   const [expandedSubgrupos, setExpandedSubgrupos] = useState<Record<string, boolean>>({})
 
@@ -111,21 +118,26 @@ export default function IndicadoresPage() {
   useEffect(() => {
     if (!user) return
     loadInitial()
-  }, [user])
+  }, [user, effectiveSchoolId])
 
   const loadInitial = async () => {
     try {
       const [anos, etapasList, campos] = await Promise.all([
-        getAnosLetivosAtivos(schoolId!),
-        getEtapasEnsino(schoolId!),
+        getAnosLetivosAtivos(effectiveSchoolId!),
+        getEtapasEnsino(effectiveSchoolId!, undefined, true),
         getCamposExperiencia(),
       ])
       setAnosLetivos(anos)
       setEtapas(etapasList)
       setCamposExperiencia(campos)
 
+      // Carregar todas as disciplinas da escola para o filtro
+      if (effectiveSchoolId) {
+        getDisciplinas(effectiveSchoolId).then(setDisciplinasEscola).catch(() => {})
+      }
+
       const ativo = anos.find((a: any) => a.status === 'ativo')
-      if (ativo) setFiltroAno(ativo.id)
+      // Não auto-selecionar - usuário escolhe manualmente
     } catch (e) {
       console.error('Erro init:', e)
       toast.error('Erro ao carregar dados')
@@ -138,20 +150,26 @@ export default function IndicadoresPage() {
   useEffect(() => {
     if (!filtroAno || !filtroEtapa) return
     loadIndicadores()
-  }, [schoolId, filtroAno, filtroEtapa, filtroSubetapa, filtroCampo, filtroDisciplina])
+  }, [effectiveSchoolId, filtroAno, filtroEtapa, filtroSubetapa, filtroCampo, filtroDisciplina])
 
   const loadIndicadores = async () => {
     setLoading(true)
     try {
-      const filtros: FiltrosIndicadores = {
-        ano_letivo_id: filtroAno,
-        etapa_ensino_id: filtroEtapa,
+      const filtros: FiltrosIndicadores = {}
+      if (filtroAno) filtros.ano_letivo_id = filtroAno
+      if (filtroEtapa) {
+        // Encontrar todos os UUIDs para o mesmo etapa_codigo (evita duplicatas ano_letivo_id null vs 2026)
+        const etapaSelecionada = etapas.find((e: any) => e.id === filtroEtapa)
+        if (etapaSelecionada) {
+          const todosIds = etapas.filter((e: any) => e.etapa_codigo === etapaSelecionada.etapa_codigo).map((e: any) => e.id)
+          filtros.etapa_ensino_ids = todosIds
+        }
       }
       if (filtroSubetapa) filtros.subetapa_id = filtroSubetapa
       if (filtroCampo) filtros.campo_experiencia = filtroCampo
       if (filtroDisciplina) filtros.disciplina_id = filtroDisciplina
 
-      const data = await getIndicadores(schoolId!, filtros)
+      const data = await getIndicadores(null, filtros)
       setIndicadores(data)
     } catch (e) {
       console.error('Erro loadIndicadores:', e)
@@ -178,7 +196,7 @@ export default function IndicadoresPage() {
     if (val) {
       const [subs, disciplinas] = await Promise.all([
         getSubetapas(val),
-        infantil ? Promise.resolve([]) : getDisciplinasMatriz(schoolId!, filtroAno, val),
+        infantil ? Promise.resolve([]) : getDisciplinasMatriz(effectiveSchoolId!, filtroAno, val),
       ])
       setSubetapas(subs)
       setDisciplinasMatriz(disciplinas)
@@ -187,6 +205,17 @@ export default function IndicadoresPage() {
       setDisciplinasMatriz([])
     }
   }
+
+  // Recarregar disciplinas quando o ano letivo mudar (se etapa ja estiver selecionada)
+  useEffect(() => {
+    if (!filtroAno || !filtroEtapa) return
+    const etapa = etapas.find(e => e.id === filtroEtapa)
+    const infantil = etapa?.etapa_tipo?.toLowerCase().includes('infantil') || false
+    if (infantil) return
+    getDisciplinasMatriz(effectiveSchoolId!, filtroAno, filtroEtapa)
+      .then(setDisciplinasMatriz)
+      .catch(() => setDisciplinasMatriz([]))
+  }, [filtroAno, filtroEtapa])
 
   const resetFormNiveis = () => {
     setFormNiveisMetodo([])
@@ -197,9 +226,9 @@ export default function IndicadoresPage() {
 
   const adicionarNivelPersonalizado = () => {
     const desc = novoNivelDescricao.trim()
-    if (!desc) { toast.error('Digite uma descrição para o nível'); return }
+    if (!desc) { toast.error('Digite uma descricao para o nivel'); return }
     if (formNiveisPersonalizados.some(n => n.descricao.toLowerCase() === desc.toLowerCase())) {
-      toast.error('Já existe um nível com esta descrição'); return
+      toast.error('Ja existe um nivel com esta descricao'); return
     }
     setFormNiveisPersonalizados(prev => [...prev, { descricao: desc, sigla: novoNivelSigla.trim() }])
     setNovoNivelDescricao('')
@@ -219,8 +248,8 @@ export default function IndicadoresPage() {
     setEditId(null)
     setFormData({ descricao: '', periodo_ids: [] })
     setFormContexto({
-      ano_letivo_id: filtroAno,
-      etapa_ensino_id: filtroEtapa,
+      ano_letivo_id: '',
+      etapa_ensino_id: '',
       subetapa_ids: [],
       campo_experiencia: '',
       disciplina_id: '',
@@ -230,7 +259,7 @@ export default function IndicadoresPage() {
     setFormSubetapas([])
     setFormCampos(camposExperiencia)
     setFormDisciplinas([])
-    setFormIsInfantil(isInfantil)
+    setFormIsInfantil(false)
     resetFormNiveis()
 
     const etapa = etapas.find(e => e.id === filtroEtapa)
@@ -242,9 +271,9 @@ export default function IndicadoresPage() {
     }
     if (filtroAno && filtroEtapa) {
       const [periodos, opcoes, disciplinas] = await Promise.all([
-        getPeriodosMatriz(schoolId, filtroAno, filtroEtapa),
-        getOpcoesRegistro(schoolId, filtroAno, filtroEtapa),
-        isInfantil ? Promise.resolve([]) : getDisciplinasMatriz(schoolId, filtroAno, filtroEtapa),
+        getPeriodosMatriz(effectiveSchoolId!, filtroAno, filtroEtapa),
+        getOpcoesRegistro(effectiveSchoolId!, filtroAno, filtroEtapa),
+        formIsInfantil ? Promise.resolve([]) : getDisciplinas(effectiveSchoolId!),
       ])
       setFormPeriodos(periodos)
       setFormOpcoes(opcoes)
@@ -253,7 +282,7 @@ export default function IndicadoresPage() {
     setDialogOpen(true)
   }
 
-  // Abrir dialog de edição
+  // Abrir dialog de edicao
   const openEditDialog = async (ind: any) => {
     setEditId(ind.id)
     setFormData({
@@ -274,8 +303,8 @@ export default function IndicadoresPage() {
 
     if (ind.ano_letivo_id && ind.etapa_ensino_id) {
       const [periodos, opcoes, subs, niveis] = await Promise.all([
-        getPeriodosMatriz(schoolId, ind.ano_letivo_id, ind.etapa_ensino_id),
-        getOpcoesRegistro(schoolId, ind.ano_letivo_id, ind.etapa_ensino_id),
+        getPeriodosMatriz(effectiveSchoolId!, ind.ano_letivo_id, ind.etapa_ensino_id),
+        getOpcoesRegistro(effectiveSchoolId!, ind.ano_letivo_id, ind.etapa_ensino_id),
         getSubetapas(ind.etapa_ensino_id),
         getIndicadorNiveis(ind.id),
       ])
@@ -283,7 +312,7 @@ export default function IndicadoresPage() {
       setFormOpcoes(opcoes)
       setFormSubetapas(subs)
 
-      // Separar níveis em método e personalizados
+      // Separar niveis em metodo e personalizados
       const metodoIds: string[] = []
       const personalizados: { id: string; descricao: string; sigla: string }[] = []
       for (const n of niveis) {
@@ -295,6 +324,11 @@ export default function IndicadoresPage() {
       }
       setFormNiveisMetodo(metodoIds)
       setFormNiveisPersonalizados(personalizados)
+
+      // Carregar disciplinas para exibir valor salvo no Select
+      if (!infantil) {
+        getDisciplinas(effectiveSchoolId!).then(setFormDisciplinas).catch(() => {})
+      }
     }
 
     setFormCampos(camposExperiencia)
@@ -303,7 +337,7 @@ export default function IndicadoresPage() {
 
   // Salvar indicador
   const handleSave = async () => {
-    if (!formData.descricao.trim()) { toast.error('Descrição obrigatória'); return }
+    if (!formData.descricao.trim()) { toast.error('Descricao obrigatoria'); return }
 
     try {
       if (editId) {
@@ -311,7 +345,7 @@ export default function IndicadoresPage() {
           descricao: formData.descricao,
           periodos_ids: formData.periodo_ids,
         })
-        // Salvar níveis
+        // Salvar niveis
         await salvarNiveisIndicador(editId, {
           metodo_nivel_ids: formNiveisMetodo,
           personalizados: formNiveisPersonalizados.filter(n => !n.id).map(n => ({ descricao: n.descricao, sigla: n.sigla || undefined })),
@@ -319,7 +353,7 @@ export default function IndicadoresPage() {
         toast.success('Indicador atualizado')
       } else {
         const novo = await createIndicador({
-          school_id: schoolId!,
+          school_id: effectiveSchoolId!,
           ano_letivo_id: formContexto.ano_letivo_id,
           etapa_ensino_id: formContexto.etapa_ensino_id,
           subetapa_id: formContexto.subetapa_ids[0] || null,
@@ -330,7 +364,7 @@ export default function IndicadoresPage() {
           origem: 'manual',
         })
 
-        // Salvar níveis do novo indicador
+        // Salvar niveis do novo indicador
         const personalizados = formNiveisPersonalizados.map(n => ({ descricao: n.descricao, sigla: n.sigla || undefined }))
         await salvarNiveisIndicador((novo as any).id, {
           metodo_nivel_ids: formNiveisMetodo,
@@ -348,7 +382,7 @@ export default function IndicadoresPage() {
   // Excluir
   const handleDeleteClick = (ind: any) => {
     if (ind.utilizado) {
-      toast.error('Este indicador já foi utilizado em avaliações e não pode ser removido.')
+      toast.error('Este indicador ja foi utilizado em avaliacoes e nao pode ser removido.')
       return
     }
     setDeleteConfirmId(ind.id)
@@ -367,7 +401,7 @@ export default function IndicadoresPage() {
     }
   }
 
-  // Toggle expansão
+  // Toggle expansao
   const toggleGrupo = (key: string) => setExpandedGrupos(prev => ({ ...prev, [key]: !prev[key] }))
   const toggleSubgrupo = (key: string) => setExpandedSubgrupos(prev => ({ ...prev, [key]: !prev[key] }))
 
@@ -388,49 +422,51 @@ export default function IndicadoresPage() {
   return (
     <PageContainer>
       <PageHeader
-          title="Indicadores de Avaliação"
-          description="Defina os indicadores que os professores utilizarão para avaliar os alunos"
+          title="Indicadores de Avaliacao"
+          description="Defina os indicadores que os professores utilizarao para avaliar os alunos"
           icon={ListChecks}
-        actions={
-          <div className="flex items-center gap-2">
-            {filtroAno && filtroEtapa && isInfantil && (
-              <Button variant="outline" size="sm"
-                onClick={async () => {
-                  try {
-                    setImportando(true)
-                    const result = await importarIndicadoresDaMatriz(schoolId, filtroAno, filtroEtapa)
-                    toast.success(`${result.total} indicadores importados`)
-                    loadIndicadores()
-                  } catch (e: any) {
-                    toast.error(e.message || 'Erro ao importar')
-                  } finally {
-                    setImportando(false)
-                  }
-                }}
-                disabled={importando || !filtroAno || !filtroEtapa}>
-                <Import className="h-4 w-4 mr-1" />
-                Importar da Matriz
-              </Button>
-            )}
-            <Button
-              onClick={openNewDialog}
-              disabled={!filtroAno || !filtroEtapa}>
-              <Plus className="h-4 w-4 mr-1.5" />
-              Novo Indicador
-            </Button>
-          </div>
-        }
       />
 
       {/* Filtros */}
       <PageSection variant="compact" title="Filtros" className="mb-6">
         <div className="flex flex-wrap gap-3">
+          {/* Escola (superadmin apenas) */}
+          {isSuperAdmin && allSchools.length > 0 && (
+            <div>
+              <Label className="text-xs text-muted-foreground mb-1 block">Escola</Label>
+              <Select value={selectedSchoolId ?? ''} onValueChange={v => {
+                setSelectedSchoolId(v || null)
+                setFiltroAno('')
+                setFiltroEtapa('')
+                setFiltroSubetapa('')
+                setFiltroCampo('')
+                setFiltroDisciplina('')
+                setEtapaAtual(null)
+                setIsInfantil(false)
+                setSubetapas([])
+                setDisciplinasMatriz([])
+                setIndicadores([])
+                setExpandedGrupos({})
+                setExpandedSubgrupos({})
+              }}>
+                <SelectTrigger className="w-auto min-w-[200px] h-9 border-border">
+                  <SelectValue placeholder="Selecione uma Escola" />
+                </SelectTrigger>
+                <SelectContent position="popper" side="bottom" sideOffset={5}>
+                  {allSchools.map((s: any) => (
+                    <SelectItem key={s.id} value={s.id}>{s.nome_escola}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
+
           {/* Ano Letivo */}
           <div className="w-48">
             <Label className="text-xs text-muted-foreground mb-1 block">Ano Letivo</Label>
             <Select value={filtroAno} onValueChange={v => { setFiltroAno(v); setFiltroEtapa(''); }}>
               <SelectTrigger className="h-9">
-                <SelectValue placeholder="Selecione" />
+                <SelectValue placeholder="Selecione um ano letivo" />
               </SelectTrigger>
               <SelectContent>
                 {anosLetivos.map((a: any) => (
@@ -448,7 +484,7 @@ export default function IndicadoresPage() {
                 <SelectValue placeholder="Selecione" />
               </SelectTrigger>
               <SelectContent>
-                {etapas.map((e: any) => (
+                {etapas.filter((e: any, i: number, arr: any[]) => arr.findIndex((x: any) => x.etapa_codigo === e.etapa_codigo) === i).map((e: any) => (
                   <SelectItem key={e.id} value={e.id}>{e.etapa_nome}</SelectItem>
                 ))}
               </SelectContent>
@@ -473,10 +509,10 @@ export default function IndicadoresPage() {
             </div>
           )}
 
-          {/* Campo de Experiência (Infantil) */}
+          {/* Campo de Experiencia (Infantil) */}
           {isInfantil && camposExperiencia.length > 0 && (
             <div className="w-64">
-              <Label className="text-xs text-muted-foreground mb-1 block">Campo de Experiência</Label>
+              <Label className="text-xs text-muted-foreground mb-1 block">Campo de Experiencia</Label>
               <Select value={filtroCampo} onValueChange={v => { setFiltroCampo(v === 'all' ? '' : v); setFiltroDisciplina('') }}>
                 <SelectTrigger className="h-9">
                   <SelectValue placeholder="Todos" />
@@ -492,7 +528,7 @@ export default function IndicadoresPage() {
           )}
 
           {/* Disciplina (demais etapas) */}
-          {!isInfantil && disciplinasMatriz.length > 0 && (
+          {!isInfantil && disciplinasEscola.length > 0 && (
             <div className="w-56">
               <Label className="text-xs text-muted-foreground mb-1 block">Disciplina</Label>
               <Select value={filtroDisciplina} onValueChange={v => { setFiltroDisciplina(v === 'all' ? '' : v); setFiltroCampo('') }}>
@@ -501,10 +537,8 @@ export default function IndicadoresPage() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">Todas</SelectItem>
-                  {disciplinasMatriz.map((d: any) => (
-                    <SelectItem key={d.disciplina_id} value={d.disciplina_id}>
-                      {formatNome(d.academico_disciplinas?.nome || 'Sem nome')}
-                    </SelectItem>
+                  {disciplinasEscola.map((d: any) => (
+                    <SelectItem key={d.id} value={d.id}>{formatNome(d.nome)}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
@@ -513,10 +547,37 @@ export default function IndicadoresPage() {
         </div>
       </PageSection>
 
-      {/* Listagem hierárquica */}
+      {/* Listagem hierarquica */}
       <PageSection
         variant="flush"
         title={`${indicadores.length} indicador${indicadores.length !== 1 ? 'es' : ''} encontrado${indicadores.length !== 1 ? 's' : ''}`}
+        actions={
+          <div className="flex items-center gap-2">
+            {filtroAno && filtroEtapa && isInfantil && (
+              <Button variant="outline" size="sm"
+                onClick={async () => {
+                  try {
+                    setImportando(true)
+                    const result = await importarIndicadoresDaMatriz(effectiveSchoolId!, filtroAno, filtroEtapa)
+                    toast.success(`${result.total} indicadores importados`)
+                    loadIndicadores()
+                  } catch (e: any) {
+                    toast.error(e.message || 'Erro ao importar')
+                  } finally {
+                    setImportando(false)
+                  }
+                }}
+                disabled={importando || !filtroAno || !filtroEtapa}>
+                <Import className="h-4 w-4 mr-1" />
+                Importar da Matriz
+              </Button>
+            )}
+            <Button onClick={openNewDialog}>
+              <Plus className="h-4 w-4 mr-1.5" />
+              Novo Indicador
+            </Button>
+          </div>
+        }
       >
         {loading ? (
           <div className="flex flex-col items-center justify-center py-16 gap-3">
@@ -527,13 +588,13 @@ export default function IndicadoresPage() {
           <EmptyState
             icon={ListChecks}
             title="Selecione os filtros"
-            description="Selecione o Ano Letivo e a Etapa de Ensino acima para visualizar os indicadores de avaliação disponíveis."
+            description="Selecione o Ano Letivo e a Etapa de Ensino acima para visualizar os indicadores de avaliacao disponiveis."
           />
         ) : indicadores.length === 0 ? (
           <EmptyState
             icon={ListChecks}
             title="Nenhum indicador encontrado"
-            description={isInfantil ? 'Utilize "Importar da Matriz" para carregar os indicadores da BNCC ou clique em "Novo Indicador" para criar manualmente.' : 'Clique em "Novo Indicador" para criar indicadores de avaliação personalizados para esta disciplina.'}
+            description={isInfantil ? 'Utilize "Importar da Matriz" para carregar os indicadores da BNCC ou clique em "Novo Indicador" para criar manualmente.' : 'Clique em "Novo Indicador" para criar indicadores de avaliacao personalizados para esta disciplina.'}
           />
         ) : (
           <div className="p-4 space-y-2">
@@ -583,12 +644,12 @@ export default function IndicadoresPage() {
 
       {/* Dialog Novo/Editar Indicador */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle className="text-base">{editId ? 'Editar Indicador' : 'Novo Indicador'}</DialogTitle>
+        <DialogContent className="max-w-2xl max-h-[90vh] flex flex-col p-0 gap-0">
+          <DialogHeader className="px-6 pt-6 pb-0 shrink-0">
+            <DialogTitle>{editId ? 'Editar Indicador' : 'Novo Indicador'}</DialogTitle>
           </DialogHeader>
-          <div className="space-y-4">
-            {/* Contexto (bloqueado na edição) */}
+          <div className="flex-1 overflow-y-auto px-6 py-4 space-y-4">
+            {/* Contexto (bloqueado na edicao) */}
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <Label className="text-xs text-muted-foreground">Ano Letivo</Label>
@@ -639,7 +700,6 @@ export default function IndicadoresPage() {
                               : p.subetapa_ids.filter(id => id !== s.id)
                           }))
                         }}
-                        disabled={!!editId}
                       />
                       {s.nome}
                     </label>
@@ -648,13 +708,12 @@ export default function IndicadoresPage() {
               </div>
             )}
 
-            {/* Campo de Experiência ou Disciplina */}
+            {/* Campo de Experiencia ou Disciplina */}
             {formIsInfantil ? (
               <div>
-                <Label className="text-xs text-muted-foreground mb-1 block">Campo de Experiência</Label>
+                <Label className="text-xs text-muted-foreground mb-1 block">Campo de Experiencia</Label>
                 <Select value={formContexto.campo_experiencia}
-                  onValueChange={v => setFormContexto(p => ({ ...p, campo_experiencia: v }))}
-                  disabled={!!editId}>
+                  onValueChange={v => setFormContexto(p => ({ ...p, campo_experiencia: v }))}>
                   <SelectTrigger className="h-9">
                     <SelectValue placeholder="Selecione" />
                   </SelectTrigger>
@@ -676,8 +735,8 @@ export default function IndicadoresPage() {
                   </SelectTrigger>
                   <SelectContent>
                     {formDisciplinas.map((d: any) => (
-                      <SelectItem key={d.disciplina_id} value={d.disciplina_id}>
-                        {formatNome(d.academico_disciplinas?.nome || 'Sem nome')}
+                      <SelectItem key={d.id} value={d.id}>
+                        {formatNome(d.nome)}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -685,26 +744,27 @@ export default function IndicadoresPage() {
               </div>
             )}
 
-            {/* Descrição */}
+            {/* Descricao */}
             <div>
-              <Label className="text-xs text-muted-foreground mb-1 block">Descrição do Indicador <span className="text-destructive">*</span></Label>
+              <Label className="text-xs text-muted-foreground mb-1 block">Descricao do Indicador <span className="text-destructive">*</span></Label>
               <Textarea
-                className="min-h-[80px]"
+                className="border-border min-h-[80px]"
                 value={formData.descricao}
                 onChange={e => setFormData(p => ({ ...p, descricao: e.target.value }))}
-                placeholder="Descreva o critério de avaliação..."
+                placeholder="Descreva o criterio de avaliacao..."
               />
             </div>
 
-            {/* Períodos */}
+            {/* Periodos */}
             <div>
-              <Label className="text-xs text-muted-foreground mb-1 block">Períodos</Label>
+              <Label className="text-xs text-muted-foreground mb-1 block">Periodos</Label>
               {formPeriodos.length === 0 ? (
-                <p className="text-xs text-muted-foreground italic">Nenhum período disponível</p>
+                <p className="text-xs text-muted-foreground italic">Nenhum periodo disponivel</p>
               ) : (
-                <div className="space-y-1.5">
-                  <label className="flex items-center gap-1.5 text-xs cursor-pointer">
-                    <Checkbox
+                <div className="space-y-2">
+                  <label className="flex items-center gap-2 text-xs cursor-pointer">
+                    <Switch
+                      size="sm"
                       checked={formData.periodo_ids.length === formPeriodos.length}
                       onCheckedChange={(checked) => {
                         setFormData(p => ({
@@ -713,97 +773,91 @@ export default function IndicadoresPage() {
                         }))
                       }}
                     />
-                    <span className="font-medium">Todos os períodos</span>
+                    <span className="font-medium">Todos os periodos</span>
                   </label>
-                  {formPeriodos.map((per: any) => (
-                    <label key={per.id} className="flex items-center gap-1.5 text-xs cursor-pointer ml-4">
-                      <Checkbox
-                        checked={formData.periodo_ids.includes(per.id)}
-                        onCheckedChange={(checked) => {
-                          setFormData(p => ({
-                            ...p,
-                            periodo_ids: checked
-                              ? [...p.periodo_ids, per.id]
-                              : p.periodo_ids.filter(id => id !== per.id)
-                          }))
-                        }}
-                      />
-                      {per.periodo_nome}
-                    </label>
-                  ))}
+                  <PillToggleGroup
+                    multiple
+                    selectedValues={formData.periodo_ids}
+                    options={formPeriodos.map(p => ({ value: p.id, label: p.periodo_nome }))}
+                    onToggleValue={(val) => {
+                      setFormData(p => ({
+                        ...p,
+                        periodo_ids: p.periodo_ids.includes(val)
+                          ? p.periodo_ids.filter(id => id !== val)
+                          : [...p.periodo_ids, val]
+                      }))
+                    }}
+                  />
                 </div>
               )}
             </div>
 
-            {/* Níveis de Desenvolvimento */}
+            {/* Niveis de Desenvolvimento */}
             <div>
               <Label className="text-xs text-muted-foreground mb-1 block">
-                Níveis de Desenvolvimento
+                Niveis de Desenvolvimento
                 <span className="text-muted-foreground font-normal ml-1">
-                  (selecione os níveis do método ou crie níveis personalizados)
+                  (selecione os niveis do metodo ou crie niveis personalizados)
                 </span>
               </Label>
 
-              {/* Níveis do Método */}
+              {/* Niveis do Metodo */}
               {formOpcoes.length > 0 && (
                 <div className="mb-3">
-                  <p className="text-[11px] text-muted-foreground mb-1.5">Níveis do Método de Avaliação:</p>
-                  <div className="space-y-1.5">
-                    {formOpcoes.map((op: any) => (
-                      <label key={op.id} className="flex items-center gap-1.5 text-xs cursor-pointer">
-                        <Checkbox
-                          checked={formNiveisMetodo.includes(op.id)}
-                          onCheckedChange={(checked) => {
-                            setFormNiveisMetodo(prev =>
-                              checked ? [...prev, op.id] : prev.filter(id => id !== op.id)
-                            )
-                          }}
-                        />
-                        {op.descricao} {op.sigla ? `(${op.sigla})` : ''}
-                      </label>
-                    ))}
-                  </div>
+                  <p className="text-[11px] text-muted-foreground mb-1.5">Niveis do Metodo de Avaliacao:</p>
+                  <PillToggleGroup
+                    multiple
+                    selectedValues={formNiveisMetodo}
+                    options={formOpcoes.map(op => ({ value: op.id, label: `${op.descricao}${op.sigla ? ` (${op.sigla})` : ''}` }))}
+                    onToggleValue={(val) => {
+                      setFormNiveisMetodo(prev =>
+                        prev.includes(val) ? prev.filter(id => id !== val) : [...prev, val]
+                      )
+                    }}
+                  />
                 </div>
               )}
 
-              {/* Níveis Personalizados */}
+              {/* Niveis Personalizados */}
               <div className="border border-border rounded-md p-3 bg-muted/30">
-                <p className="text-[11px] text-muted-foreground mb-2">Níveis Personalizados:</p>
+                <p className="text-[11px] text-muted-foreground mb-2">Niveis Personalizados:</p>
 
                 {formNiveisPersonalizados.length === 0 ? (
-                  <p className="text-xs text-muted-foreground italic mb-2">Nenhum nível personalizado criado.</p>
+                  <p className="text-xs text-muted-foreground italic mb-2">Nenhum nivel personalizado criado.</p>
                 ) : (
-                  <div className="space-y-1.5 mb-3">
+                  <div className="flex flex-wrap gap-1.5 mb-3">
                     {formNiveisPersonalizados.map((n, i) => (
-                      <div key={i} className="flex items-center justify-between bg-card border border-border rounded px-2 py-1.5">
-                        <span className="text-xs text-foreground">
-                          {n.descricao} {n.sigla ? <span className="text-muted-foreground">({n.sigla})</span> : ''}
-                        </span>
-                        <Button variant="ghost" size="icon" className="h-5 w-5"
-                          onClick={() => removerNivelPersonalizado(i)}>
+                      <span key={i} className="inline-flex items-center gap-1 rounded-md bg-card border border-border px-2 py-1 text-xs">
+                        <span className="font-semibold text-primary">{n.sigla || '-'}</span>
+                        <span className="text-muted-foreground">{n.descricao}</span>
+                        <button
+                          type="button"
+                          className="ml-0.5 rounded-full hover:bg-muted p-0.5 cursor-pointer"
+                          onClick={() => removerNivelPersonalizado(i)}
+                        >
                           <X className="h-3 w-3 text-destructive" />
-                        </Button>
-                      </div>
+                        </button>
+                      </span>
                     ))}
                   </div>
                 )}
 
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-1.5">
                   <Input
-                    className="h-8 text-xs flex-1"
-                    placeholder="Descrição do nível..."
+                    className="h-7 text-xs flex-1"
+                    placeholder="Descricao do nivel..."
                     value={novoNivelDescricao}
                     onChange={e => setNovoNivelDescricao(e.target.value)}
                     onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); adicionarNivelPersonalizado() } }}
                   />
                   <Input
-                    className="h-8 text-xs w-20"
+                    className="h-7 text-xs w-16"
                     placeholder="Sigla"
                     value={novoNivelSigla}
                     onChange={e => setNovoNivelSigla(e.target.value)}
                     onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); adicionarNivelPersonalizado() } }}
                   />
-                  <Button variant="outline" size="sm" className="h-8 text-xs whitespace-nowrap"
+                  <Button variant="outline" size="sm" className="h-7 text-xs whitespace-nowrap px-2"
                     onClick={adicionarNivelPersonalizado}>
                     + Adicionar
                   </Button>
@@ -811,8 +865,8 @@ export default function IndicadoresPage() {
               </div>
             </div>
           </div>
-          <DialogFooter className="gap-2">
-            <Button variant="outline" onClick={() => setDialogOpen(false)}>Cancelar</Button>
+          <DialogFooter className="shrink-0 border-t border-border px-6 py-4 gap-3">
+            <Button variant="ghost" onClick={() => setDialogOpen(false)}>Cancelar</Button>
             <Button onClick={handleSave}>
               {editId ? 'Salvar' : 'Salvar'}
             </Button>
@@ -825,7 +879,7 @@ export default function IndicadoresPage() {
         open={!!deleteConfirmId}
         onOpenChange={() => setDeleteConfirmId(null)}
         title="Remover Indicador"
-        description={`Tem certeza que deseja remover o indicador?\n\n"${deleteConfirmDesc}"\n\nEsta ação não pode ser desfeita automaticamente.`}
+        description={`Tem certeza que deseja remover o indicador?\n\n"${deleteConfirmDesc}"\n\nEsta acao nao pode ser desfeita automaticamente.`}
         confirmLabel="Remover"
         cancelLabel="Cancelar"
         variant="destructive"
@@ -840,7 +894,7 @@ export default function IndicadoresPage() {
     const codigoDisplay = ind.codigo ? `${ind.codigo} - ` : ''
 
     return (
-      <div key={ind.id} className="flex items-start justify-between px-6 py-2.5 border-t border-border hover:bg-muted/50 transition-colors group">
+      <div key={ind.id} className="flex items-start justify-between px-6 py-2.5 border-t border-border hover:bg-muted/50 transition-colors">
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2">
             <span className="text-sm text-foreground">{codigoDisplay}{ind.descricao}</span>
@@ -848,13 +902,13 @@ export default function IndicadoresPage() {
           </div>
           <div className="flex items-center gap-3 mt-0.5 text-[11px] text-muted-foreground">
             {ind.periodos_ids && ind.periodos_ids.length > 0 && (
-              <span>{ind.periodos_ids.length} período(s)</span>
+              <span>{ind.periodos_ids.length} periodo(s)</span>
             )}
           </div>
         </div>
-        <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+        <div className="flex items-center gap-1">
           {ind.utilizado ? (
-            <span className="text-[11px] text-muted-foreground italic mr-1" title="Já utilizado em avaliações">
+            <span className="text-[11px] text-muted-foreground italic mr-1" title="Ja utilizado em avaliacoes">
               <AlertCircle className="h-3.5 w-3.5 inline mr-0.5" />
               Em uso
             </span>
@@ -874,7 +928,7 @@ export default function IndicadoresPage() {
   }
 }
 
-// Função de agrupamento
+// Funcao de agrupamento
 function agruparIndicadores(indicadores: any[], isInfantil: boolean) {
   const gruposMap = new Map<string, { nome: string; subgrupos: Map<string, { nome: string; indicadores: any[] }>; indicadores: any[] }>()
 

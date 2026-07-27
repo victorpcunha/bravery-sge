@@ -22,7 +22,7 @@ const UF_LIST = [
 
 const SITUACOES = [
   'Aprovado', 'Reprovado', 'Aprovado por conselho de classe',
-  'Reprovado por frequencia', 'Transferido', 'Desistente',
+  'Reprovado por frequência', 'Transferido', 'Desistente',
 ]
 
 type EtapaEnsino = { id: string; nome: string }
@@ -107,7 +107,7 @@ export default function ModalHistoricoManual({ open, onClose, onSuccess, personI
   const addDisciplina = () => {
     if (discDiversif) {
       if (!discNome || !discMedia) {
-        toast.error('Informe o nome da disciplina e a media final')
+        toast.error('Informe o nome da disciplina e a média final')
         return
       }
       setDisciplinas(prev => [...prev, {
@@ -120,11 +120,11 @@ export default function ModalHistoricoManual({ open, onClose, onSuccess, personI
       setDiscNome('')
     } else {
       if (!discId || !discMedia) {
-        toast.error('Selecione a disciplina e informe a media final')
+        toast.error('Selecione a disciplina e informe a média final')
         return
       }
       if (disciplinas.some(d => d.disciplina_id === discId && !d.parte_diversificada)) {
-        toast.error('Disciplina ja adicionada')
+        toast.error('Disciplina já adicionada')
         return
       }
       const nome = disciplinasOpts.find(d => d.id === discId)?.nome || discId
@@ -148,14 +148,14 @@ export default function ModalHistoricoManual({ open, onClose, onSuccess, personI
   const isFormValid = anoLetivo && estado && municipio && unidadeEscolar && etapaEnsinoId && situacao
 
   const handleSubmit = async () => {
-    if (!isFormValid) { toast.error('Preencha todos os campos obrigatorios'); return }
-    if (!schoolId) { toast.error('Escola nao selecionada'); return }
+    if (!isFormValid) { toast.error('Preencha todos os campos obrigatórios'); return }
+    if (!schoolId) { toast.error('Escola não selecionada'); return }
 
     setSalvando(true)
     try {
       const anoNum = parseInt(anoLetivo)
       if (isNaN(anoNum) || anoNum < 1900 || anoNum > 2100) {
-        toast.error('Ano Letivo invalido')
+        toast.error('Ano Letivo inválido')
         setSalvando(false)
         return
       }
@@ -182,12 +182,12 @@ export default function ModalHistoricoManual({ open, onClose, onSuccess, personI
       }
 
       await adicionarHistoricoManual(data, pessoaLogadaId)
-      toast.success('Historico registrado com sucesso')
+      toast.success('Histórico registrado com sucesso')
       resetForm()
       onSuccess()
       onClose()
     } catch (err: any) {
-      toast.error(err?.message || 'Erro ao salvar historico')
+      toast.error(err?.message || 'Erro ao salvar histórico')
     } finally {
       setSalvando(false)
     }
@@ -195,176 +195,278 @@ export default function ModalHistoricoManual({ open, onClose, onSuccess, personI
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle>Adicionar Historico</DialogTitle>
+      <DialogContent className="max-w-3xl max-h-[90vh] p-0 gap-0 flex flex-col">
+        <DialogHeader className="shrink-0 px-6 pt-6 pb-4 border-b border-border">
+          <DialogTitle>Adicionar Histórico</DialogTitle>
           <DialogDescription>
-            Registre manualmente um historico escolar de anos anteriores ou de outra escola.
+            Registre manualmente um histórico escolar de anos anteriores ou de outra escola.
           </DialogDescription>
         </DialogHeader>
 
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm">Dados Gerais</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <Label className="text-xs">Ano Letivo *</Label>
-                <Input type="number" value={anoLetivo} onChange={e => setAnoLetivo(e.target.value)} placeholder="Ex: 2025" className="h-9 text-xs border-border" />
-              </div>
-              <div>
-                <Label className="text-xs">Situacao *</Label>
-                <Select value={situacao} onValueChange={setSituacao}>
-                  <SelectTrigger size="sm" className="text-xs"><SelectValue placeholder="Selecione" /></SelectTrigger>
-                  <SelectContent>
-                    {SITUACOES.map(s => <SelectItem key={s} value={s} className="text-xs">{s}</SelectItem>)}
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <Label className="text-xs">Carga Horaria (h)</Label>
-                <Input type="number" value={cargaHoraria} onChange={e => setCargaHoraria(e.target.value)} className="h-9 text-xs border-border" />
-              </div>
-              <div>
-                <Label className="text-xs">Dias Letivos</Label>
-                <Input type="number" value={diasLetivos} onChange={e => setDiasLetivos(e.target.value)} className="h-9 text-xs border-border" />
-              </div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <Label className="text-xs">Estado (UF) *</Label>
-                <Select value={estado} onValueChange={setEstado}>
-                  <SelectTrigger size="sm" className="text-xs"><SelectValue placeholder="Selecione" /></SelectTrigger>
-                  <SelectContent>
-                    {UF_LIST.map(uf => <SelectItem key={uf} value={uf} className="text-xs">{uf}</SelectItem>)}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div>
-                <Label className="text-xs">Municipio *</Label>
-                <Input value={municipio} onChange={e => setMunicipio(e.target.value)} className="h-9 text-xs border-border" placeholder="Municipio da escola" />
-              </div>
-            </div>
-
-            <div>
-              <Label className="text-xs">Unidade Escolar *</Label>
-              <Input value={unidadeEscolar} onChange={e => setUnidadeEscolar(e.target.value)} className="h-9 text-xs border-border" placeholder="Nome da escola" />
-            </div>
-
-            <div>
-              <Label className="text-xs">Etapa de Ensino *</Label>
-              <Select value={etapaEnsinoId} onValueChange={setEtapaEnsinoId}>
-                <SelectTrigger size="sm" className="text-xs"><SelectValue placeholder="Selecione" /></SelectTrigger>
-                <SelectContent>
-                  {etapas.map(e => <SelectItem key={e.id} value={e.id} className="text-xs">{e.nome}</SelectItem>)}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div>
-              <Label className="text-xs">Observacoes</Label>
-              <Textarea value={observacoes} onChange={e => setObservacoes(e.target.value)} rows={2} className="mt-0.5 text-xs resize-y border-border" />
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm">Registros Escolares</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            <div className="flex items-center gap-2">
-              <Checkbox
-                id="parte-diversificada"
-                checked={discDiversif}
-                onCheckedChange={checked => {
-                  setDiscDiversif(!!checked)
-                  if (checked) { setDiscId('') } else { setDiscNome('') }
-                }}
-              />
-              <Label htmlFor="parte-diversificada" className="text-xs cursor-pointer">Parte Diversificada</Label>
-            </div>
-
-            {discDiversif ? (
-              <div>
-                <Label className="text-xs">Nome da Disciplina *</Label>
-                <Input value={discNome} onChange={e => setDiscNome(e.target.value)} className="h-9 text-xs border-border" placeholder="Ex: Robotica Educacional" />
-              </div>
-            ) : (
-              <div>
-                <Label className="text-xs">Disciplina *</Label>
-                <Select value={discId} onValueChange={setDiscId}>
-                  <SelectTrigger size="sm" className="text-xs"><SelectValue placeholder="Selecione a disciplina" /></SelectTrigger>
-                  <SelectContent>
-                    {disciplinasOpts.map(d => <SelectItem key={d.id} value={d.id} className="text-xs">{d.nome}</SelectItem>)}
-                  </SelectContent>
-                </Select>
-              </div>
-            )}
-
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <Label className="text-xs">Media Final *</Label>
-                <Input type="number" step="0.01" value={discMedia} onChange={e => setDiscMedia(e.target.value)} className="h-9 text-xs border-border" placeholder="Ex: 8.5" />
-              </div>
-              <div>
-                <Label className="text-xs">Carga Horaria (h)</Label>
-                <Input type="number" value={discCarga} onChange={e => setDiscCarga(e.target.value)} className="h-9 text-xs border-border" placeholder="Ex: 800" />
-              </div>
-            </div>
-
-            <Button type="button" size="sm" variant="outline" className="h-7 text-xs gap-1 w-full" onClick={addDisciplina}>
-              <Plus className="h-3 w-3" />
-              Adicionar Disciplina
-            </Button>
-
-            {disciplinas.length > 0 && (
-              <div className="space-y-2">
-                <div className="border-t border-border pt-2" />
-                {disciplinas.map((d, i) => (
-                  <div key={i} className="flex items-center gap-2 bg-muted/50 rounded p-2">
-                    <div className="flex-1 min-w-0">
-                      <p className="text-xs font-medium truncate">{d.disciplina_nome}</p>
-                      <p className="text-xs text-muted-foreground">
-                        Media: {d.media_final}
-                        {d.carga_horaria_anual != null && ` | CH: ${d.carga_horaria_anual}h`}
-                        {d.parte_diversificada && ' | Parte Diversif.'}
-                      </p>
-                    </div>
-                    <Button variant="ghost" size="sm" className="h-6 w-6 p-0 shrink-0" onClick={() => removeDisciplina(i)}>
-                      <X className="h-3 w-3" />
-                    </Button>
-                  </div>
-                ))}
-
-                <div className="border-t border-border pt-2 space-y-1">
-                  <div className="flex justify-between text-xs">
-                    <span className="text-muted-foreground">Carga Horaria BNCC</span>
-                    <span className="font-medium">{cargas.bncc}h</span>
-                  </div>
-                  <div className="flex justify-between text-xs">
-                    <span className="text-muted-foreground">Carga Horaria Parte Diversificada</span>
-                    <span className="font-medium">{cargas.diversif}h</span>
-                  </div>
-                  <div className="flex justify-between text-xs font-semibold border-t border-border pt-1">
-                    <span>Total</span>
-                    <span>{cargas.total}h</span>
-                  </div>
+        <div className="flex-1 overflow-y-auto px-6 py-4 space-y-4">
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-[14px]">Dados Gerais</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="space-y-1.5">
+                  <Label htmlFor="hm-ano">Ano Letivo *</Label>
+                  <Input
+                    id="hm-ano"
+                    type="number"
+                    value={anoLetivo}
+                    onChange={e => setAnoLetivo(e.target.value)}
+                    placeholder="Ex: 2025"
+                    className="h-9 border-border"
+                    aria-required="true"
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor="hm-situacao">Situação *</Label>
+                  <Select value={situacao} onValueChange={setSituacao}>
+                    <SelectTrigger id="hm-situacao" aria-required="true">
+                      <SelectValue placeholder="Selecione" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {SITUACOES.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
                 </div>
               </div>
-            )}
-          </CardContent>
-        </Card>
 
-        <div className="flex justify-end gap-2 pt-2">
-          <Button variant="outline" type="button" size="sm" onClick={onClose}>Cancelar</Button>
-          <Button size="sm" onClick={handleSubmit} disabled={salvando || !isFormValid}>
-            {salvando ? <Loader2 className="h-3.5 w-3.5 mr-1 animate-spin" /> : <Save className="h-3.5 w-3.5 mr-1" />}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="space-y-1.5">
+                  <Label htmlFor="hm-carga">Carga Horária (h)</Label>
+                  <Input
+                    id="hm-carga"
+                    type="number"
+                    value={cargaHoraria}
+                    onChange={e => setCargaHoraria(e.target.value)}
+                    className="h-9 border-border"
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor="hm-dias">Dias Letivos</Label>
+                  <Input
+                    id="hm-dias"
+                    type="number"
+                    value={diasLetivos}
+                    onChange={e => setDiasLetivos(e.target.value)}
+                    className="h-9 border-border"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="space-y-1.5">
+                  <Label htmlFor="hm-estado">Estado (UF) *</Label>
+                  <Select value={estado} onValueChange={setEstado}>
+                    <SelectTrigger id="hm-estado" aria-required="true">
+                      <SelectValue placeholder="Selecione" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {UF_LIST.map(uf => <SelectItem key={uf} value={uf}>{uf}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor="hm-municipio">Município *</Label>
+                  <Input
+                    id="hm-municipio"
+                    value={municipio}
+                    onChange={e => setMunicipio(e.target.value)}
+                    className="h-9 border-border"
+                    placeholder="Município da escola"
+                    aria-required="true"
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-1.5">
+                <Label htmlFor="hm-unidade">Unidade Escolar *</Label>
+                <Input
+                  id="hm-unidade"
+                  value={unidadeEscolar}
+                  onChange={e => setUnidadeEscolar(e.target.value)}
+                  className="h-9 border-border"
+                  placeholder="Nome da escola"
+                  aria-required="true"
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <Label htmlFor="hm-etapa">Etapa de Ensino *</Label>
+                <Select value={etapaEnsinoId} onValueChange={setEtapaEnsinoId}>
+                  <SelectTrigger id="hm-etapa" aria-required="true">
+                    <SelectValue placeholder="Selecione" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {etapas.map(e => <SelectItem key={e.id} value={e.id}>{e.nome}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-1.5">
+                <Label htmlFor="hm-obs">Observações</Label>
+                <Textarea
+                  id="hm-obs"
+                  value={observacoes}
+                  onChange={e => setObservacoes(e.target.value)}
+                  rows={2}
+                  className="border-border resize-y"
+                />
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-[14px]">Registros Escolares</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <div className="flex items-center gap-2">
+                <Checkbox
+                  id="parte-diversificada"
+                  checked={discDiversif}
+                  onCheckedChange={checked => {
+                    setDiscDiversif(!!checked)
+                    if (checked) { setDiscId('') } else { setDiscNome('') }
+                  }}
+                />
+                <Label htmlFor="parte-diversificada" className="cursor-pointer">Parte Diversificada</Label>
+              </div>
+
+              {discDiversif ? (
+                <div className="space-y-1.5">
+                  <Label htmlFor="hm-disc-nome">Nome da Disciplina *</Label>
+                  <Input
+                    id="hm-disc-nome"
+                    value={discNome}
+                    onChange={e => setDiscNome(e.target.value)}
+                    className="h-9 border-border"
+                    placeholder="Ex: Robótica Educacional"
+                    aria-required="true"
+                  />
+                </div>
+              ) : (
+                <div className="space-y-1.5">
+                  <Label htmlFor="hm-disc-select">Disciplina *</Label>
+                  <Select value={discId} onValueChange={setDiscId}>
+                    <SelectTrigger id="hm-disc-select" aria-required="true">
+                      <SelectValue placeholder="Selecione a disciplina" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {disciplinasOpts.map(d => <SelectItem key={d.id} value={d.id}>{d.nome}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="space-y-1.5">
+                  <Label htmlFor="hm-media">Média Final *</Label>
+                  <Input
+                    id="hm-media"
+                    type="number"
+                    step="0.01"
+                    value={discMedia}
+                    onChange={e => setDiscMedia(e.target.value)}
+                    className="h-9 border-border"
+                    placeholder="Ex: 8.5"
+                    aria-required="true"
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor="hm-disc-carga">Carga Horária (h)</Label>
+                  <Input
+                    id="hm-disc-carga"
+                    type="number"
+                    value={discCarga}
+                    onChange={e => setDiscCarga(e.target.value)}
+                    className="h-9 border-border"
+                    placeholder="Ex: 800"
+                  />
+                </div>
+              </div>
+
+              <Button
+                type="button"
+                variant="outline"
+                onClick={addDisciplina}
+                className="w-full min-h-[40px] gap-1"
+              >
+                <Plus className="h-4 w-4" />
+                Adicionar Disciplina
+              </Button>
+
+              {disciplinas.length > 0 && (
+                <div className="space-y-2">
+                  <div className="border-t border-border pt-2" />
+                  <ul className="space-y-2">
+                    {disciplinas.map((d, i) => (
+                      <li key={i} className="flex items-center gap-2 bg-muted/50 rounded p-2 min-w-0">
+                        <div className="flex-1 min-w-0">
+                          <p className="text-[14px] font-medium break-words">{d.disciplina_nome}</p>
+                          <p className="text-[13px] text-muted-foreground tabular-nums">
+                            Média: {d.media_final}
+                            {d.carga_horaria_anual != null && ` | CH: ${d.carga_horaria_anual}h`}
+                            {d.parte_diversificada && ' | Parte Diversif.'}
+                          </p>
+                        </div>
+                        <Button
+                          variant="ghost"
+                          size="icon-sm"
+                          onClick={() => removeDisciplina(i)}
+                          className="shrink-0"
+                          aria-label={`Remover disciplina ${d.disciplina_nome}`}
+                        >
+                          <X className="h-4 w-4" />
+                        </Button>
+                      </li>
+                    ))}
+                  </ul>
+
+                  <div className="border-t border-border pt-2 space-y-1 text-[13px]">
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">Carga Horária BNCC</span>
+                      <span className="font-medium tabular-nums">{cargas.bncc}h</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">Carga Horária Parte Diversificada</span>
+                      <span className="font-medium tabular-nums">{cargas.diversif}h</span>
+                    </div>
+                    <div className="flex justify-between font-semibold border-t border-border pt-1">
+                      <span>Total</span>
+                      <span className="tabular-nums">{cargas.total}h</span>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </div>
+
+        <div className="shrink-0 border-t border-border bg-muted/30 px-6 py-3 flex flex-col-reverse gap-2 sm:flex-row sm:items-center sm:justify-end">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={onClose}
+            className="min-h-[40px] sm:min-h-[44px]"
+          >
+            Cancelar
+          </Button>
+          <Button
+            type="button"
+            onClick={handleSubmit}
+            disabled={salvando || !isFormValid}
+            className="min-h-[40px] sm:min-h-[44px]"
+          >
+            {salvando ? (
+              <Loader2 className="h-4 w-4 mr-1.5 animate-spin" />
+            ) : (
+              <Save className="h-4 w-4 mr-1.5" />
+            )}
             {salvando ? 'Salvando...' : 'Salvar'}
           </Button>
         </div>

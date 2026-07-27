@@ -11,10 +11,14 @@ type EmptyStateProps = {
 
 export function EmptyState({ icon: Icon, title, description, action, className }: EmptyStateProps) {
   return (
-    <div className={cn('py-16 text-center animate-fade-in', className)}>
+    <div
+      role="status"
+      aria-live="polite"
+      className={cn('py-16 text-center animate-fade-in', className)}
+    >
       <div className="flex justify-center mb-4">
         <div className="p-4 rounded-2xl bg-muted/50">
-          <Icon className="h-10 w-10 text-muted-foreground/40" />
+          <Icon className="h-10 w-10 text-muted-foreground/40" aria-hidden="true" />
         </div>
       </div>
       <h3 className="text-base font-medium text-foreground">{title}</h3>

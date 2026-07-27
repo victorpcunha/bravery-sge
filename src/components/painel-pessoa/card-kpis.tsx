@@ -12,6 +12,23 @@ type Props = {
   pessoaLogadaId: string | null
 }
 
+function variantFrequencia(percentual: number | null) {
+  if (percentual == null) return 'default' as const
+  if (percentual >= 75) return 'success' as const
+  return 'warning' as const
+}
+
+function variantDesempenho(nota: number | null) {
+  if (nota == null) return 'default' as const
+  if (nota >= 7) return 'success' as const
+  return 'warning' as const
+}
+
+function variantOcorrencias(total: number) {
+  if (total > 0) return 'warning' as const
+  return 'default' as const
+}
+
 export default function CardKpis({ pessoaId, turmaId, schoolId, pessoaLogadaId }: Props) {
   const [resumo, setResumo] = useState<ResumoAluno | null>(null)
   const [loading, setLoading] = useState(true)
@@ -26,7 +43,7 @@ export default function CardKpis({ pessoaId, turmaId, schoolId, pessoaLogadaId }
 
   if (loading) {
     return (
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {[0, 1, 2, 3].map(i => (
           <div key={i} className="h-[120px] animate-pulse bg-muted rounded-xl" />
         ))}
@@ -36,7 +53,7 @@ export default function CardKpis({ pessoaId, turmaId, schoolId, pessoaLogadaId }
 
   if (!resumo) {
     return (
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {[0, 1, 2, 3].map(i => (
           <div key={i} className="h-[120px] rounded-xl border border-border bg-card flex items-center justify-center">
             <Loader2 className="h-4 w-4 text-muted-foreground" />
@@ -55,18 +72,18 @@ export default function CardKpis({ pessoaId, turmaId, schoolId, pessoaLogadaId }
     : 'Sem notas registradas'
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
       <StatCard
         icon={ClipboardCheck}
         value={resumo.frequencia_percentual != null ? `${resumo.frequencia_percentual}%` : '—'}
         label={freqInfo}
-        variant={resumo.frequencia_percentual != null && resumo.frequencia_percentual >= 75 ? 'success' : resumo.frequencia_percentual != null ? 'warning' : 'default'}
+        variant={variantFrequencia(resumo.frequencia_percentual)}
       />
       <StatCard
         icon={TrendingUp}
         value={resumo.desempenho_percentual != null ? resumo.desempenho_percentual.toFixed(1) : '—'}
         label={desempenhoInfo}
-        variant={resumo.desempenho_percentual != null && resumo.desempenho_percentual >= 7 ? 'success' : resumo.desempenho_percentual != null ? 'warning' : 'default'}
+        variant={variantDesempenho(resumo.desempenho_percentual)}
       />
       <StatCard
         icon={BookOpen}
@@ -78,7 +95,7 @@ export default function CardKpis({ pessoaId, turmaId, schoolId, pessoaLogadaId }
         icon={AlertTriangle}
         value={resumo.total_ocorrencias}
         label="Ocorrências registradas"
-        variant={resumo.total_ocorrencias > 0 ? 'warning' : 'default'}
+        variant={variantOcorrencias(resumo.total_ocorrencias)}
       />
     </div>
   )

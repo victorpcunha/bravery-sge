@@ -236,24 +236,27 @@ export async function salvarPermissoes(
 ) {
   const { data: perfil } = await supabase
     .from('perfis')
-    .select('id, ativo')
+    .select('id, ativo, school_id')
     .eq('id', perfilId)
     .single()
 
   if (!perfil) throw new Error('Perfil não encontrado')
   if (!perfil.ativo) throw new Error('Não é possível alterar permissões de um perfil inativo')
 
+  const effectiveSchoolId = schoolId || perfil.school_id
+  if (!effectiveSchoolId) throw new Error('Não foi possível determinar a escola do perfil')
+
   let anterioresQuery = supabase
     .from('perfis_permissoes')
     .select('recurso_id, visualizar, criar, editar, excluir')
     .eq('perfil_id', perfilId)
 
-  if (schoolId) anterioresQuery = anterioresQuery.eq('school_id', schoolId)
+  if (effectiveSchoolId) anterioresQuery = anterioresQuery.eq('school_id', effectiveSchoolId)
 
   const { data: permissoesAnteriores } = await anterioresQuery
 
   const upsertData = permissoes.map(p => ({
-    school_id: schoolId,
+    school_id: effectiveSchoolId,
     perfil_id: perfilId,
     recurso_id: p.recurso_id,
     visualizar: p.visualizar,
@@ -270,7 +273,7 @@ export async function salvarPermissoes(
   if (error) throw error
 
   await registrarAuditoria({
-    school_id: schoolId!,
+    school_id: effectiveSchoolId,
     entidade: 'permissoes',
     entidade_id: perfilId,
     acao: 'editar',

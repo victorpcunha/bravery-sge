@@ -112,7 +112,7 @@ export function MatrizForm({ schoolId, matrizId, onSaved, onCancel }: MatrizForm
   const [savingDisc, setSavingDisc] = useState(false)
   const [discForm, setDiscForm] = useState({
     disciplina_id: '',
-    tipo: 'obrigatoria' as string,
+    tipo_disciplina: 'base_comum' as string,
     desconsidera_reprovacao: false,
     carga_horaria_regular: 0,
     carga_horaria_integral: 0,
@@ -134,6 +134,29 @@ export function MatrizForm({ schoolId, matrizId, onSaved, onCancel }: MatrizForm
 
   useEffect(() => { loadInitial() }, [schoolId])
   useEffect(() => { if (matrizId) loadMatriz() }, [matrizId])
+
+  // Recarregar BNCC quando a disciplina selecionada mudar no modal
+  const etapaTipoAtual = etapas.find((e: any) => e.id === form.etapa_ensino_id)?.etapa_tipo || ''
+  const anoEscolarMatriz = etapas.find((e: any) => e.id === form.etapa_ensino_id)?.etapa_nome?.match(/(\d+)º/)?.[1]
+  useEffect(() => {
+    if (!showDiscModal) return
+    if (!discForm.disciplina_id) { setBnccHabilidades([]); return }
+    const nomeDisc = disciplinasSistema.find((d: any) => d.id === discForm.disciplina_id)?.nome || ''
+    getHabilidadesBNCCPorDisciplinaEtapa(nomeDisc, etapaTipoAtual)
+      .then(hab => {
+        // Filtrar pelo ano escolar no cliente (contorna bug do contains JSONB)
+        if (anoEscolarMatriz) {
+          const ano = `${anoEscolarMatriz}º`
+          setBnccHabilidades(hab.filter((h: any) => {
+            const anos = Array.isArray(h.anos) ? h.anos : (h.anos ? JSON.parse(h.anos) : [])
+            return anos.includes(ano) || anos.includes(`${anoEscolarMatriz}º`)
+          }))
+        } else {
+          setBnccHabilidades(hab)
+        }
+      })
+      .catch(() => setBnccHabilidades([]))
+  }, [discForm.disciplina_id, showDiscModal])
 
   async function loadInitial() {
     if (!schoolId) return
@@ -247,19 +270,19 @@ export function MatrizForm({ schoolId, matrizId, onSaved, onCancel }: MatrizForm
       setDiscEditId(editDisc.id)
       setDiscForm({
         disciplina_id: editDisc.disciplina_id || '',
-        tipo: editDisc.tipo || 'obrigatoria',
+        tipo_disciplina: editDisc.tipo_disciplina || 'base_comum',
         desconsidera_reprovacao: editDisc.desconsidera_reprovacao || false,
-        carga_horaria_regular: editDisc.carga_horaria_regular || 0,
-        carga_horaria_integral: editDisc.carga_horaria_integral || 0,
-        carga_horaria_regular_habilitada: !!editDisc.carga_horaria_regular,
-        carga_horaria_integral_habilitada: !!editDisc.carga_horaria_integral,
+        carga_horaria_regular: editDisc.carga_horaria_regular_minutos || 0,
+        carga_horaria_integral: editDisc.carga_horaria_integral_minutos || 0,
+        carga_horaria_regular_habilitada: !!editDisc.carga_horaria_regular_minutos,
+        carga_horaria_integral_habilitada: !!editDisc.carga_horaria_integral_minutos,
       })
       setSelectedBncc(new Set(editDisc.bncc_habilidades?.map((h: any) => h.codigo_bncc || h.habilidade_codigo) || []))
       setOutrasHabilidades(editDisc.habilidades_manuais?.map((h: any) => ({ codigo: h.codigo, descricao: h.descricao })) || [])
     } else {
       setDiscEditId(null)
       setDiscForm({
-        disciplina_id: '', tipo: 'obrigatoria', desconsidera_reprovacao: false,
+        disciplina_id: '', tipo_disciplina: 'base_comum', desconsidera_reprovacao: false,
         carga_horaria_regular: 0, carga_horaria_integral: 0,
         carga_horaria_regular_habilitada: false, carga_horaria_integral_habilitada: false,
       })
@@ -279,11 +302,6 @@ export function MatrizForm({ schoolId, matrizId, onSaved, onCancel }: MatrizForm
       const subs = await getSubetapas(v)
       setSubetapas(subs)
     } catch { setSubetapas([]) }
-    // Carregar BNCC
-    try {
-      const habs = await getHabilidadesBNCCPorDisciplinaEtapa('', v)
-      setBnccHabilidades(habs)
-    } catch { setBnccHabilidades([]) }
   }
 
   function toggleBncc(codigo: string) {
@@ -314,10 +332,10 @@ export function MatrizForm({ schoolId, matrizId, onSaved, onCancel }: MatrizForm
       const payload = {
         periodo_id: discPeriodoId,
         disciplina_id: discForm.disciplina_id,
-        tipo: discForm.tipo,
+        tipo_disciplina: discForm.tipo_disciplina,
         desconsidera_reprovacao: discForm.desconsidera_reprovacao,
-        carga_horaria_regular: discForm.carga_horaria_regular_habilitada ? discForm.carga_horaria_regular : 0,
-        carga_horaria_integral: discForm.carga_horaria_integral_habilitada ? discForm.carga_horaria_integral : 0,
+        carga_horaria_regular_minutos: discForm.carga_horaria_regular_habilitada ? discForm.carga_horaria_regular : 0,
+        carga_horaria_integral_minutos: discForm.carga_horaria_integral_habilitada ? discForm.carga_horaria_integral : 0,
       }
       let discId: string
       if (discEditId) {
@@ -368,8 +386,13 @@ export function MatrizForm({ schoolId, matrizId, onSaved, onCancel }: MatrizForm
   const bnccAgrupado = (() => {
     const map: Record<string, Record<string, any[]>> = {}
     for (const h of bnccHabilidades) {
-      const ut = h.unidade_tematica || h.nome_unidade || 'Outros'
-      const oc = h.objeto_conhecimento || h.nome_objeto || 'Outros'
+      // Normalizar: fundamental tem dados aninhados, infantil/medio tem flat
+      const ut = typeof h.unidade_tematica === 'string'
+        ? h.unidade_tematica
+        : h.objeto_conhecimento?.unidade_tematica?.unidade_tematica || 'Outros'
+      const oc = typeof h.objeto_conhecimento === 'string'
+        ? h.objeto_conhecimento
+        : h.objeto_conhecimento?.objeto_conhecimento || 'Outros'
       if (!map[ut]) map[ut] = {}
       if (!map[ut][oc]) map[ut][oc] = []
       map[ut][oc].push(h)
@@ -547,7 +570,7 @@ export function MatrizForm({ schoolId, matrizId, onSaved, onCancel }: MatrizForm
                               <div className="flex-1">
                                 <span className="text-sm font-medium text-foreground">{d.academico_disciplinas?.nome || d.disciplina_id}</span>
                                 <div className="flex items-center gap-2 mt-0.5">
-                                  <span className="text-xs text-muted-foreground">{d.tipo === 'obrigatoria' ? 'Obrigatória' : 'Optativa'}</span>
+                                  <span className="text-xs text-muted-foreground">{d.tipo_disciplina === 'base_comum' ? 'Base Comum' : 'Parte Diversificada'}</span>
                                   {d.desconsidera_reprovacao && <span className="text-xs text-warning">Não reprova</span>}
                                   {d.carga_horaria_regular > 0 && <span className="text-xs text-muted-foreground">Reg: {d.carga_horaria_regular}h</span>}
                                   {d.carga_horaria_integral > 0 && <span className="text-xs text-muted-foreground">Int: {d.carga_horaria_integral}h</span>}
@@ -591,30 +614,36 @@ export function MatrizForm({ schoolId, matrizId, onSaved, onCancel }: MatrizForm
               <div>
                 <Label className="text-foreground font-medium block mb-1.5">Disciplina <span className="text-destructive">*</span></Label>
                 <Select value={discForm.disciplina_id} onValueChange={v => setDiscForm({ ...discForm, disciplina_id: v })}>
-                  <SelectTrigger className="border-border [&_svg]:!rotate-0"><SelectValue placeholder="Selecione" /></SelectTrigger>
-                  <SelectContent>{disciplinasSistema.map((d: any) => <SelectItem key={d.id} value={d.id}>{d.nome}</SelectItem>)}</SelectContent>
+                  <SelectTrigger className="border-border [&_svg]:!rotate-0">
+                    <SelectValue placeholder="Selecione" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {disciplinasSistema.map((d: any) => (
+                      <SelectItem key={d.id} value={d.id}>{d.nome}</SelectItem>
+                    ))}
+                  </SelectContent>
                 </Select>
               </div>
               <div>
                 <Label className="text-foreground font-medium block mb-1.5">Tipo</Label>
                 <PillToggleGroup
                   options={[
-                    { value: 'obrigatoria', label: 'Obrigatória' },
-                    { value: 'optativa', label: 'Optativa' },
+                    { value: 'base_comum', label: 'Base Comum' },
+                    { value: 'parte_diversificada', label: 'Parte Diversificada' },
                   ]}
-                  selectedValues={[discForm.tipo]}
-                  onToggleValue={(v) => setDiscForm({ ...discForm, tipo: v })}
+                  value={discForm.tipo_disciplina}
+                  onValueChange={(v) => setDiscForm({ ...discForm, tipo_disciplina: v })}
                 />
               </div>
             </div>
 
             {/* Desconsidera reprovação - Toggle card-row */}
-            <div className="flex items-center justify-between p-4 rounded-lg border border-border bg-muted/20">
+            <div className="flex items-center justify-between p-4 rounded-lg border border-border bg-muted/50">
               <div>
                 <span className="text-[14px] font-medium text-foreground">Desconsiderar para reprovação</span>
                 <p className="text-xs text-muted-foreground mt-0.5">Aluno não será reprovado por esta disciplina</p>
               </div>
-              <Switch checked={discForm.desconsidera_reprovacao} onCheckedChange={v => setDiscForm({ ...discForm, desconsidera_reprovacao: v })} />
+              <Switch checked={discForm.desconsidera_reprovacao} onCheckedChange={v => setDiscForm({ ...discForm, desconsidera_reprovacao: v })} className="data-[state=unchecked]:bg-muted-foreground/25" />
             </div>
 
             {/* Carga Horária - cards with checkbox + hours inline */}
@@ -627,10 +656,13 @@ export function MatrizForm({ schoolId, matrizId, onSaved, onCancel }: MatrizForm
                     <Switch checked={discForm.carga_horaria_regular_habilitada} onCheckedChange={v => setDiscForm({ ...discForm, carga_horaria_regular_habilitada: v, carga_horaria_regular: v ? discForm.carga_horaria_regular : 0 })} />
                     <span className="text-sm text-foreground flex-1">Regular</span>
                     <Input
-                      type="number" className="border-border w-24"
+                      className="border-border w-24"
                       value={discForm.carga_horaria_regular || ''}
                       disabled={!discForm.carga_horaria_regular_habilitada}
-                      onChange={e => setDiscForm({ ...discForm, carga_horaria_regular: Number(e.target.value) })}
+                      onChange={e => {
+                        const digits = e.target.value.replace(/\D/g, '')
+                        setDiscForm({ ...discForm, carga_horaria_regular: digits ? parseInt(digits, 10) : 0 })
+                      }}
                     />
                     <span className="text-xs text-muted-foreground">horas</span>
                   </div>
@@ -641,10 +673,13 @@ export function MatrizForm({ schoolId, matrizId, onSaved, onCancel }: MatrizForm
                     <Switch checked={discForm.carga_horaria_integral_habilitada} onCheckedChange={v => setDiscForm({ ...discForm, carga_horaria_integral_habilitada: v, carga_horaria_integral: v ? discForm.carga_horaria_integral : 0 })} />
                     <span className="text-sm text-foreground flex-1">Integral</span>
                     <Input
-                      type="number" className="border-border w-24"
+                      className="border-border w-24"
                       value={discForm.carga_horaria_integral || ''}
                       disabled={!discForm.carga_horaria_integral_habilitada}
-                      onChange={e => setDiscForm({ ...discForm, carga_horaria_integral: Number(e.target.value) })}
+                      onChange={e => {
+                        const digits = e.target.value.replace(/\D/g, '')
+                        setDiscForm({ ...discForm, carga_horaria_integral: digits ? parseInt(digits, 10) : 0 })
+                      }}
                     />
                     <span className="text-xs text-muted-foreground">horas</span>
                   </div>
@@ -665,7 +700,7 @@ export function MatrizForm({ schoolId, matrizId, onSaved, onCancel }: MatrizForm
                 </div>
               </div>
               {bnccHabilidades.length === 0 ? (
-                <p className="text-sm text-muted-foreground">Nenhuma habilidade BNCC disponível para esta etapa. Selecione uma etapa de ensino primeiro.</p>
+                <p className="text-sm text-muted-foreground">{discForm.disciplina_id ? 'Nenhuma habilidade BNCC encontrada para esta disciplina.' : 'Selecione uma disciplina primeiro.'}</p>
               ) : filteredBnccSearch ? (
                 <div className="space-y-1 border border-border rounded-lg p-3">
                   {filteredBnccSearch.map((h: any) => (

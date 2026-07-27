@@ -5,12 +5,13 @@ import {
   Pie,
   Cell,
   Tooltip,
-  ResponsiveContainer,
   Legend,
+  ResponsiveContainer,
 } from 'recharts'
 import { PieChartIcon } from 'lucide-react'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
 import { EmptyState } from '@/components/ui/empty-state'
+import { colorPorIndice, chartTooltipContentStyle, chartTooltipWrapperStyle, chartLegendFormatter, tooltipFormatter } from '@/components/dashboard/chart-helpers'
 import { cn } from '@/lib/utils'
 
 type AlunosPorModalidadeItem = {
@@ -22,14 +23,6 @@ type Props = {
   data: AlunosPorModalidadeItem[]
   className?: string
 }
-
-const COLORS = [
-  'var(--chart-1)',
-  'var(--chart-2)',
-  'var(--chart-3)',
-  'var(--chart-4)',
-  'var(--chart-5)',
-]
 
 export default function AlunosPorModalidadeChart({ data, className }: Props) {
   if (!data || data.length === 0) {
@@ -57,7 +50,7 @@ export default function AlunosPorModalidadeChart({ data, className }: Props) {
         <CardTitle>Alunos por Modalidade</CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="h-72">
+        <div className="h-72 sm:h-80">
           <ResponsiveContainer width="100%" height="100%">
             <PieChart>
               <Pie
@@ -66,35 +59,27 @@ export default function AlunosPorModalidadeChart({ data, className }: Props) {
                 nameKey="modalidade"
                 cx="50%"
                 cy="45%"
-                outerRadius={80}
-                innerRadius={40}
-                paddingAngle={3}
-                stroke="none"
+                outerRadius={88}
+                innerRadius={48}
+                paddingAngle={2}
+                stroke="var(--card)"
+                strokeWidth={2}
               >
                 {sorted.map((_, i) => (
-                  <Cell key={i} fill={COLORS[i % COLORS.length]} />
+                  <Cell key={i} fill={colorPorIndice(i)} />
                 ))}
               </Pie>
               <Tooltip
-                contentStyle={{
-                  fontSize: 13,
-                  borderRadius: 8,
-                  border: '1px solid var(--border)',
-                  backgroundColor: 'var(--card)',
-                  color: 'var(--foreground)',
-                }}
-                formatter={(value: unknown) => [Number(value), 'Alunos']}
+                contentStyle={chartTooltipContentStyle}
+                wrapperStyle={chartTooltipWrapperStyle}
+                formatter={tooltipFormatter('Alunos')}
               />
               <Legend
                 verticalAlign="bottom"
-                height={40}
+                height={32}
                 iconType="circle"
-                fontSize={12}
-                formatter={(value: string) => (
-                  <span style={{ color: 'var(--foreground)', fontSize: 12 }}>
-                    {value}
-                  </span>
-                )}
+                iconSize={8}
+                formatter={chartLegendFormatter}
               />
             </PieChart>
           </ResponsiveContainer>

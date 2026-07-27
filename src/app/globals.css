@@ -81,7 +81,7 @@ input[type="number"] {
   --popover-foreground: #1E293B;
 
   --muted: #F1F5F9;
-  --muted-foreground: #64748B;
+  --muted-foreground: #475569;
   --border: #E2E8F0;
   --input: #FFFFFF;
   --ring: #1F88EB;
@@ -100,7 +100,7 @@ input[type="number"] {
   --chart-1: #1F88EB;
   --chart-2: #4FC3D7;
   --chart-3: #1A6FC2;
-  --chart-4: #8B5CF6;
+  --chart-4: #1A6FC2;
   --chart-5: #16A34A;
 
   --radius-sm: 6px;
@@ -191,7 +191,7 @@ input[type="number"] {
   --chart-1: #1F88EB;
   --chart-2: #4FC3D7;
   --chart-3: #1A6FC2;
-  --chart-4: #A78BFA;
+  --chart-4: #3B9EFF;
   --chart-5: #22C55E;
   --sidebar: #0F172A;
   --sidebar-foreground: #F1F5F9;
@@ -463,4 +463,16 @@ input[type="number"] {
 }
 .dark ::-webkit-scrollbar-thumb:hover {
   background: #475569;
+}
+
+/* Reduced motion — desabilita transições e animações para usuários com preferência */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }

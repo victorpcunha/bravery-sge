@@ -1,4 +1,8 @@
-import { supabase } from '@/lib/supabase'
+'use server'
+
+import { getSupabaseAdmin } from '@/lib/auth'
+
+const supabase = getSupabaseAdmin()
 
 export interface MetodoAvaliacao {
   id: string

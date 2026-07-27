@@ -21,7 +21,7 @@ export type Subetapa = {
   created_at: string
 }
 
-export async function getEtapasEnsino(schoolId: string | null, anoLetivoId?: string | null) {
+export async function getEtapasEnsino(schoolId: string | null, anoLetivoId?: string | null, skipDedup?: boolean) {
   let query = supabase
     .from('academico_etapas_ensino')
     .select('*')
@@ -36,7 +36,7 @@ export async function getEtapasEnsino(schoolId: string | null, anoLetivoId?: str
   if (error) throw error
 
   // Deduplicar por etapa_codigo quando não filtrado por ano letivo
-  if (!anoLetivoId) {
+  if (!anoLetivoId && !skipDedup) {
     const seen = new Set<number>()
     return ((data ?? []) as EtapaEnsino[]).filter(e => {
       if (seen.has(e.etapa_codigo)) return false

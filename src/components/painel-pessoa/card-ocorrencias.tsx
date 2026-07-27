@@ -37,8 +37,15 @@ export default function CardOcorrencias({ pessoaId, schoolId, pessoaLogadaId }: 
   if (loading) {
     return (
       <Card>
-        <CardHeader><CardTitle className="text-sm flex items-center gap-2"><AlertCircle className="h-4 w-4" />Ocorrências</CardTitle></CardHeader>
-        <CardContent><Loader2 className="h-4 w-4 animate-spin text-muted-foreground" /></CardContent>
+        <CardHeader>
+          <CardTitle className="text-[15px] flex items-center gap-2">
+            <AlertCircle className="h-4 w-4" />
+            Ocorrências
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+        </CardContent>
       </Card>
     )
   }
@@ -46,28 +53,30 @@ export default function CardOcorrencias({ pessoaId, schoolId, pessoaLogadaId }: 
   return (
     <Card>
       <CardHeader className="pb-2">
-        <CardTitle className="text-sm flex items-center gap-2">
+        <CardTitle className="text-[15px] flex items-center gap-2">
           <AlertCircle className="h-4 w-4 text-destructive" />
           Ocorrências
         </CardTitle>
       </CardHeader>
       <CardContent>
         {ocorrencias.length === 0 ? (
-          <p className="text-sm text-muted-foreground">Nenhuma ocorrência registrada.</p>
+          <p className="text-[14px] text-muted-foreground">Nenhuma ocorrência registrada.</p>
         ) : (
           <ScrollArea className="max-h-64">
             <div className="space-y-2">
               {ocorrencias.map(o => (
-                <div key={o.id} className="rounded-lg border border-border p-3 text-sm space-y-1">
+                <div key={o.id} className="rounded-lg border border-border p-3 text-[14px] space-y-1">
                   <div className="flex items-center justify-between gap-2">
-                    <StatusBadge status={statusTipo(o.tipo)} className="text-xs">{o.tipo}</StatusBadge>
-                    <span className="text-xs text-muted-foreground">
+                    <StatusBadge status={statusTipo(o.tipo)}>
+                      {o.tipo}
+                    </StatusBadge>
+                    <span className="text-[13px] text-muted-foreground tabular-nums">
                       {new Date(o.data_ocorrencia).toLocaleDateString('pt-BR')}
                     </span>
                   </div>
-                  <p className="text-sm">{o.descricao}</p>
+                  <p className="text-[14px]">{o.descricao}</p>
                   {o.turma_nome && (
-                    <p className="text-xs text-muted-foreground">Turma: {o.turma_nome}</p>
+                    <p className="text-[13px] text-muted-foreground">Turma: {o.turma_nome}</p>
                   )}
                 </div>
               ))}

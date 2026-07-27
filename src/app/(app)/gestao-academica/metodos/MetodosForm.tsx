@@ -383,7 +383,8 @@ export function MetodosForm({ schoolId, editId, onSaved, onCancel }: Props) {
   }
 
   return (
-    <div className="space-y-6 [&_[data-slot='input']]:border-border [&_[data-slot='input']]:focus-visible:border-primary [&_[data-slot='input']]:focus-visible:ring-2 [&_[data-slot='input']]:focus-visible:ring-primary/20 [&_[data-slot='checkbox']]:border-border [&_[data-slot='checkbox']]:data-[state=checked]:border-primary">
+    <>
+      <div className="flex-1 overflow-y-auto px-6 py-4 space-y-6 [&_[data-slot='input']]:border-border [&_[data-slot='input']]:focus-visible:border-primary [&_[data-slot='input']]:focus-visible:ring-2 [&_[data-slot='input']]:focus-visible:ring-primary/20 [&_[data-slot='checkbox']]:border-border [&_[data-slot='checkbox']]:data-[state=checked]:border-primary">
       <Card className="border-border shadow-sm">
         <CardHeader className="border-b border-border pb-4"><CardTitle className="text-base font-semibold text-foreground">Identificação</CardTitle></CardHeader>
         <CardContent className="space-y-5 px-6 pb-6 pt-0">
@@ -392,30 +393,27 @@ export function MetodosForm({ schoolId, editId, onSaved, onCancel }: Props) {
             <Input id="nome" value={form.nome} onChange={(e) => set('nome', e.target.value)} placeholder="Ex: Avaliação Regular" />
           </div>
 
-          <div className="space-y-2">
-            <Label>Critério de Frequência</Label>
-            <Select value={form.criterio_frequencia} onValueChange={(v) => set('criterio_frequencia', v)}>
-              <SelectTrigger>
-                <SelectValue placeholder="Selecione" />
-              </SelectTrigger>
-              <SelectContent position="popper" side="bottom" sideOffset={5}>
-                <SelectItem value="por_dia">Por Dia Letivo</SelectItem>
-                <SelectItem value="por_aula">Por Aula Dada</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
+          <div className="grid grid-cols-3 gap-4">
+            <div className="space-y-2">
+              <Label>Critério de Frequência</Label>
+              <Select value={form.criterio_frequencia} onValueChange={(v) => set('criterio_frequencia', v)}>
+                <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
+                <SelectContent position="popper" side="bottom" sideOffset={5}>
+                  <SelectItem value="por_dia">Por Dia Letivo</SelectItem>
+                  <SelectItem value="por_aula">Por Aula Dada</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="frecuencia">Frequência Mínima para Aprovação (%)</Label>
-            <Input id="frecuencia" type="number" min={0} max={100} value={form.frecuencia_minima} onChange={(e) => set('frecuencia_minima', Number(e.target.value) || 0)} />
-            <p className="text-xs text-muted-foreground">Se 0%, não causa reprovação por frequência.</p>
-          </div>
+            <div className="space-y-2">
+              <Label htmlFor="frecuencia">Frequência Mínima (%)</Label>
+              <Input id="frecuencia" type="number" min={0} max={100} value={form.frecuencia_minima} onChange={(e) => set('frecuencia_minima', Number(e.target.value) || 0)} />
+            </div>
 
-          <div className="flex items-center gap-3">
-            <Checkbox id="met_ativo" checked={form.ativo} onCheckedChange={(v) => set('ativo', !!v)} />
-            <Label htmlFor="met_ativo" className="cursor-pointer font-medium">
-              {form.ativo ? 'Ativo' : 'Inativo'}
-            </Label>
+            <div className="flex items-center gap-3 pt-6">
+              <Checkbox id="met_ativo" checked={form.ativo} onCheckedChange={(v) => set('ativo', !!v)} />
+              <Label htmlFor="met_ativo" className="cursor-pointer font-medium">{form.ativo ? 'Ativo' : 'Inativo'}</Label>
+            </div>
           </div>
 
           <Separator className="bg-border" />
@@ -433,8 +431,8 @@ export function MetodosForm({ schoolId, editId, onSaved, onCancel }: Props) {
                 const periodKey = `quantidade_periodos_${tipo}` as keyof FormData
                 const periodValue = form[periodKey] as number
                 return (
-                  <div key={tipo} className="flex items-center gap-4">
-                    <div className="flex items-center gap-2">
+                  <div key={tipo} className="flex items-center justify-between gap-4 py-2">
+                    <div className="flex items-center gap-2 shrink-0">
                       <Checkbox
                         id={`tipo_${tipo}`}
                         checked={form.tipos_avaliacao[tipo]}
@@ -572,7 +570,7 @@ export function MetodosForm({ schoolId, editId, onSaved, onCancel }: Props) {
               <CardHeader className="border-b border-border pb-4"><CardTitle className="text-base font-semibold text-foreground">Avaliações</CardTitle></CardHeader>
               <CardContent className="space-y-4 px-6 pb-6 pt-0">
                 {form.avaliacoes_list.map((av, i) => (
-                  <div key={i} className="flex items-end gap-3 p-3 border border-border rounded-lg bg-muted">
+                  <div key={i} className="flex items-end gap-3 p-3 border border-border rounded-lg">
                     <div className="flex-1 space-y-1">
                       <Label className="text-xs">Nome da Avaliação</Label>
                       <Input
@@ -710,40 +708,57 @@ export function MetodosForm({ schoolId, editId, onSaved, onCancel }: Props) {
           <Card className="border-border shadow-sm">
             <CardHeader className="border-b border-border pb-4"><CardTitle className="text-base font-semibold text-foreground">Configuração de Arredondamento</CardTitle></CardHeader>
             <CardContent className="space-y-5 px-6 pb-6 pt-0">
-              <div className="w-1/3 space-y-2">
-                <Label>Tipo de Arredondamento</Label>
-                <Select value={form.tipo_arredondamento} onValueChange={(v) => set('tipo_arredondamento', v)}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Nenhum" />
-                  </SelectTrigger>
-                  <SelectContent position="popper" side="bottom" sideOffset={5}>
-                    <SelectItem value="nenhum">Nenhum</SelectItem>
-                    <SelectItem value="meio_ponto">Meio Ponto</SelectItem>
-                    <SelectItem value="decimal">Decimal</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              {form.tipo_arredondamento === 'meio_ponto' && (
-                <div className="flex gap-4">
-                  <div className="space-y-2 w-40">
+              {form.tipo_arredondamento === 'meio_ponto' ? (
+                <div className="flex items-start gap-4 flex-wrap">
+                  <div className="space-y-2 w-48">
+                    <Label>Tipo de Arredondamento</Label>
+                    <Select value={form.tipo_arredondamento} onValueChange={(v) => set('tipo_arredondamento', v)}>
+                      <SelectTrigger><SelectValue placeholder="Nenhum" /></SelectTrigger>
+                      <SelectContent position="popper" side="bottom" sideOffset={5}>
+                        <SelectItem value="nenhum">Nenhum</SelectItem>
+                        <SelectItem value="meio_ponto">Meio Ponto</SelectItem>
+                        <SelectItem value="decimal">Decimal</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2 w-32">
                     <Label htmlFor="intervalo_ini">Intervalo Inicial</Label>
                     <Input id="intervalo_ini" type="number" min={0} step="0.1" value={form.intervalo_inicial} onChange={(e) => set('intervalo_inicial', Number(e.target.value) || 0)} />
-                    <p className="text-xs text-muted-foreground">Ex: 3 → abaixo disso descarta</p>
                   </div>
-                  <div className="space-y-2 w-40">
+                  <div className="space-y-2 w-32">
                     <Label htmlFor="intervalo_fim">Intervalo Final</Label>
                     <Input id="intervalo_fim" type="number" min={0} step="0.1" value={form.intervalo_final} onChange={(e) => set('intervalo_final', Number(e.target.value) || 0)} />
-                    <p className="text-xs text-muted-foreground">Ex: 7 → acima disso sobe</p>
                   </div>
                 </div>
-              )}
-
-              {form.tipo_arredondamento === 'decimal' && (
-                <div className="space-y-2 w-40">
-                  <Label htmlFor="margem_dec">Margem</Label>
-                  <Input id="margem_dec" type="number" min={0} max={9} value={form.margem_decimal} onChange={(e) => set('margem_decimal', Number(e.target.value) || 0)} />
-                  <p className="text-xs text-muted-foreground">Ex: 5 → acima ou igual sobe, abaixo descarta</p>
+              ) : form.tipo_arredondamento === 'decimal' ? (
+                <div className="flex items-start gap-4 flex-wrap">
+                  <div className="space-y-2 w-48">
+                    <Label>Tipo de Arredondamento</Label>
+                    <Select value={form.tipo_arredondamento} onValueChange={(v) => set('tipo_arredondamento', v)}>
+                      <SelectTrigger><SelectValue placeholder="Nenhum" /></SelectTrigger>
+                      <SelectContent position="popper" side="bottom" sideOffset={5}>
+                        <SelectItem value="nenhum">Nenhum</SelectItem>
+                        <SelectItem value="meio_ponto">Meio Ponto</SelectItem>
+                        <SelectItem value="decimal">Decimal</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2 w-40">
+                    <Label htmlFor="margem_dec">Margem</Label>
+                    <Input id="margem_dec" type="number" min={0} max={9} value={form.margem_decimal} onChange={(e) => set('margem_decimal', Number(e.target.value) || 0)} />
+                  </div>
+                </div>
+              ) : (
+                <div className="w-1/3 space-y-2">
+                  <Label>Tipo de Arredondamento</Label>
+                  <Select value={form.tipo_arredondamento} onValueChange={(v) => set('tipo_arredondamento', v)}>
+                    <SelectTrigger><SelectValue placeholder="Nenhum" /></SelectTrigger>
+                    <SelectContent position="popper" side="bottom" sideOffset={5}>
+                      <SelectItem value="nenhum">Nenhum</SelectItem>
+                      <SelectItem value="meio_ponto">Meio Ponto</SelectItem>
+                      <SelectItem value="decimal">Decimal</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
               )}
 
@@ -848,14 +863,15 @@ export function MetodosForm({ schoolId, editId, onSaved, onCancel }: Props) {
           </CardContent>
         </Card>
       )}
+      </div>
 
-      <div className="flex justify-end gap-3 sticky bottom-0 bg-card py-4 px-2 -mx-4 -mb-4 border-t border-border shadow-sm">
-        <Button variant="outline" onClick={onCancel} className="border-border hover:bg-muted">Cancelar</Button>
-        <Button onClick={handleSave} disabled={saving} className="min-w-[140px] shadow-sm shadow-primary/20">
+      <div className="shrink-0 border-t border-border px-6 py-4 flex justify-end gap-3 bg-card">
+        <Button variant="ghost" onClick={onCancel}>Cancelar</Button>
+        <Button onClick={handleSave} disabled={saving}>
           {saving ? 'Salvando...' : form.id ? 'Atualizar' : 'Salvar'}
         </Button>
       </div>
-    </div>
+    </>
   )
 }
 

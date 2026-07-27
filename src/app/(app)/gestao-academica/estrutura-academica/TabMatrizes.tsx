@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useMemo, useCallback } from 'react'
+import { useState, useEffect, useMemo, useCallback, useRef } from 'react'
 import { useAuth } from '@/components/providers/auth-provider'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -84,6 +84,7 @@ export function TabMatrizes({ schoolId }: TabMatrizesProps) {
   const [replicarTarget, setReplicarTarget] = useState<{ periodoOrigemId: string; periodoDestinoIds: string[]; periodoOrigemNome: string } | null>(null)
 
   const effectiveSchoolId = selectedSchoolId || schoolId
+  const lastKey = useRef('')
 
   const etapasAgrupadas = useMemo(() => {
     const grupos: Record<string, any[]> = {}
@@ -97,9 +98,12 @@ export function TabMatrizes({ schoolId }: TabMatrizesProps) {
 
   useEffect(() => {
     if (isSuperAdmin && allSchools.length > 0 && !selectedSchoolId) return
-    if (!effectiveSchoolId) { setLoading(false); return }
+    if (!effectiveSchoolId) return
+    const key = `${effectiveSchoolId}|${anoLetivoId || ''}|${etapaFiltro || ''}`
+    if (key === lastKey.current) return
+    lastKey.current = key
     loadInitialData()
-  }, [effectiveSchoolId, isSuperAdmin, allSchools, selectedSchoolId])
+  }, [effectiveSchoolId, anoLetivoId, etapaFiltro, isSuperAdmin, allSchools, selectedSchoolId])
 
   useEffect(() => {
     if (!effectiveSchoolId || !anoLetivoId) return

@@ -2,10 +2,8 @@
 
 import { useState } from 'react'
 import { type NotasDetalhadas } from '@/lib/actions/painel-pessoa'
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
-import { ScrollArea } from '@/components/ui/scroll-area'
-import { cn } from '@/lib/utils'
 import { ChevronDown, ChevronUp } from 'lucide-react'
+import { cn } from '@/lib/utils'
 
 type Props = {
   data: NotasDetalhadas
@@ -18,11 +16,24 @@ export default function ExpansaoNotas({ data }: Props) {
   if (!disciplinas.length) {
     return (
       <div className="py-2">
-        <div className="flex items-center gap-2 cursor-pointer" onClick={() => setOpen(!open)}>
-          {open ? <ChevronUp className="h-3.5 w-3.5 text-muted-foreground" /> : <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" />}
-          <h4 className="text-xs font-semibold text-foreground">Avaliacao Numerica</h4>
-        </div>
-        {open && <p className="text-xs text-muted-foreground mt-1 ml-6">Nenhuma avaliacao numerica registrada.</p>}
+        <button
+          type="button"
+          onClick={() => setOpen(!open)}
+          className="flex items-center gap-2 w-full text-left"
+          aria-expanded={open}
+        >
+          {open ? (
+            <ChevronUp className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
+          ) : (
+            <ChevronDown className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
+          )}
+          <h4 className="text-[14px] font-semibold text-foreground">Avaliação Numérica</h4>
+        </button>
+        {open && (
+          <p className="text-[14px] text-muted-foreground mt-1 ml-0 sm:ml-6">
+            Nenhuma avaliação numérica registrada.
+          </p>
+        )}
       </div>
     )
   }
@@ -37,65 +48,81 @@ export default function ExpansaoNotas({ data }: Props) {
 
   return (
     <div className="py-2">
-      <div className="flex items-center gap-2 cursor-pointer" onClick={() => setOpen(!open)}>
-        {open ? <ChevronUp className="h-3.5 w-3.5 text-muted-foreground" /> : <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" />}
-        <h4 className="text-xs font-semibold text-foreground">
-          Avaliacao Numerica
+      <button
+        type="button"
+        onClick={() => setOpen(!open)}
+        className="flex items-center gap-2 w-full text-left"
+        aria-expanded={open}
+      >
+        {open ? (
+          <ChevronUp className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
+        ) : (
+          <ChevronDown className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
+        )}
+        <h4 className="text-[14px] font-semibold text-foreground">
+          Avaliação Numérica
           {total_dias_letivos != null && (
             <span className="text-muted-foreground font-normal ml-2">
               ({total_dias_letivos} dias letivos)
             </span>
           )}
         </h4>
-      </div>
+      </button>
 
       {open && (
-        <div className="mt-2 ml-6">
-          <ScrollArea className="overflow-x-auto">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead className="text-xs sticky left-0 bg-muted z-10 min-w-[140px]">Disciplina</TableHead>
-                  {periodosSorted.map(p => (
-                    <TableHead key={p} className="text-xs text-center">{p}° Per.</TableHead>
-                  ))}
-                  <TableHead className="text-xs text-center">Media Final</TableHead>
-                  <TableHead className="text-xs text-center">Faltas</TableHead>
-                  <TableHead className="text-xs text-center">Freq. %</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {disciplinas.map(d => (
-                  <TableRow key={d.disciplina_id}>
-                    <TableCell className="text-xs font-medium sticky left-0 bg-background z-10">
-                      {d.disciplina_nome}
-                    </TableCell>
-                    {periodosSorted.map(p => {
-                      const per = d.periodos.find(pp => pp.periodo === p)
-                      return (
-                        <TableCell key={p} className="text-xs text-center">
-                          {per ? (
-                            <span className={cn(per.tem_recuperacao && 'text-warning')}>
-                              {per.nota != null ? per.nota : '-'}
-                            </span>
-                          ) : (
-                            '-'
-                          )}
-                        </TableCell>
-                      )
-                    })}
-                    <TableCell className="text-xs text-center font-medium">
-                      {d.media_final != null ? d.media_final : '-'}
-                    </TableCell>
-                    <TableCell className="text-xs text-center">{d.total_faltas}</TableCell>
-                    <TableCell className="text-xs text-center">
-                      {d.frequencia_percentual != null ? `${d.frequencia_percentual}%` : '-'}
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </ScrollArea>
+        <div className="mt-2 ml-0 sm:ml-6 space-y-2">
+          <ul className="space-y-2">
+            {disciplinas.map(d => (
+                <li
+                  key={d.disciplina_id}
+                  className="rounded-lg border border-border p-3 space-y-2 min-w-0"
+                >
+                  <p className="text-[14px] font-semibold text-foreground break-words">
+                    {d.disciplina_nome}
+                  </p>
+                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-1.5">
+                    {d.periodos.map(p => (
+                      <div
+                        key={p.periodo}
+                        className={cn(
+                          'flex items-center justify-between gap-1 text-[13px] tabular-nums px-2 py-1 rounded-md border',
+                          p.tem_recuperacao
+                            ? 'border-warning/30 bg-warning/10 text-warning'
+                            : 'border-border bg-muted/30 text-foreground'
+                        )}
+                      >
+                        <span className="text-muted-foreground font-medium">{p.periodo}°</span>
+                        <span className="font-semibold">
+                          {p.nota != null ? p.nota : '—'}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                  <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-[13px] text-muted-foreground border-t border-border pt-2 tabular-nums">
+                    <span>
+                      Média:{' '}
+                      <span className="font-semibold text-foreground">
+                        {d.media_final != null ? d.media_final : '—'}
+                      </span>
+                    </span>
+                    <span>
+                      Faltas:{' '}
+                      <span className="font-semibold text-foreground">
+                        {d.total_faltas}
+                      </span>
+                    </span>
+                    <span>
+                      Freq:{' '}
+                      <span className="font-semibold text-foreground">
+                        {d.frequencia_percentual != null
+                          ? `${d.frequencia_percentual}%`
+                          : '—'}
+                      </span>
+                    </span>
+                  </div>
+                </li>
+            ))}
+          </ul>
         </div>
       )}
     </div>
