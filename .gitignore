@@ -41,6 +41,7 @@ yarn-error.log*
 next-env.d.ts
 
 # project specific
+*.log
 /documentacao_interna/
 /.opencode/
 /opencode.json
