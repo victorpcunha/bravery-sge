@@ -68,6 +68,28 @@ export async function getIndicadores(schoolId: string | null, filtros: FiltrosIn
 
   const { data, error } = await query.order('created_at', { ascending: true })
   if (error) throw error
+
+  // Buscar origens dos níveis de desenvolvimento para cada indicador
+  if (data && data.length > 0) {
+    const ids = data.map(d => d.id)
+    const { data: niveisData } = await supabase
+      .from('indicadores_niveis')
+      .select('indicador_id, origem')
+      .in('indicador_id', ids)
+
+    const niveisMap = new Map<string, Set<string>>()
+    for (const n of niveisData || []) {
+      if (!niveisMap.has(n.indicador_id)) {
+        niveisMap.set(n.indicador_id, new Set())
+      }
+      niveisMap.get(n.indicador_id)!.add(n.origem)
+    }
+
+    for (const d of data) {
+      ;(d as any).niveis_origens = Array.from(niveisMap.get(d.id) || [])
+    }
+  }
+
   return data as any[]
 }
 

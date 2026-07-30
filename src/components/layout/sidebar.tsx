@@ -4,7 +4,6 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { cn } from '@/lib/utils'
 import { useAuth } from '@/components/providers/auth-provider'
-import { useTheme } from 'next-themes'
 import { usePermissoes } from '@/hooks/use-permissoes'
 import { useEffect, useState } from 'react'
 import {
@@ -12,13 +11,10 @@ import {
   Users,
   GraduationCap,
   BookOpen,
-  LogOut,
   LayoutDashboard,
   Calendar,
   ChevronDown,
   ChevronRight,
-  Sun,
-  Moon,
   PanelLeft,
   PanelRight,
   FileText,
@@ -120,10 +116,8 @@ const modules = [
 
 export function AppSidebar() {
   const pathname = usePathname()
-  const { signOut, user, schoolId, isSuperAdmin } = useAuth()
-  const { theme, setTheme } = useTheme()
+  const { schoolId, isSuperAdmin } = useAuth()
   const { state, toggleSidebar } = useSidebar()
-  const [mounted, setMounted] = useState(false)
   const [openSubmenu, setOpenSubmenu] = useState<string | null>(null)
   const [isHovering, setIsHovering] = useState(false)
   const { loaded: permLoaded, pode, isSetup } = usePermissoes(schoolId)
@@ -139,10 +133,6 @@ export function AppSidebar() {
   }
 
   useEffect(() => {
-    setMounted(true)
-  }, [])
-
-  useEffect(() => {
     const activeModule = modules.find(
       m => m.submenu?.some(s => pathname === s.href || (s.href !== '/' && pathname.startsWith(s.href)))
     )
@@ -153,11 +143,6 @@ export function AppSidebar() {
 
   const toggleSubmenu = (title: string) => {
     setOpenSubmenu(prev => prev === title ? null : title)
-  }
-
-  const handleSignOut = async () => {
-    await signOut()
-    window.location.href = '/login'
   }
 
   const visibleModules = modules.filter(module => {
@@ -185,27 +170,27 @@ export function AppSidebar() {
         {/* Logo */}
         <SidebarHeader className={cn(
           'border-b border-sidebar-border transition-all duration-200',
-          effectivelyCollapsed ? 'p-2' : 'p-4'
+          effectivelyCollapsed ? 'p-2' : 'px-3 py-[7px]'
         )}>
           <div className={cn(
             'flex items-center transition-all duration-200',
             effectivelyCollapsed ? 'gap-0 justify-center' : 'gap-3'
           )}>
             <div className={cn(
-              'bg-gradient-to-br from-primary to-accent rounded-xl flex items-center justify-center shrink-0 transition-all duration-200',
-              effectivelyCollapsed ? 'w-8 h-8' : 'w-10 h-10'
+              'bg-sidebar-primary rounded-xl flex items-center justify-center shrink-0 transition-all duration-200',
+              effectivelyCollapsed ? 'w-8 h-8' : 'w-9 h-9'
             )}>
               <School className={cn(
-                'text-white transition-all duration-200',
-                effectivelyCollapsed ? 'w-4 h-4' : 'w-5 h-5'
+                'text-sidebar-primary-foreground transition-all duration-200',
+                effectivelyCollapsed ? 'w-4 h-4' : 'w-[18px] h-[18px]'
               )} />
             </div>
             <div className={cn(
               'transition-all duration-200',
               effectivelyCollapsed ? 'opacity-0 invisible w-0 overflow-hidden' : 'opacity-100 visible'
             )}>
-              <span className="font-heading font-bold text-lg text-foreground tracking-tight whitespace-nowrap">Bravery</span>
-              <p className="text-xs text-muted-foreground font-medium whitespace-nowrap">Gestão Escolar</p>
+              <span className="font-heading font-bold text-[15px] text-sidebar-foreground tracking-tight whitespace-nowrap">Bravery</span>
+              <p className="text-[11px] text-sidebar-foreground/70 font-medium whitespace-nowrap">Gestão Escolar</p>
             </div>
           </div>
         </SidebarHeader>
@@ -247,16 +232,16 @@ export function AppSidebar() {
                             'relative flex items-center gap-3 px-3 py-2.5 rounded-md text-sm font-medium transition-colors w-full',
                             effectivelyCollapsed && 'justify-center px-2 gap-0',
                             effectiveActive
-                              ? 'bg-primary/10 text-primary'
-                              : 'text-muted-foreground hover:text-foreground hover:bg-muted'
+                              ? 'bg-sidebar-accent text-accent-foreground dark:text-sidebar-accent-foreground'
+                              : 'text-sidebar-foreground hover:text-accent-foreground hover:bg-sidebar-accent dark:hover:text-sidebar-accent-foreground'
                           )}
                         >
                           {!effectivelyCollapsed && effectiveActive && (
-                            <span className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-5 bg-primary rounded-full" />
+                            <span className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-5 bg-sidebar-primary rounded-full" />
                           )}
                           <module.icon className={cn(
                             'h-4 w-4 shrink-0',
-                            effectiveActive ? 'text-sidebar-foreground' : ''
+                            effectiveActive ? 'text-accent-foreground dark:text-sidebar-accent-foreground' : ''
                           )} />
                           <span className={cn(
                             'truncate transition-opacity duration-200',
@@ -272,16 +257,16 @@ export function AppSidebar() {
                             'relative flex items-center gap-3 px-3 py-2.5 rounded-md text-sm font-medium transition-colors w-full',
                             effectivelyCollapsed && 'justify-center px-2 gap-0',
                             effectiveActive
-                              ? 'bg-primary/10 text-primary'
-                              : 'text-muted-foreground hover:text-foreground hover:bg-muted'
+                              ? 'bg-sidebar-accent text-accent-foreground dark:text-sidebar-accent-foreground'
+                              : 'text-sidebar-foreground hover:text-accent-foreground hover:bg-sidebar-accent dark:hover:text-sidebar-accent-foreground'
                           )}
                         >
                           {!effectivelyCollapsed && effectiveActive && (
-                            <span className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-5 bg-primary rounded-full" />
+                            <span className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-5 bg-sidebar-primary rounded-full" />
                           )}
                           <module.icon className={cn(
                             'h-4 w-4 shrink-0',
-                            effectiveActive ? 'text-sidebar-foreground' : ''
+                            effectiveActive ? 'text-accent-foreground dark:text-sidebar-accent-foreground' : ''
                           )} />
                           <span className={cn(
                             'truncate transition-opacity duration-200',
@@ -298,16 +283,16 @@ export function AppSidebar() {
                               'relative flex items-center gap-3 w-full px-3 py-2.5 rounded-md text-sm font-medium transition-colors',
                               effectivelyCollapsed && 'justify-center px-2 gap-0',
                               effectiveActive
-                                ? 'bg-primary/10 text-primary'
-                                : 'text-muted-foreground hover:text-foreground hover:bg-muted'
+                                ? 'bg-sidebar-accent text-accent-foreground dark:text-sidebar-accent-foreground'
+                                : 'text-sidebar-foreground hover:text-accent-foreground hover:bg-sidebar-accent dark:hover:text-sidebar-accent-foreground'
                             )}
                           >
                             {!effectivelyCollapsed && effectiveActive && (
-                              <span className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-5 bg-primary rounded-full" />
+                              <span className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-5 bg-sidebar-primary rounded-full" />
                             )}
                             <module.icon className={cn(
                               'h-4 w-4 shrink-0',
-                              effectiveActive ? 'text-sidebar-foreground' : ''
+                              effectiveActive ? 'text-accent-foreground dark:text-sidebar-accent-foreground' : ''
                             )} />
                             <span className={cn(
                               'flex-1 text-left truncate transition-opacity duration-200',
@@ -317,12 +302,12 @@ export function AppSidebar() {
                             </span>
                             {submenuOpen ? (
                               <ChevronDown className={cn(
-                                'h-3.5 shrink-0 text-muted-foreground transition-all duration-200',
+                                'h-3.5 shrink-0 text-sidebar-foreground transition-all duration-200',
                                 effectivelyCollapsed ? 'w-0 opacity-0 invisible' : 'w-3.5 opacity-100 visible'
                               )} />
                             ) : (
                               <ChevronRight className={cn(
-                                'h-3.5 shrink-0 text-muted-foreground transition-all duration-200',
+                                'h-3.5 shrink-0 text-sidebar-foreground transition-all duration-200',
                                 effectivelyCollapsed ? 'w-0 opacity-0 invisible' : 'w-3.5 opacity-100 visible'
                               )} />
                             )}
@@ -341,12 +326,12 @@ export function AppSidebar() {
                                       className={cn(
                                         'flex items-center px-3 py-1.5 rounded-sm text-sm transition-colors',
                                         isSubActive
-                                          ? 'bg-primary/10 text-primary font-medium'
-                                          : 'text-muted-foreground hover:text-foreground hover:bg-muted'
+                                          ? 'bg-sidebar-accent text-accent-foreground dark:text-sidebar-accent-foreground font-medium'
+                                          : 'text-sidebar-foreground hover:text-accent-foreground hover:bg-sidebar-accent dark:hover:text-sidebar-accent-foreground'
                                       )}
                                     >
                                       {isSubActive && (
-                                        <span className="absolute left-0 top-1/2 -translate-y-1/2 w-0.5 h-4 bg-primary rounded-full" />
+                                        <span className="absolute left-0 top-1/2 -translate-y-1/2 w-0.5 h-4 bg-sidebar-primary rounded-full" />
                                       )}
                                       {subitem.title}
                                     </Link>
@@ -375,7 +360,7 @@ export function AppSidebar() {
             onClick={toggleSidebar}
             className={cn(
               'flex items-center gap-3 px-3 py-2 rounded-md text-sm w-full transition-colors',
-              'text-muted-foreground hover:text-foreground hover:bg-muted',
+              'text-sidebar-foreground hover:text-accent-foreground hover:bg-sidebar-accent dark:hover:text-sidebar-accent-foreground',
               effectivelyCollapsed && 'justify-center px-0 gap-0'
             )}
           >
@@ -389,82 +374,6 @@ export function AppSidebar() {
               effectivelyCollapsed ? 'opacity-0 invisible w-0' : 'opacity-100 visible'
             )}>
               {state === 'expanded' ? 'Recolher menu' : 'Fixar menu'}
-            </span>
-          </button>
-
-          {/* User info — expanded only */}
-          <div className={cn(
-            'flex items-center gap-3 mt-1 transition-all duration-200',
-            effectivelyCollapsed ? 'opacity-0 invisible h-0 overflow-hidden' : 'opacity-100 visible'
-          )}>
-            <div className="w-8 h-8 bg-gradient-to-br from-sidebar-primary to-sidebar-accent rounded-full flex items-center justify-center text-xs font-bold text-sidebar-primary-foreground shrink-0">
-              {user?.email?.charAt(0).toUpperCase()}
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium text-sidebar-foreground truncate">{user?.email?.split('@')[0]}</p>
-              <p className="text-xs text-muted-foreground truncate">{user?.email}</p>
-            </div>
-          </div>
-
-          {/* User avatar — collapsed only */}
-          <div className={cn(
-            'flex justify-center transition-all duration-200',
-            effectivelyCollapsed ? 'opacity-100 visible' : 'opacity-0 invisible h-0 overflow-hidden'
-          )}>
-            <div className="w-8 h-8 bg-gradient-to-br from-sidebar-primary to-sidebar-accent rounded-full flex items-center justify-center text-xs font-bold text-sidebar-primary-foreground">
-              {user?.email?.charAt(0).toUpperCase()}
-            </div>
-          </div>
-
-          {/* Theme Toggle */}
-          {mounted && (
-            <button
-              onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
-              className={cn(
-                'flex items-center gap-3 px-3 py-2 rounded-md text-sm w-full transition-colors',
-                'text-muted-foreground hover:text-foreground hover:bg-muted',
-                effectivelyCollapsed && 'justify-center px-0 gap-0'
-              )}
-            >
-              {effectivelyCollapsed ? (
-                theme === 'dark' ? (
-                  <Sun className="h-4 w-4 shrink-0 text-sidebar-primary" />
-                ) : (
-                  <Moon className="h-4 w-4 shrink-0 text-sidebar-primary" />
-                )
-              ) : (
-                <div className="p-1 rounded-md bg-sidebar-accent/10 shrink-0">
-                  {theme === 'dark' ? (
-                    <Sun className="h-4 w-4 text-sidebar-primary" />
-                  ) : (
-                    <Moon className="h-4 w-4 text-sidebar-primary" />
-                  )}
-                </div>
-              )}
-              <span className={cn(
-                'truncate transition-opacity duration-200',
-                effectivelyCollapsed ? 'opacity-0 invisible w-0' : 'opacity-100 visible'
-              )}>
-                {theme === 'dark' ? 'Modo claro' : 'Modo escuro'}
-              </span>
-            </button>
-          )}
-
-          {/* Logout */}
-          <button
-            onClick={handleSignOut}
-            className={cn(
-              'flex items-center gap-3 px-3 py-2 rounded-md text-sm w-full transition-colors',
-              'text-muted-foreground hover:text-foreground hover:bg-muted',
-              effectivelyCollapsed && 'justify-center px-0 gap-0'
-            )}
-          >
-            <LogOut className="h-4 w-4 shrink-0" />
-            <span className={cn(
-              'truncate transition-opacity duration-200',
-              effectivelyCollapsed ? 'opacity-0 invisible w-0' : 'opacity-100 visible'
-            )}>
-              Sair da conta
             </span>
           </button>
         </SidebarFooter>

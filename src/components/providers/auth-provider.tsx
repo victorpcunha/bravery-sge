@@ -14,9 +14,26 @@ type AuthContextType = {
   schoolId: string | null
   isSuperAdmin: boolean
   allSchools: { id: string; nome_escola: string }[]
+  nomeCompleto: string
+  iniciais: string
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
+
+function getInitials(nome: string): string {
+  const parts = nome.trim().split(/\s+/)
+  if (parts.length === 0) return '?'
+  if (parts.length === 1) return parts[0].charAt(0).toUpperCase()
+  return (parts[0].charAt(0) + parts[parts.length - 1].charAt(0)).toUpperCase()
+}
+
+function formatarNome(user: User): string {
+  const emailName = user.email?.split('@')[0] || ''
+  return emailName
+    .split(/[._-]/)
+    .map((p) => p.charAt(0).toUpperCase() + p.slice(1).toLowerCase())
+    .join(' ')
+}
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
@@ -25,6 +42,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [schoolId, setSchoolId] = useState<string | null>(null)
   const [isSuperAdmin, setIsSuperAdmin] = useState(false)
   const [allSchools, setAllSchools] = useState<{ id: string; nome_escola: string }[]>([])
+  const [nomeCompleto, setNomeCompleto] = useState('')
+  const [iniciais, setIniciais] = useState('')
 
   useEffect(() => {
     const supabase = getSupabaseClient()
@@ -63,6 +82,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }).catch((err) => {
       console.error('[AuthProvider] getUserAuthInfo failed:', err)
     })
+
+    ;(async () => {
+      const supabase = getSupabaseClient()
+      try {
+        const { data } = await supabase.from('people').select('nome_completo').eq('email', user.email?.toLowerCase().trim()).maybeSingle()
+        const nome = data?.nome_completo || formatarNome(user)
+        setNomeCompleto(nome)
+        setIniciais(getInitials(nome))
+      } catch {
+        const nome = formatarNome(user)
+        setNomeCompleto(nome)
+        setIniciais(getInitials(nome))
+      }
+    })()
   }, [user])
 
   const signIn = async (email: string, password: string) => {
@@ -91,10 +124,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setSchoolId(null)
     setIsSuperAdmin(false)
     setAllSchools([])
+    setNomeCompleto('')
+    setIniciais('')
   }
 
   return (
-    <AuthContext.Provider value={{ user, session, loading, signIn, signOut, schoolId, isSuperAdmin, allSchools }}>
+    <AuthContext.Provider value={{ user, session, loading, signIn, signOut, schoolId, isSuperAdmin, allSchools, nomeCompleto, iniciais }}>
       {children}
     </AuthContext.Provider>
   )

@@ -68,6 +68,14 @@ export default function UsuariosPage() {
   const [selectedSchoolId, setSelectedSchoolId] = useState<string | null>(null)
   const [currentPage, setCurrentPage] = useState(1)
 
+  useEffect(() => {
+    const stored = sessionStorage.getItem('usuarios_search')
+    if (stored) {
+      setSearch(stored)
+      sessionStorage.removeItem('usuarios_search')
+    }
+  }, [])
+
   const totalPages = Math.max(1, Math.ceil(pessoas.length / ITEMS_PER_PAGE))
   const paginatedPessoas = useMemo(() => {
     const start = (currentPage - 1) * ITEMS_PER_PAGE

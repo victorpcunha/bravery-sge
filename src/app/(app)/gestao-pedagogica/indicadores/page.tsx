@@ -762,19 +762,27 @@ export default function IndicadoresPage() {
                 <p className="text-xs text-muted-foreground italic">Nenhum periodo disponivel</p>
               ) : (
                 <div className="space-y-2">
-                  <label className="flex items-center gap-2 text-xs cursor-pointer">
-                    <Switch
-                      size="sm"
-                      checked={formData.periodo_ids.length === formPeriodos.length}
-                      onCheckedChange={(checked) => {
-                        setFormData(p => ({
-                          ...p,
-                          periodo_ids: checked ? formPeriodos.map(per => per.id) : []
-                        }))
-                      }}
-                    />
-                    <span className="font-medium">Todos os periodos</span>
-                  </label>
+                  <div className="rounded-md border border-primary/20 bg-primary/[0.04] px-3 py-2.5">
+                    <label className="flex items-center gap-2.5 text-xs cursor-pointer">
+                      <Switch
+                        checked={formData.periodo_ids.length === formPeriodos.length}
+                        onCheckedChange={(checked) => {
+                          setFormData(p => ({
+                            ...p,
+                            periodo_ids: checked ? formPeriodos.map(per => per.id) : []
+                          }))
+                        }}
+                      />
+                      <div>
+                        <span className="text-[13px] font-semibold text-foreground">Todos os periodos</span>
+                        <p className="text-[11px] text-muted-foreground mt-0.5">
+                          {formData.periodo_ids.length === formPeriodos.length
+                            ? `${formPeriodos.length} periodo(s) selecionado(s)`
+                            : `${formData.periodo_ids.length} de ${formPeriodos.length} periodo(s) selecionado(s)`}
+                        </p>
+                      </div>
+                    </label>
+                  </div>
                   <PillToggleGroup
                     multiple
                     selectedValues={formData.periodo_ids}
@@ -793,18 +801,19 @@ export default function IndicadoresPage() {
             </div>
 
             {/* Niveis de Desenvolvimento */}
-            <div>
-              <Label className="text-xs text-muted-foreground mb-1 block">
-                Niveis de Desenvolvimento
-                <span className="text-muted-foreground font-normal ml-1">
-                  (selecione os niveis do metodo ou crie niveis personalizados)
-                </span>
-              </Label>
+            <div className="rounded-lg border border-border overflow-hidden">
+              <div className="bg-muted/50 px-4 py-2.5 border-b border-border">
+                <h3 className="text-[14px] font-semibold text-foreground">Niveis de Desenvolvimento</h3>
+                <p className="text-[12px] text-muted-foreground mt-0.5">
+                  Selecione os niveis do metodo de avaliacao ou crie niveis personalizados
+                </p>
+              </div>
+              <div className="p-4 space-y-4">
 
               {/* Niveis do Metodo */}
               {formOpcoes.length > 0 && (
-                <div className="mb-3">
-                  <p className="text-[11px] text-muted-foreground mb-1.5">Niveis do Metodo de Avaliacao:</p>
+                <div>
+                  <p className="text-[12px] font-medium text-foreground mb-2">Niveis do Metodo de Avaliacao:</p>
                   <PillToggleGroup
                     multiple
                     selectedValues={formNiveisMetodo}
@@ -819,8 +828,10 @@ export default function IndicadoresPage() {
               )}
 
               {/* Niveis Personalizados */}
+              <div>
+                <p className="text-[12px] font-medium text-foreground mb-2">Niveis Personalizados:</p>
+
               <div className="border border-border rounded-md p-3 bg-muted/30">
-                <p className="text-[11px] text-muted-foreground mb-2">Niveis Personalizados:</p>
 
                 {formNiveisPersonalizados.length === 0 ? (
                   <p className="text-xs text-muted-foreground italic mb-2">Nenhum nivel personalizado criado.</p>
@@ -865,6 +876,8 @@ export default function IndicadoresPage() {
               </div>
             </div>
           </div>
+          </div>
+          </div>
           <DialogFooter className="shrink-0 border-t border-border px-6 py-4 gap-3">
             <Button variant="ghost" onClick={() => setDialogOpen(false)}>Cancelar</Button>
             <Button onClick={handleSave}>
@@ -890,7 +903,9 @@ export default function IndicadoresPage() {
 
   // Renderizar um indicador na listagem
   function renderIndicador(ind: any) {
-    const origemLabel = ind.origem === 'matriz' ? 'Matriz' : 'Manual'
+    const origens = (ind.niveis_origens || []) as string[]
+    const temMetodo = origens.includes('metodo')
+    const temPersonalizado = origens.includes('personalizado')
     const codigoDisplay = ind.codigo ? `${ind.codigo} - ` : ''
 
     return (
@@ -898,7 +913,16 @@ export default function IndicadoresPage() {
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2">
             <span className="text-sm text-foreground">{codigoDisplay}{ind.descricao}</span>
-            <Badge variant="outline" className="text-[10px] px-1 py-0">{origemLabel}</Badge>
+            {temMetodo && (
+              <Badge variant="outline" className="text-[10px] px-1.5 py-0 border-primary/30 text-primary font-medium">
+                Nivel do Metodo de Avaliacao
+              </Badge>
+            )}
+            {temPersonalizado && (
+              <Badge variant="outline" className="text-[10px] px-1.5 py-0 border-warning/30 text-warning font-medium">
+                Nivel proprio
+              </Badge>
+            )}
           </div>
           <div className="flex items-center gap-3 mt-0.5 text-[11px] text-muted-foreground">
             {ind.periodos_ids && ind.periodos_ids.length > 0 && (

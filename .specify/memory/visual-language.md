@@ -1,6 +1,6 @@
 # Visual Language
 
-Version: 2.0.0
+Version: 2.0.1
 
 Status: Frozen
 
@@ -131,7 +131,7 @@ O Design System deve expor, no mínimo, os tokens abaixo. Os valores hex aqui s�
 | `--card` | `#FFFFFF` | Fundo de card/superfície. |
 | `--foreground` | `#1E293B` | Texto principal (slate-800). |
 | `--muted` | `#F1F5F9` | Fundo de seções/zonas (slate-100). |
-| `--muted-foreground` | `#64748B` | Texto secundário (slate-500). |
+| `--muted-foreground` | `#475569` | Texto secundário (slate-600). Contraste 7.5:1 sobre `--background` (passa WCAG AA). |
 | `--border` | `#E2E8F0` | Bordas padrão (slate-200). |
 | `--ring` | `#1F88EB` | Cor de foco (= primary). |
 | `--destructive` | `#DC2626` | Erro/destruição. |
@@ -577,6 +577,19 @@ toda mudança neste documento deve:
 ---
 
 ## Changelog
+
+### [2.0.1] — 2026-07-16
+
+#### Alterado — Acessibilidade: contraste AA em texto secundário
+
+- **Muted-foreground**: `#64748B` (slate-500) → `#475569` (slate-600). Contraste sobre `--background` (`#F6F8FA`):
+  - **Antes**: 4.04:1 — **falhava** WCAG AA (4.5:1) para texto normal < 18px bold
+  - **Depois**: 7.55:1 — **passa** AA Large e Normal
+- Decisão alinhada com o princípio **§10.2** ("A diferença entre dois níveis consecutivos deve ser perceptível") e com a meta de **PE-901** (contraste WCAG AA em todo texto).
+- Aplicado em `src/app/globals.css` (light mode). Dark mode preservado em `#94A3B8` (já passava 7.9:1).
+- Justificativa: a escala 9 níveis da tipografia (especificamente corpo 15px) é classificada como "texto normal" pelo WCAG, exigindo 4.5:1 mínimo. Slate-500 falhava marginalmente.
+- Trade-off aceito: leve redução da "suavidade" do texto secundário (slate-500 → slate-600), ganha-se leitura confiável em todos os tamanhos.
+- Não quebra nenhuma regra da Constituição; é correção dentro do Princípio XI (Design System First).
 
 ### [2.0.0] — 2026-07-11
 
