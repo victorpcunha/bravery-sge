@@ -1,8 +1,8 @@
 const { createClient } = require('@supabase/supabase-js');
 
 const supabase = createClient(
-  'https://wfxmmwmxmantgzydusnw.supabase.co',
-  '***REMOVED***'
+  process.env.SUPABASE_URL || 'https://wfxmmwmxmantgzydusnw.supabase.co',
+  process.env.SUPABASE_SERVICE_ROLE_KEY
 );
 
 // Dados para carregar - objetivos de aprendizagem (缩减 para exemplo)
