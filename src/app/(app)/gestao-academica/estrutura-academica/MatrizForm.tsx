@@ -596,10 +596,9 @@ export function MatrizForm({ schoolId, matrizId, onSaved, onCancel }: MatrizForm
         </Card>
       )}
 
-      {/* Footer */}
-      <div className="flex justify-end gap-3 pt-4 border-t border-border">
-        <Button variant="ghost" onClick={onCancel}>Cancelar</Button>
-        <Button onClick={handleSave} disabled={saving}>{matrizId ? 'Salvar Alterações' : 'Criar Matriz'}</Button>
+      <div className="shrink-0 border-t border-border px-6 py-3 flex justify-end gap-2 bg-muted/30">
+        <Button variant="outline" onClick={onCancel} className="min-h-[40px] sm:min-h-[44px]">Cancelar</Button>
+        <Button onClick={handleSave} disabled={saving} className="min-h-[40px] sm:min-h-[44px]">{matrizId ? 'Salvar Alterações' : 'Criar Matriz'}</Button>
       </div>
 
       {/* Modal: Disciplina */}
@@ -775,9 +774,9 @@ export function MatrizForm({ schoolId, matrizId, onSaved, onCancel }: MatrizForm
               )}
             </div>
           </div>
-          <DialogFooter className="shrink-0 border-t border-border px-6 py-3">
-            <Button variant="ghost" onClick={() => setShowDiscModal(false)}>Cancelar</Button>
-            <Button onClick={handleSaveDisciplina} disabled={savingDisc}>{discEditId ? 'Salvar' : 'Adicionar'}</Button>
+          <DialogFooter className="shrink-0 border-t border-border px-6 py-3 gap-2 bg-muted/30">
+            <Button variant="outline" onClick={() => setShowDiscModal(false)} className="min-h-[40px] sm:min-h-[44px]">Cancelar</Button>
+            <Button onClick={handleSaveDisciplina} disabled={savingDisc} className="min-h-[40px] sm:min-h-[44px]">{discEditId ? 'Salvar' : 'Adicionar'}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

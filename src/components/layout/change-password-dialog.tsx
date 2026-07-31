@@ -183,11 +183,11 @@ export function ChangePasswordDialog({ open, onOpenChange }: Props) {
           )}
         </div>
 
-        <div className="flex justify-end gap-2 pt-2">
-          <Button variant="outline" onClick={() => handleOpenChange(false)}>
+        <div className="shrink-0 border-t border-border px-6 py-3 flex justify-end gap-2 bg-muted/30">
+          <Button variant="outline" onClick={() => handleOpenChange(false)} className="min-h-[40px] sm:min-h-[44px]">
             Cancelar
           </Button>
-          <Button onClick={handleSave} disabled={!canSave || saving}>
+          <Button onClick={handleSave} disabled={!canSave || saving} className="min-h-[40px] sm:min-h-[44px]">
             {saving ? 'Salvando...' : 'Salvar'}
           </Button>
         </div>

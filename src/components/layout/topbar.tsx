@@ -27,6 +27,7 @@ import {
   Calendar,
   UserCheck,
 } from 'lucide-react'
+import { AgendaDrawer } from '@/components/agenda/agenda-drawer'
 
 export function Topbar() {
   const router = useRouter()
@@ -35,6 +36,7 @@ export function Topbar() {
   const [mounted, setMounted] = useState(false)
   const [passwordOpen, setPasswordOpen] = useState(false)
   const [dropdownOpen, setDropdownOpen] = useState(false)
+  const [agendaOpen, setAgendaOpen] = useState(false)
 
   useEffect(() => setMounted(true), [])
 
@@ -54,7 +56,7 @@ export function Topbar() {
         {/* Right side */}
         <div className="flex items-center gap-1 sm:gap-2">
           {/* Agenda */}
-          <Button variant="ghost" size="icon" className="relative shrink-0" aria-label="Agenda do Profissional">
+          <Button variant="ghost" size="icon" className="relative shrink-0" aria-label="Agenda do Profissional" onClick={() => setAgendaOpen(true)}>
             <Calendar className="h-5 w-5 text-muted-foreground" />
             <span className="absolute -top-0.5 -right-0.5 w-2 h-2 bg-primary rounded-full" />
           </Button>
@@ -167,6 +169,7 @@ export function Topbar() {
       </header>
 
       <ChangePasswordDialog open={passwordOpen} onOpenChange={setPasswordOpen} />
+      <AgendaDrawer open={agendaOpen} onOpenChange={setAgendaOpen} />
     </>
   )
 }

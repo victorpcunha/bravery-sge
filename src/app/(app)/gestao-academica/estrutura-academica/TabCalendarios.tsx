@@ -923,9 +923,9 @@ export function TabCalendarios({ schoolId }: TabCalendariosProps) {
               required
             />
           </div>
-          <DialogFooter className="mt-6 gap-3">
-            <Button variant="ghost" onClick={() => setShowAnoModal(false)}>Cancelar</Button>
-            <Button onClick={handleCreateAno}>Salvar</Button>
+          <DialogFooter className="shrink-0 border-t border-border px-6 py-3 gap-2 bg-muted/30">
+            <Button variant="outline" onClick={() => setShowAnoModal(false)} className="min-h-[40px] sm:min-h-[44px]">Cancelar</Button>
+            <Button onClick={handleCreateAno} className="min-h-[40px] sm:min-h-[44px]">Salvar</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -948,9 +948,9 @@ export function TabCalendarios({ schoolId }: TabCalendariosProps) {
               onChangeTermino={(v) => setCalendarioForm({ ...calendarioForm, data_termino: v })}
             />
           </div>
-          <DialogFooter className="mt-6 gap-3">
-            <Button variant="ghost" onClick={() => { setShowCalendarioModal(false); setCalendarioEditId(null) }}>Cancelar</Button>
-            <Button onClick={calendarioEditId ? handleUpdateCalendario : handleCreateCalendario}>
+          <DialogFooter className="shrink-0 border-t border-border px-6 py-3 gap-2 bg-muted/30">
+            <Button variant="outline" onClick={() => { setShowCalendarioModal(false); setCalendarioEditId(null) }} className="min-h-[40px] sm:min-h-[44px]">Cancelar</Button>
+            <Button onClick={calendarioEditId ? handleUpdateCalendario : handleCreateCalendario} className="min-h-[40px] sm:min-h-[44px]">
               {calendarioEditId ? 'Salvar Alterações' : 'Salvar'}
             </Button>
           </DialogFooter>
@@ -1010,16 +1010,16 @@ export function TabCalendarios({ schoolId }: TabCalendariosProps) {
             />
           </div>
           )}
-          <DialogFooter className="mt-6 gap-3">
+          <DialogFooter className="shrink-0 border-t border-border px-6 py-3 gap-2 bg-muted/30">
             {diaLetivoPadrao ? (
               <>
                 <Button variant="destructive" onClick={handleExcluirDiaLetivo} className="mr-auto">Sim, excluir dia letivo</Button>
-                <Button variant="ghost" onClick={() => { setShowEventoModal(false); setDiaLetivoPadrao(false) }}>Cancelar</Button>
+                <Button variant="outline" onClick={() => { setShowEventoModal(false); setDiaLetivoPadrao(false) }} className="min-h-[40px] sm:min-h-[44px]">Cancelar</Button>
               </>
             ) : (
               <>
-                <Button variant="ghost" onClick={() => { setShowEventoModal(false); setEventoDiaUnico(false); setDiaLetivoPadrao(false); setEventoEditId(null) }}>Cancelar</Button>
-                <Button onClick={eventoEditId ? handleUpdateEvento : handleCreateEvento}>
+                <Button variant="outline" onClick={() => { setShowEventoModal(false); setEventoDiaUnico(false); setDiaLetivoPadrao(false); setEventoEditId(null) }} className="min-h-[40px] sm:min-h-[44px]">Cancelar</Button>
+                <Button onClick={eventoEditId ? handleUpdateEvento : handleCreateEvento} className="min-h-[40px] sm:min-h-[44px]">
                   {eventoEditId ? 'Salvar Alterações' : 'Salvar'}
                 </Button>
               </>

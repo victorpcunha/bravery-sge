@@ -878,9 +878,9 @@ export default function IndicadoresPage() {
           </div>
           </div>
           </div>
-          <DialogFooter className="shrink-0 border-t border-border px-6 py-4 gap-3">
-            <Button variant="ghost" onClick={() => setDialogOpen(false)}>Cancelar</Button>
-            <Button onClick={handleSave}>
+          <DialogFooter className="shrink-0 border-t border-border px-6 py-3 gap-2 bg-muted/30">
+            <Button variant="outline" onClick={() => setDialogOpen(false)} className="min-h-[40px] sm:min-h-[44px]">Cancelar</Button>
+            <Button onClick={handleSave} className="min-h-[40px] sm:min-h-[44px]">
               {editId ? 'Salvar' : 'Salvar'}
             </Button>
           </DialogFooter>

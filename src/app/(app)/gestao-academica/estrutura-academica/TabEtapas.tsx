@@ -423,14 +423,14 @@ export function TabEtapas({ schoolId }: TabEtapasProps) {
               <Input className="border-border" placeholder="Ex: Maternal, 1º Ano, etc." value={novaSubetapaNome} onChange={e => setNovaSubetapaNome(e.target.value)} onKeyDown={e => { if (e.key === 'Enter') editingSubetapa ? confirmAddSubetapa() : confirmAddSubetapa(true) }} autoFocus />
             </div>
           </div>
-          <DialogFooter className="mt-4 gap-3">
-            <Button variant="ghost" onClick={() => { setShowSubetapaModal(false); setEditingSubetapa(null); setEtapaSelecionada(null); setNovaSubetapaNome('') }}>Cancelar</Button>
+          <DialogFooter className="shrink-0 border-t border-border px-6 py-3 gap-2 bg-muted/30">
+            <Button variant="outline" onClick={() => { setShowSubetapaModal(false); setEditingSubetapa(null); setEtapaSelecionada(null); setNovaSubetapaNome('') }} className="min-h-[40px] sm:min-h-[44px]">Cancelar</Button>
             {editingSubetapa ? (
-              <Button onClick={() => confirmAddSubetapa()}>Salvar</Button>
+              <Button onClick={() => confirmAddSubetapa()} className="min-h-[40px] sm:min-h-[44px]">Salvar</Button>
             ) : (
               <>
-                <Button variant="outline" onClick={() => confirmAddSubetapa(true)}>Adicionar e criar outro</Button>
-                <Button onClick={() => confirmAddSubetapa()}>Adicionar</Button>
+                <Button variant="outline" onClick={() => confirmAddSubetapa(true)} className="min-h-[40px] sm:min-h-[44px]">Adicionar e criar outro</Button>
+                <Button onClick={() => confirmAddSubetapa()} className="min-h-[40px] sm:min-h-[44px]">Adicionar</Button>
               </>
             )}
           </DialogFooter>

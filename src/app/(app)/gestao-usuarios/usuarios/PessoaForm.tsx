@@ -1735,9 +1735,9 @@ export function PessoaForm({ schoolId: propSchoolId, person, onSaved, onCancel }
         </div>
       </Tabs>
 
-      <div className="bg-card pt-4 pb-2 px-6 flex justify-end gap-3 border-t border-border shrink-0">
-        <Button variant="outline" onClick={onCancel} className="border-border">Cancelar</Button>
-        <Button onClick={handleSave} disabled={saving}>
+      <div className="shrink-0 border-t border-border px-6 py-3 flex justify-end gap-2 bg-muted/30">
+        <Button variant="outline" onClick={onCancel} className="min-h-[40px] sm:min-h-[44px]">Cancelar</Button>
+        <Button onClick={handleSave} disabled={saving} className="min-h-[40px] sm:min-h-[44px]">
           {saving ? 'Salvando...' : person ? 'Atualizar' : 'Criar'}
         </Button>
       </div>

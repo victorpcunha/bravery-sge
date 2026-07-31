@@ -360,12 +360,12 @@ export default function DisciplinasPage() {
               </div>
             </div>
           </div>
-          <DialogFooter className="gap-3">
+          <DialogFooter className="shrink-0 border-t border-border px-6 py-3 gap-2 bg-muted/30">
             {editando && !editando.is_padrao_mec && (
               <Button variant="destructive" className="mr-auto" onClick={() => { setShowModal(false); setDeleteTarget(editando) }}>Excluir</Button>
             )}
-            <Button variant="ghost" onClick={() => setShowModal(false)}>Cancelar</Button>
-            <Button onClick={handleSave} disabled={saving}>{saving ? 'Salvando...' : 'Salvar'}</Button>
+            <Button variant="outline" onClick={() => setShowModal(false)} className="min-h-[40px] sm:min-h-[44px]">Cancelar</Button>
+            <Button onClick={handleSave} disabled={saving} className="min-h-[40px] sm:min-h-[44px]">{saving ? 'Salvando...' : 'Salvar'}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

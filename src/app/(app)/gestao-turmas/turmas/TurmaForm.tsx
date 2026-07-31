@@ -943,10 +943,9 @@ export function TurmaForm({ schoolId, anoLetivo, etapas, editId, pessoaId, onSav
         </div>
       </div>
 
-      {/* Footer fixo */}
-      <div className="shrink-0 border-t border-border px-6 py-4 flex justify-end gap-3 bg-card">
-        <Button variant="ghost" onClick={onCancel}>Cancelar</Button>
-        <Button onClick={handleSave} disabled={loading}>
+      <div className="shrink-0 border-t border-border px-6 py-3 flex justify-end gap-2 bg-muted/30">
+        <Button variant="outline" onClick={onCancel} className="min-h-[40px] sm:min-h-[44px]">Cancelar</Button>
+        <Button onClick={handleSave} disabled={loading} className="min-h-[40px] sm:min-h-[44px]">
           {editId ? 'Atualizar' : 'Criar'}
         </Button>
       </div>
@@ -1044,8 +1043,8 @@ export function TurmaForm({ schoolId, anoLetivo, etapas, editId, pessoaId, onSav
             )}
           </div>
           <div className="shrink-0 border-t border-border px-6 py-3 flex justify-end gap-2 bg-muted/30">
-            <Button variant="ghost" onClick={() => setProfModalOpen(false)}>Cancelar</Button>
-            <Button onClick={handleSaveProfissional}>
+            <Button variant="outline" onClick={() => setProfModalOpen(false)} className="min-h-[40px] sm:min-h-[44px]">Cancelar</Button>
+            <Button onClick={handleSaveProfissional} className="min-h-[40px] sm:min-h-[44px]">
               {profEditId ? 'Atualizar' : 'Adicionar'}
             </Button>
           </div>

@@ -206,9 +206,9 @@ export default function FuncoesPage() {
               </p>
             </div>
           </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setModalOpen(false)}>Cancelar</Button>
-            <Button onClick={handleSave}>{editItem ? 'Atualizar' : 'Criar'}</Button>
+          <DialogFooter className="shrink-0 border-t border-border px-6 py-3 gap-2 bg-muted/30">
+            <Button variant="outline" onClick={() => setModalOpen(false)} className="min-h-[40px] sm:min-h-[44px]">Cancelar</Button>
+            <Button onClick={handleSave} className="min-h-[40px] sm:min-h-[44px]">{editItem ? 'Atualizar' : 'Criar'}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

@@ -865,9 +865,9 @@ export function MetodosForm({ schoolId, editId, onSaved, onCancel }: Props) {
       )}
       </div>
 
-      <div className="shrink-0 border-t border-border px-6 py-4 flex justify-end gap-3 bg-card">
-        <Button variant="ghost" onClick={onCancel}>Cancelar</Button>
-        <Button onClick={handleSave} disabled={saving}>
+      <div className="shrink-0 border-t border-border px-6 py-3 flex justify-end gap-2 bg-muted/30">
+        <Button variant="outline" onClick={onCancel} className="min-h-[40px] sm:min-h-[44px]">Cancelar</Button>
+        <Button onClick={handleSave} disabled={saving} className="min-h-[40px] sm:min-h-[44px]">
           {saving ? 'Salvando...' : form.id ? 'Atualizar' : 'Salvar'}
         </Button>
       </div>
