@@ -32,6 +32,7 @@ export type AvaliacaoIndicador = {
   periodo: number
   nivel_id: string | null
   observacao: string | null
+  updated_at: string | null
 }
 
 export async function getIndicadoresDaTurma(
@@ -113,15 +114,20 @@ export async function salvarAvaliacaoIndicador(
     .eq('periodo', periodo)
     .maybeSingle()
 
+  let updatedAt: string | null = null
+
   if (existing) {
-    const { error } = await supabase
+    const { data, error } = await supabase
       .from('academico_avaliacoes_indicadores')
       .update({ nivel_id: nivelId, observacao, updated_by: pessoaId })
       .eq('id', existing.id)
+      .select('updated_at')
+      .single()
 
     if (error) throw error
+    updatedAt = data?.updated_at ?? null
   } else {
-    const { error } = await supabase
+    const { data, error } = await supabase
       .from('academico_avaliacoes_indicadores')
       .insert({
         school_id: schoolId,
@@ -134,24 +140,38 @@ export async function salvarAvaliacaoIndicador(
         created_by: pessoaId,
         updated_by: pessoaId,
       })
+      .select('updated_at')
+      .single()
 
     if (error) throw error
+    updatedAt = data?.updated_at ?? null
   }
 
-  return { success: true }
+  return { success: true, updated_at: updatedAt }
 }
 
 export async function listarAvaliacoesIndicadores(
   turmaId: string,
-  periodo: number,
-  pessoaId?: string | null
+  options: {
+    periodo?: number
+    indicadorIds?: string[]
+    pessoaId?: string | null
+  } = {}
 ) {
-  await validarPermRead('gestao-pedagogica.diario-classe.indicadores', pessoaId)
-  const { data, error } = await supabase
+  await validarPermRead('gestao-pedagogica.diario-classe.indicadores', options.pessoaId)
+  let query = supabase
     .from('academico_avaliacoes_indicadores')
-    .select('id, aluno_id, indicador_id, periodo, nivel_id, observacao')
+    .select('id, aluno_id, indicador_id, periodo, nivel_id, observacao, updated_at')
     .eq('turma_id', turmaId)
-    .eq('periodo', periodo)
+
+  if (options.periodo != null) {
+    query = query.eq('periodo', options.periodo)
+  }
+  if (options.indicadorIds?.length) {
+    query = query.in('indicador_id', options.indicadorIds)
+  }
+
+  const { data, error } = await query
 
   if (error) throw error
   return (data || []) as AvaliacaoIndicador[]

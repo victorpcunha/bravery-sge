@@ -47,7 +47,7 @@ export function Topbar() {
 
   return (
     <>
-      <header className="sticky top-0 z-40 flex h-14 items-center justify-between gap-4 border-b border-border bg-card px-4 shadow-sm">
+      <header className="sticky top-0 z-40 flex h-12 items-center justify-between gap-4 border-b border-border bg-card px-4 shadow-sm">
         {/* Left side */}
         <div className="flex items-center gap-2">
           <SidebarTrigger className="h-9 w-9 shrink-0 md:hidden" />

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { useAuth } from '@/components/providers/auth-provider'
 import { usePermissoes } from '@/hooks/use-permissoes'
 import {
@@ -13,11 +13,11 @@ import {
   type AulaQuadro,
   type FrequenciaAula,
 } from '@/lib/actions/diario-classe'
-import { listarPlanoAulaPorMes, type PlanoAula } from '@/lib/actions/plano-ensino'
 import { Button } from '@/components/ui/button'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
-import { ChevronLeft, ChevronRight, Check, X, AlertTriangle, BookOpen } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Check, X, AlertTriangle, Info, Users } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { toast } from 'sonner'
 
@@ -35,12 +35,11 @@ type Props = {
   disciplinas: DisciplinaItem[]
 }
 
-const STATUS_CYCLE: (FrequenciaAula['status'] | null)[] = [null, 'P', 'F', 'FJ']
-
-function nextStatus(current: FrequenciaAula['status'] | null): FrequenciaAula['status'] | null {
-  const idx = STATUS_CYCLE.indexOf(current)
-  return STATUS_CYCLE[(idx + 1) % STATUS_CYCLE.length]
-}
+const STATUS_LIST: { value: FrequenciaAula['status']; label: string; icon: React.ReactNode; classes: string }[] = [
+  { value: 'P', label: 'Presente', icon: <Check className="h-3.5 w-3.5" />, classes: 'bg-success text-white hover:bg-success/90' },
+  { value: 'F', label: 'Ausente', icon: <X className="h-3.5 w-3.5" />, classes: 'bg-destructive text-white hover:bg-destructive/90' },
+  { value: 'FJ', label: 'Justificado', icon: <AlertTriangle className="h-3.5 w-3.5" />, classes: 'bg-warning text-white hover:bg-warning/90' },
+]
 
 export default function FrequenciaPorAula({ turmaId, alunos, disciplinas }: Props) {
   const hoje = new Date()
@@ -55,8 +54,8 @@ export default function FrequenciaPorAula({ turmaId, alunos, disciplinas }: Prop
   const [loadingStats, setLoadingStats] = useState(false)
   const { schoolId } = useAuth()
   const [salvando, setSalvando] = useState<Set<string>>(new Set())
-
-  const [planos, setPlanos] = useState<PlanoAula[]>([])
+  const [popoverOpen, setPopoverOpen] = useState<string | null>(null)
+  const tableRef = useRef<HTMLDivElement>(null)
 
   const { pessoaId } = usePermissoes(schoolId || '')
 
@@ -64,7 +63,6 @@ export default function FrequenciaPorAula({ turmaId, alunos, disciplinas }: Prop
     if (!disciplinaId || !turmaId) {
       setAulas([])
       setFrequencias(new Map())
-      setPlanos([])
       return
     }
     setLoading(true)
@@ -83,9 +81,6 @@ export default function FrequenciaPorAula({ turmaId, alunos, disciplinas }: Prop
       } else {
         setFrequencias(new Map())
       }
-
-      const planosData = await listarPlanoAulaPorMes(turmaId, disciplinaId)
-      setPlanos(planosData)
     } catch {
       toast.error('Erro ao carregar aulas')
     } finally {
@@ -93,9 +88,7 @@ export default function FrequenciaPorAula({ turmaId, alunos, disciplinas }: Prop
     }
   }, [turmaId, disciplinaId, ano, mes, pessoaId])
 
-  useEffect(() => {
-    carregar()
-  }, [carregar])
+  useEffect(() => { carregar() }, [carregar])
 
   useEffect(() => {
     if (!disciplinaId || !turmaId) {
@@ -116,30 +109,27 @@ export default function FrequenciaPorAula({ turmaId, alunos, disciplinas }: Prop
       .catch(() => {})
   }, [disciplinaId, turmaId, pessoaId])
 
-  const getPlanoDaData = (data: string): PlanoAula | undefined => {
-    return planos.find(p => {
-      if (!p.data_inicio || !p.data_fim) return false
-      return data >= p.data_inicio && data <= p.data_fim
-    })
-  }
-
-  const handleToggle = async (alunoId: string, horarioId: string, dataAula: string) => {
+  const handleRegistrar = async (
+    alunoId: string,
+    horarioId: string,
+    dataAula: string,
+    status: FrequenciaAula['status'] | null
+  ) => {
     const key = `${alunoId}_${horarioId}_${dataAula}`
-    const current = frequencias.get(key) || null
-    const newVal = nextStatus(current)
-    const savingKey = `${key}_${newVal}`
+    const savingKey = `${key}_${status}`
     setSalvando(prev => new Set(prev).add(savingKey))
+    setPopoverOpen(null)
 
     try {
-      const result = await registrarFrequenciaAula(schoolId, turmaId, horarioId, alunoId, dataAula, newVal, pessoaId)
+      const result = await registrarFrequenciaAula(schoolId, turmaId, horarioId, alunoId, dataAula, status, pessoaId)
       if (!result.success) {
         toast.error(result.error || 'Erro ao registrar frequência')
         return
       }
       setFrequencias(prev => {
         const next = new Map(prev)
-        if (newVal) {
-          next.set(key, newVal)
+        if (status) {
+          next.set(key, status)
         } else {
           next.delete(key)
         }
@@ -157,8 +147,7 @@ export default function FrequenciaPorAula({ turmaId, alunos, disciplinas }: Prop
     }
   }
 
-  const handleMarcarTodos = async (horarioId: string, dataAula: string, presente: boolean) => {
-    const status = presente ? 'P' : null
+  const handleMarcarTodos = async (horarioId: string, dataAula: string, status: FrequenciaAula['status'] | null) => {
     const alunosValidos = alunos.filter(aluno => {
       if (aluno.data_matricula && dataAula < aluno.data_matricula) return false
       if (aluno.data_saida && dataAula > aluno.data_saida) return false
@@ -177,25 +166,18 @@ export default function FrequenciaPorAula({ turmaId, alunos, disciplinas }: Prop
     try {
       let erros = 0
       for (const aluno of alunosValidos) {
-        const result = await registrarFrequenciaAula(schoolId, turmaId, horarioId, aluno.id, dataAula, status as any, pessoaId)
-        if (!result.success) {
-          erros++
-          toast.error(`${aluno.nome_completo}: ${result.error}`)
-          continue
-        }
+        const result = await registrarFrequenciaAula(schoolId, turmaId, horarioId, aluno.id, dataAula, status, pessoaId)
+        if (!result.success) { erros++; continue }
         const key = `${aluno.id}_${horarioId}_${dataAula}`
         setFrequencias(prev => {
           const next = new Map(prev)
-          if (status) {
-            next.set(key, status)
-          } else {
-            next.delete(key)
-          }
+          if (status) { next.set(key, status) }
+          else { next.delete(key) }
           return next
         })
       }
       if (erros === 0) {
-        toast.success(presente ? 'Todos presentes nesta aula' : 'Frequências removidas')
+        toast.success(status === 'P' ? 'Todos marcados como presente' : status === 'F' ? 'Todos marcados como ausente' : 'Frequências removidas')
       } else {
         toast.error(`${erros} aluno(s) com erro`)
       }
@@ -219,7 +201,7 @@ export default function FrequenciaPorAula({ turmaId, alunos, disciplinas }: Prop
       grupo.aulas.push(aula)
     } else {
       const d = new Date(aula.data + 'T12:00:00')
-      const diaSemana = d.toLocaleDateString('pt-BR', { weekday: 'long' })
+      const diaSemana = d.toLocaleDateString('pt-BR', { weekday: 'short' }).toUpperCase().replace('.', '')
       acc.push({ data: aula.data, diaSemana, aulas: [aula] })
     }
     return acc
@@ -227,20 +209,41 @@ export default function FrequenciaPorAula({ turmaId, alunos, disciplinas }: Prop
 
   const formatarDataCurta = (dataStr: string) => {
     const d = new Date(dataStr + 'T12:00:00')
-    const dia = String(d.getDate()).padStart(2, '0')
-    const mesNum = String(d.getMonth() + 1).padStart(2, '0')
-    return `${dia}/${mesNum}`
+    return `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}`
   }
+
+  const alunosVisiveis = alunos.filter(a => !a.data_saida)
+
+  const resumoPorAula = aulasPorData.map(grupo =>
+    grupo.aulas.map(aula => {
+      let totalP = 0, totalF = 0, totalFJ = 0
+      alunosVisiveis.forEach(aluno => {
+        const key = `${aluno.id}_${aula.horario_id}_${aula.data}`
+        const s = frequencias.get(key)
+        if (s === 'P') totalP++
+        else if (s === 'F') totalF++
+        else if (s === 'FJ') totalFJ++
+      })
+      return { horario_id: aula.horario_id, data: aula.data, totalP, totalF, totalFJ }
+    })
+  ).flat()
+
+  const resumoMap = new Map(resumoPorAula.map(r => [`${r.horario_id}_${r.data}`, r]))
+
+  const tabelaTemConteudo = aulasPorData.some(grupo =>
+    grupo.aulas.some(aula => {
+      const hojeLocal = new Date()
+      const aulaDate = new Date(aula.data + 'T12:00:00')
+      return aulaDate <= hojeLocal
+    })
+  )
 
   return (
     <div>
-      <div className="flex flex-wrap items-center gap-4 mb-6">
+      <div className="flex flex-wrap items-center gap-4 mb-8 pt-2 px-1">
         <div>
-          <label className="text-xs font-medium text-muted-foreground block mb-1">
-            Disciplina
-          </label>
           <Select value={disciplinaId} onValueChange={setDisciplinaId}>
-            <SelectTrigger className="min-w-[200px]">
+            <SelectTrigger className="min-w-[220px]">
               <SelectValue placeholder="Selecione uma disciplina" />
             </SelectTrigger>
             <SelectContent>
@@ -253,14 +256,14 @@ export default function FrequenciaPorAula({ turmaId, alunos, disciplinas }: Prop
           </Select>
         </div>
 
-        <div className="flex items-center gap-2 ml-auto">
+        <div className="flex items-center gap-2">
           <Button variant="outline" size="icon" onClick={() => {
             if (mes === 1) { setMes(12); setAno(a => a - 1) }
             else setMes(m => m - 1)
           }}>
             <ChevronLeft className="h-4 w-4" />
           </Button>
-          <span className="text-sm font-medium capitalize min-w-[140px] text-center">
+          <span className="text-sm font-medium capitalize min-w-[140px] text-center tabular-nums">
             {nomeMes} {ano}
           </span>
           <Button variant="outline" size="icon" onClick={() => {
@@ -269,10 +272,7 @@ export default function FrequenciaPorAula({ turmaId, alunos, disciplinas }: Prop
           }}>
             <ChevronRight className="h-4 w-4" />
           </Button>
-          <Button variant="ghost" size="sm" onClick={() => {
-            setAno(hoje.getFullYear())
-            setMes(hoje.getMonth() + 1)
-          }}>
+          <Button variant="ghost" size="sm" onClick={() => { setAno(hoje.getFullYear()); setMes(hoje.getMonth() + 1) }}>
             Hoje
           </Button>
         </div>
@@ -283,9 +283,7 @@ export default function FrequenciaPorAula({ turmaId, alunos, disciplinas }: Prop
           <p className="text-sm">Selecione uma disciplina para lançar a frequência.</p>
         </div>
       ) : loading ? (
-        <div className="py-8 text-center text-muted-foreground text-sm">
-          Carregando aulas...
-        </div>
+        <div className="py-8 text-center text-muted-foreground text-sm">Carregando aulas...</div>
       ) : aulas.length === 0 ? (
         <div className="py-12 text-center text-muted-foreground">
           <p className="text-sm">Nenhuma aula encontrada para esta disciplina neste mês.</p>
@@ -294,95 +292,140 @@ export default function FrequenciaPorAula({ turmaId, alunos, disciplinas }: Prop
       ) : (
         <>
           {loadingStats ? (
-            <div className="text-xs text-muted-foreground mb-3">Carregando indicadores...</div>
+            <div className="text-xs text-muted-foreground mb-4">Carregando indicadores...</div>
           ) : estatisticas && (
-            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-2 mb-4">
-              <div className="rounded-lg border border-border bg-card p-3 text-center">
-                <div className="text-lg font-bold text-foreground">{estatisticas.totalDiasLetivos}</div>
-                <div className="text-[10px] text-muted-foreground">Dias Letivos</div>
+            <div className="flex flex-wrap gap-3 mb-4">
+              <div className="rounded-md border border-border bg-card px-3 py-2 text-center whitespace-nowrap">
+                <div className="text-base font-bold text-foreground tabular-nums">{estatisticas.diasDisciplina ?? '-'}</div>
+                <div className="text-[11px] text-muted-foreground mt-0.5">Dias da Disc.</div>
               </div>
-              <div className="rounded-lg border border-border bg-card p-3 text-center">
-                <div className="text-lg font-bold text-foreground">{estatisticas.diasDisciplina ?? '-'}</div>
-                <div className="text-[10px] text-muted-foreground">Dias da Disciplina</div>
+              <div className="rounded-md border border-border bg-card px-3 py-2 text-center whitespace-nowrap">
+                <div className="text-base font-bold text-success tabular-nums">{estatisticas.diasRegistrados}</div>
+                <div className="text-[11px] text-muted-foreground mt-0.5">Dias c/ Registro</div>
               </div>
-              <div className="rounded-lg border border-border bg-card p-3 text-center">
-                <div className="text-lg font-bold text-success">{estatisticas.diasRegistrados}</div>
-                <div className="text-[10px] text-muted-foreground">Dias c/ Registro</div>
+              <div className="rounded-md border border-border bg-card px-3 py-2 text-center whitespace-nowrap">
+                <div className="text-base font-bold text-warning tabular-nums">{estatisticas.diasPendentes}</div>
+                <div className="text-[11px] text-muted-foreground mt-0.5">Dias Pendentes</div>
               </div>
-              <div className="rounded-lg border border-border bg-card p-3 text-center">
-                <div className="text-lg font-bold text-warning">{estatisticas.diasPendentes}</div>
-                <div className="text-[10px] text-muted-foreground">Dias Pendentes</div>
+              <div className="rounded-md border border-border bg-card px-3 py-2 text-center whitespace-nowrap">
+                <div className="text-base font-bold text-foreground tabular-nums">{estatisticas.totalAulas ?? '-'}</div>
+                <div className="text-[11px] text-muted-foreground mt-0.5">Aulas no Quadro</div>
               </div>
-              <div className="rounded-lg border border-border bg-card p-3 text-center">
-                <div className="text-lg font-bold text-foreground">{estatisticas.totalAulas ?? '-'}</div>
-                <div className="text-[10px] text-muted-foreground">Aulas no Quadro</div>
+              <div className="rounded-md border border-border bg-card px-3 py-2 text-center whitespace-nowrap">
+                <div className="text-base font-bold text-success tabular-nums">{estatisticas.aulasRegistradas ?? '-'}</div>
+                <div className="text-[11px] text-muted-foreground mt-0.5">Aulas c/ Registro</div>
               </div>
-              <div className="rounded-lg border border-border bg-card p-3 text-center">
-                <div className="text-lg font-bold text-success">{estatisticas.aulasRegistradas ?? '-'}</div>
-                <div className="text-[10px] text-muted-foreground">Aulas c/ Registro</div>
-              </div>
-              <div className="rounded-lg border border-border bg-card p-3 text-center">
-                <div className="text-lg font-bold text-warning">{estatisticas.aulasPendentes ?? '-'}</div>
-                <div className="text-[10px] text-muted-foreground">Aulas Pendentes</div>
+              <div className="rounded-md border border-border bg-card px-3 py-2 text-center whitespace-nowrap">
+                <div className="text-base font-bold text-warning tabular-nums">{estatisticas.aulasPendentes ?? '-'}</div>
+                <div className="text-[11px] text-muted-foreground mt-0.5">Aulas Pendentes</div>
               </div>
             </div>
           )}
-          <div className="overflow-x-auto border border-border rounded-lg">
+
+          <div className="flex flex-wrap items-center gap-x-6 gap-y-2 mb-4 rounded-lg bg-muted/40 border border-border px-4 py-2.5 text-xs text-muted-foreground">
+            <span className="flex items-center gap-1.5">
+              <span className="flex h-4 w-4 items-center justify-center rounded-sm bg-success"><Check className="h-2.5 w-2.5 text-white" /></span>
+              Presente
+            </span>
+            <span className="flex items-center gap-1.5">
+              <span className="flex h-4 w-4 items-center justify-center rounded-sm bg-destructive"><X className="h-2.5 w-2.5 text-white" /></span>
+              Ausente
+            </span>
+            <span className="flex items-center gap-1.5">
+              <span className="flex h-4 w-4 items-center justify-center rounded-sm bg-warning"><AlertTriangle className="h-2.5 w-2.5 text-white" /></span>
+              Justificado
+            </span>
+            <span className="hidden sm:block text-muted-foreground/40">|</span>
+            <span className="flex items-center gap-1.5 rounded-md bg-primary/10 text-primary font-medium px-2.5 py-1">
+              <Info className="h-3.5 w-3.5" />
+              Clique na célula para abrir opções
+            </span>
+            <span className="hidden sm:block text-muted-foreground/40">|</span>
+            <span className="flex items-center gap-1.5 rounded-md bg-primary/10 text-primary font-medium px-2.5 py-1">
+              <Info className="h-3.5 w-3.5" />
+              Clique no cabeçalho da aula para marcar todos
+            </span>
+          </div>
+
+          <div className="overflow-auto border border-border rounded-lg" ref={tableRef}>
             <Table className="min-w-max text-xs">
               <TableHeader>
-                <TableRow>
-                  <TableHead
-                    rowSpan={2}
-                    className="sticky left-0 bg-muted text-left py-2 px-3 min-w-[180px] z-20"
-                  >
+                <TableRow className="bg-muted/50">
+                  <TableHead className="sticky left-0 bg-muted/50 text-left py-2.5 px-3 min-w-[180px] z-20 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
                     Aluno
                   </TableHead>
                   {aulasPorData.map(grupo => (
                     <TableHead
                       key={grupo.data}
                       colSpan={grupo.aulas.length}
-                      className="py-2 px-1 text-center font-medium border-l border-border"
+                      className="py-2 px-1 text-center font-semibold border-l border-border text-[12px] text-foreground"
                     >
-                      <div className="text-xs capitalize">{grupo.diaSemana}</div>
-                      <div className="text-sm font-bold">{formatarDataCurta(grupo.data)}</div>
+                      <div>{formatarDataCurta(grupo.data)}</div>
+                      <div className="text-[10px] font-normal text-muted-foreground">{grupo.diaSemana}</div>
                     </TableHead>
                   ))}
                 </TableRow>
                 <TableRow>
+                  <TableHead className="sticky left-0 bg-card text-left py-1.5 px-3 min-w-[180px] z-20" />
                   {aulasPorData.map(grupo =>
                     grupo.aulas.map((aula) => {
-                      const alunosValidosAula = alunos.filter(al => {
+                      const isFuture = aula.data > hojeStr
+                      const alunosValidosAula = alunosVisiveis.filter(al => {
                         if (al.data_matricula && aula.data < al.data_matricula) return false
                         if (al.data_saida && aula.data > al.data_saida) return false
                         return true
                       })
-                      const allPresent = alunosValidosAula.length > 0 && alunosValidosAula.every(aluno => {
-                        const k = `${aluno.id}_${aula.horario_id}_${aula.data}`
+                      const allPresent = alunosValidosAula.length > 0 && alunosValidosAula.every(al => {
+                        const k = `${al.id}_${aula.horario_id}_${aula.data}`
                         return frequencias.get(k) === 'P'
                       })
-                      const isFuture = aula.data > hojeStr
-                      const hasPlano = !!getPlanoDaData(aula.data)
 
                       return (
                         <TableHead
                           key={`${aula.horario_id}_${aula.data}`}
                           className={cn(
-                            "py-1.5 px-1 text-center font-normal text-muted-foreground border-l border-border min-w-[64px] transition-colors group relative",
-                            isFuture ? "cursor-default opacity-50" : "cursor-pointer hover:bg-primary/10"
+                            "py-1.5 px-1 text-center font-normal text-muted-foreground border-l border-border min-w-[56px]",
+                            isFuture ? "opacity-50" : "cursor-pointer"
                           )}
                         >
-                          <div className="text-[10px] font-semibold">{aula.numero_aula}ª Aula</div>
+                          <div className="text-[11px] font-semibold">Aula {aula.numero_aula}ª</div>
                           <div className="text-[10px]">{aula.horario_inicial}</div>
-                          {hasPlano && (
-                            <div className="mt-0.5">
-                              <BookOpen className="h-3 w-3 text-success inline" />
+                          {!isFuture && (
+                            <div className="flex justify-center mt-0.5">
+                              <Popover
+                                open={popoverOpen === `header_aula_${aula.horario_id}_${aula.data}`}
+                                onOpenChange={(o) => setPopoverOpen(o ? `header_aula_${aula.horario_id}_${aula.data}` : null)}
+                              >
+                                <PopoverTrigger asChild>
+                                  <button
+                                    type="button"
+                                    className="flex items-center gap-1 rounded-md px-1.5 py-0.5 text-[9px] font-semibold text-primary/70 hover:text-primary hover:bg-primary/10 transition-colors"
+                                    title={allPresent ? 'Clique para opções de frequência' : 'Clique para opções de frequência'}
+                                  >
+                                    <Users className="h-2.5 w-2.5" />
+                                    {allPresent ? 'Limpar' : 'Todos'}
+                                  </button>
+                                </PopoverTrigger>
+                                <PopoverContent side="bottom" align="center" className="w-52 p-1" sideOffset={4}>
+                                  <div className="flex flex-col gap-0.5">
+                                    <button
+                                      type="button"
+                                      onClick={() => handleMarcarTodos(aula.horario_id, aula.data, allPresent ? null : 'P')}
+                                      className="flex items-center gap-2.5 rounded-md px-3 py-2 text-[13px] font-medium transition-colors w-full text-left text-foreground hover:bg-muted"
+                                    >
+                                      <span className={cn(
+                                        "flex h-5 w-5 items-center justify-center rounded-sm",
+                                        allPresent ? "bg-muted text-muted-foreground" : "bg-success text-white"
+                                      )}>
+                                        <Check className="h-3 w-3" />
+                                      </span>
+                                      {allPresent ? 'Limpar' : 'Marcar todos como presente'}
+                                    </button>
+                                  </div>
+                                </PopoverContent>
+                              </Popover>
                             </div>
                           )}
-                          <div
-                            className="absolute inset-0 z-10"
-                            onClick={() => !isFuture && handleMarcarTodos(aula.horario_id, aula.data, !allPresent)}
-                            title={isFuture ? 'Data futura' : (allPresent ? 'Clique para limpar todos' : 'Clique para marcar todos como presente')}
-                          />
                         </TableHead>
                       )
                     })
@@ -390,93 +433,127 @@ export default function FrequenciaPorAula({ turmaId, alunos, disciplinas }: Prop
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {alunos.map((aluno, idx) => (
-                  <TableRow key={aluno.id} className={cn(
-                    idx % 2 === 0 && "bg-card",
-                    idx % 2 === 1 && "bg-muted/30"
-                  )}>
+                {alunosVisiveis.map((aluno, idx) => (
+                  <TableRow key={aluno.id} className="hover:bg-muted/30 transition-colors">
                     <TableCell className={cn(
                       "sticky left-0 py-2 px-3 text-sm font-medium z-10",
-                      idx % 2 === 0 && "bg-card",
-                      idx % 2 === 1 && "bg-muted/30"
+                      "bg-card"
                     )}>
                       {aluno.nome_completo}
                     </TableCell>
-                      {aulasPorData.map(grupo =>
-                        grupo.aulas.map(aula => {
-                          const key = `${aluno.id}_${aula.horario_id}_${aula.data}`
-                          const status = frequencias.get(key) || null
-                          const isSaving = salvando.has(`${key}_P`) || salvando.has(`${key}_F`) || salvando.has(`${key}_FJ`)
-                          const isFuture = aula.data > hojeStr
-                          const isBeforeMatricula = aluno.data_matricula ? aula.data < aluno.data_matricula : false
-                          const isAfterSaida = aluno.data_saida ? aula.data > aluno.data_saida : false
-                          const isOutsidePeriod = isBeforeMatricula || isAfterSaida
-                          const disabled = isSaving || isFuture || isOutsidePeriod
+                    {aulasPorData.map(grupo =>
+                      grupo.aulas.map(aula => {
+                        const key = `${aluno.id}_${aula.horario_id}_${aula.data}`
+                        const status = frequencias.get(key) || null
+                        const isSaving = salvando.has(`${key}_P`) || salvando.has(`${key}_F`) || salvando.has(`${key}_FJ`)
+                        const isFuture = aula.data > hojeStr
+                        const isBeforeMatricula = aluno.data_matricula ? aula.data < aluno.data_matricula : false
+                        const isAfterSaida = aluno.data_saida ? aula.data > aluno.data_saida : false
+                        const isOutsidePeriod = isBeforeMatricula || isAfterSaida
+                        const disabled = isSaving || isFuture || isOutsidePeriod
+                        const popoverKey = `${key}_popover`
 
-                          let tooltip = ''
-                          if (isFuture) tooltip = 'Data futura'
-                          else if (isBeforeMatricula) tooltip = 'Aluno ainda não matriculado nesta data'
-                          else if (isAfterSaida) tooltip = 'Aluno não pertence mais à turma nesta data'
+                        let tooltip = ''
+                        if (isFuture) tooltip = 'Data futura'
+                        else if (isBeforeMatricula) tooltip = 'Aluno ainda não matriculado'
+                        else if (isAfterSaida) tooltip = 'Aluno não pertence mais à turma'
 
-                          return (
-                            <TableCell key={key} className={cn(
-                              "py-1 px-0.5 text-center border-l border-border",
-                              isOutsidePeriod && "opacity-40"
-                            )}>
-                              <Button
-                                type="button"
-                                variant="ghost"
-                                size="icon"
-                                disabled={disabled}
-                                onClick={!isOutsidePeriod ? () => handleToggle(aluno.id, aula.horario_id, aula.data) : undefined}
-                                className={cn(
-                                  "h-7 w-7 rounded-md text-xs font-bold mx-auto",
-                                  !disabled && !isOutsidePeriod && "cursor-pointer hover:ring-2 hover:ring-primary/30",
-                                  isOutsidePeriod && "cursor-not-allowed",
-                                  status === 'P' && "bg-success/10 text-success hover:bg-success/20",
-                                  status === 'F' && "bg-destructive/10 text-destructive hover:bg-destructive/20",
-                                  status === 'FJ' && "bg-warning/10 text-warning hover:bg-warning/20",
-                                  !status && !disabled && !isOutsidePeriod && "bg-transparent text-muted-foreground/30 hover:bg-muted hover:text-muted-foreground/60",
-                                  !status && (isFuture || isOutsidePeriod) && "bg-transparent text-muted-foreground/10",
-                                  isFuture && "cursor-default",
-                                  isSaving && "opacity-50 cursor-wait"
-                                )}
-                                title={tooltip || `${aluno.nome_completo}`}
-                              >
-                              {status === 'P' && <Check className="h-3.5 w-3.5" />}
-                              {status === 'F' && <X className="h-3.5 w-3.5" />}
-                              {status === 'FJ' && <AlertTriangle className="h-3.5 w-3.5" />}
-                              {!status && '-'}
-                            </Button>
+                        return (
+                          <TableCell key={key} className={cn(
+                            "py-1 px-0.5 text-center border-l border-border",
+                            isOutsidePeriod && "opacity-30"
+                          )}>
+                            {disabled || isOutsidePeriod ? (
+                              <div className={cn(
+                                "h-8 w-8 rounded-md mx-auto flex items-center justify-center",
+                                isFuture && "border border-dashed border-muted-foreground/20 bg-transparent",
+                                isOutsidePeriod && "bg-transparent"
+                              )}>
+                                {status === 'P' && <Check className="h-3.5 w-3.5 text-success" />}
+                                {status === 'F' && <X className="h-3.5 w-3.5 text-destructive" />}
+                                {status === 'FJ' && <AlertTriangle className="h-3.5 w-3.5 text-warning" />}
+                              </div>
+                            ) : (
+                              <Popover open={popoverOpen === popoverKey} onOpenChange={(o) => setPopoverOpen(o ? popoverKey : null)}>
+                                <PopoverTrigger asChild>
+                                  <button
+                                    type="button"
+                                    disabled={disabled || isSaving}
+                                    className={cn(
+                                      "h-8 w-8 rounded-md mx-auto flex items-center justify-center transition-all",
+                                      !status && "border border-dashed border-muted-foreground/30 bg-transparent hover:border-primary/50 hover:bg-primary/5",
+                                      status === 'P' && "bg-success text-white shadow-xs",
+                                      status === 'F' && "bg-destructive text-white shadow-xs",
+                                      status === 'FJ' && "bg-warning text-white shadow-xs",
+                                      isSaving && "opacity-50 animate-pulse",
+                                      !disabled && "cursor-pointer"
+                                    )}
+                                    title={tooltip || (status ? 'Clique para alterar' : 'Clique para registrar')}
+                                  >
+                                    {status === 'P' && <Check className="h-4 w-4" />}
+                                    {status === 'F' && <X className="h-4 w-4" />}
+                                    {status === 'FJ' && <AlertTriangle className="h-4 w-4" />}
+                                    {!status && <span className="text-muted-foreground/30 text-[10px] font-medium">—</span>}
+                                  </button>
+                                </PopoverTrigger>
+                                <PopoverContent side="right" align="center" className="w-40 p-1" sideOffset={4}>
+                                  <div className="flex flex-col gap-0.5">
+                                    {STATUS_LIST.map(item => {
+                                      const isAtivo = status === item.value
+                                      return (
+                                        <button
+                                          key={item.value}
+                                          type="button"
+                                          onClick={() => handleRegistrar(aluno.id, aula.horario_id, aula.data, isAtivo ? null : item.value)}
+                                          className={cn(
+                                            "flex items-center gap-2.5 rounded-md px-3 py-2 text-[13px] font-medium transition-colors w-full text-left",
+                                            isAtivo ? item.classes : "text-foreground hover:bg-muted"
+                                          )}
+                                        >
+                                          <span className={cn(
+                                            "flex h-5 w-5 items-center justify-center rounded-sm",
+                                            isAtivo ? "bg-white/20" : item.classes
+                                          )}>
+                                            {item.icon}
+                                          </span>
+                                          {isAtivo ? `Remover ${item.label}` : item.label}
+                                        </button>
+                                      )
+                                    })}
+                                  </div>
+                                </PopoverContent>
+                              </Popover>
+                            )}
                           </TableCell>
                         )
                       })
                     )}
                   </TableRow>
                 ))}
+
+                {tabelaTemConteudo && (
+                  <TableRow className="bg-muted/30 border-t-2 border-border font-medium">
+                    <TableCell className="sticky left-0 bg-muted/30 py-2 px-3 text-[12px] font-semibold text-foreground z-10">
+                      Resumo
+                    </TableCell>
+                    {aulasPorData.map(grupo =>
+                      grupo.aulas.map(aula => {
+                        const resumo = resumoMap.get(`${aula.horario_id}_${aula.data}`)
+                        return (
+                          <TableCell key={`res_${aula.horario_id}_${aula.data}`} className="py-2 px-1 text-center border-l border-border">
+                            <div className="flex flex-col items-center gap-1 text-[11px]">
+                              <span className="text-success font-semibold">{resumo?.totalP ?? 0} P</span>
+                              <span className="text-destructive font-semibold">{resumo?.totalF ?? 0} F</span>
+                              <span className="text-warning font-semibold">{resumo?.totalFJ ?? 0} FJ</span>
+                            </div>
+                          </TableCell>
+                        )
+                      })
+                    )}
+                  </TableRow>
+                )}
               </TableBody>
             </Table>
-          </div>
-
-          <div className="flex items-center gap-4 mt-3 text-xs text-muted-foreground flex-wrap">
-            <span className="flex items-center gap-1">
-              <Check className="h-3 w-3 text-success" /> Presente
-            </span>
-            <span className="flex items-center gap-1">
-              <X className="h-3 w-3 text-destructive" /> Falta
-            </span>
-            <span className="flex items-center gap-1">
-              <AlertTriangle className="h-3 w-3 text-warning" /> Falta Justificada
-            </span>
-            <span className="text-muted-foreground/60">Clique para alternar</span>
-            <span className="text-muted-foreground/40">|</span>
-            <span className="text-muted-foreground/60">Clique no cabeçalho da aula para marcar todos</span>
-            <span className="text-muted-foreground/40">|</span>
-            <span className="text-muted-foreground/60 italic">Células apagadas = fora do período ativo do aluno</span>
-            <span className="text-muted-foreground/40">|</span>
-            <span className="flex items-center gap-1">
-              <BookOpen className="h-3 w-3 text-success" /> Plano de Aula
-            </span>
           </div>
         </>
       )}

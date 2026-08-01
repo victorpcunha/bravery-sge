@@ -8,6 +8,7 @@ export type TurmaDiario = {
   id: string
   nome: string
   etapa_nome: string
+  etapa_tipo: string
   subetapa_nome: string | null
   total_alunos: number
   capacidade: number
@@ -21,9 +22,21 @@ export type AlunoMatriculado = {
   matricula_id: string
   data_matricula?: string
   data_saida?: string | null
+  data_nascimento?: string | null
+  situacao?: string
+  frequencia?: number | null
 }
 
-export async function listarTurmasDiario(schoolId: string | null, pessoaId: string | null, anoLetivoId?: string) {
+export async function listarTurmasDiario(
+  schoolId: string | null,
+  pessoaId: string | null,
+  anoLetivoId?: string,
+  filters?: {
+    searchNome?: string
+    etapaTipo?: string
+    turno?: string
+  }
+) {
   let usaVinculo = false
 
   if (pessoaId) {
@@ -48,7 +61,7 @@ export async function listarTurmasDiario(schoolId: string | null, pessoaId: stri
   let query = supabase
     .from('turmas')
     .select(`
-      id, nome, capacidade_alunos, turnos,
+      id, nome, capacidade_alunos, turnos, etapa_ensino_id,
       academico_etapas_ensino(etapa_nome, etapa_tipo)
     `)
     .eq('ativo', true)
@@ -70,6 +83,25 @@ export async function listarTurmasDiario(schoolId: string | null, pessoaId: stri
     query = query.in('id', turmaIds)
   }
 
+  if (filters?.searchNome) {
+    query = query.ilike('nome', `%${filters.searchNome}%`)
+  }
+
+  if (filters?.etapaTipo) {
+    const { data: etapas } = await supabase
+      .from('academico_etapas_ensino')
+      .select('id')
+      .eq('etapa_tipo', filters.etapaTipo)
+
+    const etapaIds = etapas?.map(e => e.id) || []
+    if (etapaIds.length === 0) return []
+    query = query.in('etapa_ensino_id', etapaIds)
+  }
+
+  if (filters?.turno) {
+    query = query.contains('turnos', JSON.stringify([{ turno: filters.turno }]))
+  }
+
   const { data: turmas, error } = await query.order('nome')
 
   if (error) throw error
@@ -89,6 +121,7 @@ export async function listarTurmasDiario(schoolId: string | null, pessoaId: stri
       id: t.id,
       nome: t.nome,
       etapa_nome: t.academico_etapas_ensino?.etapa_nome || '',
+      etapa_tipo: t.academico_etapas_ensino?.etapa_tipo || '',
       subetapa_nome: null,
       total_alunos: count || 0,
       capacidade: t.capacidade_alunos || 0,
@@ -111,6 +144,7 @@ export type TurmaDiarioInfo = {
   nome: string
   ano_letivo_descricao: string
   etapa_nome: string
+  turno: string
   capacidade_alunos: number
   total_alunos: number
   quadro_aula_id: string | null
@@ -121,12 +155,16 @@ export async function getTurmaDiarioInfo(turmaId: string, pessoaId?: string | nu
 
   const { data: turma, error } = await supabase
     .from('turmas')
-    .select('id, nome, capacidade_alunos, ano_letivo_id, etapa_ensino_id')
+    .select('id, nome, capacidade_alunos, ano_letivo_id, etapa_ensino_id, turnos')
     .eq('id', turmaId)
     .maybeSingle()
 
   if (error) throw error
   if (!turma) return null
+
+  const turnosArray = Array.isArray(turma.turnos) ? turma.turnos : []
+  const primeiroTurno = turnosArray[0]
+  const turnoLabel = typeof primeiroTurno === 'object' ? primeiroTurno.turno : (primeiroTurno || '')
 
   const results = await Promise.all([
     supabase.from('academico_etapas_ensino').select('etapa_nome').eq('id', turma.etapa_ensino_id).maybeSingle(),
@@ -140,6 +178,7 @@ export async function getTurmaDiarioInfo(turmaId: string, pessoaId?: string | nu
     nome: turma.nome,
     ano_letivo_descricao: results[1].data?.descricao || '',
     etapa_nome: results[0].data?.etapa_nome || '',
+    turno: turnoLabel,
     capacidade_alunos: turma.capacidade_alunos || 0,
     total_alunos: results[2].count || 0,
     quadro_aula_id: results[3].data?.id || null,
@@ -180,7 +219,7 @@ export async function getAlunosDaTurmaComPeriodo(turmaId: string, pessoaId?: str
 
   const { data: matriculas, error } = await supabase
     .from('academico_matriculas')
-    .select('id, aluno_id, data_matricula, data_saida')
+    .select('id, aluno_id, data_matricula, data_saida, situacao')
     .eq('turma_id', turmaId)
 
   if (error) throw error
@@ -190,7 +229,7 @@ export async function getAlunosDaTurmaComPeriodo(turmaId: string, pessoaId?: str
 
   const { data: pessoas } = await supabase
     .from('people')
-    .select('id, nome_completo')
+    .select('id, nome_completo, data_nascimento')
     .in('id', pessoaIds)
     .order('nome_completo')
 
@@ -203,6 +242,8 @@ export async function getAlunosDaTurmaComPeriodo(turmaId: string, pessoaId?: str
     numero_chamada: null,
     data_matricula: m.data_matricula,
     data_saida: m.data_saida,
+    data_nascimento: pessoaMap.get(m.aluno_id)?.data_nascimento || null,
+    situacao: m.situacao,
   }))
 }
 
@@ -402,11 +443,22 @@ export async function getMetodoAvaliacaoDaTurma(turmaId: string) {
 
   const { data: metodo } = await supabase
     .from('academico_metodos_avaliacao')
-    .select('id, nome, criterio_frequencia, tipos_avaliacao, quantidade_periodos_numerico, quantidade_periodos_parecer, quantidade_periodos_conceito, quantidade_periodos_nivel')
+    .select('id, nome, criterio_frequencia, frecuencia_minima, tipos_avaliacao, quantidade_periodos_numerico, quantidade_periodos_parecer, quantidade_periodos_conceito, quantidade_periodos_nivel')
     .eq('id', metodoId)
     .maybeSingle()
 
-  return metodo
+  if (!metodo) return null
+
+  const { data: parecerConfig } = await supabase
+    .from('academico_metodos_parecer')
+    .select('registro_geral')
+    .eq('metodo_id', metodoId)
+    .maybeSingle()
+
+  return {
+    ...metodo,
+    registro_geral: parecerConfig?.registro_geral ?? false,
+  }
 }
 
 export async function getDiasLetivosDaTurma(turmaId: string, ano: number, mes: number) {
@@ -664,6 +716,50 @@ export type EstatisticasFrequencia = {
   aulasRegistradas?: number
   diasPendentes: number
   aulasPendentes?: number
+}
+
+export type FrequenciaAluno = {
+  aluno_id: string
+  frequencia: number
+}
+
+export async function getFrequenciasAlunosTurma(
+  turmaId: string,
+  criterio: string,
+  pessoaId?: string | null
+): Promise<FrequenciaAluno[]> {
+  if (criterio === 'por_aula') {
+    const { data } = await supabase
+      .from('academico_frequencias_aula')
+      .select('aluno_id, status')
+      .eq('turma_id', turmaId)
+
+    return agruparFrequencia(data || [])
+  }
+
+  const { data } = await supabase
+    .from('academico_frequencias_dia')
+    .select('aluno_id, status')
+    .eq('turma_id', turmaId)
+
+  return agruparFrequencia(data || [])
+}
+
+function agruparFrequencia(registros: { aluno_id: string; status: string }[]): FrequenciaAluno[] {
+  const grupos = new Map<string, { presencas: number; total: number }>()
+
+  for (const r of registros) {
+    if (!r.status) continue
+    const g = grupos.get(r.aluno_id) || { presencas: 0, total: 0 }
+    g.total++
+    if (r.status === 'P' || r.status === 'FJ') g.presencas++
+    grupos.set(r.aluno_id, g)
+  }
+
+  return Array.from(grupos.entries()).map(([aluno_id, g]) => ({
+    aluno_id,
+    frequencia: g.total > 0 ? Math.round((g.presencas / g.total) * 100) : 0,
+  }))
 }
 
 export async function getEstatisticasFrequencia(

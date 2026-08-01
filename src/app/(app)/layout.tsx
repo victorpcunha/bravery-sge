@@ -10,7 +10,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       <AppSidebar />
       <SidebarInset>
         <Topbar />
-        <main className="pt-14">
+        <main className="pt-12">
           {children}
         </main>
       </SidebarInset>

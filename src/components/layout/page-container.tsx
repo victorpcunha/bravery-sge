@@ -10,7 +10,7 @@ export function PageContainer({ children, maxWidth = 'default', className }: Pag
   return (
     <div
       className={cn(
-        'container mx-auto py-8 px-4',
+        'container mx-auto pb-8 px-4',
         maxWidth === 'dashboard' && 'max-w-7xl',
         className
       )}
