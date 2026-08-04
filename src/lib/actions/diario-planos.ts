@@ -96,6 +96,29 @@ export async function listarPlanosAplicados(
   return (data || []) as unknown as PlanoAplicado[]
 }
 
+export async function listarPlanosAplicadosMes(
+  turmaId: string,
+  matrizDisciplinaId: string,
+  ano: number,
+  mes: number,
+  pessoaId?: string | null
+): Promise<PlanoAplicado[]> {
+  await validarPermRead(pessoaId)
+
+  const primeiroDia = `${ano}-${String(mes).padStart(2, '0')}-01`
+  const ultimoDia = `${ano}-${String(mes).padStart(2, '0')}-${new Date(ano, mes, 0).getDate()}`
+
+  const { data } = await supabase
+    .from('academico_diario_planos_aplicados')
+    .select('*, plano_aula:plano_aula_id(*)')
+    .eq('turma_id', turmaId)
+    .eq('matriz_disciplina_id', matrizDisciplinaId)
+    .gte('data_aula', primeiroDia)
+    .lte('data_aula', ultimoDia)
+
+  return (data || []) as unknown as PlanoAplicado[]
+}
+
 export async function listarPlanosDisponiveis(
   turmaId: string,
   matrizDisciplinaId: string,
@@ -140,6 +163,12 @@ export async function aplicarPlanoAula(
   pessoaId?: string | null
 ) {
   await validarPermWrite(pessoaId)
+
+  const hoje = new Date()
+  const hojeStr = `${hoje.getFullYear()}-${String(hoje.getMonth() + 1).padStart(2, '0')}-${String(hoje.getDate()).padStart(2, '0')}`
+  if (dataAula > hojeStr) {
+    throw new Error('Não é possível aplicar um plano de aula em uma data futura.')
+  }
 
   const { error } = await supabase
     .from('academico_diario_planos_aplicados')
