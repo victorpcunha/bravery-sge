@@ -1,8 +1,7 @@
 "use client"
 
 import * as React from "react"
-import { format, parse, isValid, addMonths, subMonths, getDaysInMonth, startOfMonth, getDay } from "date-fns"
-import { ptBR } from "date-fns/locale"
+import { format, isValid, addMonths, subMonths, getDaysInMonth, startOfMonth, getDay } from "date-fns"
 import { ChevronLeft, ChevronRight } from "lucide-react"
 
 import { cn } from "@/lib/utils"
@@ -17,10 +16,32 @@ interface DatePickerProps {
   className?: string
   label?: string
   disabled?: boolean
+  size?: 'sm' | 'md'
 }
 
 const MONTHS = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"]
 const DAYS_WEEK = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"]
+
+const sizeStyles = {
+  sm: {
+    label: 'text-[11px] font-medium mb-1',
+    input: 'h-8 pr-7 text-[12px]',
+    icon: 'h-3.5 w-3.5',
+    popover: 'w-64 p-3',
+    day: 'h-7 w-7 text-[12px]',
+    headerBtn: 'h-7 w-7',
+    emptyCell: 'h-7 w-7',
+  },
+  md: {
+    label: 'text-[14px] font-medium mb-2',
+    input: 'pr-10 text-[14px]',
+    icon: 'h-[18px] w-[18px]',
+    popover: 'w-80 p-4',
+    day: 'h-8 w-8 text-sm',
+    headerBtn: 'h-8 w-8',
+    emptyCell: 'h-8 w-8',
+  },
+}
 
 export function DatePicker({
   value,
@@ -29,8 +50,10 @@ export function DatePicker({
   minDate,
   className,
   label,
-  disabled = false
+  disabled = false,
+  size = 'md'
 }: DatePickerProps) {
+  const sizeCls = sizeStyles[size]
   const [date, setDate] = React.useState<Date | undefined>(
     value ? new Date(value) : undefined
   )
@@ -123,10 +146,15 @@ export function DatePicker({
     for (let i = 1; i <= daysInMonth; i++) {
       days.push(i)
     }
-    
+
+    // Pad to always render 6 rows (42 cells) so the popover height stays constant
+    while (days.length < 42) {
+      days.push(null)
+    }
+
     return days.map((day, index) => {
       if (day === null) {
-        return <div key={`empty-${index}`} className="h-8 w-8" />
+        return <div key={`empty-${index}`} className={sizeCls.emptyCell} />
       }
       
       const isSelected = date && 
@@ -141,29 +169,30 @@ export function DatePicker({
       const minDateObj = minDate ? new Date(minDate) : null
       const isDisabled = minDateObj ? new Date(currentMonth.getFullYear(), currentMonth.getMonth(), day) < minDateObj : false
       
-      return (
-        <button
-          key={day}
-          type="button"
-          onClick={() => !isDisabled && handleSelectDay(day)}
-          disabled={isDisabled}
-          className={cn(
-            "h-9 w-9 rounded-md text-sm font-medium transition-all duration-150 cursor-pointer",
-            isDisabled ? "text-muted-foreground opacity-40 cursor-not-allowed" : "text-foreground hover:bg-muted",
-            isSelected && "bg-primary text-primary-foreground hover:bg-primary",
-            isToday && !isSelected && "bg-accent/20 text-accent font-bold"
-          )}
-        >
-          {day}
-        </button>
-      )
+    return (
+      <button
+        key={day}
+        type="button"
+        onClick={() => !isDisabled && handleSelectDay(day)}
+        disabled={isDisabled}
+        className={cn(
+          sizeCls.day,
+          "rounded-md font-medium transition-all duration-150 cursor-pointer",
+          isDisabled ? "text-muted-foreground opacity-40 cursor-not-allowed" : "text-foreground hover:bg-muted",
+          isSelected && "bg-primary text-primary-foreground hover:bg-primary",
+          isToday && !isSelected && "bg-accent/20 text-accent font-bold"
+        )}
+      >
+        {day}
+      </button>
+    )
     })
   }
 
   return (
     <div className={className}>
       {label && (
-        <label className="text-foreground font-medium block mb-2">
+        <label className={cn("block text-foreground", sizeCls.label)}>
           {label}
         </label>
       )}
@@ -176,7 +205,8 @@ export function DatePicker({
               placeholder={placeholder}
               disabled={disabled}
               className={cn(
-                "border-2 border-border focus:border-primary focus:ring-primary/20 bg-card pr-10 cursor-text",
+                sizeCls.input,
+                "border-2 border-border focus:border-primary focus:ring-primary/20 bg-card cursor-text",
                 disabled && "bg-muted text-muted-foreground cursor-not-allowed"
               )}
             />
@@ -189,7 +219,7 @@ export function DatePicker({
               )}
               onClick={() => !disabled && setOpen(!open)}
             >
-              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <svg xmlns="http://www.w3.org/2000/svg" className={sizeCls.icon} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <rect width="18" height="18" x="3" y="4" rx="2" ry="2"/>
                 <line x1="16" x2="16" y1="2" y2="6"/>
                 <line x1="8" x2="8" y1="2" y2="6"/>
@@ -199,17 +229,17 @@ export function DatePicker({
           </div>
         </PopoverTrigger>
         <PopoverContent 
-          className="w-80 p-4 bg-card border-2 border-border rounded-xl shadow-xl" 
+          className={cn("bg-card border-2 border-border rounded-xl shadow-xl", sizeCls.popover)} 
           align="start" 
           side="bottom"
           sideOffset={8}
         >
           {/* Header */}
-          <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center justify-between mb-1">
             <button
               type="button"
               onClick={handlePrevMonth}
-              className="h-8 w-8 flex items-center justify-center rounded-md hover:bg-muted transition-colors cursor-pointer text-muted-foreground hover:text-primary"
+              className={cn(sizeCls.headerBtn, "flex items-center justify-center rounded-md hover:bg-muted transition-colors cursor-pointer text-muted-foreground hover:text-primary")}
             >
               <ChevronLeft className="h-4 w-4" />
             </button>
@@ -219,23 +249,23 @@ export function DatePicker({
             <button
               type="button"
               onClick={handleNextMonth}
-              className="h-8 w-8 flex items-center justify-center rounded-md hover:bg-muted transition-colors cursor-pointer text-muted-foreground hover:text-primary"
+              className={cn(sizeCls.headerBtn, "flex items-center justify-center rounded-md hover:bg-muted transition-colors cursor-pointer text-muted-foreground hover:text-primary")}
             >
               <ChevronRight className="h-4 w-4" />
             </button>
           </div>
           
           {/* Days of week header */}
-          <div className="grid grid-cols-7 gap-1 mb-2">
+          <div className="grid grid-cols-7 gap-x-1 mb-0.5">
             {DAYS_WEEK.map((day) => (
-              <div key={day} className="h-8 w-9 flex items-center justify-center text-xs font-semibold text-muted-foreground">
+              <div key={day} className="h-7 w-full flex items-center justify-center text-xs font-semibold text-muted-foreground">
                 {day}
               </div>
             ))}
           </div>
           
           {/* Calendar grid */}
-          <div className="grid grid-cols-7 gap-1">
+          <div className="grid grid-cols-7 gap-x-1 gap-y-0">
             {renderCalendarDays()}
           </div>
         </PopoverContent>

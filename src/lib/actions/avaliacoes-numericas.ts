@@ -27,6 +27,7 @@ export type Recuperacao = {
   disciplina_id: string
   periodo: number | null
   tipo: 'avaliacao' | 'periodo' | 'final'
+  descricao: string | null
   valor: number | null
 }
 
@@ -36,10 +37,90 @@ export type DesempenhoAluno = {
   media_anual: number | null
   recuperacao: number | null
   media_final: number | null
-  status: 'aprovado' | 'recuperacao' | 'reprovado' | null
+  status: 'aprovado' | 'recuperacao' | 'reprovado' | 'em_andamento' | null
 }
 
-async function getConfigNumerica(metodoId: string) {
+export type AvaliacaoPredefinida = { nome: string; peso: number; nota_maxima: number }
+
+export type ConfigNumericaCompleta = {
+  forma_registro: string
+  tipo_media_periodo: string
+  tipo_resultado_final: string
+  media_maxima_periodo: number
+  permite_recuperacao: string[]
+  recuperacao_substitutiva: boolean
+  recuperacao_periodo_substitutiva: boolean
+  recuperacao_final_substitutiva: boolean
+  limitar_avaliacoes: boolean
+  avaliacoes_list: AvaliacaoPredefinida[]
+  aprovacao_automatica: boolean
+  media_minima: number
+  pesos_periodos: number[]
+  permite_recuperacao_final: boolean
+  permite_recuperacao_final_para_reprovados: boolean
+  media_minima_recuperacao: number
+  usa_media_ponderada_recuperacao: boolean
+  peso_media_anual: number
+  peso_recuperacao_final: number
+}
+
+type NumericoConfigRow = {
+  forma_registro?: string | null
+  tipo_media_periodo?: string | null
+  tipo_resultado_final?: string | null
+  media_maxima_periodo?: number | string | null
+  permite_recuperacao?: string | null
+  recuperacao_substitutiva?: boolean | null
+  recuperacao_periodo_substitutiva?: boolean | null
+  recuperacao_final_substitutiva?: boolean | null
+  limitar_avaliacoes?: boolean | null
+  avaliacoes_list?: AvaliacaoPredefinida[] | null
+  permite_recuperacao_final_reprovados?: boolean | null
+}
+
+type AprovacaoConfigRow = {
+  aprovacao_automatica?: boolean | null
+  media_minima?: number | string | null
+  pesos_periodos?: number[] | null
+  permite_recuperacao_final?: boolean | null
+  media_minima_recuperacao?: number | string | null
+  usa_media_ponderada_recuperacao?: boolean | null
+  peso_media_anual?: number | string | null
+  peso_recuperacao_final?: number | string | null
+}
+
+function parsePermiteRecuperacao(valor: string | null | undefined): string[] {
+  if (!valor) return []
+  const str = String(valor).trim()
+  if (str === '' || str === 'nenhum') return []
+  return str.split(',').map(s => s.trim()).filter(Boolean)
+}
+
+function configNumericaPadrao(quantidadePeriodos: number): ConfigNumericaCompleta {
+  return {
+    forma_registro: 'decimal',
+    tipo_media_periodo: 'ponderada',
+    tipo_resultado_final: 'media_periodos',
+    media_maxima_periodo: 10,
+    permite_recuperacao: [],
+    recuperacao_substitutiva: false,
+    recuperacao_periodo_substitutiva: false,
+    recuperacao_final_substitutiva: false,
+    limitar_avaliacoes: false,
+    avaliacoes_list: [],
+    aprovacao_automatica: false,
+    media_minima: 7,
+    pesos_periodos: Array(quantidadePeriodos).fill(1),
+    permite_recuperacao_final: false,
+    permite_recuperacao_final_para_reprovados: false,
+    media_minima_recuperacao: 5,
+    usa_media_ponderada_recuperacao: false,
+    peso_media_anual: 1,
+    peso_recuperacao_final: 1,
+  }
+}
+
+async function getConfigNumerica(metodoId: string, quantidadePeriodos?: number): Promise<ConfigNumericaCompleta> {
   const [numerico, aprovacao] = await Promise.all([
     supabase
       .from('academico_metodos_avaliacao_numerico')
@@ -55,25 +136,41 @@ async function getConfigNumerica(metodoId: string) {
       .then(r => r.data),
   ])
 
+  const padrao = configNumericaPadrao(quantidadePeriodos || 4)
+  const n = (numerico ?? {}) as NumericoConfigRow
+  const a = (aprovacao ?? {}) as AprovacaoConfigRow
+  const pesos = a.pesos_periodos as number[] | undefined
+
   return {
-    forma_registro: (numerico as any)?.forma_registro || 'decimal',
-    tipo_media_periodo: (numerico as any)?.tipo_media_periodo || 'ponderada',
-    tipo_resultado_final: (numerico as any)?.tipo_resultado_final || 'media_periodos',
-    media_maxima_periodo: Number((numerico as any)?.media_maxima_periodo || 10),
-    permite_recuperacao: (numerico as any)?.permite_recuperacao || 'nenhum',
-    recuperacao_substitutiva: (numerico as any)?.recuperacao_substitutiva || false,
-    recuperacao_periodo_substitutiva: (numerico as any)?.recuperacao_periodo_substitutiva || false,
-    limitar_avaliacoes: (numerico as any)?.limitar_avaliacoes ?? false,
-    avaliacoes_list: ((numerico as any)?.avaliacoes_list || []) as { nome: string; peso: number; nota_maxima: number }[],
-    aprovacao_automatica: (aprovacao as any)?.aprovacao_automatica ?? false,
-    media_minima: Number((aprovacao as any)?.media_minima || 7),
-    pesos_periodos: (aprovacao as any)?.pesos_periodos as number[] || [1],
-    permite_recuperacao_final: (aprovacao as any)?.permite_recuperacao_final || false,
-    media_minima_recuperacao: Number((aprovacao as any)?.media_minima_recuperacao || 5),
-    usa_media_ponderada_recuperacao: (aprovacao as any)?.usa_media_ponderada_recuperacao || false,
-    peso_media_anual: Number((aprovacao as any)?.peso_media_anual || 1),
-    peso_recuperacao_final: Number((aprovacao as any)?.peso_recuperacao_final || 1),
+    forma_registro: n.forma_registro || padrao.forma_registro,
+    tipo_media_periodo: n.tipo_media_periodo || padrao.tipo_media_periodo,
+    tipo_resultado_final: n.tipo_resultado_final || padrao.tipo_resultado_final,
+    media_maxima_periodo: Number(n.media_maxima_periodo ?? padrao.media_maxima_periodo),
+    permite_recuperacao: parsePermiteRecuperacao(n.permite_recuperacao),
+    recuperacao_substitutiva: n.recuperacao_substitutiva ?? padrao.recuperacao_substitutiva,
+    recuperacao_periodo_substitutiva: n.recuperacao_periodo_substitutiva ?? padrao.recuperacao_periodo_substitutiva,
+    recuperacao_final_substitutiva: n.recuperacao_final_substitutiva ?? padrao.recuperacao_final_substitutiva,
+    limitar_avaliacoes: n.limitar_avaliacoes ?? padrao.limitar_avaliacoes,
+    avaliacoes_list: (n.avaliacoes_list || []) as AvaliacaoPredefinida[],
+    aprovacao_automatica: a.aprovacao_automatica ?? padrao.aprovacao_automatica,
+    media_minima: Number(a.media_minima ?? padrao.media_minima),
+    pesos_periodos: Array.isArray(pesos) && pesos.length > 0 ? pesos : padrao.pesos_periodos,
+    permite_recuperacao_final: a.permite_recuperacao_final ?? padrao.permite_recuperacao_final,
+    permite_recuperacao_final_para_reprovados:
+      n.permite_recuperacao_final_reprovados ?? padrao.permite_recuperacao_final_para_reprovados,
+    media_minima_recuperacao: Number(a.media_minima_recuperacao ?? padrao.media_minima_recuperacao),
+    usa_media_ponderada_recuperacao: a.usa_media_ponderada_recuperacao ?? padrao.usa_media_ponderada_recuperacao,
+    peso_media_anual: Number(a.peso_media_anual ?? padrao.peso_media_anual),
+    peso_recuperacao_final: Number(a.peso_recuperacao_final ?? padrao.peso_recuperacao_final),
   }
+}
+
+export async function getNumericoConfigCompleta(
+  metodoId: string | null | undefined,
+  quantidadePeriodos?: number
+): Promise<ConfigNumericaCompleta> {
+  if (!metodoId) return configNumericaPadrao(quantidadePeriodos || 4)
+  return getConfigNumerica(metodoId, quantidadePeriodos)
 }
 
 export async function getNumericoConfig(metodoId: string) {
@@ -82,9 +179,10 @@ export async function getNumericoConfig(metodoId: string) {
     .select('limitar_avaliacoes, avaliacoes_list')
     .eq('metodo_id', metodoId)
     .maybeSingle()
+  const row = (data ?? {}) as NumericoConfigRow
   return {
-    limitar_avaliacoes: (data as any)?.limitar_avaliacoes ?? false,
-    avaliacoes_list: ((data as any)?.avaliacoes_list || []) as { nome: string; peso: number; nota_maxima: number }[],
+    limitar_avaliacoes: row.limitar_avaliacoes ?? false,
+    avaliacoes_list: (row.avaliacoes_list || []) as AvaliacaoPredefinida[],
   }
 }
 
@@ -156,8 +254,8 @@ export async function salvarNota(
       if (error) return { success: false, error: error.message }
       return { success: true, id: data?.id }
     }
-  } catch (e: any) {
-    return { success: false, error: e?.message || 'Erro interno ao salvar nota' }
+  } catch (e: unknown) {
+    return { success: false, error: mensagemErro(e) || 'Erro interno ao salvar nota' }
   }
 }
 
@@ -183,6 +281,7 @@ export async function salvarRecuperacao(
   tipo: 'avaliacao' | 'periodo' | 'final',
   periodo: number | null,
   valor: number | null,
+  descricao: string | null,
   recId: string | null,
   pessoaId: string | null
 ) {
@@ -195,7 +294,7 @@ export async function salvarRecuperacao(
     if (recId) {
       const { data, error } = await supabase
         .from('academico_recuperacoes')
-        .update({ valor, updated_by: pessoaId })
+        .update({ valor, descricao, updated_by: pessoaId })
         .eq('id', recId)
         .select('id')
         .maybeSingle()
@@ -212,6 +311,7 @@ export async function salvarRecuperacao(
           tipo,
           periodo,
           valor,
+          descricao,
           created_by: pessoaId,
           updated_by: pessoaId,
         })
@@ -220,8 +320,8 @@ export async function salvarRecuperacao(
       if (error) return { success: false, error: error.message }
       return { success: true, id: data?.id }
     }
-  } catch (e: any) {
-    return { success: false, error: e?.message || 'Erro interno ao salvar recuperação' }
+  } catch (e: unknown) {
+    return { success: false, error: mensagemErro(e) || 'Erro interno ao salvar recuperação' }
   }
 }
 
@@ -229,12 +329,53 @@ export async function listarRecuperacoes(turmaId: string, disciplinaId: string, 
   await validarPermRead('gestao-pedagogica.diario-classe.avaliacoes', pessoaId)
   const { data, error } = await supabase
     .from('academico_recuperacoes')
-    .select('id, aluno_id, disciplina_id, periodo, tipo, valor')
+    .select('id, aluno_id, disciplina_id, periodo, tipo, descricao, valor')
     .eq('turma_id', turmaId)
     .eq('disciplina_id', disciplinaId)
 
   if (error) throw error
   return (data || []) as Recuperacao[]
+}
+
+export async function listarNotasTurmaDisciplina(turmaId: string, disciplinaId: string, pessoaId?: string | null) {
+  await validarPermRead('gestao-pedagogica.diario-classe.avaliacoes', pessoaId)
+  const { data, error } = await supabase
+    .from('academico_notas')
+    .select('id, aluno_id, disciplina_id, periodo, valor, descricao, data_aplicacao')
+    .eq('turma_id', turmaId)
+    .eq('disciplina_id', disciplinaId)
+    .order('data_aplicacao', { ascending: true })
+
+  if (error) throw error
+  return (data || []) as Nota[]
+}
+
+export async function limparNotasAluno(
+  turmaId: string,
+  alunoId: string,
+  disciplinaId: string,
+  periodo: number,
+  pessoaId: string | null
+) {
+  try {
+    if (pessoaId) {
+      const { validarPermissaoServer } = await import('./perfis')
+      await validarPermissaoServer(pessoaId, 'gestao-pedagogica.diario-classe.avaliacoes', 'editar')
+    }
+
+    const { error } = await supabase
+      .from('academico_notas')
+      .delete()
+      .eq('turma_id', turmaId)
+      .eq('aluno_id', alunoId)
+      .eq('disciplina_id', disciplinaId)
+      .eq('periodo', periodo)
+
+    if (error) return { success: false, error: error.message }
+    return { success: true }
+  } catch (e: unknown) {
+    return { success: false, error: mensagemErro(e) || 'Erro interno ao limpar notas' }
+  }
 }
 
 export async function getDescricoesNotas(turmaId: string, periodo: number, disciplinaId: string, pessoaId?: string | null) {
@@ -259,6 +400,18 @@ export async function getDescricoesNotas(turmaId: string, periodo: number, disci
 
 // ── FASE 6: Engine de Cálculo ──
 
+type NotaDbRow = { periodo: number; valor: number | string | null; descricao: string | null }
+type RecuperacaoDbRow = {
+  periodo: number | null
+  tipo: string
+  descricao: string | null
+  valor: number | string | null
+}
+
+function mensagemErro(e: unknown): string {
+  return e instanceof Error ? e.message : 'Erro interno'
+}
+
 export async function calcularDesempenhoAluno(
   turmaId: string,
   alunoId: string,
@@ -268,26 +421,8 @@ export async function calcularDesempenhoAluno(
   const metodoId = await getMetodoIdDaTurma(turmaId)
 
   const config = metodoId
-    ? await getConfigNumerica(metodoId)
-    : {
-        forma_registro: 'decimal',
-        tipo_media_periodo: 'ponderada',
-        tipo_resultado_final: 'media_periodos',
-        media_maxima_periodo: 10,
-        permite_recuperacao: 'nenhum',
-        recuperacao_substitutiva: false,
-        recuperacao_periodo_substitutiva: false,
-        limitar_avaliacoes: false,
-        avaliacoes_list: [] as { nome: string; peso: number; nota_maxima: number }[],
-        aprovacao_automatica: false,
-        media_minima: 7,
-        pesos_periodos: Array(quantidadePeriodos).fill(1),
-        permite_recuperacao_final: false,
-        media_minima_recuperacao: 5,
-        usa_media_ponderada_recuperacao: false,
-        peso_media_anual: 1,
-        peso_recuperacao_final: 1,
-      }
+    ? await getConfigNumerica(metodoId, quantidadePeriodos)
+    : configNumericaPadrao(quantidadePeriodos)
 
   const periodos = Array.from({ length: quantidadePeriodos }, (_, i) => i + 1)
 
@@ -297,13 +432,13 @@ export async function calcularDesempenhoAluno(
       .select('periodo, valor, descricao')
       .eq('aluno_id', alunoId)
       .eq('disciplina_id', disciplinaId)
-      .then(r => r.data || []),
+      .then(r => (r.data || []) as NotaDbRow[]),
     supabase
       .from('academico_recuperacoes')
-      .select('periodo, tipo, valor')
+      .select('periodo, tipo, descricao, valor')
       .eq('aluno_id', alunoId)
       .eq('disciplina_id', disciplinaId)
-      .then(r => r.data || []),
+      .then(r => (r.data || []) as RecuperacaoDbRow[]),
   ])
 
   const pesoMap = new Map<string, number>()
@@ -311,22 +446,42 @@ export async function calcularDesempenhoAluno(
     pesoMap.set(av.nome, av.peso)
   }
 
+  // Recuperação por avaliação: a nota recuperada substitui a nota original da avaliação
+  const recAvaliacaoPorPeriodo = new Map<number, Map<string, number>>()
+  for (const rec of recuperacoesData) {
+    if (rec.tipo !== 'avaliacao' || rec.periodo === null || rec.valor === null || !rec.descricao) continue
+    let porPeriodo = recAvaliacaoPorPeriodo.get(rec.periodo)
+    if (!porPeriodo) {
+      porPeriodo = new Map<string, number>()
+      recAvaliacaoPorPeriodo.set(rec.periodo, porPeriodo)
+    }
+    porPeriodo.set(rec.descricao, Number(rec.valor))
+  }
+
   // Calcular média de cada período
   const mediasPeriodo: (number | null)[] = periodos.map(p => {
+    const recAvaliacao = recAvaliacaoPorPeriodo.get(p) || new Map<string, number>()
     const notasDoPeriodo = notasData
-      .filter((n: any) => n.periodo === p && n.valor !== null)
+      .filter((n): n is NotaDbRow => n.periodo === p && n.valor !== null)
+      .map(n => {
+        const recVal = n.descricao ? recAvaliacao.get(n.descricao) : undefined
+        if (recVal === undefined) return n
+        return config.recuperacao_substitutiva
+          ? { ...n, valor: recVal }
+          : { ...n, valor: Math.max(Number(n.valor), recVal) }
+      })
 
     if (notasDoPeriodo.length === 0) return null
 
     if (config.tipo_media_periodo === 'somatoria') {
-      const soma = notasDoPeriodo.reduce((a: number, n: any) => a + Number(n.valor), 0)
+      const soma = notasDoPeriodo.reduce((acc, n) => acc + Number(n.valor), 0)
       return Math.min(soma, config.media_maxima_periodo)
     }
 
     let somaPonderada = 0
     let somaPesos = 0
     for (const n of notasDoPeriodo) {
-      const peso = pesoMap.get(n.descricao) ?? 1
+      const peso = pesoMap.get(n.descricao ?? '') ?? 1
       somaPonderada += Number(n.valor) * peso
       somaPesos += peso
     }
@@ -335,16 +490,17 @@ export async function calcularDesempenhoAluno(
     return Math.round(capped * 100) / 100
   })
 
-  // Aplicar recuperação por período (se recuperacao_periodo_substitutiva)
-  if (config.recuperacao_periodo_substitutiva) {
-    recPeriodoLoop: for (const rec of recuperacoesData as any[]) {
-      if (rec.tipo !== 'periodo' || rec.periodo === null || rec.valor === null) continue
-      const idx = rec.periodo - 1
-      if (idx >= 0 && idx < mediasPeriodo.length) {
-        if (mediasPeriodo[idx] === null || Number(rec.valor) > mediasPeriodo[idx]!) {
-          mediasPeriodo[idx] = Number(rec.valor)
-        }
-      }
+  // Aplicar recuperação por período: substitui a média do período, ou mantém a maior se substitutiva
+  for (const rec of recuperacoesData) {
+    if (rec.tipo !== 'periodo' || rec.periodo === null || rec.valor === null) continue
+    const idx = rec.periodo - 1
+    if (idx >= 0 && idx < mediasPeriodo.length) {
+      const recVal = Number(rec.valor)
+      mediasPeriodo[idx] = config.recuperacao_periodo_substitutiva
+        ? mediasPeriodo[idx] === null
+          ? recVal
+          : Math.max(mediasPeriodo[idx]!, recVal)
+        : recVal
     }
   }
 
@@ -376,8 +532,8 @@ export async function calcularDesempenhoAluno(
   }
 
   // Recuperação final
-  const recFinal = (recuperacoesData as any[]).find(
-    (r: any) => r.tipo === 'final' && r.valor !== null
+  const recFinal = recuperacoesData.find(
+    r => r.tipo === 'final' && r.valor !== null
   )
   const valorRecFinal = recFinal ? Number(recFinal.valor) : null
 
@@ -385,14 +541,10 @@ export async function calcularDesempenhoAluno(
   let status: DesempenhoAluno['status'] = null
 
   if (mediaAnual !== null) {
-    if (config.aprovacao_automatica) {
-      mediaFinal = mediaAnual
-      status = 'aprovado'
-    } else if (mediaAnual >= config.media_minima) {
-      mediaFinal = mediaAnual
-      status = 'aprovado'
-    } else if (config.permite_recuperacao_final && valorRecFinal !== null) {
-      if (config.usa_media_ponderada_recuperacao) {
+    if (config.permite_recuperacao_final && valorRecFinal !== null) {
+      if (config.recuperacao_final_substitutiva) {
+        mediaFinal = Math.max(mediaAnual, valorRecFinal)
+      } else if (config.usa_media_ponderada_recuperacao) {
         const pesoAnual = config.peso_media_anual
         const pesoRec = config.peso_recuperacao_final
         const totalPeso = pesoAnual + pesoRec
@@ -402,18 +554,30 @@ export async function calcularDesempenhoAluno(
       }
       mediaFinal = Math.round(mediaFinal * 100) / 100
 
-      if (config.recuperacao_substitutiva) {
+      if (config.recuperacao_final_substitutiva) {
         status = mediaFinal >= config.media_minima ? 'aprovado' : 'reprovado'
       } else {
         status = mediaFinal >= config.media_minima_recuperacao ? 'aprovado' : 'reprovado'
       }
+    } else if (mediaAnual >= config.media_minima) {
+      mediaFinal = mediaAnual
+      status = 'aprovado'
     } else if (config.permite_recuperacao_final && valorRecFinal === null) {
       mediaFinal = mediaAnual
       status = 'recuperacao'
+    } else if (config.aprovacao_automatica) {
+      mediaFinal = mediaAnual
+      status = 'aprovado'
     } else {
       mediaFinal = mediaAnual
       status = 'reprovado'
     }
+  }
+
+  // Avaliação incompleta: enquanto algum bimestre estiver sem notas, a situação é provisória
+  const avaliacaoCompleta = mediasPeriodo.every(m => m !== null)
+  if (mediaAnual !== null && status !== null && !avaliacaoCompleta) {
+    status = 'em_andamento'
   }
 
   return {

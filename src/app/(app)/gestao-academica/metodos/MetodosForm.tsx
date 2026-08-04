@@ -73,6 +73,7 @@ type FormData = {
   permite_recuperacao_final_reprovados: boolean
   recuperacao_substitutiva: boolean
   recuperacao_periodo_substitutiva: boolean
+  recuperacao_final_substitutiva: boolean
   realizava_avaliacao_reclassificacao: boolean
   limitar_avaliacoes: boolean
   avaliacoes_list: { nome: string; peso: number; nota_maxima: number }[]
@@ -121,6 +122,7 @@ const defaultForm: FormData = {
   permite_recuperacao_final_reprovados: false,
   recuperacao_substitutiva: false,
   recuperacao_periodo_substitutiva: false,
+  recuperacao_final_substitutiva: false,
   realizava_avaliacao_reclassificacao: false,
   limitar_avaliacoes: false,
   avaliacoes_list: [],
@@ -152,8 +154,9 @@ const tooltips: Record<string, string> = {
   atribui_media_minima_conselho: 'Atribui automaticamente a média mínima para alunos aprovados em Conselho de Classe.',
   usa_media_5_conceito: 'Esta média não é uma recuperação. Após informada, irá substituir a média final do aluno.',
   permite_recuperacao_final_reprovados: 'Restringe a recuperação final apenas para alunos reprovados.',
-  recuperacao_substitutiva: 'Se desmarcado, o sistema mantém a maior nota entre a média e a recuperação.',
+  recuperacao_substitutiva: 'Ao marcar, a nota da recuperação substitui a nota original da avaliação. Se desmarcado, o sistema mantém a maior nota.',
   recuperacao_periodo_substitutiva: 'Ao marcar, o sistema mantém a maior nota entre a média do período e a recuperação.',
+  recuperacao_final_substitutiva: 'Ao marcar, o sistema mantém a maior nota entre a média anual e a recuperação. Se desmarcado, a nota da recuperação substitui a média anual.',
   realizava_avaliacao_reclassificacao: 'Habilita uma nova avaliação para alunos sem frequência mínima mas com nota mínima para aprovação.',
 }
 
@@ -243,6 +246,7 @@ export function MetodosForm({ schoolId, editId, onSaved, onCancel }: Props) {
           permite_recuperacao_final_reprovados: n?.permite_recuperacao_final_reprovados ?? false,
           recuperacao_substitutiva: n?.recuperacao_substitutiva ?? false,
           recuperacao_periodo_substitutiva: n?.recuperacao_periodo_substitutiva ?? false,
+          recuperacao_final_substitutiva: n?.recuperacao_final_substitutiva ?? false,
           realizava_avaliacao_reclassificacao: n?.realizava_avaliacao_reclassificacao ?? false,
           limitar_avaliacoes: (n as any)?.limitar_avaliacoes ?? false,
           avaliacoes_list: (n as any)?.avaliacoes_list ?? [],
@@ -314,6 +318,7 @@ export function MetodosForm({ schoolId, editId, onSaved, onCancel }: Props) {
               permite_recuperacao_final_reprovados: form.permite_recuperacao_final_reprovados,
               recuperacao_substitutiva: form.recuperacao_substitutiva,
               recuperacao_periodo_substitutiva: form.recuperacao_periodo_substitutiva,
+              recuperacao_final_substitutiva: form.recuperacao_final_substitutiva,
               realizava_avaliacao_reclassificacao: form.realizava_avaliacao_reclassificacao,
               limitar_avaliacoes: form.limitar_avaliacoes,
               avaliacoes_list: form.avaliacoes_list,
@@ -550,10 +555,13 @@ export function MetodosForm({ schoolId, editId, onSaved, onCancel }: Props) {
                   <CheckboxWithTooltip id="rec_final_reprovados" checked={form.permite_recuperacao_final_reprovados} onCheckedChange={(v) => set('permite_recuperacao_final_reprovados', v)} label="Permite recuperação Final apenas para reprovados" tooltipKey="permite_recuperacao_final_reprovados" />
                 )}
                 {form.permite_recuperacao.includes('avaliacao') && (
-                  <CheckboxWithTooltip id="rec_substitutiva" checked={form.recuperacao_substitutiva} onCheckedChange={(v) => set('recuperacao_substitutiva', v)} label="A recuperação é substitutiva" tooltipKey="recuperacao_substitutiva" />
+                  <CheckboxWithTooltip id="rec_substitutiva" checked={form.recuperacao_substitutiva} onCheckedChange={(v) => set('recuperacao_substitutiva', v)} label="A recuperação por avaliação é substitutiva" tooltipKey="recuperacao_substitutiva" />
                 )}
                 {form.permite_recuperacao.includes('periodo') && (
                   <CheckboxWithTooltip id="rec_periodo_substitutiva" checked={form.recuperacao_periodo_substitutiva} onCheckedChange={(v) => set('recuperacao_periodo_substitutiva', v)} label="A recuperação por período é substitutiva" tooltipKey="recuperacao_periodo_substitutiva" />
+                )}
+                {form.permite_recuperacao.includes('final') && (
+                  <CheckboxWithTooltip id="rec_final_substitutiva" checked={form.recuperacao_final_substitutiva} onCheckedChange={(v) => set('recuperacao_final_substitutiva', v)} label="A recuperação final é substitutiva" tooltipKey="recuperacao_final_substitutiva" />
                 )}
                 <CheckboxWithTooltip id="reclassificacao" checked={form.realizava_avaliacao_reclassificacao} onCheckedChange={(v) => set('realizava_avaliacao_reclassificacao', v)} label="Realiza avaliação de reclassificação" tooltipKey="realizava_avaliacao_reclassificacao" />
 

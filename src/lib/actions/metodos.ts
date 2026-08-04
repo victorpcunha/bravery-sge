@@ -35,6 +35,7 @@ export interface MetodoNumerico {
   permite_recuperacao_final_reprovados: boolean
   recuperacao_substitutiva: boolean
   recuperacao_periodo_substitutiva: boolean
+  recuperacao_final_substitutiva: boolean
   realizava_avaliacao_reclassificacao: boolean
   limitar_avaliacoes?: boolean
   avaliacoes_list?: { nome: string; peso: number }[]
