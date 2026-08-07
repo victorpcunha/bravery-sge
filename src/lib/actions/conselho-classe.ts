@@ -9,8 +9,8 @@ export type DisciplinaDesempenho = {
   nome: string
   frequencia: number | null
   total_faltas: number | null
-  media_final: number | null
   media_periodo: number | null
+  media_minima: number | null
   nota_conselho: number | null
   parecer: string | null
 }
@@ -90,14 +90,23 @@ export async function listarAlunosAbaixoMedia(
 
   const { data: numerico } = await supabase
     .from('academico_metodos_avaliacao_numerico')
-    .select('media_maxima_periodo, tipo_media_periodo, limitar_avaliacoes, avaliacoes_list')
+    .select('media_maxima_periodo, tipo_media_periodo, limitar_avaliacoes, avaliacoes_list, recuperacao_periodo_substitutiva')
     .eq('metodo_id', metodoId)
     .maybeSingle()
 
   if (!numerico) return []
 
+  const { data: metodoFreq } = await supabase
+    .from('academico_metodos_avaliacao')
+    .select('criterio_frequencia')
+    .eq('id', metodoId)
+    .maybeSingle()
+
+  const criterioFrequencia = (metodoFreq as any)?.criterio_frequencia || 'por_dia'
+
   const mediaMaxima = Number((numerico as any).media_maxima_periodo || 10)
   const tipoMedia = (numerico as any).tipo_media_periodo || 'ponderada'
+  const recuperacaoPeriodoSubstitutiva = (numerico as any).recuperacao_periodo_substitutiva ?? false
   const limitarAv = (numerico as any).limitar_avaliacoes ?? false
   const avaliacoesList = ((numerico as any).avaliacoes_list || []) as { nome: string; peso: number; nota_maxima: number }[]
   const pesoMap = new Map<string, number>()
@@ -190,6 +199,42 @@ export async function listarAlunosAbaixoMedia(
     }
   }
 
+  type FreqEntry = { presencas: number; faltas: number; total: number }
+  const freqPorAlunoDisc = new Map<string, FreqEntry>()
+  const freqPorAluno = new Map<string, FreqEntry>()
+
+  if (criterioFrequencia === 'por_aula') {
+    const { data: freqAulas } = await supabase
+      .from('academico_frequencias_aula')
+      .select('aluno_id, disciplina_id, status')
+      .eq('turma_id', turmaId)
+      .in('aluno_id', alunoIds)
+      .in('disciplina_id', disciplinaIds)
+    for (const f of freqAulas || []) {
+      if (!f.status) continue
+      const key = `${f.aluno_id}|${f.disciplina_id}`
+      const e = freqPorAlunoDisc.get(key) || { presencas: 0, faltas: 0, total: 0 }
+      e.total++
+      if (f.status === 'P' || f.status === 'FJ') e.presencas++
+      if (f.status === 'F' || f.status === 'FJ') e.faltas++
+      freqPorAlunoDisc.set(key, e)
+    }
+  } else {
+    const { data: freqDias } = await supabase
+      .from('academico_frequencias_dia')
+      .select('aluno_id, status')
+      .eq('turma_id', turmaId)
+      .in('aluno_id', alunoIds)
+    for (const f of freqDias || []) {
+      if (!f.status) continue
+      const e = freqPorAluno.get(f.aluno_id) || { presencas: 0, faltas: 0, total: 0 }
+      e.total++
+      if (f.status === 'P' || f.status === 'FJ') e.presencas++
+      if (f.status === 'F' || f.status === 'FJ') e.faltas++
+      freqPorAluno.set(f.aluno_id, e)
+    }
+  }
+
   const resultado: AlunoDesempenho[] = []
 
   for (const alunoId of alunoIds) {
@@ -223,14 +268,26 @@ export async function listarAlunosAbaixoMedia(
       }
 
       if (mediaPeriodo !== null && mediaPeriodo < mediaMinima) {
+        const notaConselho = conselho?.nota_conselho ?? null
+        let mediaPeriodoEfetiva = mediaPeriodo
+        if (notaConselho !== null) {
+          mediaPeriodoEfetiva = recuperacaoPeriodoSubstitutiva
+            ? Math.max(mediaPeriodo, notaConselho)
+            : notaConselho
+        }
+        const freq = criterioFrequencia === 'por_aula'
+          ? freqPorAlunoDisc.get(`${alunoId}|${discId}`)
+          : freqPorAluno.get(alunoId)
+        const frequencia = freq && freq.total > 0 ? Math.round((freq.presencas / freq.total) * 100) : null
+        const totalFaltas = freq ? freq.faltas : null
         disciplinasAluno.push({
           disciplina_id: discId,
           nome: (disc.academico_matriz_disciplinas as any)?.academico_disciplinas?.nome || '',
-          frequencia: null,
-          total_faltas: null,
-          media_final: null,
-          media_periodo: mediaPeriodo,
-          nota_conselho: conselho?.nota_conselho ?? null,
+          frequencia,
+          total_faltas: totalFaltas,
+          media_periodo: mediaPeriodoEfetiva,
+          media_minima: mediaMinima,
+          nota_conselho: notaConselho,
           parecer: conselho?.parecer ?? null,
         })
       }

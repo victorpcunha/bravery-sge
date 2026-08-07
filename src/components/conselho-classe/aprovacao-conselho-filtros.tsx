@@ -1,16 +1,17 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
+import { useAuth } from '@/components/providers/auth-provider'
 import { getAnosLetivosAtivos } from '@/lib/actions/quadro-aulas'
 import { listarTurmasConselho } from '@/lib/actions/conselho-classe'
-import { Button } from '@/components/ui/button'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { FilterBar } from '@/components/layout/filter-bar'
-import { Filter } from 'lucide-react'
+import { PageSection } from '@/components/layout/page-section'
 
 type Turma = { id: string; nome: string; turnos: string[] }
 
 export type FiltrosAprovacao = {
+  schoolId: string | null
   anoLetivoId: string
   turmaId: string
 }
@@ -21,62 +22,94 @@ type Props = {
 }
 
 export default function AprovacaoConselhoFiltros({ schoolId, onFilter }: Props) {
+  const { isSuperAdmin, allSchools } = useAuth()
+  const [selectedSchoolId, setSelectedSchoolId] = useState<string | null>(null)
   const [anosLetivos, setAnosLetivos] = useState<any[]>([])
   const [turmas, setTurmas] = useState<Turma[]>([])
   const [anoLetivoId, setAnoLetivoId] = useState('')
   const [turmaId, setTurmaId] = useState('')
   const [loadingTurmas, setLoadingTurmas] = useState(false)
 
+  const effectiveSchoolId = isSuperAdmin ? selectedSchoolId : schoolId
+
+  const onFilterRef = useRef(onFilter)
   useEffect(() => {
-    getAnosLetivosAtivos(schoolId).then(setAnosLetivos).catch(() => {})
-  }, [schoolId])
+    onFilterRef.current = onFilter
+  })
 
   useEffect(() => {
-    if (!anoLetivoId) { setTurmas([]); return }
+    setAnoLetivoId('')
+    setTurmaId('')
+    setTurmas([])
+    setAnosLetivos([])
+    if (!effectiveSchoolId) return
+    getAnosLetivosAtivos(effectiveSchoolId).then(setAnosLetivos).catch(() => {})
+  }, [effectiveSchoolId])
+
+  useEffect(() => {
+    if (!anoLetivoId || !effectiveSchoolId) {
+      setTurmas([])
+      return
+    }
     setLoadingTurmas(true)
-    listarTurmasConselho(schoolId, anoLetivoId)
+    listarTurmasConselho(effectiveSchoolId, anoLetivoId)
       .then(setTurmas)
       .catch(() => {})
       .finally(() => setLoadingTurmas(false))
-  }, [anoLetivoId, schoolId])
+  }, [anoLetivoId, effectiveSchoolId])
 
-  function handleFilter() {
-    if (!anoLetivoId || !turmaId) return
-    onFilter({ anoLetivoId, turmaId })
-  }
+  const handleAnoLetivo = useCallback((v: string) => {
+    setAnoLetivoId(v)
+    setTurmaId('')
+  }, [])
+
+  useEffect(() => {
+    if (!effectiveSchoolId || !anoLetivoId || !turmaId) return
+    onFilterRef.current({ schoolId: effectiveSchoolId, anoLetivoId, turmaId })
+  }, [effectiveSchoolId, anoLetivoId, turmaId])
 
   return (
-    <FilterBar className="mb-6">
-      <div className="flex flex-wrap items-end gap-3">
-        <div className="w-44">
-          <label className="text-xs font-medium text-muted-foreground mb-1 block">Ano Letivo</label>
-          <Select value={anoLetivoId} onValueChange={setAnoLetivoId}>
-            <SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger>
+    <PageSection variant="compact" title="Filtros" className="mb-6">
+      <FilterBar>
+        {isSuperAdmin && allSchools.length > 0 && (
+          <Select
+            value={selectedSchoolId ?? '__none__'}
+            onValueChange={(v) => setSelectedSchoolId(v === '__none__' ? null : v)}
+          >
+            <SelectTrigger className="w-auto min-w-[200px] h-9">
+              <SelectValue placeholder="Selecione uma escola" />
+            </SelectTrigger>
             <SelectContent>
-              {anosLetivos.map((a: any) => (
-                <SelectItem key={a.id} value={a.id}>{a.descricao}</SelectItem>
+              <SelectItem value="__none__" disabled>Selecione uma escola</SelectItem>
+              {allSchools.map(s => (
+                <SelectItem key={s.id} value={s.id}>{s.nome_escola}</SelectItem>
               ))}
             </SelectContent>
           </Select>
-        </div>
+        )}
 
-        <div className="w-52">
-          <label className="text-xs font-medium text-muted-foreground mb-1 block">Turma</label>
-          <Select value={turmaId} onValueChange={setTurmaId} disabled={!anoLetivoId}>
-            <SelectTrigger><SelectValue placeholder={loadingTurmas ? 'Carregando...' : 'Selecione...'} /></SelectTrigger>
-            <SelectContent>
-              {turmas.map(t => (
-                <SelectItem key={t.id} value={t.id}>{t.nome}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
+        <Select value={anoLetivoId} onValueChange={handleAnoLetivo}>
+          <SelectTrigger className="w-auto min-w-[160px] h-9" disabled={!effectiveSchoolId}>
+            <SelectValue placeholder="Ano letivo" />
+          </SelectTrigger>
+          <SelectContent>
+            {anosLetivos.map((a: any) => (
+              <SelectItem key={a.id} value={a.id}>{a.descricao || a.ano}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
 
-        <Button onClick={handleFilter} disabled={!anoLetivoId || !turmaId}>
-          <Filter className="h-4 w-4 mr-1" />
-          Filtrar
-        </Button>
-      </div>
-    </FilterBar>
+        <Select value={turmaId} onValueChange={setTurmaId}>
+          <SelectTrigger className="w-auto min-w-[180px] h-9" disabled={!anoLetivoId}>
+            <SelectValue placeholder={loadingTurmas ? 'Carregando...' : 'Turma'} />
+          </SelectTrigger>
+          <SelectContent>
+            {turmas.map(t => (
+              <SelectItem key={t.id} value={t.id}>{t.nome}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </FilterBar>
+    </PageSection>
   )
 }

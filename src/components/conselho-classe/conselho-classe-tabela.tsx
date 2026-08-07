@@ -3,6 +3,8 @@
 import { Skeleton } from '@/components/ui/skeleton'
 import { AlertCircle, Inbox } from 'lucide-react'
 import { EmptyState } from '@/components/ui/empty-state'
+import { PageSection } from '@/components/layout/page-section'
+import { StatusBadge } from '@/components/feedback/status-badge'
 import ConselhoClasseLinhaAluno from './conselho-classe-linha-aluno'
 import type { AlunoDesempenho } from '@/lib/actions/conselho-classe'
 
@@ -46,15 +48,25 @@ export default function ConselhoClasseTabela({ alunos, loading, error, onSalvarN
   }
 
   return (
-    <div className="space-y-2">
-      {alunos.map(aluno => (
-        <ConselhoClasseLinhaAluno
-          key={aluno.aluno_id}
-          aluno={aluno}
-          onSalvarNota={onSalvarNota}
-          readonly={readonly}
-        />
-      ))}
-    </div>
+    <PageSection
+      variant="flush"
+      title="Alunos reprovados no período"
+      actions={
+        <StatusBadge status="primary">
+          {alunos.length} {alunos.length === 1 ? 'Aluno' : 'Alunos'}
+        </StatusBadge>
+      }
+    >
+      <div className="p-4 sm:p-6 space-y-3">
+        {alunos.map(aluno => (
+          <ConselhoClasseLinhaAluno
+            key={aluno.aluno_id}
+            aluno={aluno}
+            onSalvarNota={onSalvarNota}
+            readonly={readonly}
+          />
+        ))}
+      </div>
+    </PageSection>
   )
 }

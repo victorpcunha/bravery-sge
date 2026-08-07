@@ -34,6 +34,7 @@ export type Recuperacao = {
 export type DesempenhoAluno = {
   aluno_id: string
   medias_periodo: (number | null)[]
+  conselho_periodos: (number | null)[]
   media_anual: number | null
   recuperacao: number | null
   media_final: number | null
@@ -207,6 +208,24 @@ export async function getMetodoIdDaTurma(turmaId: string) {
 
 // ── FASE 5: Server Actions ──
 
+async function limparConselhoDeClasse(
+  disciplinaId: string,
+  alunoId: string,
+  periodo: number,
+  pessoaId: string | null
+): Promise<boolean> {
+  const { data, error } = await supabase
+    .from('conselho_classe_resultados')
+    .update({ nota_conselho: null, parecer: null, updated_by: pessoaId })
+    .eq('matriz_disciplina_id', disciplinaId)
+    .eq('aluno_id', alunoId)
+    .eq('periodo', periodo)
+    .select('id')
+
+  if (error) return false
+  return (data?.length ?? 0) > 0
+}
+
 export async function salvarNota(
   schoolId: string | null,
   turmaId: string,
@@ -226,6 +245,15 @@ export async function salvarNota(
     }
 
     if (notaId) {
+      const { data: atual } = await supabase
+        .from('academico_notas')
+        .select('valor')
+        .eq('id', notaId)
+        .maybeSingle()
+      const atualValor = atual ? (atual.valor === null ? null : Number(atual.valor)) : null
+      const novoValor = valor === null ? null : Number(valor)
+      const valorMudou = atualValor !== novoValor
+
       const { data, error } = await supabase
         .from('academico_notas')
         .update({ valor, descricao, data_aplicacao: dataAplicacao, updated_by: pessoaId })
@@ -233,7 +261,10 @@ export async function salvarNota(
         .select('id')
         .maybeSingle()
       if (error) return { success: false, error: error.message }
-      return { success: true, id: data?.id || notaId }
+      const conselhoRemovido = valorMudou
+        ? await limparConselhoDeClasse(disciplinaId, alunoId, periodo, pessoaId)
+        : false
+      return { success: true, id: data?.id || notaId, conselho_removido: conselhoRemovido }
     } else {
       const { data, error } = await supabase
         .from('academico_notas')
@@ -252,7 +283,8 @@ export async function salvarNota(
         .select('id')
         .maybeSingle()
       if (error) return { success: false, error: error.message }
-      return { success: true, id: data?.id }
+      const conselhoRemovido = await limparConselhoDeClasse(disciplinaId, alunoId, periodo, pessoaId)
+      return { success: true, id: data?.id, conselho_removido: conselhoRemovido }
     }
   } catch (e: unknown) {
     return { success: false, error: mensagemErro(e) || 'Erro interno ao salvar nota' }
@@ -299,7 +331,10 @@ export async function salvarRecuperacao(
         .select('id')
         .maybeSingle()
       if (error) return { success: false, error: error.message }
-      return { success: true, id: data?.id || recId }
+      const conselhoRemovido = periodo !== null
+        ? await limparConselhoDeClasse(disciplinaId, alunoId, periodo, pessoaId)
+        : false
+      return { success: true, id: data?.id || recId, conselho_removido: conselhoRemovido }
     } else {
       const { data, error } = await supabase
         .from('academico_recuperacoes')
@@ -318,7 +353,10 @@ export async function salvarRecuperacao(
         .select('id')
         .maybeSingle()
       if (error) return { success: false, error: error.message }
-      return { success: true, id: data?.id }
+      const conselhoRemovido = periodo !== null
+        ? await limparConselhoDeClasse(disciplinaId, alunoId, periodo, pessoaId)
+        : false
+      return { success: true, id: data?.id, conselho_removido: conselhoRemovido }
     }
   } catch (e: unknown) {
     return { success: false, error: mensagemErro(e) || 'Erro interno ao salvar recuperação' }
@@ -372,7 +410,8 @@ export async function limparNotasAluno(
       .eq('periodo', periodo)
 
     if (error) return { success: false, error: error.message }
-    return { success: true }
+    const conselhoRemovido = await limparConselhoDeClasse(disciplinaId, alunoId, periodo, pessoaId)
+    return { success: true, conselho_removido: conselhoRemovido }
   } catch (e: unknown) {
     return { success: false, error: mensagemErro(e) || 'Erro interno ao limpar notas' }
   }
@@ -426,7 +465,7 @@ export async function calcularDesempenhoAluno(
 
   const periodos = Array.from({ length: quantidadePeriodos }, (_, i) => i + 1)
 
-  const [notasData, recuperacoesData] = await Promise.all([
+  const [notasData, recuperacoesData, conselhoData] = await Promise.all([
     supabase
       .from('academico_notas')
       .select('periodo, valor, descricao')
@@ -439,6 +478,12 @@ export async function calcularDesempenhoAluno(
       .eq('aluno_id', alunoId)
       .eq('disciplina_id', disciplinaId)
       .then(r => (r.data || []) as RecuperacaoDbRow[]),
+    supabase
+      .from('conselho_classe_resultados')
+      .select('periodo, nota_conselho')
+      .eq('aluno_id', alunoId)
+      .eq('matriz_disciplina_id', disciplinaId)
+      .then(r => (r.data || []) as { periodo: number; nota_conselho: number | null }[]),
   ])
 
   const pesoMap = new Map<string, number>()
@@ -503,6 +548,24 @@ export async function calcularDesempenhoAluno(
         : recVal
     }
   }
+
+  // Aplicar nota do conselho de classe por período: substitui a média do período,
+  // ou mantém a maior se a recuperação por período for substitutiva
+  const conselhoPorPeriodo = new Map<number, number>()
+  for (const c of conselhoData) {
+    if (c.nota_conselho === null) continue
+    const conselhoVal = Number(c.nota_conselho)
+    conselhoPorPeriodo.set(c.periodo, conselhoVal)
+    const idx = c.periodo - 1
+    if (idx >= 0 && idx < mediasPeriodo.length) {
+      mediasPeriodo[idx] = config.recuperacao_periodo_substitutiva
+        ? mediasPeriodo[idx] === null
+          ? conselhoVal
+          : Math.max(mediasPeriodo[idx]!, conselhoVal)
+        : conselhoVal
+    }
+  }
+  const conselhoPeriodos = periodos.map(p => conselhoPorPeriodo.get(p) ?? null)
 
   // Calcular média anual
   let mediaAnual: number | null = null
@@ -583,6 +646,7 @@ export async function calcularDesempenhoAluno(
   return {
     aluno_id: alunoId,
     medias_periodo: mediasPeriodo,
+    conselho_periodos: conselhoPeriodos,
     media_anual: mediaAnual ? Math.round(mediaAnual * 100) / 100 : null,
     recuperacao: valorRecFinal,
     media_final: mediaFinal,

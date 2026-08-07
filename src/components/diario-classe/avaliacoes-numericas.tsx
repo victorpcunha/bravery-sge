@@ -38,6 +38,7 @@ import {
 import { StatusBadge } from '@/components/feedback/status-badge'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Progress } from '@/components/ui/progress'
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { cn } from '@/lib/utils'
 import { toast } from 'sonner'
 import {
@@ -61,6 +62,7 @@ import {
   Medal,
   Users,
   Clock,
+  GraduationCap,
   type LucideIcon,
 } from 'lucide-react'
 
@@ -453,6 +455,9 @@ export default function AvaliacoesNumericas({
             setFeedback(prev => ({ ...prev, [cardKey]: { state: 'idle' } }))
           }, 4000)
           agendarRecalc()
+          if (result.conselho_removido) {
+            toast.warning('Nota do conselho removida — a avaliação foi alterada. Reavalie no Conselho de Classe.')
+          }
         } catch {
           toast.error('Erro ao salvar nota')
           setFeedback(prev => ({ ...prev, [cardKey]: { state: 'idle' } }))
@@ -531,6 +536,9 @@ export default function AvaliacoesNumericas({
         return
       }
       toast.success('Notas do bimestre limpas')
+      if (res.conselho_removido) {
+        toast.warning('Nota do conselho removida — as notas foram alteradas. Reavalie no Conselho de Classe.')
+      }
       agendarRecalc()
     } catch {
       toast.error('Erro ao limpar notas')
@@ -593,6 +601,9 @@ export default function AvaliacoesNumericas({
             return [...prev, novo]
           })
           agendarRecalc()
+          if (result.conselho_removido) {
+            toast.warning('Nota do conselho removida — a recuperação foi alterada. Reavalie no Conselho de Classe.')
+          }
         } catch {
           toast.error('Erro ao salvar recuperação')
         }
@@ -904,20 +915,41 @@ export default function AvaliacoesNumericas({
                             </TableCell>
                             {periodos.map(p => {
                               const m = d?.medias_periodo[p - 1] ?? null
+                              const notaConselho = d?.conselho_periodos?.[p - 1] ?? null
+                              const span = (
+                                <span
+                                  className={cn(
+                                    'text-[14px] font-semibold tabular-nums',
+                                    m === null
+                                      ? 'text-muted-foreground'
+                                      : m >= mediaMinima
+                                        ? 'text-success'
+                                        : 'text-destructive'
+                                  )}
+                                >
+                                  {m !== null ? m.toFixed(2) : '—'}
+                                </span>
+                              )
                               return (
                                 <TableCell key={p} className="px-2 py-2.5 text-center">
-                                  <span
-                                    className={cn(
-                                      'text-[14px] font-semibold tabular-nums',
-                                      m === null
-                                        ? 'text-muted-foreground'
-                                        : m >= mediaMinima
-                                          ? 'text-success'
-                                          : 'text-destructive'
-                                    )}
-                                  >
-                                    {m !== null ? m.toFixed(2) : '—'}
-                                  </span>
+                                  {notaConselho !== null ? (
+                                    <Tooltip>
+                                      <TooltipTrigger asChild>
+                                        <span className="inline-flex cursor-help items-center gap-1">
+                                          {span}
+                                          <GraduationCap className="h-3.5 w-3.5 text-primary" />
+                                        </span>
+                                      </TooltipTrigger>
+                                      <TooltipContent side="top">
+                                        <span className="flex items-center gap-1.5">
+                                          <GraduationCap className="h-3.5 w-3.5" />
+                                          Nota do conselho de classe: {Number(notaConselho).toFixed(2)}
+                                        </span>
+                                      </TooltipContent>
+                                    </Tooltip>
+                                  ) : (
+                                    span
+                                  )}
                                 </TableCell>
                               )
                             })}

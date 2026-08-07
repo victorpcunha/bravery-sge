@@ -5,6 +5,7 @@ import { Checkbox } from '@/components/ui/checkbox'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/ui/table'
 import { EmptyState } from '@/components/ui/empty-state'
+import { PageSection } from '@/components/layout/page-section'
 import { StatusBadge } from '@/components/feedback/status-badge'
 import { AlertCircle, Inbox } from 'lucide-react'
 import { toast } from 'sonner'
@@ -80,33 +81,38 @@ export default function AprovacaoConselhoTabela({ alunos, loading, error, school
   }
 
   return (
-    <div className="rounded-lg overflow-hidden">
-      <Table>
-        <TableHeader>
-          <TableRow className="bg-muted/30 text-xs text-muted-foreground hover:bg-muted/30">
-            <TableHead className="py-3 px-4 text-left font-medium">Nome Completo</TableHead>
-            <TableHead className="py-3 px-4 text-center font-medium">Situação da Matrícula</TableHead>
-            <TableHead className="py-3 px-4 text-center font-medium">Aprovado por Conselho</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {alunos.map(aluno => (
-            <TableRow key={aluno.matricula_id}>
-              <TableCell className="py-3 px-4 text-sm">{aluno.nome}</TableCell>
-              <TableCell className="py-3 px-4 text-sm text-center">
-                <StatusBadge status="destructive">{aluno.situacao}</StatusBadge>
-              </TableCell>
-              <TableCell className="py-3 px-4 text-center">
-                <Checkbox
-                  checked={aluno.situacao === 'Aprovado por conselho de classe'}
-                  disabled={toggling.has(aluno.matricula_id) || readonly}
-                  onCheckedChange={() => handleToggle(aluno)}
-                />
-              </TableCell>
+    <PageSection
+      variant="flush"
+      title={`${alunos.length} ${alunos.length === 1 ? 'aluno reprovado' : 'alunos reprovados'}`}
+    >
+      <div className="overflow-x-auto">
+        <Table>
+          <TableHeader>
+            <TableRow className="bg-muted text-xs text-muted-foreground hover:bg-muted">
+              <TableHead className="py-3 px-4 text-left font-semibold">Nome Completo</TableHead>
+              <TableHead className="py-3 px-4 text-center font-semibold">Situação da Matrícula</TableHead>
+              <TableHead className="py-3 px-4 text-center font-semibold">Aprovado por Conselho</TableHead>
             </TableRow>
-          ))}
-        </TableBody>
-      </Table>
-    </div>
+          </TableHeader>
+          <TableBody>
+            {alunos.map(aluno => (
+              <TableRow key={aluno.matricula_id}>
+                <TableCell className="py-3 px-4 text-[15px] font-medium text-foreground">{aluno.nome}</TableCell>
+                <TableCell className="py-3 px-4 text-center">
+                  <StatusBadge status="destructive">{aluno.situacao}</StatusBadge>
+                </TableCell>
+                <TableCell className="py-3 px-4 text-center">
+                  <Checkbox
+                    checked={aluno.situacao === 'Aprovado por conselho de classe'}
+                    disabled={toggling.has(aluno.matricula_id) || readonly}
+                    onCheckedChange={() => handleToggle(aluno)}
+                  />
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </div>
+    </PageSection>
   )
 }

@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { ChevronDown, ChevronRight } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { StatusBadge } from '@/components/feedback/status-badge'
 import { Table, TableHeader, TableBody, TableRow, TableHead } from '@/components/ui/table'
 import ConselhoClasseLinhaDisciplina from './conselho-classe-linha-disciplina'
 import type { DisciplinaDesempenho } from '@/lib/actions/conselho-classe'
@@ -21,7 +22,7 @@ export default function ConselhoClasseLinhaAluno({ aluno, onSalvarNota, readonly
   const [expanded, setExpanded] = useState(false)
 
   return (
-    <div className="border border-border rounded-lg overflow-hidden">
+    <div className="border border-border rounded-lg overflow-hidden bg-card">
       <Button
         variant="ghost"
         onClick={() => setExpanded(!expanded)}
@@ -32,23 +33,24 @@ export default function ConselhoClasseLinhaAluno({ aluno, onSalvarNota, readonly
         ) : (
           <ChevronRight className="h-4 w-4 text-muted-foreground shrink-0" />
         )}
-        <span className="font-medium text-sm flex-1">{aluno.nome}</span>
-        <span className="text-xs text-muted-foreground bg-muted px-2 py-0.5 rounded-full">
-          {aluno.disciplinas.length} {aluno.disciplinas.length === 1 ? 'disciplina' : 'disciplinas'}
+        <span className="flex items-center gap-2 flex-1 min-w-0">
+          <span className="font-medium text-[15px] truncate">{aluno.nome}</span>
+          <StatusBadge status="warning" className="shrink-0">
+            {aluno.disciplinas.length} {aluno.disciplinas.length === 1 ? 'disciplina' : 'disciplinas'}
+          </StatusBadge>
         </span>
       </Button>
 
       {expanded && (
-        <div className="border-t border-border">
+        <div className="border-t border-border bg-muted/30">
           <Table>
             <TableHeader>
-              <TableRow className="bg-muted/30 text-xs text-muted-foreground hover:bg-muted/30">
-                <TableHead className="py-2 px-3 text-left font-medium">Disciplina</TableHead>
-                <TableHead className="py-2 px-3 text-center font-medium">Frequência</TableHead>
-                <TableHead className="py-2 px-3 text-center font-medium">Faltas</TableHead>
-                <TableHead className="py-2 px-3 text-center font-medium">Média Final</TableHead>
-                <TableHead className="py-2 px-3 text-center font-medium">Média Período</TableHead>
-                <TableHead className="py-2 px-3 text-center font-medium">Nota Conselho</TableHead>
+              <TableRow className="bg-muted text-xs text-muted-foreground hover:bg-muted">
+                <TableHead className="py-2.5 px-4 text-left font-semibold">Disciplina</TableHead>
+                <TableHead className="py-2.5 px-4 text-center font-semibold">Frequência</TableHead>
+                <TableHead className="py-2.5 px-4 text-center font-semibold">Faltas</TableHead>
+                <TableHead className="py-2.5 px-4 text-center font-semibold">Média Período</TableHead>
+                <TableHead className="py-2.5 px-4 text-center font-semibold">Nota Conselho</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>

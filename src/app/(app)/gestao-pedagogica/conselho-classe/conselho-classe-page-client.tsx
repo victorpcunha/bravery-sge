@@ -2,7 +2,7 @@
 
 import { useState, useCallback } from 'react'
 import { usePermissoes } from '@/hooks/use-permissoes'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { ModernTabs, type ModernTabItem } from '@/components/ui/modern-tabs'
 import { PageHeader } from '@/components/layout/page-header'
 import { EmptyState } from '@/components/ui/empty-state'
 import ConselhoClasseFiltros, { type FiltrosConselho } from '@/components/conselho-classe/conselho-classe-filtros'
@@ -20,6 +20,8 @@ type Props = {
   schoolId: string | null
 }
 
+type PreReq = { ok: boolean; erro: string | null }
+
 export default function ConselhoClassePageClient({ schoolId }: Props) {
   const { pode, loaded: permLoaded, pessoaId } = usePermissoes(schoolId)
 
@@ -34,27 +36,33 @@ export default function ConselhoClassePageClient({ schoolId }: Props) {
   const [loadingReprovados, setLoadingReprovados] = useState(false)
   const [errorReprovados, setErrorReprovados] = useState<string | null>(null)
 
-  const [preReqOk, setPreReqOk] = useState<boolean | null>(null)
-  const [preReqErro, setPreReqErro] = useState<string | null>(null)
+  const [preReqConselho, setPreReqConselho] = useState<PreReq | null>(null)
+  const [preReqAprovacao, setPreReqAprovacao] = useState<PreReq | null>(null)
 
-  const [filtrosAtuais, setFiltrosAtuais] = useState<{ turmaId: string; periodo: number } | null>(null)
+  const [filtrosAtuais, setFiltrosAtuais] = useState<FiltrosConselho | null>(null)
+  const [filtrosAprovacaoAtuais, setFiltrosAprovacaoAtuais] = useState<FiltrosAprovacao | null>(null)
 
-  async function handleFilterConselho(filtros: FiltrosConselho) {
+  const handleFilterConselho = useCallback(async (filtros: FiltrosConselho) => {
     setLoadingAlunos(true)
     setErrorAlunos(null)
     try {
-      const preReq = await verificarPreRequisitos(filtros.turmaId)
-      if (!preReq.ok) {
-        setPreReqOk(false)
-        setPreReqErro(preReq.erro || 'Pré-requisitos não atendidos')
+      if (!filtros.turmaId) {
+        setPreReqConselho(null)
+        setAlunos([])
         setLoadingAlunos(false)
         return
       }
-      setPreReqOk(true)
-      setPreReqErro(null)
-      setFiltrosAtuais({ turmaId: filtros.turmaId, periodo: Number(filtros.periodo) })
+      const preReq = await verificarPreRequisitos(filtros.turmaId)
+      if (!preReq.ok) {
+        setPreReqConselho({ ok: false, erro: preReq.erro || 'Pré-requisitos não atendidos' })
+        setAlunos([])
+        setLoadingAlunos(false)
+        return
+      }
+      setPreReqConselho({ ok: true, erro: null })
+      setFiltrosAtuais(filtros)
       const data = await listarAlunosAbaixoMedia(
-        schoolId, filtros.turmaId, Number(filtros.periodo), filtros.disciplinaId || undefined
+        filtros.schoolId, filtros.turmaId, Number(filtros.periodo), filtros.disciplinaId || undefined
       )
       setAlunos(data)
     } catch (e: any) {
@@ -62,29 +70,47 @@ export default function ConselhoClassePageClient({ schoolId }: Props) {
     } finally {
       setLoadingAlunos(false)
     }
-  }
+  }, [])
 
-  async function handleFilterAprovacao(filtros: FiltrosAprovacao) {
+  const handleFilterAprovacao = useCallback(async (filtros: FiltrosAprovacao) => {
     setLoadingReprovados(true)
     setErrorReprovados(null)
     try {
-      const preReq = await verificarPreRequisitos(filtros.turmaId)
-      if (!preReq.ok) {
-        setPreReqOk(false)
-        setPreReqErro(preReq.erro || 'Pré-requisitos não atendidos')
+      if (!filtros.turmaId) {
+        setPreReqAprovacao(null)
+        setReprovados([])
         setLoadingReprovados(false)
         return
       }
-      setPreReqOk(true)
-      setPreReqErro(null)
-      const data = await listarAlunosReprovados(schoolId, filtros.turmaId)
+      const preReq = await verificarPreRequisitos(filtros.turmaId)
+      if (!preReq.ok) {
+        setPreReqAprovacao({ ok: false, erro: preReq.erro || 'Pré-requisitos não atendidos' })
+        setReprovados([])
+        setLoadingReprovados(false)
+        return
+      }
+      setPreReqAprovacao({ ok: true, erro: null })
+      setFiltrosAprovacaoAtuais(filtros)
+      const data = await listarAlunosReprovados(filtros.schoolId, filtros.turmaId)
       setReprovados(data)
     } catch (e: any) {
       setErrorReprovados(e?.message || 'Erro ao carregar alunos reprovados')
     } finally {
       setLoadingReprovados(false)
     }
-  }
+  }, [])
+
+  const atualizarAlunosSilencioso = useCallback(async () => {
+    if (!filtrosAtuais || !filtrosAtuais.turmaId) return
+    try {
+      const data = await listarAlunosAbaixoMedia(
+        filtrosAtuais.schoolId, filtrosAtuais.turmaId, Number(filtrosAtuais.periodo), filtrosAtuais.disciplinaId || undefined
+      )
+      setAlunos(data)
+    } catch {
+      // mantém os últimos dados carregados em caso de falha
+    }
+  }, [filtrosAtuais])
 
   const handleSalvarNota = useCallback(async (
     alunoId: string,
@@ -92,10 +118,10 @@ export default function ConselhoClassePageClient({ schoolId }: Props) {
     field: 'nota_conselho' | 'parecer',
     value: string
   ) => {
-    if (!pessoaId || !filtrosAtuais) return
+    if (!filtrosAtuais) return
 
     const result = await salvarNotaConselho(
-      schoolId, filtrosAtuais.turmaId, disciplinaId, alunoId, filtrosAtuais.periodo,
+      filtrosAtuais.schoolId, filtrosAtuais.turmaId, disciplinaId, alunoId, Number(filtrosAtuais.periodo),
       field === 'nota_conselho' ? (value === '' ? null : Number(value)) : undefined as any,
       field === 'parecer' ? (value === '' ? null : value) : undefined as any,
       pessoaId
@@ -105,8 +131,11 @@ export default function ConselhoClassePageClient({ schoolId }: Props) {
       toast.error(result.error || 'Erro ao salvar')
     } else {
       toast.success('Nota salva com sucesso')
+      if (field === 'nota_conselho') {
+        atualizarAlunosSilencioso()
+      }
     }
-  }, [schoolId, pessoaId, filtrosAtuais])
+  }, [pessoaId, filtrosAtuais, atualizarAlunosSilencioso])
 
   if (!permLoaded) {
     return (
@@ -126,15 +155,10 @@ export default function ConselhoClassePageClient({ schoolId }: Props) {
     )
   }
 
-  if (preReqOk === false) {
-    return (
-      <EmptyState
-        icon={AlertCircle}
-        title="Conselho de Classe não disponível"
-        description={preReqErro || ''}
-      />
-    )
-  }
+  const tabs: ModernTabItem[] = [
+    { value: 'conselho', label: 'Conselho de Classe' },
+    { value: 'aprovacao', label: 'Aprovação por Conselho de Classe' },
+  ]
 
   return (
     <>
@@ -144,43 +168,56 @@ export default function ConselhoClassePageClient({ schoolId }: Props) {
         icon={GraduationCap}
       />
 
-      <Tabs defaultValue="conselho">
-        <TabsList>
-          <TabsTrigger value="conselho">Conselho de Classe</TabsTrigger>
-          <TabsTrigger value="aprovacao">Aprovação por Conselho de Classe</TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="conselho" className="mt-6">
+      <ModernTabs tabs={tabs}>
+        <div className="space-y-6">
           <ConselhoClasseFiltros
             schoolId={schoolId}
             onFilter={handleFilterConselho}
             temPeriodo
           />
-          <ConselhoClasseTabela
-            alunos={alunos}
-            loading={loadingAlunos}
-            error={errorAlunos}
-            onSalvarNota={handleSalvarNota}
-            readonly={!podeEditar}
-          />
-        </TabsContent>
 
-        <TabsContent value="aprovacao" className="mt-6">
+          {preReqConselho && !preReqConselho.ok ? (
+            <EmptyState
+              icon={AlertCircle}
+              title="Conselho de Classe não disponível"
+              description={preReqConselho.erro || ''}
+            />
+          ) : (
+            <ConselhoClasseTabela
+              alunos={alunos}
+              loading={loadingAlunos}
+              error={errorAlunos}
+              onSalvarNota={handleSalvarNota}
+              readonly={!podeEditar}
+            />
+          )}
+        </div>
+
+        <div className="space-y-6">
           <AprovacaoConselhoFiltros
             schoolId={schoolId}
             onFilter={handleFilterAprovacao}
           />
-          <AprovacaoConselhoTabela
-            alunos={reprovados}
-            loading={loadingReprovados}
-            error={errorReprovados}
-            schoolId={schoolId}
-            pessoaId={pessoaId}
-            readonly={!podeEditar}
-            onToggle={() => handleFilterAprovacao({ anoLetivoId: '', turmaId: '' })}
-          />
-        </TabsContent>
-      </Tabs>
+
+          {preReqAprovacao && !preReqAprovacao.ok ? (
+            <EmptyState
+              icon={AlertCircle}
+              title="Aprovação por Conselho não disponível"
+              description={preReqAprovacao.erro || ''}
+            />
+          ) : (
+            <AprovacaoConselhoTabela
+              alunos={reprovados}
+              loading={loadingReprovados}
+              error={errorReprovados}
+              schoolId={filtrosAprovacaoAtuais?.schoolId ?? schoolId}
+              pessoaId={pessoaId}
+              readonly={!podeEditar}
+              onToggle={() => filtrosAprovacaoAtuais && handleFilterAprovacao(filtrosAprovacaoAtuais)}
+            />
+          )}
+        </div>
+      </ModernTabs>
     </>
   )
 }
