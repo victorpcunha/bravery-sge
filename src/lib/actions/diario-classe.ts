@@ -139,6 +139,13 @@ async function validarPermRead(recurso: string, pessoaId?: string | null) {
   }
 }
 
+async function validarPermWrite(recurso: string, pessoaId?: string | null) {
+  if (pessoaId) {
+    const { validarPermissaoServer } = await import('./perfis')
+    await validarPermissaoServer(pessoaId, recurso, 'editar')
+  }
+}
+
 export type TurmaDiarioInfo = {
   id: string
   nome: string
@@ -189,7 +196,7 @@ export async function getAlunosDaTurma(turmaId: string, pessoaId?: string | null
   await validarPermRead('gestao-pedagogica.diario-classe', pessoaId)
   const { data: matriculas, error } = await supabase
     .from('academico_matriculas')
-    .select('id, aluno_id')
+    .select('id, aluno_id, numero_chamada')
     .eq('turma_id', turmaId)
     .eq('situacao', 'Ativo')
 
@@ -209,7 +216,7 @@ export async function getAlunosDaTurma(turmaId: string, pessoaId?: string | null
   return matriculas.map(m => ({
     id: m.aluno_id,
     nome_completo: pessoaMap.get(m.aluno_id)?.nome_completo || '',
-    numero_chamada: null,
+    numero_chamada: m.numero_chamada ?? null,
     matricula_id: m.id,
   })) as AlunoMatriculado[]
 }
@@ -219,7 +226,7 @@ export async function getAlunosDaTurmaComPeriodo(turmaId: string, pessoaId?: str
 
   const { data: matriculas, error } = await supabase
     .from('academico_matriculas')
-    .select('id, aluno_id, data_matricula, data_saida, situacao')
+    .select('id, aluno_id, data_matricula, data_saida, situacao, numero_chamada')
     .eq('turma_id', turmaId)
 
   if (error) throw error
@@ -231,25 +238,59 @@ export async function getAlunosDaTurmaComPeriodo(turmaId: string, pessoaId?: str
     .from('people')
     .select('id, nome_completo, data_nascimento')
     .in('id', pessoaIds)
-    .order('nome_completo')
 
   const pessoaMap = new Map((pessoas || []).map(p => [p.id, p]))
 
-  return matriculas.map(m => ({
-    id: m.aluno_id,
-    matricula_id: m.id,
-    nome_completo: pessoaMap.get(m.aluno_id)?.nome_completo || '',
-    numero_chamada: null,
-    data_matricula: m.data_matricula,
-    data_saida: m.data_saida,
-    data_nascimento: pessoaMap.get(m.aluno_id)?.data_nascimento || null,
-    situacao: m.situacao,
-  }))
+  return matriculas
+    .map(m => ({
+      id: m.aluno_id,
+      matricula_id: m.id,
+      nome_completo: pessoaMap.get(m.aluno_id)?.nome_completo || '',
+      numero_chamada: m.numero_chamada ?? null,
+      data_matricula: m.data_matricula,
+      data_saida: m.data_saida,
+      data_nascimento: pessoaMap.get(m.aluno_id)?.data_nascimento || null,
+      situacao: m.situacao,
+    }))
+    .sort((a, b) => a.nome_completo.localeCompare(b.nome_completo))
 }
 
 export async function gerarNumeroChamada(turmaId: string, pessoaId?: string | null) {
-  const alunos = await getAlunosDaTurma(turmaId, pessoaId)
-  const ordenados = alunos.sort((a, b) => a.nome_completo.localeCompare(b.nome_completo))
+  await validarPermWrite('gestao-pedagogica.diario-classe', pessoaId)
+
+  const { data: matriculas, error } = await supabase
+    .from('academico_matriculas')
+    .select('id, aluno_id')
+    .eq('turma_id', turmaId)
+    .eq('situacao', 'Ativo')
+
+  if (error) throw error
+  if (!matriculas?.length) return 0
+
+  const pessoaIds = matriculas.map(m => m.aluno_id)
+
+  const { data: pessoas } = await supabase
+    .from('people')
+    .select('id, nome_completo')
+    .in('id', pessoaIds)
+
+  const pessoaMap = new Map((pessoas || []).map(p => [p.id, p]))
+
+  const ordenados = matriculas
+    .map(m => ({
+      matriculaId: m.id,
+      nome: pessoaMap.get(m.aluno_id)?.nome_completo || '',
+    }))
+    .sort((a, b) => a.nome.localeCompare(b.nome))
+
+  for (let i = 0; i < ordenados.length; i++) {
+    const { error: errUpdate } = await supabase
+      .from('academico_matriculas')
+      .update({ numero_chamada: i + 1 })
+      .eq('id', ordenados[i].matriculaId)
+    if (errUpdate) throw errUpdate
+  }
+
   return ordenados.length
 }
 

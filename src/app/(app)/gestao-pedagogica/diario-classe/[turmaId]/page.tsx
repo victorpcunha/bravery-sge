@@ -17,6 +17,7 @@ import { PageSection } from '@/components/layout/page-section'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent } from '@/components/ui/card'
+import { ConfirmDialog } from '@/components/feedback/confirm-dialog'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -43,6 +44,7 @@ export default function TurmaDiarioPage() {
   const [metodo, setMetodo] = useState<any>(null)
   const [loading, setLoading] = useState(true)
   const [gerando, setGerando] = useState(false)
+  const [confirmChamadaOpen, setConfirmChamadaOpen] = useState(false)
   const [abaAtiva, setAbaAtiva] = useState('alunos')
   const [alunosSearch, setAlunosSearch] = useState('')
   const [alunosPage, setAlunosPage] = useState(1)
@@ -50,27 +52,29 @@ export default function TurmaDiarioPage() {
 
   const { loaded: permLoaded, pessoaId, pode } = usePermissoes(schoolId || '')
 
+  const carregarAlunosComFrequencia = useCallback(async (criterioFrequencia?: string) => {
+    const lista = await getAlunosDaTurmaComPeriodo(turmaId, pessoaId)
+    if (lista.length > 0 && criterioFrequencia) {
+      const frequencias = await getFrequenciasAlunosTurma(turmaId, criterioFrequencia, pessoaId).catch(() => [])
+      const freqMap = new Map(frequencias.map(f => [f.aluno_id, f.frequencia]))
+      lista.forEach(a => { a.frequencia = freqMap.get(a.id) ?? null })
+    }
+    return lista
+  }, [turmaId, pessoaId])
+
   useEffect(() => {
     if (!turmaId) return
     setLoading(true)
 
     const carregar = async () => {
       try {
-        const [info, alunosData, disciplinasData, metodoData] = await Promise.all([
+        const [info, disciplinasData, metodoData] = await Promise.all([
           getTurmaDiarioInfo(turmaId, pessoaId).catch(() => null),
-          getAlunosDaTurmaComPeriodo(turmaId, pessoaId).catch(() => []),
           getDisciplinasDiario(turmaId, pessoaId).catch(() => []),
           getMetodoAvaliacaoDaTurma(turmaId).catch(() => null),
         ])
         setTurmaInfo(info)
-
-        if (alunosData.length > 0 && metodoData?.criterio_frequencia) {
-          const frequencias = await getFrequenciasAlunosTurma(turmaId, metodoData.criterio_frequencia, pessoaId).catch(() => [])
-          const freqMap = new Map(frequencias.map(f => [f.aluno_id, f.frequencia]))
-          alunosData.forEach(a => { a.frequencia = freqMap.get(a.id) ?? null })
-        }
-
-        setAlunos(alunosData)
+        setAlunos(await carregarAlunosComFrequencia(metodoData?.criterio_frequencia))
         setDisciplinas(disciplinasData)
         setMetodo(metodoData)
       } catch {
@@ -81,19 +85,19 @@ export default function TurmaDiarioPage() {
     }
 
     carregar()
-  }, [turmaId, pessoaId])
+  }, [turmaId, pessoaId, carregarAlunosComFrequencia])
 
   const handleGerarChamada = async () => {
     setGerando(true)
     try {
       const total = await gerarNumeroChamada(turmaId, pessoaId)
-      toast.success(`Chamada gerada para ${total} alunos`)
-      const alunosAtualizados = await getAlunosDaTurmaComPeriodo(turmaId, pessoaId)
-      setAlunos(alunosAtualizados)
+      toast.success(`Numeração de chamada gerada para ${total} ${total === 1 ? 'aluno' : 'alunos'}`)
+      setAlunos(await carregarAlunosComFrequencia(metodo?.criterio_frequencia))
     } catch {
       toast.error('Erro ao gerar chamada')
     } finally {
       setGerando(false)
+      setConfirmChamadaOpen(false)
     }
   }
 
@@ -170,7 +174,7 @@ export default function TurmaDiarioPage() {
             icon={GraduationCap}
             actions={
               <div className="flex flex-col gap-2 sm:flex-row">
-                <Button variant="outline" size="sm" onClick={handleGerarChamada} disabled={gerando}>
+                <Button variant="outline" size="sm" onClick={() => setConfirmChamadaOpen(true)} disabled={gerando}>
                   <Hash className="h-4 w-4 mr-1.5" />
                   {gerando ? 'Gerando...' : 'Gerar Chamada'}
                 </Button>
@@ -359,7 +363,7 @@ export default function TurmaDiarioPage() {
                             return (
                               <TableRow key={aluno.id} className="hover:bg-muted/50 transition-colors">
                                 <TableCell className="text-[13px] text-muted-foreground tabular-nums align-top pt-4">
-                                  {inicio + idx + 1}
+                                  {aluno.numero_chamada ?? inicio + idx + 1}
                                 </TableCell>
                                 <TableCell className="align-top pt-4">
                                   <p className="text-[14px] font-semibold text-foreground">{aluno.nome_completo}</p>
@@ -495,6 +499,18 @@ export default function TurmaDiarioPage() {
           </Tabs>
         </>
       )}
+
+      <ConfirmDialog
+        open={confirmChamadaOpen}
+        onOpenChange={v => { if (!v) setConfirmChamadaOpen(false) }}
+        title="Gerar numeração de chamada?"
+        description="Os alunos serão reorganizados em ordem alfabética e cada um receberá um número de chamada em sequência (1, 2, 3...). Atenção: alunos que entrarem na turma durante o ano letivo podem ficar com números que antes pertenciam a outros alunos."
+        confirmLabel="Gerar chamada"
+        cancelLabel="Cancelar"
+        variant="warning"
+        loading={gerando}
+        onConfirm={handleGerarChamada}
+      />
     </PageContainer>
   )
 }
