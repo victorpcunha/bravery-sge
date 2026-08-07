@@ -477,6 +477,16 @@ export async function getHabilidadesBNCCSistema(tipoEnsino?: string, componente?
 // Buscar habilidades BNCC por disciplina + etapa
 // ============================================
 
+function normalizarDisciplina(nome: string): string {
+  return (nome || '')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
+}
+
 export async function getHabilidadesBNCCPorDisciplinaEtapa(disciplinaNome: string, etapaEnsino: string) {
   // Mapear etapa_tipo do sistema para os valores usados nas tabelas BNCC
   const etapaDB = etapaEnsino === 'fundamental_inicial' ? 'anos_iniciais'
@@ -573,11 +583,12 @@ export async function getHabilidadesBNCCPorDisciplinaEtapa(disciplinaNome: strin
       .eq('objeto_conhecimento.unidade_tematica.etapa_ensino', etapaDB)
       .limit(200)
     if (!fbError && fallbackData) {
-      // Filtrar client-side por nome de disciplina (case-insensitive)
-      const discLower = disciplinaNome.toLowerCase()
+      // Filtrar client-side por nome de disciplina normalizado (contorna nomes divergentes)
+      const alvo = normalizarDisciplina(disciplinaNome)
       results = (fallbackData as any[]).filter((h: any) => {
         const d = h.objeto_conhecimento?.unidade_tematica?.disciplina || ''
-        return d.toLowerCase() === discLower
+        const dn = normalizarDisciplina(d)
+        return dn.includes(alvo) || alvo.includes(dn)
       })
     }
   }

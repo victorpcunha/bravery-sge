@@ -1,5 +1,5 @@
-﻿-- Migration: Dados BNCC Ensino Fundamental
--- Gerado automaticamente em 2026-07-13T18:46:03.549Z
+-- Migration: Dados BNCC Ensino Fundamental
+-- Gerado automaticamente em 2026-08-06T23:21:07.863Z
 
 -- Limpar dados existentes (ordem inversa das FKs)
 DELETE FROM bncc_habilidades;
@@ -7197,6 +7197,14 @@ WITH ut AS (
   INSERT INTO bncc_habilidades (id, objeto_conhecimento_id, codigo_bncc, descricao, anos, etapa_ensino)
   SELECT gen_random_uuid(), oc1.id, 'EF35LP04', 'Inferir informações implícitas nos textos lidos.', '["3º","4º","5º"]'::jsonb, 'anos_iniciais' FROM oc1
 )
+, h_1_EF35LP05 AS (
+  INSERT INTO bncc_habilidades (id, objeto_conhecimento_id, codigo_bncc, descricao, anos, etapa_ensino)
+  SELECT gen_random_uuid(), oc1.id, 'EF35LP05', 'Inferir o sentido de palavras ou expressões desconhecidas em textos, com base no contexto da frase ou do texto.', '["3º","4º","5º"]'::jsonb, 'anos_iniciais' FROM oc1
+)
+, h_1_EF35LP06 AS (
+  INSERT INTO bncc_habilidades (id, objeto_conhecimento_id, codigo_bncc, descricao, anos, etapa_ensino)
+  SELECT gen_random_uuid(), oc1.id, 'EF35LP06', 'Recuperar relações entre partes de um texto, identificando substituições lexicais (de substantivos por sinônimos) ou pronominais (uso de pronomes anafóricos – pessoais, possessivos, demonstrativos) que contribuem para a continuidade do texto.', '["3º","4º","5º"]'::jsonb, 'anos_iniciais' FROM oc1
+)
 , oc2 AS (
   INSERT INTO bncc_objetos_conhecimento (id, unidade_tematica_id, objeto_conhecimento)
   SELECT gen_random_uuid(), ut.id, 'Leitura de imagens em narrativas visuais' FROM ut
@@ -7214,6 +7222,10 @@ WITH ut AS (
 , h_3_EF15LP15 AS (
   INSERT INTO bncc_habilidades (id, objeto_conhecimento_id, codigo_bncc, descricao, anos, etapa_ensino)
   SELECT gen_random_uuid(), oc3.id, 'EF15LP15', 'Reconhecer que os textos literários fazem parte do mundo do imaginário e apresentam uma dimensão lúdica, de encantamento, valorizando-os, em sua diversidade cultural, como patrimônio artístico da humanidade.', '["1º","2º","3º","4º","5º"]'::jsonb, 'anos_iniciais' FROM oc3
+)
+, h_3_EF02LP26 AS (
+  INSERT INTO bncc_habilidades (id, objeto_conhecimento_id, codigo_bncc, descricao, anos, etapa_ensino)
+  SELECT gen_random_uuid(), oc3.id, 'EF02LP26', 'Ler e compreender, com certa autonomia, textos literários, de gêneros variados, desenvolvendo o gosto pela leitura.', '["2º"]'::jsonb, 'anos_iniciais' FROM oc3
 )
 , h_3_EF35LP21 AS (
   INSERT INTO bncc_habilidades (id, objeto_conhecimento_id, codigo_bncc, descricao, anos, etapa_ensino)
@@ -7260,92 +7272,179 @@ WITH ut AS (
 )
 , oc7 AS (
   INSERT INTO bncc_objetos_conhecimento (id, unidade_tematica_id, objeto_conhecimento)
-  SELECT gen_random_uuid(), ut.id, 'Compreensão em leitura' FROM ut
+  SELECT gen_random_uuid(), ut.id, 'Protocolos de leitura' FROM ut
   RETURNING id
 )
-, h_7_EF12LP04 AS (
+, h_7_EF01LP01 AS (
   INSERT INTO bncc_habilidades (id, objeto_conhecimento_id, codigo_bncc, descricao, anos, etapa_ensino)
-  SELECT gen_random_uuid(), oc7.id, 'EF12LP04', 'Ler e compreender, em colaboração com os colegas e com a ajuda do professor ou já com certa autonomia, listas, agendas, calendários, avisos, convites, receitas, instruções de montagem (digitais ou impressos), dentre outros gêneros do campo da vida cotidiana, considerando a situação comunicativa e o tema/assunto do texto e relacionando sua forma de organização à sua finalidade.', '["1º","2º"]'::jsonb, 'anos_iniciais' FROM oc7
-)
-, h_7_EF12LP08 AS (
-  INSERT INTO bncc_habilidades (id, objeto_conhecimento_id, codigo_bncc, descricao, anos, etapa_ensino)
-  SELECT gen_random_uuid(), oc7.id, 'EF12LP08', 'Ler e compreender, em colaboração com os colegas e com a ajuda do professor, fotolegendas em notícias, manchetes e lides em notícias, álbum de fotos digital noticioso e notícias curtas para público infantil, dentre outros gêneros do campo jornalístico, considerando a situação comunicativa e o tema/assunto do texto.', '["1º","2º"]'::jsonb, 'anos_iniciais' FROM oc7
-)
-, h_7_EF12LP17 AS (
-  INSERT INTO bncc_habilidades (id, objeto_conhecimento_id, codigo_bncc, descricao, anos, etapa_ensino)
-  SELECT gen_random_uuid(), oc7.id, 'EF12LP17', 'Ler e compreender, em colaboração com os colegas e com a ajuda do professor, enunciados de tarefas escolares, diagramas, curiosidades, pequenos relatos de experimentos, entrevistas, verbetes de enciclopédia infantil, entre outros gêneros do campo investigativo, considerando a situação comunicativa e o tema/assunto do texto.', '["1º","2º"]'::jsonb, 'anos_iniciais' FROM oc7
+  SELECT gen_random_uuid(), oc7.id, 'EF01LP01', 'Reconhecer que textos são lidos e escritos da esquerda para a direita e de cima para baixo da página.', '["1º"]'::jsonb, 'anos_iniciais' FROM oc7
 )
 , oc8 AS (
-  INSERT INTO bncc_objetos_conhecimento (id, unidade_tematica_id, objeto_conhecimento)
-  SELECT gen_random_uuid(), ut.id, '(EF01LP16) Ler e compreender, em colaboração com os colegas e com a ajuda do professor, quadras, quadrinhas, parlendas, trava-línguas, dentre outros gêneros do campo da vida cotidiana, considerando a situação comunicativa e o tema/assunto do texto e relacionando sua forma de organização à sua finalidade.' FROM ut
-  RETURNING id
-)
-, h_8_EF02LP12 AS (
-  INSERT INTO bncc_habilidades (id, objeto_conhecimento_id, codigo_bncc, descricao, anos, etapa_ensino)
-  SELECT gen_random_uuid(), oc8.id, 'EF02LP12', 'Ler e compreender com certa autonomia cantigas, letras de canção, dentre outros gêneros do campo da vida cotidiana, considerando a situação comunicativa e o tema/assunto do texto e relacionando sua forma de organização à sua finalidade.', '["1º","2º"]'::jsonb, 'anos_iniciais' FROM oc8
-)
-, oc9 AS (
-  INSERT INTO bncc_objetos_conhecimento (id, unidade_tematica_id, objeto_conhecimento)
-  SELECT gen_random_uuid(), ut.id, '(EF01LP18) Registrar, em colaboração com os colegas e com a ajuda do professor, cantigas, quadras, quadrinhas, parlendas, trava-línguas, dentre outros gêneros do campo da vida cotidiana, considerando a situação comunicativa e o tema/assunto/finalidade do texto.' FROM ut
-  RETURNING id
-)
-, h_9_EF02LP14 AS (
-  INSERT INTO bncc_habilidades (id, objeto_conhecimento_id, codigo_bncc, descricao, anos, etapa_ensino)
-  SELECT gen_random_uuid(), oc9.id, 'EF02LP14', 'Planejar e produzir pequenos relatos de observação de processos, de fatos, de experiências pessoais, mantendo as características do gênero, considerando a situação comunicativa e o tema/assunto do texto.', '["1º","2º"]'::jsonb, 'anos_iniciais' FROM oc9
-)
-, oc10 AS (
-  INSERT INTO bncc_objetos_conhecimento (id, unidade_tematica_id, objeto_conhecimento)
-  SELECT gen_random_uuid(), ut.id, 'Escrita compartilhada' FROM ut
-  RETURNING id
-)
-, h_10_EF12LP05 AS (
-  INSERT INTO bncc_habilidades (id, objeto_conhecimento_id, codigo_bncc, descricao, anos, etapa_ensino)
-  SELECT gen_random_uuid(), oc10.id, 'EF12LP05', 'Planejar e produzir, em colaboração com os colegas e com a ajuda do professor, (re)contagens de histórias, poemas e outros textos versificados (letras de canção, quadrinhas, cordel), poemas visuais, tiras e histórias em quadrinhos, dentre outros gêneros do campo artístico-literário, considerando a situação comunicativa e a finalidade do texto.', '["1º","2º"]'::jsonb, 'anos_iniciais' FROM oc10
-)
-, oc11 AS (
-  INSERT INTO bncc_objetos_conhecimento (id, unidade_tematica_id, objeto_conhecimento)
-  SELECT gen_random_uuid(), ut.id, 'Formas de composição de textos poéticos' FROM ut
-  RETURNING id
-)
-, h_11_EF12LP19 AS (
-  INSERT INTO bncc_habilidades (id, objeto_conhecimento_id, codigo_bncc, descricao, anos, etapa_ensino)
-  SELECT gen_random_uuid(), oc11.id, 'EF12LP19', 'Reconhecer, em textos versificados, rimas, sonoridades, jogos de palavras, palavras, expressões, comparações, relacionando-as com sensações e associações.', '["1º","2º"]'::jsonb, 'anos_iniciais' FROM oc11
-)
-, oc12 AS (
   INSERT INTO bncc_objetos_conhecimento (id, unidade_tematica_id, objeto_conhecimento)
   SELECT gen_random_uuid(), ut.id, 'Decodificação/Fluência de leitura' FROM ut
   RETURNING id
 )
-, h_12_EF35LP01 AS (
+, h_8_EF12LP01 AS (
   INSERT INTO bncc_habilidades (id, objeto_conhecimento_id, codigo_bncc, descricao, anos, etapa_ensino)
-  SELECT gen_random_uuid(), oc12.id, 'EF35LP01', 'Ler e compreender, silenciosamente e, em seguida, em voz alta, com autonomia e fluência, textos curtos com nível de textualidade adequado.', '["3º","4º","5º"]'::jsonb, 'anos_iniciais' FROM oc12
+  SELECT gen_random_uuid(), oc8.id, 'EF12LP01', 'Ler palavras novas com precisão na decodificação, no caso de palavras de uso frequente, ler globalmente, por memorização.', '["1º","2º"]'::jsonb, 'anos_iniciais' FROM oc8
 )
-, oc13 AS (
+, h_8_EF35LP01 AS (
+  INSERT INTO bncc_habilidades (id, objeto_conhecimento_id, codigo_bncc, descricao, anos, etapa_ensino)
+  SELECT gen_random_uuid(), oc8.id, 'EF35LP01', 'Ler e compreender, silenciosamente e, em seguida, em voz alta, com autonomia e fluência, textos curtos com nível de textualidade adequado.', '["3º","4º","5º"]'::jsonb, 'anos_iniciais' FROM oc8
+)
+, oc9 AS (
   INSERT INTO bncc_objetos_conhecimento (id, unidade_tematica_id, objeto_conhecimento)
   SELECT gen_random_uuid(), ut.id, 'Formação de leitor' FROM ut
   RETURNING id
 )
-, h_13_EF35LP02 AS (
+, h_9_EF12LP02 AS (
   INSERT INTO bncc_habilidades (id, objeto_conhecimento_id, codigo_bncc, descricao, anos, etapa_ensino)
-  SELECT gen_random_uuid(), oc13.id, 'EF35LP02', 'Selecionar livros da biblioteca e/ou do cantinho de leitura da sala de aula e/ou disponíveis em meios digitais para leitura individual, justificando a escolha e compartilhando com os colegas sua opinião, após a leitura.', '["3º","4º","5º"]'::jsonb, 'anos_iniciais' FROM oc13
+  SELECT gen_random_uuid(), oc9.id, 'EF12LP02', 'Buscar, selecionar e ler, com a mediação do professor (leitura compartilhada), textos que circulam em meios impressos ou digitais, de acordo com as necessidades e interesses.', '["1º","2º"]'::jsonb, 'anos_iniciais' FROM oc9
 )
-, oc14 AS (
+, h_9_EF35LP02 AS (
+  INSERT INTO bncc_habilidades (id, objeto_conhecimento_id, codigo_bncc, descricao, anos, etapa_ensino)
+  SELECT gen_random_uuid(), oc9.id, 'EF35LP02', 'Selecionar livros da biblioteca e/ou do cantinho de leitura da sala de aula e/ou disponíveis em meios digitais para leitura individual, justificando a escolha e compartilhando com os colegas sua opinião, após a leitura.', '["3º","4º","5º"]'::jsonb, 'anos_iniciais' FROM oc9
+)
+, oc10 AS (
+  INSERT INTO bncc_objetos_conhecimento (id, unidade_tematica_id, objeto_conhecimento)
+  SELECT gen_random_uuid(), ut.id, 'Compreensão em leitura' FROM ut
+  RETURNING id
+)
+, h_10_EF12LP04 AS (
+  INSERT INTO bncc_habilidades (id, objeto_conhecimento_id, codigo_bncc, descricao, anos, etapa_ensino)
+  SELECT gen_random_uuid(), oc10.id, 'EF12LP04', 'Ler e compreender, em colaboração com os colegas e com a ajuda do professor ou já com certa autonomia, listas, agendas, calendários, avisos, convites, receitas, instruções de montagem (digitais ou impressos), dentre outros gêneros do campo da vida cotidiana, considerando a situação comunicativa e o tema/assunto do texto e relacionando sua forma de organização à sua finalidade.', '["1º","2º"]'::jsonb, 'anos_iniciais' FROM oc10
+)
+, h_10_EF01LP16 AS (
+  INSERT INTO bncc_habilidades (id, objeto_conhecimento_id, codigo_bncc, descricao, anos, etapa_ensino)
+  SELECT gen_random_uuid(), oc10.id, 'EF01LP16', 'Ler e compreender, em colaboração com os colegas e com a ajuda do professor, quadras, quadrinhas, parlendas, trava-línguas, dentre outros gêneros do campo da vida cotidiana, considerando a situação comunicativa e o tema/assunto do texto e relacionando sua forma de organização à sua finalidade.', '["1º"]'::jsonb, 'anos_iniciais' FROM oc10
+)
+, h_10_EF02LP12 AS (
+  INSERT INTO bncc_habilidades (id, objeto_conhecimento_id, codigo_bncc, descricao, anos, etapa_ensino)
+  SELECT gen_random_uuid(), oc10.id, 'EF02LP12', 'Ler e compreender com certa autonomia cantigas, letras de canção, dentre outros gêneros do campo da vida cotidiana, considerando a situação comunicativa e o tema/assunto do texto e relacionando sua forma de organização à sua finalidade.', '["2º"]'::jsonb, 'anos_iniciais' FROM oc10
+)
+, h_10_EF12LP08 AS (
+  INSERT INTO bncc_habilidades (id, objeto_conhecimento_id, codigo_bncc, descricao, anos, etapa_ensino)
+  SELECT gen_random_uuid(), oc10.id, 'EF12LP08', 'Ler e compreender, em colaboração com os colegas e com a ajuda do professor, fotolegendas em notícias, manchetes e lides em notícias, álbum de fotos digital noticioso e notícias curtas para público infantil, dentre outros gêneros do campo jornalístico, considerando a situação comunicativa e o tema/assunto do texto.', '["1º","2º"]'::jsonb, 'anos_iniciais' FROM oc10
+)
+, h_10_EF12LP09 AS (
+  INSERT INTO bncc_habilidades (id, objeto_conhecimento_id, codigo_bncc, descricao, anos, etapa_ensino)
+  SELECT gen_random_uuid(), oc10.id, 'EF12LP09', 'Ler e compreender, em colaboração com os colegas e com a ajuda do professor, slogans, anúncios publicitários e textos de campanhas de conscientização destinados ao público infantil, dentre outros gêneros do campo publicitário, considerando a situação comunicativa e o tema/assunto do texto.', '["1º","2º"]'::jsonb, 'anos_iniciais' FROM oc10
+)
+, h_10_EF12LP10 AS (
+  INSERT INTO bncc_habilidades (id, objeto_conhecimento_id, codigo_bncc, descricao, anos, etapa_ensino)
+  SELECT gen_random_uuid(), oc10.id, 'EF12LP10', 'Ler e compreender, em colaboração com os colegas e com a ajuda do professor, cartazes, avisos, folhetos, regras e regulamentos que organizam a vida na comunidade escolar, dentre outros gêneros do campo da atuação cidadã, considerando a situação comunicativa e o tema/assunto do texto.', '["1º","2º"]'::jsonb, 'anos_iniciais' FROM oc10
+)
+, h_10_EF12LP17 AS (
+  INSERT INTO bncc_habilidades (id, objeto_conhecimento_id, codigo_bncc, descricao, anos, etapa_ensino)
+  SELECT gen_random_uuid(), oc10.id, 'EF12LP17', 'Ler e compreender, em colaboração com os colegas e com a ajuda do professor, enunciados de tarefas escolares, diagramas, curiosidades, pequenos relatos de experimentos, entrevistas, verbetes de enciclopédia infantil, entre outros gêneros do campo investigativo, considerando a situação comunicativa e o tema/assunto do texto.', '["1º","2º"]'::jsonb, 'anos_iniciais' FROM oc10
+)
+, h_10_EF03LP11 AS (
+  INSERT INTO bncc_habilidades (id, objeto_conhecimento_id, codigo_bncc, descricao, anos, etapa_ensino)
+  SELECT gen_random_uuid(), oc10.id, 'EF03LP11', 'Ler e compreender, com autonomia, textos injuntivos instrucionais (receitas, instruções de montagem etc.), com a estrutura própria desses textos (verbos imperativos, indicação de passos a ser seguidos) e mesclando palavras, imagens e recursos gráficovisuais, considerando a situação comunicativa e o tema/assunto do texto.', '["3º"]'::jsonb, 'anos_iniciais' FROM oc10
+)
+, h_10_EF04LP09 AS (
+  INSERT INTO bncc_habilidades (id, objeto_conhecimento_id, codigo_bncc, descricao, anos, etapa_ensino)
+  SELECT gen_random_uuid(), oc10.id, 'EF04LP09', 'Ler e compreender, com autonomia, boletos, faturas e carnês, dentre outros gêneros do campo da vida cotidiana, de acordo com as convenções do gênero (campos, itens elencados, medidas de consumo, código de barras) e considerando a situação comunicativa e a finalidade do texto.', '["4º"]'::jsonb, 'anos_iniciais' FROM oc10
+)
+, h_10_EF05LP09 AS (
+  INSERT INTO bncc_habilidades (id, objeto_conhecimento_id, codigo_bncc, descricao, anos, etapa_ensino)
+  SELECT gen_random_uuid(), oc10.id, 'EF05LP09', 'Ler e compreender, com autonomia, textos instrucional de regras de jogo, dentre outros gêneros do campo da vida cotidiana, de acordo com as convenções do gênero e considerando a situação comunicativa e a finalidade do texto.', '["5º"]'::jsonb, 'anos_iniciais' FROM oc10
+)
+, h_10_EF03LP12 AS (
+  INSERT INTO bncc_habilidades (id, objeto_conhecimento_id, codigo_bncc, descricao, anos, etapa_ensino)
+  SELECT gen_random_uuid(), oc10.id, 'EF03LP12', 'Ler e compreender, com autonomia, cartas pessoais e diários, com expressão de sentimentos e opiniões, dentre outros gêneros do campo da vida cotidiana, de acordo com as convenções do gênero carta e considerando a situação comunicativa e o tema/assunto do texto.', '["3º"]'::jsonb, 'anos_iniciais' FROM oc10
+)
+, h_10_EF04LP10 AS (
+  INSERT INTO bncc_habilidades (id, objeto_conhecimento_id, codigo_bncc, descricao, anos, etapa_ensino)
+  SELECT gen_random_uuid(), oc10.id, 'EF04LP10', 'Ler e compreender, com autonomia, cartas pessoais de reclamação, dentre outros gêneros do campo da vida cotidiana, de acordo com as convenções do gênero carta e considerando a situação comunicativa e o tema/assunto/finalidade do texto.', '["4º"]'::jsonb, 'anos_iniciais' FROM oc10
+)
+, h_10_EF05LP10 AS (
+  INSERT INTO bncc_habilidades (id, objeto_conhecimento_id, codigo_bncc, descricao, anos, etapa_ensino)
+  SELECT gen_random_uuid(), oc10.id, 'EF05LP10', 'Ler e compreender, com autonomia, anedotas, piadas e cartuns, dentre outros gêneros do campo da vida cotidiana, de acordo com as convenções do gênero e considerando a situação comunicativa e a finalidade do texto.', '["5º"]'::jsonb, 'anos_iniciais' FROM oc10
+)
+, h_10_EF03LP18 AS (
+  INSERT INTO bncc_habilidades (id, objeto_conhecimento_id, codigo_bncc, descricao, anos, etapa_ensino)
+  SELECT gen_random_uuid(), oc10.id, 'EF03LP18', 'Ler e compreender, com autonomia, cartas dirigidas a veículos da mídia impressa ou digital (cartas de leitor e de reclamação a jornais, revistas) e notícias, dentre outros gêneros do campo jornalístico, de acordo com as convenções do gênero carta e considerando a situação comunicativa e o tema/assunto do texto.', '["3º"]'::jsonb, 'anos_iniciais' FROM oc10
+)
+, h_10_EF04LP14 AS (
+  INSERT INTO bncc_habilidades (id, objeto_conhecimento_id, codigo_bncc, descricao, anos, etapa_ensino)
+  SELECT gen_random_uuid(), oc10.id, 'EF04LP14', 'Identificar, em notícias, fatos, participantes, local e momento/tempo da ocorrência do fato noticiado.', '["4º"]'::jsonb, 'anos_iniciais' FROM oc10
+)
+, h_10_EF05LP15 AS (
+  INSERT INTO bncc_habilidades (id, objeto_conhecimento_id, codigo_bncc, descricao, anos, etapa_ensino)
+  SELECT gen_random_uuid(), oc10.id, 'EF05LP15', 'Ler/assistir e compreender, com autonomia, notícias, reportagens, vídeos em vlogs argumentativos, dentre outros gêneros do campo político-cidadão, de acordo com as convenções dos gêneros e considerando a situação comunicativa e o tema/assunto do texto.', '["5º"]'::jsonb, 'anos_iniciais' FROM oc10
+)
+, h_10_EF03LP19 AS (
+  INSERT INTO bncc_habilidades (id, objeto_conhecimento_id, codigo_bncc, descricao, anos, etapa_ensino)
+  SELECT gen_random_uuid(), oc10.id, 'EF03LP19', 'Identificar e discutir o propósito do uso de recursos de persuasão (cores, imagens, escolha de palavras, jogo de palavras, tamanho de letras) em textos publicitários e de propaganda, como elementos de convencimento.', '["3º"]'::jsonb, 'anos_iniciais' FROM oc10
+)
+, h_10_EF04LP15 AS (
+  INSERT INTO bncc_habilidades (id, objeto_conhecimento_id, codigo_bncc, descricao, anos, etapa_ensino)
+  SELECT gen_random_uuid(), oc10.id, 'EF04LP15', 'Distinguir fatos de opiniões/sugestões em textos (informativos, jornalísticos, publicitários etc.).', '["4º"]'::jsonb, 'anos_iniciais' FROM oc10
+)
+, h_10_EF05LP16 AS (
+  INSERT INTO bncc_habilidades (id, objeto_conhecimento_id, codigo_bncc, descricao, anos, etapa_ensino)
+  SELECT gen_random_uuid(), oc10.id, 'EF05LP16', 'Comparar informações sobre um mesmo fato veiculadas em diferentes mídias e concluir sobre qual é mais confiável e por quê.', '["5º"]'::jsonb, 'anos_iniciais' FROM oc10
+)
+, h_10_EF03LP24 AS (
+  INSERT INTO bncc_habilidades (id, objeto_conhecimento_id, codigo_bncc, descricao, anos, etapa_ensino)
+  SELECT gen_random_uuid(), oc10.id, 'EF03LP24', 'Ler/ouvir e compreender, com autonomia, relatos de observações e de pesquisas em fontes de informações, considerando a situação comunicativa e o tema/assunto do texto.', '["3º"]'::jsonb, 'anos_iniciais' FROM oc10
+)
+, h_10_EF04LP19 AS (
+  INSERT INTO bncc_habilidades (id, objeto_conhecimento_id, codigo_bncc, descricao, anos, etapa_ensino)
+  SELECT gen_random_uuid(), oc10.id, 'EF04LP19', 'Ler e compreender textos expositivos de divulgação científica para crianças, considerando a situação comunicativa e o tema/assunto do texto.', '["4º"]'::jsonb, 'anos_iniciais' FROM oc10
+)
+, h_10_EF05LP22 AS (
+  INSERT INTO bncc_habilidades (id, objeto_conhecimento_id, codigo_bncc, descricao, anos, etapa_ensino)
+  SELECT gen_random_uuid(), oc10.id, 'EF05LP22', 'Ler e compreender verbetes de dicionário, identificando a estrutura, as informações gramaticais (significado de abreviaturas) e as informações semânticas.', '["5º"]'::jsonb, 'anos_iniciais' FROM oc10
+)
+, oc11 AS (
+  INSERT INTO bncc_objetos_conhecimento (id, unidade_tematica_id, objeto_conhecimento)
+  SELECT gen_random_uuid(), ut.id, 'Imagens analíticas em textos' FROM ut
+  RETURNING id
+)
+, h_11_EF02LP20 AS (
+  INSERT INTO bncc_habilidades (id, objeto_conhecimento_id, codigo_bncc, descricao, anos, etapa_ensino)
+  SELECT gen_random_uuid(), oc11.id, 'EF02LP20', 'Reconhecer a função de textos utilizados para apresentar informações coletadas em atividades de pesquisa (enquetes, pequenas entrevistas, registros de experimentações).', '["2º"]'::jsonb, 'anos_iniciais' FROM oc11
+)
+, h_11_EF04LP20 AS (
+  INSERT INTO bncc_habilidades (id, objeto_conhecimento_id, codigo_bncc, descricao, anos, etapa_ensino)
+  SELECT gen_random_uuid(), oc11.id, 'EF04LP20', 'Reconhecer a função de gráficos, diagramas e tabelas em textos, como forma de apresentação de dados e informações.', '["4º"]'::jsonb, 'anos_iniciais' FROM oc11
+)
+, h_11_EF05LP23 AS (
+  INSERT INTO bncc_habilidades (id, objeto_conhecimento_id, codigo_bncc, descricao, anos, etapa_ensino)
+  SELECT gen_random_uuid(), oc11.id, 'EF05LP23', 'Comparar informações apresentadas em gráficos ou tabelas.', '["5º"]'::jsonb, 'anos_iniciais' FROM oc11
+)
+, oc12 AS (
+  INSERT INTO bncc_objetos_conhecimento (id, unidade_tematica_id, objeto_conhecimento)
+  SELECT gen_random_uuid(), ut.id, 'Pesquisa' FROM ut
+  RETURNING id
+)
+, h_12_EF02LP21 AS (
+  INSERT INTO bncc_habilidades (id, objeto_conhecimento_id, codigo_bncc, descricao, anos, etapa_ensino)
+  SELECT gen_random_uuid(), oc12.id, 'EF02LP21', 'Explorar, com a mediação do professor, textos informativos de diferentes ambientes digitais de pesquisa, conhecendo suas possibilidades.', '["2º"]'::jsonb, 'anos_iniciais' FROM oc12
+)
+, h_12_EF35LP17 AS (
+  INSERT INTO bncc_habilidades (id, objeto_conhecimento_id, codigo_bncc, descricao, anos, etapa_ensino)
+  SELECT gen_random_uuid(), oc12.id, 'EF35LP17', 'Buscar e selecionar, com o apoio do professor, informações de interesse sobre fenômenos sociais e naturais, em textos que circulam em meios impressos ou digitais.', '["3º","4º","5º"]'::jsonb, 'anos_iniciais' FROM oc12
+)
+, oc13 AS (
   INSERT INTO bncc_objetos_conhecimento (id, unidade_tematica_id, objeto_conhecimento)
   SELECT gen_random_uuid(), ut.id, 'Compreensão' FROM ut
   RETURNING id
 )
-, h_14_EF35LP03 AS (
+, h_13_EF35LP03 AS (
   INSERT INTO bncc_habilidades (id, objeto_conhecimento_id, codigo_bncc, descricao, anos, etapa_ensino)
-  SELECT gen_random_uuid(), oc14.id, 'EF35LP03', 'Identificar a ideia central do texto, demonstrando compreensão global.', '["3º","4º","5º"]'::jsonb, 'anos_iniciais' FROM oc14
+  SELECT gen_random_uuid(), oc13.id, 'EF35LP03', 'Identificar a ideia central do texto, demonstrando compreensão global.', '["3º","4º","5º"]'::jsonb, 'anos_iniciais' FROM oc13
 )
-, oc15 AS (
+, oc14 AS (
   INSERT INTO bncc_objetos_conhecimento (id, unidade_tematica_id, objeto_conhecimento)
   SELECT gen_random_uuid(), ut.id, 'Textos dramáticos' FROM ut
   RETURNING id
 )
-, h_15_EF35LP24 AS (
+, h_14_EF35LP24 AS (
   INSERT INTO bncc_habilidades (id, objeto_conhecimento_id, codigo_bncc, descricao, anos, etapa_ensino)
-  SELECT gen_random_uuid(), oc15.id, 'EF35LP24', 'Identificar funções do texto dramático (escrito para ser encenado) e sua organização por meio de diálogos entre personagens e marcadores das falas das personagens e de cena.', '["3º","4º","5º"]'::jsonb, 'anos_iniciais' FROM oc15
+  SELECT gen_random_uuid(), oc14.id, 'EF35LP24', 'Identificar funções do texto dramático (escrito para ser encenado) e sua organização por meio de diálogos entre personagens e marcadores das falas das personagens e de cena.', '["3º","4º","5º"]'::jsonb, 'anos_iniciais' FROM oc14
 )
 SELECT 1;
 
@@ -7420,21 +7519,87 @@ WITH ut AS (
 )
 , oc7 AS (
   INSERT INTO bncc_objetos_conhecimento (id, unidade_tematica_id, objeto_conhecimento)
-  SELECT gen_random_uuid(), ut.id, 'Escrita autônoma e compartilhada' FROM ut
+  SELECT gen_random_uuid(), ut.id, 'Escrita colaborativa' FROM ut
   RETURNING id
 )
-, h_7_EF35LP25 AS (
+, h_7_EF03LP13 AS (
   INSERT INTO bncc_habilidades (id, objeto_conhecimento_id, codigo_bncc, descricao, anos, etapa_ensino)
-  SELECT gen_random_uuid(), oc7.id, 'EF35LP25', 'Criar narrativas ficcionais, com certa autonomia, utilizando detalhes descritivos, sequências de eventos e imagens apropriadas para sustentar o sentido do texto, e marcadores de tempo, espaço e de fala de personagens.', '["3º","4º","5º"]'::jsonb, 'anos_iniciais' FROM oc7
+  SELECT gen_random_uuid(), oc7.id, 'EF03LP13', 'Planejar e produzir cartas pessoais e diários, com expressão de sentimentos e opiniões, dentre outros gêneros do campo da vida cotidiana, de acordo com as convenções dos gêneros carta e diário e considerando a situação comunicativa e o tema/assunto do texto.', '["3º"]'::jsonb, 'anos_iniciais' FROM oc7
+)
+, h_7_EF04LP11 AS (
+  INSERT INTO bncc_habilidades (id, objeto_conhecimento_id, codigo_bncc, descricao, anos, etapa_ensino)
+  SELECT gen_random_uuid(), oc7.id, 'EF04LP11', 'Planejar e produzir, com autonomia, cartas pessoais de reclamação, dentre outros gêneros do campo da vida cotidiana, de acordo com as convenções do gênero carta e com a estrutura própria desses textos (problema, opinião, argumentos), considerando a situação comunicativa e o tema/assunto/finalidade do texto.', '["4º"]'::jsonb, 'anos_iniciais' FROM oc7
+)
+, h_7_EF05LP11 AS (
+  INSERT INTO bncc_habilidades (id, objeto_conhecimento_id, codigo_bncc, descricao, anos, etapa_ensino)
+  SELECT gen_random_uuid(), oc7.id, 'EF05LP11', 'Registrar, com autonomia, anedotas, piadas e cartuns, dentre outros gêneros do campo da vida cotidiana, de acordo com as convenções do gênero e considerando a situação comunicativa e a finalidade do texto.', '["5º"]'::jsonb, 'anos_iniciais' FROM oc7
+)
+, h_7_EF03LP20 AS (
+  INSERT INTO bncc_habilidades (id, objeto_conhecimento_id, codigo_bncc, descricao, anos, etapa_ensino)
+  SELECT gen_random_uuid(), oc7.id, 'EF03LP20', 'Produzir cartas dirigidas a veículos da mídia impressa ou digital (cartas do leitor ou de reclamação a jornais ou revistas), dentre outros gêneros do campo político-cidadão, com opiniões e críticas, de acordo com as convenções do gênero carta e considerando a situação comunicativa e o tema/assunto do texto.', '["3º"]'::jsonb, 'anos_iniciais' FROM oc7
+)
+, h_7_EF04LP16 AS (
+  INSERT INTO bncc_habilidades (id, objeto_conhecimento_id, codigo_bncc, descricao, anos, etapa_ensino)
+  SELECT gen_random_uuid(), oc7.id, 'EF04LP16', 'Produzir notícias sobre fatos ocorridos no universo escolar, digitais ou impressas, para o jornal da escola, noticiando os fatos e seus atores e comentando decorrências, de acordo com as convenções do gênero notícia e considerando a situação comunicativa e o tema/assunto do texto.', '["4º"]'::jsonb, 'anos_iniciais' FROM oc7
+)
+, h_7_EF05LP17 AS (
+  INSERT INTO bncc_habilidades (id, objeto_conhecimento_id, codigo_bncc, descricao, anos, etapa_ensino)
+  SELECT gen_random_uuid(), oc7.id, 'EF05LP17', 'Produzir roteiro para edição de uma reportagem digital sobre temas de interesse da turma, a partir de buscas de informações, imagens, áudios e vídeos na internet, de acordo com as convenções do gênero e considerando a situação comunicativa e o tema/assunto do texto.', '["5º"]'::jsonb, 'anos_iniciais' FROM oc7
+)
+, h_7_EF03LP21 AS (
+  INSERT INTO bncc_habilidades (id, objeto_conhecimento_id, codigo_bncc, descricao, anos, etapa_ensino)
+  SELECT gen_random_uuid(), oc7.id, 'EF03LP21', 'Produzir anúncios publicitários, textos de campanhas de conscientização destinados ao público infantil, observando os recursos de persuasão utilizados nos textos publicitários e de propaganda (cores, imagens, slogan, escolha de palavras, jogo de palavras, tamanho e tipo de letras, diagramação).', '["3º"]'::jsonb, 'anos_iniciais' FROM oc7
+)
+, h_7_EF35LP15 AS (
+  INSERT INTO bncc_habilidades (id, objeto_conhecimento_id, codigo_bncc, descricao, anos, etapa_ensino)
+  SELECT gen_random_uuid(), oc7.id, 'EF35LP15', 'Opinar e defender ponto de vista sobre tema polêmico relacionado a situações vivenciadas na escola e/ou na comunidade, utilizando registro formal e estrutura adequada à argumentação, considerando a situação comunicativa e o tema/assunto do texto.', '["3º","4º","5º"]'::jsonb, 'anos_iniciais' FROM oc7
 )
 , oc8 AS (
+  INSERT INTO bncc_objetos_conhecimento (id, unidade_tematica_id, objeto_conhecimento)
+  SELECT gen_random_uuid(), ut.id, 'Produção de textos' FROM ut
+  RETURNING id
+)
+, h_8_EF03LP25 AS (
+  INSERT INTO bncc_habilidades (id, objeto_conhecimento_id, codigo_bncc, descricao, anos, etapa_ensino)
+  SELECT gen_random_uuid(), oc8.id, 'EF03LP25', 'Planejar e produzir textos para apresentar resultados de observações e de pesquisas em fontes de informações, incluindo, quando pertinente, imagens, diagramas e gráficos ou tabelas simples, considerando a situação comunicativa e o tema/assunto do texto.', '["3º"]'::jsonb, 'anos_iniciais' FROM oc8
+)
+, h_8_EF04LP21 AS (
+  INSERT INTO bncc_habilidades (id, objeto_conhecimento_id, codigo_bncc, descricao, anos, etapa_ensino)
+  SELECT gen_random_uuid(), oc8.id, 'EF04LP21', 'Planejar e produzir textos sobre temas de interesse, com base em resultados de observações e pesquisas em fontes de informações impressas ou eletrônicas, incluindo, quando pertinente, imagens e gráficos ou tabelas simples, considerando a situação comunicativa e o tema/assunto do texto.', '["4º"]'::jsonb, 'anos_iniciais' FROM oc8
+)
+, h_8_EF05LP24 AS (
+  INSERT INTO bncc_habilidades (id, objeto_conhecimento_id, codigo_bncc, descricao, anos, etapa_ensino)
+  SELECT gen_random_uuid(), oc8.id, 'EF05LP24', 'Planejar e produzir texto sobre tema de interesse, organizando resultados de pesquisa em fontes de informação impressas ou digitais, incluindo imagens e gráficos ou tabelas, considerando a situação comunicativa e o tema/assunto do texto.', '["5º"]'::jsonb, 'anos_iniciais' FROM oc8
+)
+, oc9 AS (
   INSERT INTO bncc_objetos_conhecimento (id, unidade_tematica_id, objeto_conhecimento)
   SELECT gen_random_uuid(), ut.id, 'Escrita autônoma' FROM ut
   RETURNING id
 )
-, h_8_EF35LP27 AS (
+, h_9_EF04LP22 AS (
   INSERT INTO bncc_habilidades (id, objeto_conhecimento_id, codigo_bncc, descricao, anos, etapa_ensino)
-  SELECT gen_random_uuid(), oc8.id, 'EF35LP27', 'Ler e compreender, com certa autonomia, textos em versos, explorando rimas, sons e jogos de palavras, imagens poéticas (sentidos figurados) e recursos visuais e sonoros.', '["3º","4º","5º"]'::jsonb, 'anos_iniciais' FROM oc8
+  SELECT gen_random_uuid(), oc9.id, 'EF04LP22', 'Planejar e produzir, com certa autonomia, verbetes de enciclopédia infantil, digitais ou impressos, considerando a situação comunicativa e o tema/assunto/finalidade do texto.', '["4º"]'::jsonb, 'anos_iniciais' FROM oc9
+)
+, h_9_EF05LP25 AS (
+  INSERT INTO bncc_habilidades (id, objeto_conhecimento_id, codigo_bncc, descricao, anos, etapa_ensino)
+  SELECT gen_random_uuid(), oc9.id, 'EF05LP25', 'Planejar e produzir, com certa autonomia, verbetes de dicionário, digitais ou impressos, considerando a situação comunicativa e o tema/assunto/finalidade do texto.', '["5º"]'::jsonb, 'anos_iniciais' FROM oc9
+)
+, h_9_EF35LP27 AS (
+  INSERT INTO bncc_habilidades (id, objeto_conhecimento_id, codigo_bncc, descricao, anos, etapa_ensino)
+  SELECT gen_random_uuid(), oc9.id, 'EF35LP27', 'Ler e compreender, com certa autonomia, textos em versos, explorando rimas, sons e jogos de palavras, imagens poéticas (sentidos figurados) e recursos visuais e sonoros.', '["3º","4º","5º"]'::jsonb, 'anos_iniciais' FROM oc9
+)
+, oc10 AS (
+  INSERT INTO bncc_objetos_conhecimento (id, unidade_tematica_id, objeto_conhecimento)
+  SELECT gen_random_uuid(), ut.id, 'Escrita autônoma e compartilhada' FROM ut
+  RETURNING id
+)
+, h_10_EF35LP25 AS (
+  INSERT INTO bncc_habilidades (id, objeto_conhecimento_id, codigo_bncc, descricao, anos, etapa_ensino)
+  SELECT gen_random_uuid(), oc10.id, 'EF35LP25', 'Criar narrativas ficcionais, com certa autonomia, utilizando detalhes descritivos, sequências de eventos e imagens apropriadas para sustentar o sentido do texto, e marcadores de tempo, espaço e de fala de personagens.', '["3º","4º","5º"]'::jsonb, 'anos_iniciais' FROM oc10
+)
+, h_10_EF35LP26 AS (
+  INSERT INTO bncc_habilidades (id, objeto_conhecimento_id, codigo_bncc, descricao, anos, etapa_ensino)
+  SELECT gen_random_uuid(), oc10.id, 'EF35LP26', 'Ler e compreender, com certa autonomia, narrativas ficcionais que apresentem cenários e personagens, observando os elementos da estrutura narrativa: enredo, tempo, espaço, personagens, narrador e a construção do discurso indireto e discurso direto.', '["3º","4º","5º"]'::jsonb, 'anos_iniciais' FROM oc10
 )
 SELECT 1;
 
@@ -7507,14 +7672,46 @@ WITH ut AS (
   INSERT INTO bncc_habilidades (id, objeto_conhecimento_id, codigo_bncc, descricao, anos, etapa_ensino)
   SELECT gen_random_uuid(), oc6.id, 'EF12LP06', 'Planejar e produzir, em colaboração com os colegas e com a ajuda do professor, recados, avisos, convites, receitas, instruções de montagem, dentre outros gêneros do campo da vida cotidiana, que possam ser repassados oralmente por meio de ferramentas digitais, em áudio ou vídeo, considerando a situação comunicativa e o tema/assunto/finalidade do texto.', '["1º","2º"]'::jsonb, 'anos_iniciais' FROM oc6
 )
+, h_6_EF01LP19 AS (
+  INSERT INTO bncc_habilidades (id, objeto_conhecimento_id, codigo_bncc, descricao, anos, etapa_ensino)
+  SELECT gen_random_uuid(), oc6.id, 'EF01LP19', 'Recitar parlendas, quadras, quadrinhas, trava-línguas, com entonação adequada e observando as rimas.', '["1º"]'::jsonb, 'anos_iniciais' FROM oc6
+)
+, h_6_EF02LP15 AS (
+  INSERT INTO bncc_habilidades (id, objeto_conhecimento_id, codigo_bncc, descricao, anos, etapa_ensino)
+  SELECT gen_random_uuid(), oc6.id, 'EF02LP15', 'Cantar cantigas e canções, obedecendo ao ritmo e à melodia.', '["2º"]'::jsonb, 'anos_iniciais' FROM oc6
+)
+, h_6_EF02LP19 AS (
+  INSERT INTO bncc_habilidades (id, objeto_conhecimento_id, codigo_bncc, descricao, anos, etapa_ensino)
+  SELECT gen_random_uuid(), oc6.id, 'EF02LP19', 'Planejar e produzir, em colaboração com os colegas e com a ajuda do professor, notícias curtas para público infantil, para compor jornal falado que possa ser repassado oralmente ou em meio digital, em áudio ou vídeo, dentre outros gêneros do campo jornalístico, considerando a situação comunicativa e o tema/assunto do texto.', '["2º"]'::jsonb, 'anos_iniciais' FROM oc6
+)
+, h_6_EF12LP13 AS (
+  INSERT INTO bncc_habilidades (id, objeto_conhecimento_id, codigo_bncc, descricao, anos, etapa_ensino)
+  SELECT gen_random_uuid(), oc6.id, 'EF12LP13', 'Planejar, em colaboração com os colegas e com a ajuda do professor, slogans e peça de campanha de conscientização destinada ao público infantil que possam ser repassados oralmente por meio de ferramentas digitais, em áudio ou vídeo, considerando a situação comunicativa e o tema/assunto/finalidade do texto.', '["1º","2º"]'::jsonb, 'anos_iniciais' FROM oc6
+)
+, h_6_EF03LP15 AS (
+  INSERT INTO bncc_habilidades (id, objeto_conhecimento_id, codigo_bncc, descricao, anos, etapa_ensino)
+  SELECT gen_random_uuid(), oc6.id, 'EF03LP15', 'Assistir, em vídeo digital, a programa de culinária infantil e, a partir dele, planejar e produzir receitas em áudio ou vídeo.', '["3º"]'::jsonb, 'anos_iniciais' FROM oc6
+)
+, h_6_EF04LP12 AS (
+  INSERT INTO bncc_habilidades (id, objeto_conhecimento_id, codigo_bncc, descricao, anos, etapa_ensino)
+  SELECT gen_random_uuid(), oc6.id, 'EF04LP12', 'Assistir, em vídeo digital, a programa infantil com instruções de montagem, de jogos e brincadeiras e, a partir dele, planejar e produzir tutoriais em áudio ou vídeo.', '["4º"]'::jsonb, 'anos_iniciais' FROM oc6
+)
+, h_6_EF05LP13 AS (
+  INSERT INTO bncc_habilidades (id, objeto_conhecimento_id, codigo_bncc, descricao, anos, etapa_ensino)
+  SELECT gen_random_uuid(), oc6.id, 'EF05LP13', 'Assistir, em vídeo digital, a postagem de vlog infantil de críticas de brinquedos e livros de literatura infantil e, a partir dele, planejar e produzir resenhas digitais em áudio ou vídeo.', '["5º"]'::jsonb, 'anos_iniciais' FROM oc6
+)
 , oc7 AS (
   INSERT INTO bncc_objetos_conhecimento (id, unidade_tematica_id, objeto_conhecimento)
-  SELECT gen_random_uuid(), ut.id, '(EF01LP19) Recitar parlendas, quadras, quadrinhas, trava-línguas, com entonação adequada e observando as rimas.' FROM ut
+  SELECT gen_random_uuid(), ut.id, 'Planejamento de texto oral Exposição oral' FROM ut
   RETURNING id
 )
-, h_7_EF02LP15 AS (
+, h_7_EF01LP23 AS (
   INSERT INTO bncc_habilidades (id, objeto_conhecimento_id, codigo_bncc, descricao, anos, etapa_ensino)
-  SELECT gen_random_uuid(), oc7.id, 'EF02LP15', 'Cantar cantigas e canções, obedecendo ao ritmo e à melodia.', '["1º","2º"]'::jsonb, 'anos_iniciais' FROM oc7
+  SELECT gen_random_uuid(), oc7.id, 'EF01LP23', 'Planejar e produzir, em colaboração com os colegas e com a ajuda do professor, entrevistas, curiosidades, dentre outros gêneros do campo investigativo, que possam ser repassados oralmente por meio de ferramentas digitais, em áudio ou vídeo, considerando a situação comunicativa e o tema/assunto/finalidade do texto.', '["1º"]'::jsonb, 'anos_iniciais' FROM oc7
+)
+, h_7_EF02LP24 AS (
+  INSERT INTO bncc_habilidades (id, objeto_conhecimento_id, codigo_bncc, descricao, anos, etapa_ensino)
+  SELECT gen_random_uuid(), oc7.id, 'EF02LP24', 'Planejar e produzir, em colaboração com os colegas e com a ajuda do professor, relatos de experimentos, registros de observação, entrevistas, dentre outros gêneros do campo investigativo, que possam ser repassados oralmente por meio de ferramentas digitais, em áudio ou vídeo, considerando a situação comunicativa e o tema/assunto/finalidade do texto.', '["2º"]'::jsonb, 'anos_iniciais' FROM oc7
 )
 , oc8 AS (
   INSERT INTO bncc_objetos_conhecimento (id, unidade_tematica_id, objeto_conhecimento)
@@ -7536,73 +7733,78 @@ WITH ut AS (
 )
 , oc10 AS (
   INSERT INTO bncc_objetos_conhecimento (id, unidade_tematica_id, objeto_conhecimento)
+  SELECT gen_random_uuid(), ut.id, 'Planejamento e produção de texto' FROM ut
+  RETURNING id
+)
+, h_10_EF03LP22 AS (
+  INSERT INTO bncc_habilidades (id, objeto_conhecimento_id, codigo_bncc, descricao, anos, etapa_ensino)
+  SELECT gen_random_uuid(), oc10.id, 'EF03LP22', 'Planejar e produzir, em colaboração com os colegas, telejornal para público infantil com algumas notícias e textos de campanhas que possam ser repassados oralmente ou em meio digital, em áudio ou vídeo, considerando a situação comunicativa, a organização específica da fala nesses gêneros e o tema/assunto/finalidade dos textos.', '["3º"]'::jsonb, 'anos_iniciais' FROM oc10
+)
+, h_10_EF04LP17 AS (
+  INSERT INTO bncc_habilidades (id, objeto_conhecimento_id, codigo_bncc, descricao, anos, etapa_ensino)
+  SELECT gen_random_uuid(), oc10.id, 'EF04LP17', 'Produzir jornais radiofônicos ou televisivos e entrevistas veiculadas em rádio, TV e na internet, orientando-se por roteiro ou texto e demonstrando conhecimento dos gêneros jornal falado/televisivo e entrevista.', '["4º"]'::jsonb, 'anos_iniciais' FROM oc10
+)
+, h_10_EF05LP18 AS (
+  INSERT INTO bncc_habilidades (id, objeto_conhecimento_id, codigo_bncc, descricao, anos, etapa_ensino)
+  SELECT gen_random_uuid(), oc10.id, 'EF05LP18', 'Roteirizar, produzir e editar vídeo para vlogs argumentativos sobre produtos de mídia para público infantil (filmes, desenhos animados, HQs, games etc.), com base em conhecimentos sobre os mesmos, de acordo com as convenções do gênero e considerando a situação comunicativa e o tema/assunto/finalidade do texto.', '["5º"]'::jsonb, 'anos_iniciais' FROM oc10
+)
+, oc11 AS (
+  INSERT INTO bncc_objetos_conhecimento (id, unidade_tematica_id, objeto_conhecimento)
+  SELECT gen_random_uuid(), ut.id, 'Produção de texto' FROM ut
+  RETURNING id
+)
+, h_11_EF05LP19 AS (
+  INSERT INTO bncc_habilidades (id, objeto_conhecimento_id, codigo_bncc, descricao, anos, etapa_ensino)
+  SELECT gen_random_uuid(), oc11.id, 'EF05LP19', 'Argumentar oralmente sobre acontecimentos de interesse social, com base em conhecimentos sobre fatos divulgados em TV, rádio, mídia impressa e digital, respeitando pontos de vista diferentes.', '["5º"]'::jsonb, 'anos_iniciais' FROM oc11
+)
+, oc12 AS (
+  INSERT INTO bncc_objetos_conhecimento (id, unidade_tematica_id, objeto_conhecimento)
   SELECT gen_random_uuid(), ut.id, 'Escuta de textos orais' FROM ut
   RETURNING id
 )
-, h_10_EF35LP18 AS (
+, h_12_EF35LP18 AS (
   INSERT INTO bncc_habilidades (id, objeto_conhecimento_id, codigo_bncc, descricao, anos, etapa_ensino)
-  SELECT gen_random_uuid(), oc10.id, 'EF35LP18', 'Escutar, com atenção, apresentações de trabalhos realizadas por colegas, formulando perguntas pertinentes ao tema e solicitando esclarecimentos sempre que necessário.', '["3º","4º","5º"]'::jsonb, 'anos_iniciais' FROM oc10
+  SELECT gen_random_uuid(), oc12.id, 'EF35LP18', 'Escutar, com atenção, apresentações de trabalhos realizadas por colegas, formulando perguntas pertinentes ao tema e solicitando esclarecimentos sempre que necessário.', '["3º","4º","5º"]'::jsonb, 'anos_iniciais' FROM oc12
 )
-, oc11 AS (
+, oc13 AS (
   INSERT INTO bncc_objetos_conhecimento (id, unidade_tematica_id, objeto_conhecimento)
   SELECT gen_random_uuid(), ut.id, 'Compreensão de textos orais' FROM ut
   RETURNING id
 )
-, h_11_EF35LP19 AS (
+, h_13_EF35LP19 AS (
   INSERT INTO bncc_habilidades (id, objeto_conhecimento_id, codigo_bncc, descricao, anos, etapa_ensino)
-  SELECT gen_random_uuid(), oc11.id, 'EF35LP19', 'Recuperar as ideias principais em situações formais de escuta de exposições, apresentações e palestras.', '["3º","4º","5º"]'::jsonb, 'anos_iniciais' FROM oc11
+  SELECT gen_random_uuid(), oc13.id, 'EF35LP19', 'Recuperar as ideias principais em situações formais de escuta de exposições, apresentações e palestras.', '["3º","4º","5º"]'::jsonb, 'anos_iniciais' FROM oc13
 )
-, oc12 AS (
+, oc14 AS (
   INSERT INTO bncc_objetos_conhecimento (id, unidade_tematica_id, objeto_conhecimento)
   SELECT gen_random_uuid(), ut.id, 'Planejamento de texto oral / Exposição oral' FROM ut
   RETURNING id
 )
-, h_12_EF35LP20 AS (
+, h_14_EF35LP20 AS (
   INSERT INTO bncc_habilidades (id, objeto_conhecimento_id, codigo_bncc, descricao, anos, etapa_ensino)
-  SELECT gen_random_uuid(), oc12.id, 'EF35LP20', 'Expor trabalhos ou pesquisas escolares, em sala de aula, com apoio de recursos multissemióticos (imagens, diagrama, tabelas etc.), orientando-se por roteiro escrito, planejando o tempo de fala e adequando a linguagem à situação comunicativa.', '["3º","4º","5º"]'::jsonb, 'anos_iniciais' FROM oc12
+  SELECT gen_random_uuid(), oc14.id, 'EF35LP20', 'Expor trabalhos ou pesquisas escolares, em sala de aula, com apoio de recursos multissemióticos (imagens, diagrama, tabelas etc.), orientando-se por roteiro escrito, planejando o tempo de fala e adequando a linguagem à situação comunicativa.', '["3º","4º","5º"]'::jsonb, 'anos_iniciais' FROM oc14
 )
-, oc13 AS (
+, oc15 AS (
   INSERT INTO bncc_objetos_conhecimento (id, unidade_tematica_id, objeto_conhecimento)
   SELECT gen_random_uuid(), ut.id, 'Declamação' FROM ut
   RETURNING id
 )
-, h_13_EF35LP28 AS (
+, h_15_EF35LP28 AS (
   INSERT INTO bncc_habilidades (id, objeto_conhecimento_id, codigo_bncc, descricao, anos, etapa_ensino)
-  SELECT gen_random_uuid(), oc13.id, 'EF35LP28', 'Declamar poemas, com entonação, postura e interpretação adequadas.', '["3º","4º","5º"]'::jsonb, 'anos_iniciais' FROM oc13
+  SELECT gen_random_uuid(), oc15.id, 'EF35LP28', 'Declamar poemas, com entonação, postura e interpretação adequadas.', '["3º","4º","5º"]'::jsonb, 'anos_iniciais' FROM oc15
 )
-SELECT 1;
-
--- Análise linguística/semiótica (Alfabetização) (anos_iniciais)
-WITH ut AS (
-  INSERT INTO bncc_unidades_tematicas (id, disciplina, unidade_tematica, etapa_ensino)
-  VALUES (gen_random_uuid(), 'Português', 'Análise linguística/semiótica (Alfabetização)', 'anos_iniciais')
-  RETURNING id
-)
-, oc0 AS (
+, oc16 AS (
   INSERT INTO bncc_objetos_conhecimento (id, unidade_tematica_id, objeto_conhecimento)
-  SELECT gen_random_uuid(), ut.id, 'Forma de composição do texto' FROM ut
+  SELECT gen_random_uuid(), ut.id, 'Performances orais' FROM ut
   RETURNING id
 )
-, h_0_EF12LP07 AS (
+, h_16_EF03LP27 AS (
   INSERT INTO bncc_habilidades (id, objeto_conhecimento_id, codigo_bncc, descricao, anos, etapa_ensino)
-  SELECT gen_random_uuid(), oc0.id, 'EF12LP07', 'Identificar e (re)produzir, em cantiga, quadras, quadrinhas, parlendas, trava-línguas e canções, rimas, aliterações, assonâncias, o ritmo de fala relacionado ao ritmo e à melodia das músicas e seus efeitos de sentido.', '["1º","2º"]'::jsonb, 'anos_iniciais' FROM oc0
+  SELECT gen_random_uuid(), oc16.id, 'EF03LP27', 'Recitar cordel e cantar repentes e emboladas, observando as rimas e obedecendo ao ritmo e à melodia.', '["3º"]'::jsonb, 'anos_iniciais' FROM oc16
 )
-, h_0_EF12LP14 AS (
+, h_16_EF04LP25 AS (
   INSERT INTO bncc_habilidades (id, objeto_conhecimento_id, codigo_bncc, descricao, anos, etapa_ensino)
-  SELECT gen_random_uuid(), oc0.id, 'EF12LP14', 'Identificar e reproduzir, em fotolegendas de notícias, álbum de fotos digital noticioso, cartas de leitor (revista infantil), digitais ou impressos, a formatação e diagramação específica de cada um desses gêneros, inclusive em suas versões orais.', '["1º","2º"]'::jsonb, 'anos_iniciais' FROM oc0
-)
-, oc1 AS (
-  INSERT INTO bncc_objetos_conhecimento (id, unidade_tematica_id, objeto_conhecimento)
-  SELECT gen_random_uuid(), ut.id, '(EF01LP20) Identificar e reproduzir, em listas, agendas, calendários, regras, avisos, convites, receitas, instruções de montagem e legendas para álbuns, fotos ou ilustrações (digitais ou impressos), a formatação e diagramação específica de cada um desses gêneros.' FROM ut
-  RETURNING id
-)
-, h_1_EF02LP16 AS (
-  INSERT INTO bncc_habilidades (id, objeto_conhecimento_id, codigo_bncc, descricao, anos, etapa_ensino)
-  SELECT gen_random_uuid(), oc1.id, 'EF02LP16', 'Identificar e reproduzir, em bilhetes, recados, avisos, cartas, e-mails, receitas (modo de fazer), relatos (digitais ou impressos), a formatação e diagramação específica de cada um desses gêneros.', '["1º","2º"]'::jsonb, 'anos_iniciais' FROM oc1
-)
-, h_EF02LP17 AS (
-  INSERT INTO bncc_habilidades (id, objeto_conhecimento_id, codigo_bncc, descricao, anos, etapa_ensino)
-  SELECT gen_random_uuid(), oc1.id, 'EF02LP17', 'Identificar e reproduzir, em relatos de experiências pessoais, a sequência dos fatos, utilizando expressões que marquem a passagem do tempo (“antes”, “depois”, “ontem”, “hoje”, “amanhã”, “outro dia”, “antigamente”, “há muito tempo” etc.), e o nível de informatividade necessário.', '["1º","2º"]'::jsonb, 'anos_iniciais' FROM oc1
+  SELECT gen_random_uuid(), oc16.id, 'EF04LP25', 'Representar cenas de textos dramáticos, reproduzindo as falas das personagens, de acordo com as rubricas de interpretação e movimento indicadas pelo autor.', '["4º"]'::jsonb, 'anos_iniciais' FROM oc16
 )
 SELECT 1;
 
@@ -7614,21 +7816,336 @@ WITH ut AS (
 )
 , oc0 AS (
   INSERT INTO bncc_objetos_conhecimento (id, unidade_tematica_id, objeto_conhecimento)
-  SELECT gen_random_uuid(), ut.id, 'Escrita compartilhada' FROM ut
+  SELECT gen_random_uuid(), ut.id, 'Correspondência fonema-grafema' FROM ut
   RETURNING id
 )
-, h_0_EF12LP11 AS (
+, h_0_EF01LP02 AS (
   INSERT INTO bncc_habilidades (id, objeto_conhecimento_id, codigo_bncc, descricao, anos, etapa_ensino)
-  SELECT gen_random_uuid(), oc0.id, 'EF12LP11', 'Escrever, em colaboração com os colegas e com a ajuda do professor, fotolegendas em notícias, manchetes e lides em notícias, álbum de fotos digital noticioso e notícias curtas para público infantil, digitais ou impressos, dentre outros gêneros do campo jornalístico, considerando a situação comunicativa e o tema/assunto do texto.', '["1º","2º"]'::jsonb, 'anos_iniciais' FROM oc0
+  SELECT gen_random_uuid(), oc0.id, 'EF01LP02', 'Escrever, espontaneamente ou por ditado, palavras e frases de forma alfabética – usando letras/grafemas que representem fonemas.', '["1º"]'::jsonb, 'anos_iniciais' FROM oc0
 )
 , oc1 AS (
   INSERT INTO bncc_objetos_conhecimento (id, unidade_tematica_id, objeto_conhecimento)
-  SELECT gen_random_uuid(), ut.id, '(EF01LP21) Escrever, em colaboração com os colegas e com a ajuda do professor, listas de regras e regulamentos que organizam a vida na comunidade escolar, dentre outros gêneros do campo da atuação cidadã, considerando a situação comunicativa e o tema/assunto do texto.' FROM ut
+  SELECT gen_random_uuid(), ut.id, 'Construção do sistema alfabético/Convenções da escrita' FROM ut
   RETURNING id
 )
-, h_1_EF02LP18 AS (
+, h_1_EF01LP03 AS (
   INSERT INTO bncc_habilidades (id, objeto_conhecimento_id, codigo_bncc, descricao, anos, etapa_ensino)
-  SELECT gen_random_uuid(), oc1.id, 'EF02LP18', 'Planejar e produzir cartazes e folhetos para divulgar eventos da escola ou da comunidade, utilizando linguagem persuasiva e elementos textuais e visuais (tamanho da letra, leiaute, imagens) adequados ao gênero, considerando a situação comunicativa e o tema/assunto do texto.', '["1º","2º"]'::jsonb, 'anos_iniciais' FROM oc1
+  SELECT gen_random_uuid(), oc1.id, 'EF01LP03', 'Observar escritas convencionais, comparando-as às suas produções escritas, percebendo semelhanças e diferenças.', '["1º"]'::jsonb, 'anos_iniciais' FROM oc1
+)
+, h_1_EF02LP01 AS (
+  INSERT INTO bncc_habilidades (id, objeto_conhecimento_id, codigo_bncc, descricao, anos, etapa_ensino)
+  SELECT gen_random_uuid(), oc1.id, 'EF02LP01', 'Utilizar, ao produzir o texto, grafia correta de palavras conhecidas ou com estruturas silábicas já dominadas, letras maiúsculas em início de frases e em substantivos próprios, segmentação entre as palavras, ponto final, ponto de interrogação e ponto de exclamação.', '["2º"]'::jsonb, 'anos_iniciais' FROM oc1
+)
+, oc2 AS (
+  INSERT INTO bncc_objetos_conhecimento (id, unidade_tematica_id, objeto_conhecimento)
+  SELECT gen_random_uuid(), ut.id, 'Construção do sistema alfabético/Estabelecimento de relações anafóricas na referenciação e construção da coesão' FROM ut
+  RETURNING id
+)
+, h_2_EF12LP03 AS (
+  INSERT INTO bncc_habilidades (id, objeto_conhecimento_id, codigo_bncc, descricao, anos, etapa_ensino)
+  SELECT gen_random_uuid(), oc2.id, 'EF12LP03', 'Copiar textos breves, mantendo suas características e voltando para o texto sempre que tiver dúvidas sobre sua distribuição gráfica, espaçamento entre as palavras, escrita das palavras e pontuação.', '["1º","2º"]'::jsonb, 'anos_iniciais' FROM oc2
+)
+, oc3 AS (
+  INSERT INTO bncc_objetos_conhecimento (id, unidade_tematica_id, objeto_conhecimento)
+  SELECT gen_random_uuid(), ut.id, 'Escrita autônoma e compartilhada' FROM ut
+  RETURNING id
+)
+, h_3_EF01LP17 AS (
+  INSERT INTO bncc_habilidades (id, objeto_conhecimento_id, codigo_bncc, descricao, anos, etapa_ensino)
+  SELECT gen_random_uuid(), oc3.id, 'EF01LP17', 'Planejar e produzir, em colaboração com os colegas e com a ajuda do professor, listas, agendas, calendários, avisos, convites, receitas, instruções de montagem e legendas para álbuns, fotos ou ilustrações (digitais ou impressos), dentre outros gêneros do campo da vida cotidiana, considerando a situação comunicativa e o tema/assunto/finalidade do texto.', '["1º"]'::jsonb, 'anos_iniciais' FROM oc3
+)
+, h_3_EF02LP13 AS (
+  INSERT INTO bncc_habilidades (id, objeto_conhecimento_id, codigo_bncc, descricao, anos, etapa_ensino)
+  SELECT gen_random_uuid(), oc3.id, 'EF02LP13', 'Planejar e produzir bilhetes e cartas, em meio impresso e/ou digital, dentre outros gêneros do campo da vida cotidiana, considerando a situação comunicativa e o tema/assunto/finalidade do texto.', '["2º"]'::jsonb, 'anos_iniciais' FROM oc3
+)
+, h_3_EF01LP18 AS (
+  INSERT INTO bncc_habilidades (id, objeto_conhecimento_id, codigo_bncc, descricao, anos, etapa_ensino)
+  SELECT gen_random_uuid(), oc3.id, 'EF01LP18', 'Registrar, em colaboração com os colegas e com a ajuda do professor, cantigas, quadras, quadrinhas, parlendas, trava-línguas, dentre outros gêneros do campo da vida cotidiana, considerando a situação comunicativa e o tema/assunto/finalidade do texto.', '["1º"]'::jsonb, 'anos_iniciais' FROM oc3
+)
+, h_3_EF02LP14 AS (
+  INSERT INTO bncc_habilidades (id, objeto_conhecimento_id, codigo_bncc, descricao, anos, etapa_ensino)
+  SELECT gen_random_uuid(), oc3.id, 'EF02LP14', 'Planejar e produzir pequenos relatos de observação de processos, de fatos, de experiências pessoais, mantendo as características do gênero, considerando a situação comunicativa e o tema/assunto do texto.', '["2º"]'::jsonb, 'anos_iniciais' FROM oc3
+)
+, h_3_EF01LP25 AS (
+  INSERT INTO bncc_habilidades (id, objeto_conhecimento_id, codigo_bncc, descricao, anos, etapa_ensino)
+  SELECT gen_random_uuid(), oc3.id, 'EF01LP25', 'Produzir, tendo o professor como escriba, recontagens de histórias lidas pelo professor, histórias imaginadas ou baseadas em livros de imagens, observando a forma de composição de textos narrativos (personagens, enredo, tempo e espaço).', '["1º"]'::jsonb, 'anos_iniciais' FROM oc3
+)
+, h_3_EF02LP27 AS (
+  INSERT INTO bncc_habilidades (id, objeto_conhecimento_id, codigo_bncc, descricao, anos, etapa_ensino)
+  SELECT gen_random_uuid(), oc3.id, 'EF02LP27', 'Reescrever textos narrativos literários lidos pelo professor.', '["2º"]'::jsonb, 'anos_iniciais' FROM oc3
+)
+, oc4 AS (
+  INSERT INTO bncc_objetos_conhecimento (id, unidade_tematica_id, objeto_conhecimento)
+  SELECT gen_random_uuid(), ut.id, 'Escrita compartilhada' FROM ut
+  RETURNING id
+)
+, h_4_EF12LP05 AS (
+  INSERT INTO bncc_habilidades (id, objeto_conhecimento_id, codigo_bncc, descricao, anos, etapa_ensino)
+  SELECT gen_random_uuid(), oc4.id, 'EF12LP05', 'Planejar e produzir, em colaboração com os colegas e com a ajuda do professor, (re)contagens de histórias, poemas e outros textos versificados (letras de canção, quadrinhas, cordel), poemas visuais, tiras e histórias em quadrinhos, dentre outros gêneros do campo artístico-literário, considerando a situação comunicativa e a finalidade do texto.', '["1º","2º"]'::jsonb, 'anos_iniciais' FROM oc4
+)
+, h_4_EF12LP11 AS (
+  INSERT INTO bncc_habilidades (id, objeto_conhecimento_id, codigo_bncc, descricao, anos, etapa_ensino)
+  SELECT gen_random_uuid(), oc4.id, 'EF12LP11', 'Escrever, em colaboração com os colegas e com a ajuda do professor, fotolegendas em notícias, manchetes e lides em notícias, álbum de fotos digital noticioso e notícias curtas para público infantil, digitais ou impressos, dentre outros gêneros do campo jornalístico, considerando a situação comunicativa e o tema/assunto do texto.', '["1º","2º"]'::jsonb, 'anos_iniciais' FROM oc4
+)
+, h_4_EF12LP12 AS (
+  INSERT INTO bncc_habilidades (id, objeto_conhecimento_id, codigo_bncc, descricao, anos, etapa_ensino)
+  SELECT gen_random_uuid(), oc4.id, 'EF12LP12', 'Escrever, em colaboração com os colegas e com a ajuda do professor, slogans, anúncios publicitários e textos de campanhas de conscientização destinados ao público infantil, dentre outros gêneros do campo publicitário, considerando a situação comunicativa e o tema/assunto/finalidade do texto.', '["1º","2º"]'::jsonb, 'anos_iniciais' FROM oc4
+)
+, h_4_EF01LP21 AS (
+  INSERT INTO bncc_habilidades (id, objeto_conhecimento_id, codigo_bncc, descricao, anos, etapa_ensino)
+  SELECT gen_random_uuid(), oc4.id, 'EF01LP21', 'Escrever, em colaboração com os colegas e com a ajuda do professor, listas de regras e regulamentos que organizam a vida na comunidade escolar, dentre outros gêneros do campo da atuação cidadã, considerando a situação comunicativa e o tema/assunto do texto.', '["1º"]'::jsonb, 'anos_iniciais' FROM oc4
+)
+, h_4_EF02LP18 AS (
+  INSERT INTO bncc_habilidades (id, objeto_conhecimento_id, codigo_bncc, descricao, anos, etapa_ensino)
+  SELECT gen_random_uuid(), oc4.id, 'EF02LP18', 'Planejar e produzir cartazes e folhetos para divulgar eventos da escola ou da comunidade, utilizando linguagem persuasiva e elementos textuais e visuais (tamanho da letra, leiaute, imagens) adequados ao gênero, considerando a situação comunicativa e o tema/assunto do texto.', '["2º"]'::jsonb, 'anos_iniciais' FROM oc4
+)
+, oc5 AS (
+  INSERT INTO bncc_objetos_conhecimento (id, unidade_tematica_id, objeto_conhecimento)
+  SELECT gen_random_uuid(), ut.id, 'Produção de textos' FROM ut
+  RETURNING id
+)
+, h_5_EF01LP22 AS (
+  INSERT INTO bncc_habilidades (id, objeto_conhecimento_id, codigo_bncc, descricao, anos, etapa_ensino)
+  SELECT gen_random_uuid(), oc5.id, 'EF01LP22', 'Planejar e produzir, em colaboração com os colegas e com a ajuda do professor, diagramas, entrevistas, curiosidades, dentre outros gêneros do campo investigativo, digitais ou impressos, considerando a situação comunicativa e o tema/assunto/finalidade do texto.', '["1º"]'::jsonb, 'anos_iniciais' FROM oc5
+)
+, h_5_EF02LP22 AS (
+  INSERT INTO bncc_habilidades (id, objeto_conhecimento_id, codigo_bncc, descricao, anos, etapa_ensino)
+  SELECT gen_random_uuid(), oc5.id, 'EF02LP22', 'Planejar e produzir, em colaboração com os colegas e com a ajuda do professor, pequenos relatos de experimentos, entrevistas, verbetes de enciclopédia infantil, dentre outros gêneros do campo investigativo, digitais ou impressos, considerando a situação comunicativa e o tema/assunto/finalidade do texto.', '["2º"]'::jsonb, 'anos_iniciais' FROM oc5
+)
+, oc6 AS (
+  INSERT INTO bncc_objetos_conhecimento (id, unidade_tematica_id, objeto_conhecimento)
+  SELECT gen_random_uuid(), ut.id, 'Escrita autônoma' FROM ut
+  RETURNING id
+)
+, h_6_EF02LP23 AS (
+  INSERT INTO bncc_habilidades (id, objeto_conhecimento_id, codigo_bncc, descricao, anos, etapa_ensino)
+  SELECT gen_random_uuid(), oc6.id, 'EF02LP23', 'Planejar e produzir, com certa autonomia, pequenos registros de observação de resultados de pesquisa, coerentes com um tema investigado.', '["2º"]'::jsonb, 'anos_iniciais' FROM oc6
+)
+, oc7 AS (
+  INSERT INTO bncc_objetos_conhecimento (id, unidade_tematica_id, objeto_conhecimento)
+  SELECT gen_random_uuid(), ut.id, 'Escrita colaborativa' FROM ut
+  RETURNING id
+)
+, h_7_EF03LP14 AS (
+  INSERT INTO bncc_habilidades (id, objeto_conhecimento_id, codigo_bncc, descricao, anos, etapa_ensino)
+  SELECT gen_random_uuid(), oc7.id, 'EF03LP14', 'Planejar e produzir textos injuntivos instrucionais, com a estrutura própria desses textos (verbos imperativos, indicação de passos a ser seguidos) e mesclando palavras, imagens e recursos gráfico-visuais, considerando a situação comunicativa e o tema/assunto do texto.', '["3º"]'::jsonb, 'anos_iniciais' FROM oc7
+)
+, h_7_EF05LP12 AS (
+  INSERT INTO bncc_habilidades (id, objeto_conhecimento_id, codigo_bncc, descricao, anos, etapa_ensino)
+  SELECT gen_random_uuid(), oc7.id, 'EF05LP12', 'Planejar e produzir, com autonomia, textos instrucionais de regras de jogo, dentre outros gêneros do campo da vida cotidiana, de acordo com as convenções do gênero e considerando a situação comunicativa e a finalidade do texto.', '["5º"]'::jsonb, 'anos_iniciais' FROM oc7
+)
+SELECT 1;
+
+-- Análise linguística/semiótica (Alfabetização) (anos_iniciais)
+WITH ut AS (
+  INSERT INTO bncc_unidades_tematicas (id, disciplina, unidade_tematica, etapa_ensino)
+  VALUES (gen_random_uuid(), 'Português', 'Análise linguística/semiótica (Alfabetização)', 'anos_iniciais')
+  RETURNING id
+)
+, oc0 AS (
+  INSERT INTO bncc_objetos_conhecimento (id, unidade_tematica_id, objeto_conhecimento)
+  SELECT gen_random_uuid(), ut.id, 'Conhecimento do alfabeto do português do Brasil' FROM ut
+  RETURNING id
+)
+, h_0_EF01LP04 AS (
+  INSERT INTO bncc_habilidades (id, objeto_conhecimento_id, codigo_bncc, descricao, anos, etapa_ensino)
+  SELECT gen_random_uuid(), oc0.id, 'EF01LP04', 'Distinguir as letras do alfabeto de outros sinais gráficos.', '["1º"]'::jsonb, 'anos_iniciais' FROM oc0
+)
+, h_0_EF01LP10 AS (
+  INSERT INTO bncc_habilidades (id, objeto_conhecimento_id, codigo_bncc, descricao, anos, etapa_ensino)
+  SELECT gen_random_uuid(), oc0.id, 'EF01LP10', 'Nomear as letras do alfabeto e recitá-lo na ordem das letras.', '["1º"]'::jsonb, 'anos_iniciais' FROM oc0
+)
+, h_0_EF02LP06 AS (
+  INSERT INTO bncc_habilidades (id, objeto_conhecimento_id, codigo_bncc, descricao, anos, etapa_ensino)
+  SELECT gen_random_uuid(), oc0.id, 'EF02LP06', 'Perceber o princípio acrofônico que opera nos nomes das letras do alfabeto.', '["2º"]'::jsonb, 'anos_iniciais' FROM oc0
+)
+, oc1 AS (
+  INSERT INTO bncc_objetos_conhecimento (id, unidade_tematica_id, objeto_conhecimento)
+  SELECT gen_random_uuid(), ut.id, 'Construção do sistema alfabético' FROM ut
+  RETURNING id
+)
+, h_1_EF01LP05 AS (
+  INSERT INTO bncc_habilidades (id, objeto_conhecimento_id, codigo_bncc, descricao, anos, etapa_ensino)
+  SELECT gen_random_uuid(), oc1.id, 'EF01LP05', 'Reconhecer o sistema de escrita alfabética como representação dos sons da fala.', '["1º"]'::jsonb, 'anos_iniciais' FROM oc1
+)
+, h_1_EF01LP13 AS (
+  INSERT INTO bncc_habilidades (id, objeto_conhecimento_id, codigo_bncc, descricao, anos, etapa_ensino)
+  SELECT gen_random_uuid(), oc1.id, 'EF01LP13', 'Comparar palavras, identificando semelhanças e diferenças entre sons de sílabas mediais e finais.', '["1º"]'::jsonb, 'anos_iniciais' FROM oc1
+)
+, oc2 AS (
+  INSERT INTO bncc_objetos_conhecimento (id, unidade_tematica_id, objeto_conhecimento)
+  SELECT gen_random_uuid(), ut.id, 'Construção do sistema alfabético e da ortografia' FROM ut
+  RETURNING id
+)
+, h_2_EF01LP06 AS (
+  INSERT INTO bncc_habilidades (id, objeto_conhecimento_id, codigo_bncc, descricao, anos, etapa_ensino)
+  SELECT gen_random_uuid(), oc2.id, 'EF01LP06', 'Segmentar oralmente palavras em sílabas.', '["1º"]'::jsonb, 'anos_iniciais' FROM oc2
+)
+, h_2_EF02LP02 AS (
+  INSERT INTO bncc_habilidades (id, objeto_conhecimento_id, codigo_bncc, descricao, anos, etapa_ensino)
+  SELECT gen_random_uuid(), oc2.id, 'EF02LP02', 'Segmentar palavras em sílabas e remover e substituir sílabas iniciais, mediais ou finais para criar novas palavras.', '["2º"]'::jsonb, 'anos_iniciais' FROM oc2
+)
+, h_2_EF01LP07 AS (
+  INSERT INTO bncc_habilidades (id, objeto_conhecimento_id, codigo_bncc, descricao, anos, etapa_ensino)
+  SELECT gen_random_uuid(), oc2.id, 'EF01LP07', 'Identificar fonemas e sua representação por letras.', '["1º"]'::jsonb, 'anos_iniciais' FROM oc2
+)
+, h_2_EF02LP03 AS (
+  INSERT INTO bncc_habilidades (id, objeto_conhecimento_id, codigo_bncc, descricao, anos, etapa_ensino)
+  SELECT gen_random_uuid(), oc2.id, 'EF02LP03', 'Ler e escrever palavras com correspondências regulares diretas entre letras e fonemas (f, v, t, d, p, b) e correspondências regulares contextuais (c e q; e e o, em posição átona em final de palavra).', '["2º"]'::jsonb, 'anos_iniciais' FROM oc2
+)
+, h_2_EF01LP08 AS (
+  INSERT INTO bncc_habilidades (id, objeto_conhecimento_id, codigo_bncc, descricao, anos, etapa_ensino)
+  SELECT gen_random_uuid(), oc2.id, 'EF01LP08', 'Relacionar elementos sonoros (sílabas, fonemas, partes de palavras) com sua representação escrita.', '["1º"]'::jsonb, 'anos_iniciais' FROM oc2
+)
+, h_2_EF02LP04 AS (
+  INSERT INTO bncc_habilidades (id, objeto_conhecimento_id, codigo_bncc, descricao, anos, etapa_ensino)
+  SELECT gen_random_uuid(), oc2.id, 'EF02LP04', 'Ler e escrever corretamente palavras com sílabas CV, V, CVC, CCV, identificando que existem vogais em todas as sílabas.', '["2º"]'::jsonb, 'anos_iniciais' FROM oc2
+)
+, h_2_EF01LP09 AS (
+  INSERT INTO bncc_habilidades (id, objeto_conhecimento_id, codigo_bncc, descricao, anos, etapa_ensino)
+  SELECT gen_random_uuid(), oc2.id, 'EF01LP09', 'Comparar palavras, identificando semelhanças e diferenças entre sons de sílabas iniciais.', '["1º"]'::jsonb, 'anos_iniciais' FROM oc2
+)
+, h_2_EF02LP05 AS (
+  INSERT INTO bncc_habilidades (id, objeto_conhecimento_id, codigo_bncc, descricao, anos, etapa_ensino)
+  SELECT gen_random_uuid(), oc2.id, 'EF02LP05', 'Ler e escrever corretamente palavras com marcas de nasalidade (til, m, n).', '["2º"]'::jsonb, 'anos_iniciais' FROM oc2
+)
+, oc3 AS (
+  INSERT INTO bncc_objetos_conhecimento (id, unidade_tematica_id, objeto_conhecimento)
+  SELECT gen_random_uuid(), ut.id, 'Conhecimento das diversas grafias do alfabeto/Acentuação' FROM ut
+  RETURNING id
+)
+, h_3_EF01LP11 AS (
+  INSERT INTO bncc_habilidades (id, objeto_conhecimento_id, codigo_bncc, descricao, anos, etapa_ensino)
+  SELECT gen_random_uuid(), oc3.id, 'EF01LP11', 'Conhecer, diferenciar e relacionar letras em formato imprensa e cursiva, maiúsculas e minúsculas.', '["1º"]'::jsonb, 'anos_iniciais' FROM oc3
+)
+, h_3_EF02LP07 AS (
+  INSERT INTO bncc_habilidades (id, objeto_conhecimento_id, codigo_bncc, descricao, anos, etapa_ensino)
+  SELECT gen_random_uuid(), oc3.id, 'EF02LP07', 'Escrever palavras, frases, textos curtos nas formas imprensa e cursiva.', '["2º"]'::jsonb, 'anos_iniciais' FROM oc3
+)
+, oc4 AS (
+  INSERT INTO bncc_objetos_conhecimento (id, unidade_tematica_id, objeto_conhecimento)
+  SELECT gen_random_uuid(), ut.id, 'Segmentação de palavras/Classificação de palavras por número de sílabas' FROM ut
+  RETURNING id
+)
+, h_4_EF01LP12 AS (
+  INSERT INTO bncc_habilidades (id, objeto_conhecimento_id, codigo_bncc, descricao, anos, etapa_ensino)
+  SELECT gen_random_uuid(), oc4.id, 'EF01LP12', 'Reconhecer a separação das palavras, na escrita, por espaços em branco.', '["1º"]'::jsonb, 'anos_iniciais' FROM oc4
+)
+, h_4_EF02LP08 AS (
+  INSERT INTO bncc_habilidades (id, objeto_conhecimento_id, codigo_bncc, descricao, anos, etapa_ensino)
+  SELECT gen_random_uuid(), oc4.id, 'EF02LP08', 'Segmentar corretamente as palavras ao escrever frases e textos.', '["2º"]'::jsonb, 'anos_iniciais' FROM oc4
+)
+, oc5 AS (
+  INSERT INTO bncc_objetos_conhecimento (id, unidade_tematica_id, objeto_conhecimento)
+  SELECT gen_random_uuid(), ut.id, 'Pontuação' FROM ut
+  RETURNING id
+)
+, h_5_EF01LP14 AS (
+  INSERT INTO bncc_habilidades (id, objeto_conhecimento_id, codigo_bncc, descricao, anos, etapa_ensino)
+  SELECT gen_random_uuid(), oc5.id, 'EF01LP14', 'Identificar outros sinais no texto além das letras, como pontos finais, de interrogação e exclamação e seus efeitos na entonação.', '["1º"]'::jsonb, 'anos_iniciais' FROM oc5
+)
+, h_5_EF02LP09 AS (
+  INSERT INTO bncc_habilidades (id, objeto_conhecimento_id, codigo_bncc, descricao, anos, etapa_ensino)
+  SELECT gen_random_uuid(), oc5.id, 'EF02LP09', 'Usar adequadamente ponto final, ponto de interrogação e ponto de exclamação.', '["2º"]'::jsonb, 'anos_iniciais' FROM oc5
+)
+, oc6 AS (
+  INSERT INTO bncc_objetos_conhecimento (id, unidade_tematica_id, objeto_conhecimento)
+  SELECT gen_random_uuid(), ut.id, 'Sinonímia e antonímia/Morfologia/Pontuação' FROM ut
+  RETURNING id
+)
+, h_6_EF01LP15 AS (
+  INSERT INTO bncc_habilidades (id, objeto_conhecimento_id, codigo_bncc, descricao, anos, etapa_ensino)
+  SELECT gen_random_uuid(), oc6.id, 'EF01LP15', 'Agrupar palavras pelo critério de aproximação de significado (sinonímia) e separar palavras pelo critério de oposição de significado (antonímia).', '["1º"]'::jsonb, 'anos_iniciais' FROM oc6
+)
+, h_6_EF02LP10 AS (
+  INSERT INTO bncc_habilidades (id, objeto_conhecimento_id, codigo_bncc, descricao, anos, etapa_ensino)
+  SELECT gen_random_uuid(), oc6.id, 'EF02LP10', 'Identificar sinônimos de palavras de texto lido, determinando a diferença de sentido entre eles, e formar antônimos de palavras encontradas em texto lido pelo acréscimo do prefixo de negação in-/im-.', '["2º"]'::jsonb, 'anos_iniciais' FROM oc6
+)
+, oc7 AS (
+  INSERT INTO bncc_objetos_conhecimento (id, unidade_tematica_id, objeto_conhecimento)
+  SELECT gen_random_uuid(), ut.id, 'Morfologia' FROM ut
+  RETURNING id
+)
+, h_7_EF02LP11 AS (
+  INSERT INTO bncc_habilidades (id, objeto_conhecimento_id, codigo_bncc, descricao, anos, etapa_ensino)
+  SELECT gen_random_uuid(), oc7.id, 'EF02LP11', 'Formar o aumentativo e o diminutivo de palavras com os sufixos -ão e -inho/-zinho.', '["2º"]'::jsonb, 'anos_iniciais' FROM oc7
+)
+, oc8 AS (
+  INSERT INTO bncc_objetos_conhecimento (id, unidade_tematica_id, objeto_conhecimento)
+  SELECT gen_random_uuid(), ut.id, 'Forma de composição do texto' FROM ut
+  RETURNING id
+)
+, h_8_EF12LP07 AS (
+  INSERT INTO bncc_habilidades (id, objeto_conhecimento_id, codigo_bncc, descricao, anos, etapa_ensino)
+  SELECT gen_random_uuid(), oc8.id, 'EF12LP07', 'Identificar e (re)produzir, em cantiga, quadras, quadrinhas, parlendas, trava-línguas e canções, rimas, aliterações, assonâncias, o ritmo de fala relacionado ao ritmo e à melodia das músicas e seus efeitos de sentido.', '["1º","2º"]'::jsonb, 'anos_iniciais' FROM oc8
+)
+, h_8_EF01LP20 AS (
+  INSERT INTO bncc_habilidades (id, objeto_conhecimento_id, codigo_bncc, descricao, anos, etapa_ensino)
+  SELECT gen_random_uuid(), oc8.id, 'EF01LP20', 'Identificar e reproduzir, em listas, agendas, calendários, regras, avisos, convites, receitas, instruções de montagem e legendas para álbuns, fotos ou ilustrações (digitais ou impressos), a formatação e diagramação específica de cada um desses gêneros.', '["1º"]'::jsonb, 'anos_iniciais' FROM oc8
+)
+, h_8_EF02LP16 AS (
+  INSERT INTO bncc_habilidades (id, objeto_conhecimento_id, codigo_bncc, descricao, anos, etapa_ensino)
+  SELECT gen_random_uuid(), oc8.id, 'EF02LP16', 'Identificar e reproduzir, em bilhetes, recados, avisos, cartas, e-mails, receitas (modo de fazer), relatos (digitais ou impressos), a formatação e diagramação específica de cada um desses gêneros.', '["2º"]'::jsonb, 'anos_iniciais' FROM oc8
+)
+, h_8_EF02LP17 AS (
+  INSERT INTO bncc_habilidades (id, objeto_conhecimento_id, codigo_bncc, descricao, anos, etapa_ensino)
+  SELECT gen_random_uuid(), oc8.id, 'EF02LP17', 'Identificar e reproduzir, em relatos de experiências pessoais, a sequência dos fatos, utilizando expressões que marquem a passagem do tempo (“antes”, “depois”, “ontem”, “hoje”, “amanhã”, “outro dia”, “antigamente”, “há muito tempo” etc.), e o nível de informatividade necessário.', '["2º"]'::jsonb, 'anos_iniciais' FROM oc8
+)
+, h_8_EF12LP14 AS (
+  INSERT INTO bncc_habilidades (id, objeto_conhecimento_id, codigo_bncc, descricao, anos, etapa_ensino)
+  SELECT gen_random_uuid(), oc8.id, 'EF12LP14', 'Identificar e reproduzir, em fotolegendas de notícias, álbum de fotos digital noticioso, cartas de leitor (revista infantil), digitais ou impressos, a formatação e diagramação específica de cada um desses gêneros, inclusive em suas versões orais.', '["1º","2º"]'::jsonb, 'anos_iniciais' FROM oc8
+)
+, h_8_EF12LP15 AS (
+  INSERT INTO bncc_habilidades (id, objeto_conhecimento_id, codigo_bncc, descricao, anos, etapa_ensino)
+  SELECT gen_random_uuid(), oc8.id, 'EF12LP15', 'Identificar a forma de composição de slogans publicitários.', '["1º","2º"]'::jsonb, 'anos_iniciais' FROM oc8
+)
+, h_8_EF12LP16 AS (
+  INSERT INTO bncc_habilidades (id, objeto_conhecimento_id, codigo_bncc, descricao, anos, etapa_ensino)
+  SELECT gen_random_uuid(), oc8.id, 'EF12LP16', 'Identificar e reproduzir, em anúncios publicitários e textos de campanhas de conscientização destinados ao público infantil (orais e escritos, digitais ou impressos), a formatação e diagramação específica de cada um desses gêneros, inclusive o uso de imagens.', '["1º","2º"]'::jsonb, 'anos_iniciais' FROM oc8
+)
+, oc9 AS (
+  INSERT INTO bncc_objetos_conhecimento (id, unidade_tematica_id, objeto_conhecimento)
+  SELECT gen_random_uuid(), ut.id, 'Forma de composição dos textos/Adequação do texto às normas de escrita' FROM ut
+  RETURNING id
+)
+, h_9_EF01LP24 AS (
+  INSERT INTO bncc_habilidades (id, objeto_conhecimento_id, codigo_bncc, descricao, anos, etapa_ensino)
+  SELECT gen_random_uuid(), oc9.id, 'EF01LP24', 'Identificar e reproduzir, em enunciados de tarefas escolares, diagramas, entrevistas, curiosidades, digitais ou impressos, a formatação e diagramação específica de cada um desses gêneros, inclusive em suas versões orais.', '["1º"]'::jsonb, 'anos_iniciais' FROM oc9
+)
+, h_9_EF02LP25 AS (
+  INSERT INTO bncc_habilidades (id, objeto_conhecimento_id, codigo_bncc, descricao, anos, etapa_ensino)
+  SELECT gen_random_uuid(), oc9.id, 'EF02LP25', 'Identificar e reproduzir, em relatos de experimentos, entrevistas, verbetes de enciclopédia infantil, digitais ou impressos, a formatação e diagramação específica de cada um desses gêneros, inclusive em suas versões orais.', '["2º"]'::jsonb, 'anos_iniciais' FROM oc9
+)
+, oc10 AS (
+  INSERT INTO bncc_objetos_conhecimento (id, unidade_tematica_id, objeto_conhecimento)
+  SELECT gen_random_uuid(), ut.id, 'Formas de composição de narrativas' FROM ut
+  RETURNING id
+)
+, h_10_EF01LP26 AS (
+  INSERT INTO bncc_habilidades (id, objeto_conhecimento_id, codigo_bncc, descricao, anos, etapa_ensino)
+  SELECT gen_random_uuid(), oc10.id, 'EF01LP26', 'Identificar elementos de uma narrativa lida ou escutada, incluindo personagens, enredo, tempo e espaço.', '["1º"]'::jsonb, 'anos_iniciais' FROM oc10
+)
+, h_10_EF02LP28 AS (
+  INSERT INTO bncc_habilidades (id, objeto_conhecimento_id, codigo_bncc, descricao, anos, etapa_ensino)
+  SELECT gen_random_uuid(), oc10.id, 'EF02LP28', 'Reconhecer o conflito gerador de uma narrativa ficcional e sua resolução, além de palavras, expressões e frases que caracterizam personagens e ambientes.', '["2º"]'::jsonb, 'anos_iniciais' FROM oc10
+)
+, oc11 AS (
+  INSERT INTO bncc_objetos_conhecimento (id, unidade_tematica_id, objeto_conhecimento)
+  SELECT gen_random_uuid(), ut.id, 'Formas de composição de textos poéticos' FROM ut
+  RETURNING id
+)
+, h_11_EF12LP19 AS (
+  INSERT INTO bncc_habilidades (id, objeto_conhecimento_id, codigo_bncc, descricao, anos, etapa_ensino)
+  SELECT gen_random_uuid(), oc11.id, 'EF12LP19', 'Reconhecer, em textos versificados, rimas, sonoridades, jogos de palavras, palavras, expressões, comparações, relacionando-as com sensações e associações.', '["1º","2º"]'::jsonb, 'anos_iniciais' FROM oc11
+)
+, oc12 AS (
+  INSERT INTO bncc_objetos_conhecimento (id, unidade_tematica_id, objeto_conhecimento)
+  SELECT gen_random_uuid(), ut.id, 'Formas de composição de textos poéticos visuais' FROM ut
+  RETURNING id
+)
+, h_12_EF02LP29 AS (
+  INSERT INTO bncc_habilidades (id, objeto_conhecimento_id, codigo_bncc, descricao, anos, etapa_ensino)
+  SELECT gen_random_uuid(), oc12.id, 'EF02LP29', 'Observar, em poemas visuais, o formato do texto na página, as ilustrações e outros efeitos visuais.', '["2º"]'::jsonb, 'anos_iniciais' FROM oc12
 )
 SELECT 1;
 
@@ -7647,113 +8164,282 @@ WITH ut AS (
   INSERT INTO bncc_habilidades (id, objeto_conhecimento_id, codigo_bncc, descricao, anos, etapa_ensino)
   SELECT gen_random_uuid(), oc0.id, 'EF35LP12', 'Recorrer ao dicionário para esclarecer dúvida sobre a escrita de palavras, especialmente no caso de palavras com relações irregulares fonema-grafema.', '["3º","4º","5º"]'::jsonb, 'anos_iniciais' FROM oc0
 )
+, h_0_EF03LP01 AS (
+  INSERT INTO bncc_habilidades (id, objeto_conhecimento_id, codigo_bncc, descricao, anos, etapa_ensino)
+  SELECT gen_random_uuid(), oc0.id, 'EF03LP01', 'Ler e escrever palavras com correspondências regulares contextuais entre grafemas e fonemas – c/qu; g/gu; r/rr; s/ss; o (e não u) e e (e não i) em sílaba átona em final de palavra – e com marcas de nasalidade (til, m, n).', '["3º"]'::jsonb, 'anos_iniciais' FROM oc0
+)
+, h_0_EF04LP01 AS (
+  INSERT INTO bncc_habilidades (id, objeto_conhecimento_id, codigo_bncc, descricao, anos, etapa_ensino)
+  SELECT gen_random_uuid(), oc0.id, 'EF04LP01', 'Grafar palavras utilizando regras de correspondência fonema-grafema regulares diretas e contextuais.', '["4º"]'::jsonb, 'anos_iniciais' FROM oc0
+)
+, h_0_EF05LP01 AS (
+  INSERT INTO bncc_habilidades (id, objeto_conhecimento_id, codigo_bncc, descricao, anos, etapa_ensino)
+  SELECT gen_random_uuid(), oc0.id, 'EF05LP01', 'Grafar palavras utilizando regras de correspondência fonema-grafema regulares, contextuais e morfológicas e palavras de uso frequente com correspondências irregulares.', '["5º"]'::jsonb, 'anos_iniciais' FROM oc0
+)
+, h_0_EF03LP02 AS (
+  INSERT INTO bncc_habilidades (id, objeto_conhecimento_id, codigo_bncc, descricao, anos, etapa_ensino)
+  SELECT gen_random_uuid(), oc0.id, 'EF03LP02', 'Ler e escrever corretamente palavras com sílabas CV, V, CVC, CCV, VC, VV, CVV, identificando que existem vogais em todas as sílabas.', '["3º"]'::jsonb, 'anos_iniciais' FROM oc0
+)
+, h_0_EF04LP02 AS (
+  INSERT INTO bncc_habilidades (id, objeto_conhecimento_id, codigo_bncc, descricao, anos, etapa_ensino)
+  SELECT gen_random_uuid(), oc0.id, 'EF04LP02', 'Ler e escrever, corretamente, palavras com sílabas VV e CVV em casos nos quais a combinação VV (ditongo) é reduzida na língua oral (ai, ei, ou).', '["4º"]'::jsonb, 'anos_iniciais' FROM oc0
+)
+, h_0_EF03LP03 AS (
+  INSERT INTO bncc_habilidades (id, objeto_conhecimento_id, codigo_bncc, descricao, anos, etapa_ensino)
+  SELECT gen_random_uuid(), oc0.id, 'EF03LP03', 'Ler e escrever corretamente palavras com os dígrafos lh, nh, ch.', '["3º"]'::jsonb, 'anos_iniciais' FROM oc0
+)
+, h_0_EF35LP13 AS (
+  INSERT INTO bncc_habilidades (id, objeto_conhecimento_id, codigo_bncc, descricao, anos, etapa_ensino)
+  SELECT gen_random_uuid(), oc0.id, 'EF35LP13', 'Memorizar a grafia de palavras de uso frequente nas quais as relações fonema-grafema são irregulares e com h inicial que não representa fonema.', '["3º","4º","5º"]'::jsonb, 'anos_iniciais' FROM oc0
+)
 , oc1 AS (
   INSERT INTO bncc_objetos_conhecimento (id, unidade_tematica_id, objeto_conhecimento)
-  SELECT gen_random_uuid(), ut.id, '(EF04LP01) Grafar palavras utilizando regras de correspondência fonema-grafema regulares diretas e contextuais.' FROM ut
+  SELECT gen_random_uuid(), ut.id, 'Conhecimento do alfabeto do português do Brasil/Ordem alfabética/Polissemia' FROM ut
   RETURNING id
 )
-, h_1_EF05LP01 AS (
+, h_1_EF04LP03 AS (
   INSERT INTO bncc_habilidades (id, objeto_conhecimento_id, codigo_bncc, descricao, anos, etapa_ensino)
-  SELECT gen_random_uuid(), oc1.id, 'EF05LP01', 'Grafar palavras utilizando regras de correspondência fonema-grafema regulares, contextuais e morfológicas e palavras de uso frequente com correspondências irregulares.', '["3º","4º","5º"]'::jsonb, 'anos_iniciais' FROM oc1
+  SELECT gen_random_uuid(), oc1.id, 'EF04LP03', 'Localizar palavras no dicionário para esclarecer significados, reconhecendo o significado mais plausível para o contexto que deu origem à consulta.', '["4º"]'::jsonb, 'anos_iniciais' FROM oc1
+)
+, h_1_EF05LP02 AS (
+  INSERT INTO bncc_habilidades (id, objeto_conhecimento_id, codigo_bncc, descricao, anos, etapa_ensino)
+  SELECT gen_random_uuid(), oc1.id, 'EF05LP02', 'Identificar o caráter polissêmico das palavras (uma mesma palavra com diferentes significados, de acordo com o contexto de uso), comparando o significado de determinados termos utilizados nas áreas científicas com esses mesmos termos utilizados na linguagem usual.', '["5º"]'::jsonb, 'anos_iniciais' FROM oc1
 )
 , oc2 AS (
   INSERT INTO bncc_objetos_conhecimento (id, unidade_tematica_id, objeto_conhecimento)
-  SELECT gen_random_uuid(), ut.id, '(EF04LP06) Identificar em textos e usar na produção textual a concordância entre substantivo ou pronome pessoal e verbo (concordância verbal).' FROM ut
+  SELECT gen_random_uuid(), ut.id, 'Conhecimento das diversas grafias do alfabeto/Acentuação' FROM ut
   RETURNING id
 )
-, h_2_EF05LP06 AS (
+, h_2_EF03LP04 AS (
   INSERT INTO bncc_habilidades (id, objeto_conhecimento_id, codigo_bncc, descricao, anos, etapa_ensino)
-  SELECT gen_random_uuid(), oc2.id, 'EF05LP06', 'Flexionar, adequadamente, na escrita e na oralidade, os verbos em concordância com pronomes pessoais/nomes sujeitos da oração.', '["3º","4º","5º"]'::jsonb, 'anos_iniciais' FROM oc2
+  SELECT gen_random_uuid(), oc2.id, 'EF03LP04', 'Usar acento gráfico (agudo ou circunflexo) em monossílabos tônicos terminados em a, e, o e em palavras oxítonas terminadas em a, e, o, seguidas ou não de s.', '["3º"]'::jsonb, 'anos_iniciais' FROM oc2
+)
+, h_2_EF04LP04 AS (
+  INSERT INTO bncc_habilidades (id, objeto_conhecimento_id, codigo_bncc, descricao, anos, etapa_ensino)
+  SELECT gen_random_uuid(), oc2.id, 'EF04LP04', 'Usar acento gráfico (agudo ou circunflexo) em paroxítonas terminadas em -i(s), -l, -r, -ão(s).', '["4º"]'::jsonb, 'anos_iniciais' FROM oc2
+)
+, h_2_EF05LP03 AS (
+  INSERT INTO bncc_habilidades (id, objeto_conhecimento_id, codigo_bncc, descricao, anos, etapa_ensino)
+  SELECT gen_random_uuid(), oc2.id, 'EF05LP03', 'Acentuar corretamente palavras oxítonas, paroxítonas e proparoxítonas.', '["5º"]'::jsonb, 'anos_iniciais' FROM oc2
 )
 , oc3 AS (
+  INSERT INTO bncc_objetos_conhecimento (id, unidade_tematica_id, objeto_conhecimento)
+  SELECT gen_random_uuid(), ut.id, 'Segmentação de palavras/Classificação de palavras por número de sílabas' FROM ut
+  RETURNING id
+)
+, h_3_EF03LP05 AS (
+  INSERT INTO bncc_habilidades (id, objeto_conhecimento_id, codigo_bncc, descricao, anos, etapa_ensino)
+  SELECT gen_random_uuid(), oc3.id, 'EF03LP05', 'Identificar o número de sílabas de palavras, classificando-as em monossílabas, dissílabas, trissílabas e polissílabas.', '["3º"]'::jsonb, 'anos_iniciais' FROM oc3
+)
+, oc4 AS (
+  INSERT INTO bncc_objetos_conhecimento (id, unidade_tematica_id, objeto_conhecimento)
+  SELECT gen_random_uuid(), ut.id, 'Construção do sistema alfabético' FROM ut
+  RETURNING id
+)
+, h_4_EF03LP06 AS (
+  INSERT INTO bncc_habilidades (id, objeto_conhecimento_id, codigo_bncc, descricao, anos, etapa_ensino)
+  SELECT gen_random_uuid(), oc4.id, 'EF03LP06', 'Identificar a sílaba tônica em palavras, classificando-as em oxítonas, paroxítonas e proparoxítonas.', '["3º"]'::jsonb, 'anos_iniciais' FROM oc4
+)
+, oc5 AS (
+  INSERT INTO bncc_objetos_conhecimento (id, unidade_tematica_id, objeto_conhecimento)
+  SELECT gen_random_uuid(), ut.id, 'Pontuação' FROM ut
+  RETURNING id
+)
+, h_5_EF03LP07 AS (
+  INSERT INTO bncc_habilidades (id, objeto_conhecimento_id, codigo_bncc, descricao, anos, etapa_ensino)
+  SELECT gen_random_uuid(), oc5.id, 'EF03LP07', 'Identificar a função na leitura e usar na escrita ponto final, ponto de interrogação, ponto de exclamação e, em diálogos (discurso direto), dois-pontos e travessão.', '["3º"]'::jsonb, 'anos_iniciais' FROM oc5
+)
+, h_5_EF04LP05 AS (
+  INSERT INTO bncc_habilidades (id, objeto_conhecimento_id, codigo_bncc, descricao, anos, etapa_ensino)
+  SELECT gen_random_uuid(), oc5.id, 'EF04LP05', 'Identificar a função na leitura e usar, adequadamente, na escrita ponto final, de interrogação, de exclamação, dois-pontos e travessão em diálogos (discurso direto), vírgula em enumerações e em separação de vocativo e de aposto.', '["4º"]'::jsonb, 'anos_iniciais' FROM oc5
+)
+, h_5_EF05LP04 AS (
+  INSERT INTO bncc_habilidades (id, objeto_conhecimento_id, codigo_bncc, descricao, anos, etapa_ensino)
+  SELECT gen_random_uuid(), oc5.id, 'EF05LP04', 'Diferenciar, na leitura de textos, vírgula, ponto e vírgula, dois-pontos e reconhecer, na leitura de textos, o efeito de sentido que decorre do uso de reticências, aspas, parênteses.', '["5º"]'::jsonb, 'anos_iniciais' FROM oc5
+)
+, oc6 AS (
+  INSERT INTO bncc_objetos_conhecimento (id, unidade_tematica_id, objeto_conhecimento)
+  SELECT gen_random_uuid(), ut.id, 'Morfologia/Morfossintaxe' FROM ut
+  RETURNING id
+)
+, h_6_EF05LP05 AS (
+  INSERT INTO bncc_habilidades (id, objeto_conhecimento_id, codigo_bncc, descricao, anos, etapa_ensino)
+  SELECT gen_random_uuid(), oc6.id, 'EF05LP05', 'Identificar a expressão de presente, passado e futuro em tempos verbais do modo indicativo.', '["5º"]'::jsonb, 'anos_iniciais' FROM oc6
+)
+, h_6_EF03LP08 AS (
+  INSERT INTO bncc_habilidades (id, objeto_conhecimento_id, codigo_bncc, descricao, anos, etapa_ensino)
+  SELECT gen_random_uuid(), oc6.id, 'EF03LP08', 'Identificar e diferenciar, em textos, substantivos e verbos e suas funções na oração: agente, ação, objeto da ação.', '["3º"]'::jsonb, 'anos_iniciais' FROM oc6
+)
+, h_6_EF04LP06 AS (
+  INSERT INTO bncc_habilidades (id, objeto_conhecimento_id, codigo_bncc, descricao, anos, etapa_ensino)
+  SELECT gen_random_uuid(), oc6.id, 'EF04LP06', 'Identificar em textos e usar na produção textual a concordância entre substantivo ou pronome pessoal e verbo (concordância verbal).', '["4º"]'::jsonb, 'anos_iniciais' FROM oc6
+)
+, h_6_EF05LP06 AS (
+  INSERT INTO bncc_habilidades (id, objeto_conhecimento_id, codigo_bncc, descricao, anos, etapa_ensino)
+  SELECT gen_random_uuid(), oc6.id, 'EF05LP06', 'Flexionar, adequadamente, na escrita e na oralidade, os verbos em concordância com pronomes pessoais/nomes sujeitos da oração.', '["5º"]'::jsonb, 'anos_iniciais' FROM oc6
+)
+, oc7 AS (
+  INSERT INTO bncc_objetos_conhecimento (id, unidade_tematica_id, objeto_conhecimento)
+  SELECT gen_random_uuid(), ut.id, 'Morfossintaxe' FROM ut
+  RETURNING id
+)
+, h_7_EF03LP09 AS (
+  INSERT INTO bncc_habilidades (id, objeto_conhecimento_id, codigo_bncc, descricao, anos, etapa_ensino)
+  SELECT gen_random_uuid(), oc7.id, 'EF03LP09', 'Identificar, em textos, adjetivos e sua função de atribuição de propriedades aos substantivos.', '["3º"]'::jsonb, 'anos_iniciais' FROM oc7
+)
+, h_7_EF04LP07 AS (
+  INSERT INTO bncc_habilidades (id, objeto_conhecimento_id, codigo_bncc, descricao, anos, etapa_ensino)
+  SELECT gen_random_uuid(), oc7.id, 'EF04LP07', 'Identificar em textos e usar na produção textual a concordância entre artigo, substantivo e adjetivo (concordância no grupo nominal).', '["4º"]'::jsonb, 'anos_iniciais' FROM oc7
+)
+, oc8 AS (
   INSERT INTO bncc_objetos_conhecimento (id, unidade_tematica_id, objeto_conhecimento)
   SELECT gen_random_uuid(), ut.id, 'Morfologia' FROM ut
   RETURNING id
 )
-, h_3_EF35LP14 AS (
+, h_8_EF35LP14 AS (
   INSERT INTO bncc_habilidades (id, objeto_conhecimento_id, codigo_bncc, descricao, anos, etapa_ensino)
-  SELECT gen_random_uuid(), oc3.id, 'EF35LP14', 'Identificar em textos e usar na produção textual pronomes pessoais, possessivos e demonstrativos, como recurso coesivo anafórico.', '["3º","4º","5º"]'::jsonb, 'anos_iniciais' FROM oc3
+  SELECT gen_random_uuid(), oc8.id, 'EF35LP14', 'Identificar em textos e usar na produção textual pronomes pessoais, possessivos e demonstrativos, como recurso coesivo anafórico.', '["3º","4º","5º"]'::jsonb, 'anos_iniciais' FROM oc8
 )
-, oc4 AS (
+, h_8_EF05LP07 AS (
+  INSERT INTO bncc_habilidades (id, objeto_conhecimento_id, codigo_bncc, descricao, anos, etapa_ensino)
+  SELECT gen_random_uuid(), oc8.id, 'EF05LP07', 'Identificar, em textos, o uso de conjunções e a relação que estabelecem entre partes do texto: adição, oposição, tempo, causa, condição, finalidade.', '["5º"]'::jsonb, 'anos_iniciais' FROM oc8
+)
+, h_8_EF03LP10 AS (
+  INSERT INTO bncc_habilidades (id, objeto_conhecimento_id, codigo_bncc, descricao, anos, etapa_ensino)
+  SELECT gen_random_uuid(), oc8.id, 'EF03LP10', 'Reconhecer prefixos e sufixos produtivos na formação de palavras derivadas de substantivos, de adjetivos e de verbos, utilizando-os para compreender palavras e para formar novas palavras.', '["3º"]'::jsonb, 'anos_iniciais' FROM oc8
+)
+, h_8_EF04LP08 AS (
+  INSERT INTO bncc_habilidades (id, objeto_conhecimento_id, codigo_bncc, descricao, anos, etapa_ensino)
+  SELECT gen_random_uuid(), oc8.id, 'EF04LP08', 'Reconhecer e grafar, corretamente, palavras derivadas com os sufixos -agem, -oso, -eza, -izar/-isar (regulares morfológicas).', '["4º"]'::jsonb, 'anos_iniciais' FROM oc8
+)
+, h_8_EF05LP08 AS (
+  INSERT INTO bncc_habilidades (id, objeto_conhecimento_id, codigo_bncc, descricao, anos, etapa_ensino)
+  SELECT gen_random_uuid(), oc8.id, 'EF05LP08', 'Diferenciar palavras primitivas, derivadas e compostas, e derivadas por adição de prefixo e de sufixo.', '["5º"]'::jsonb, 'anos_iniciais' FROM oc8
+)
+, oc9 AS (
   INSERT INTO bncc_objetos_conhecimento (id, unidade_tematica_id, objeto_conhecimento)
-  SELECT gen_random_uuid(), ut.id, '(EF04LP08) Reconhecer e grafar, corretamente, palavras derivadas com os sufixos -agem, -oso, -eza, -izar/-isar (regulares morfológicas).' FROM ut
+  SELECT gen_random_uuid(), ut.id, 'Forma de composição do texto' FROM ut
   RETURNING id
 )
-, h_4_EF05LP08 AS (
+, h_9_EF03LP16 AS (
   INSERT INTO bncc_habilidades (id, objeto_conhecimento_id, codigo_bncc, descricao, anos, etapa_ensino)
-  SELECT gen_random_uuid(), oc4.id, 'EF05LP08', 'Diferenciar palavras primitivas, derivadas e compostas, e derivadas por adição de prefixo e de sufixo.', '["3º","4º","5º"]'::jsonb, 'anos_iniciais' FROM oc4
+  SELECT gen_random_uuid(), oc9.id, 'EF03LP16', 'Identificar e reproduzir, em textos injuntivos instrucionais (receitas, instruções de montagem, digitais ou impressos), a formatação própria desses textos (verbos imperativos, indicação de passos a ser seguidos) e a diagramação específica dos textos desses gêneros (lista de ingredientes ou materiais e instruções de execução – "modo de fazer").', '["3º"]'::jsonb, 'anos_iniciais' FROM oc9
 )
-, oc5 AS (
-  INSERT INTO bncc_objetos_conhecimento (id, unidade_tematica_id, objeto_conhecimento)
-  SELECT gen_random_uuid(), ut.id, '(EF04LP10) Ler e compreender, com autonomia, cartas pessoais de reclamação, dentre outros gêneros do campo da vida cotidiana, de acordo com as convenções do gênero carta e considerando a situação comunicativa e o tema/assunto/finalidade do texto.' FROM ut
-  RETURNING id
-)
-, h_5_EF05LP10 AS (
+, h_9_EF04LP13 AS (
   INSERT INTO bncc_habilidades (id, objeto_conhecimento_id, codigo_bncc, descricao, anos, etapa_ensino)
-  SELECT gen_random_uuid(), oc5.id, 'EF05LP10', 'Ler e compreender, com autonomia, anedotas, piadas e cartuns, dentre outros gêneros do campo da vida cotidiana, de acordo com as convenções do gênero e considerando a situação comunicativa e a finalidade do texto.', '["3º","4º","5º"]'::jsonb, 'anos_iniciais' FROM oc5
+  SELECT gen_random_uuid(), oc9.id, 'EF04LP13', 'Identificar e reproduzir, em textos injuntivos instrucionais (instruções de jogos digitais ou impressos), a formatação própria desses textos (verbos imperativos, indicação de passos a ser seguidos) e formato específico dos textos orais ou escritos desses gêneros (lista/ apresentação de materiais e instruções/passos de jogo).', '["4º"]'::jsonb, 'anos_iniciais' FROM oc9
 )
-, oc6 AS (
-  INSERT INTO bncc_objetos_conhecimento (id, unidade_tematica_id, objeto_conhecimento)
-  SELECT gen_random_uuid(), ut.id, '(EF04LP15) Distinguir fatos de opiniões/sugestões em textos (informativos, jornalísticos, publicitários etc.).' FROM ut
-  RETURNING id
-)
-, h_6_EF05LP16 AS (
+, h_9_EF05LP14 AS (
   INSERT INTO bncc_habilidades (id, objeto_conhecimento_id, codigo_bncc, descricao, anos, etapa_ensino)
-  SELECT gen_random_uuid(), oc6.id, 'EF05LP16', 'Comparar informações sobre um mesmo fato veiculadas em diferentes mídias e concluir sobre qual é mais confiável e por quê.', '["3º","4º","5º"]'::jsonb, 'anos_iniciais' FROM oc6
+  SELECT gen_random_uuid(), oc9.id, 'EF05LP14', 'Identificar e reproduzir, em textos de resenha crítica de brinquedos ou livros de literatura infantil, a formatação própria desses textos (apresentação e avaliação do produto).', '["5º"]'::jsonb, 'anos_iniciais' FROM oc9
 )
-, oc7 AS (
+, h_9_EF03LP17 AS (
+  INSERT INTO bncc_habilidades (id, objeto_conhecimento_id, codigo_bncc, descricao, anos, etapa_ensino)
+  SELECT gen_random_uuid(), oc9.id, 'EF03LP17', 'Identificar e reproduzir, em gêneros epistolares e diários, a formatação própria desses textos (relatos de acontecimentos, expressão de vivências, emoções, opiniões ou críticas) e a diagramação específica dos textos desses gêneros (data, saudação, corpo do texto, despedida, assinatura).', '["3º"]'::jsonb, 'anos_iniciais' FROM oc9
+)
+, oc10 AS (
   INSERT INTO bncc_objetos_conhecimento (id, unidade_tematica_id, objeto_conhecimento)
   SELECT gen_random_uuid(), ut.id, 'Forma de composição dos textos' FROM ut
   RETURNING id
 )
-, h_7_EF35LP16 AS (
+, h_10_EF35LP16 AS (
   INSERT INTO bncc_habilidades (id, objeto_conhecimento_id, codigo_bncc, descricao, anos, etapa_ensino)
-  SELECT gen_random_uuid(), oc7.id, 'EF35LP16', 'Identificar e reproduzir, em notícias, manchetes, lides e corpo de notícias simples para público infantil e cartas de reclamação (revista infantil), digitais ou impressos, a formatação e diagramação específica de cada um desses gêneros, inclusive em suas versões orais.', '["3º","4º","5º"]'::jsonb, 'anos_iniciais' FROM oc7
+  SELECT gen_random_uuid(), oc10.id, 'EF35LP16', 'Identificar e reproduzir, em notícias, manchetes, lides e corpo de notícias simples para público infantil e cartas de reclamação (revista infantil), digitais ou impressos, a formatação e diagramação específica de cada um desses gêneros, inclusive em suas versões orais.', '["3º","4º","5º"]'::jsonb, 'anos_iniciais' FROM oc10
 )
-, oc8 AS (
+, h_10_EF03LP23 AS (
+  INSERT INTO bncc_habilidades (id, objeto_conhecimento_id, codigo_bncc, descricao, anos, etapa_ensino)
+  SELECT gen_random_uuid(), oc10.id, 'EF03LP23', 'Analisar o uso de adjetivos em cartas dirigidas a veículos da mídia impressa ou digital (cartas do leitor ou de reclamação a jornais ou revistas), digitais ou impressas.', '["3º"]'::jsonb, 'anos_iniciais' FROM oc10
+)
+, h_10_EF05LP20 AS (
+  INSERT INTO bncc_habilidades (id, objeto_conhecimento_id, codigo_bncc, descricao, anos, etapa_ensino)
+  SELECT gen_random_uuid(), oc10.id, 'EF05LP20', 'Analisar a validade e força de argumentos em argumentações sobre produtos de mídia para público infantil (filmes, desenhos animados, HQs, games etc.), com base em conhecimentos sobre os mesmos.', '["5º"]'::jsonb, 'anos_iniciais' FROM oc10
+)
+, h_10_EF04LP18 AS (
+  INSERT INTO bncc_habilidades (id, objeto_conhecimento_id, codigo_bncc, descricao, anos, etapa_ensino)
+  SELECT gen_random_uuid(), oc10.id, 'EF04LP18', 'Analisar o padrão entonacional e a expressão facial e corporal de âncoras de jornais radiofônicos ou televisivos e de entrevistadores/entrevistados.', '["4º"]'::jsonb, 'anos_iniciais' FROM oc10
+)
+, h_10_EF05LP21 AS (
+  INSERT INTO bncc_habilidades (id, objeto_conhecimento_id, codigo_bncc, descricao, anos, etapa_ensino)
+  SELECT gen_random_uuid(), oc10.id, 'EF05LP21', 'Analisar o padrão entonacional, a expressão facial e corporal e as escolhas de variedade e registro linguísticos de vloggers de vlogs opinativos ou argumentativos.', '["5º"]'::jsonb, 'anos_iniciais' FROM oc10
+)
+, oc11 AS (
   INSERT INTO bncc_objetos_conhecimento (id, unidade_tematica_id, objeto_conhecimento)
-  SELECT gen_random_uuid(), ut.id, '(EF04LP18) Analisar o padrão entonacional e a expressão facial e corporal de âncoras de jornais radiofônicos ou televisivos e de entrevistadores/entrevistados.' FROM ut
+  SELECT gen_random_uuid(), ut.id, 'Forma de composição dos textos / Adequação do texto às normas de escrita' FROM ut
   RETURNING id
 )
-, h_8_EF05LP21 AS (
+, h_11_EF03LP26 AS (
   INSERT INTO bncc_habilidades (id, objeto_conhecimento_id, codigo_bncc, descricao, anos, etapa_ensino)
-  SELECT gen_random_uuid(), oc8.id, 'EF05LP21', 'Analisar o padrão entonacional, a expressão facial e corporal e as escolhas de variedade e registro linguísticos de vloggers de vlogs opinativos ou argumentativos.', '["3º","4º","5º"]'::jsonb, 'anos_iniciais' FROM oc8
+  SELECT gen_random_uuid(), oc11.id, 'EF03LP26', 'Identificar e reproduzir, em relatórios de observação e pesquisa, a formatação e diagramação específica desses gêneros (passos ou listas de itens, tabelas, ilustrações, gráficos, resumo dos resultados), inclusive em suas versões orais.', '["3º"]'::jsonb, 'anos_iniciais' FROM oc11
 )
-, oc9 AS (
+, h_11_EF05LP26 AS (
+  INSERT INTO bncc_habilidades (id, objeto_conhecimento_id, codigo_bncc, descricao, anos, etapa_ensino)
+  SELECT gen_random_uuid(), oc11.id, 'EF05LP26', 'Utilizar, ao produzir o texto, conhecimentos linguísticos e gramaticais: regras sintáticas de concordância nominal e verbal, convenções de escrita de citações, pontuação (ponto final, dois-pontos, vírgulas em enumerações) e regras ortográficas.', '["5º"]'::jsonb, 'anos_iniciais' FROM oc11
+)
+, h_11_EF04LP24 AS (
+  INSERT INTO bncc_habilidades (id, objeto_conhecimento_id, codigo_bncc, descricao, anos, etapa_ensino)
+  SELECT gen_random_uuid(), oc11.id, 'EF04LP24', 'Identificar e reproduzir, em seu formato, tabelas, diagramas e gráficos em relatórios de observação e pesquisa, como forma de apresentação de dados e informações.', '["4º"]'::jsonb, 'anos_iniciais' FROM oc11
+)
+, oc12 AS (
   INSERT INTO bncc_objetos_conhecimento (id, unidade_tematica_id, objeto_conhecimento)
-  SELECT gen_random_uuid(), ut.id, 'Pesquisa' FROM ut
+  SELECT gen_random_uuid(), ut.id, 'Forma de composição dos textos / Coesão e articuladores' FROM ut
   RETURNING id
 )
-, h_9_EF35LP17 AS (
+, h_12_EF04LP23 AS (
   INSERT INTO bncc_habilidades (id, objeto_conhecimento_id, codigo_bncc, descricao, anos, etapa_ensino)
-  SELECT gen_random_uuid(), oc9.id, 'EF35LP17', 'Buscar e selecionar, com o apoio do professor, informações de interesse sobre fenômenos sociais e naturais, em textos que circulam em meios impressos ou digitais.', '["3º","4º","5º"]'::jsonb, 'anos_iniciais' FROM oc9
+  SELECT gen_random_uuid(), oc12.id, 'EF04LP23', 'Identificar e reproduzir, em verbetes de enciclopédia infantil, digitais ou impressos, a formatação e diagramação específica desse gênero (título do verbete, definição, detalhamento, curiosidades), considerando a situação comunicativa e o tema/assunto/finalidade do texto.', '["4º"]'::jsonb, 'anos_iniciais' FROM oc12
 )
-, oc10 AS (
+, h_12_EF05LP27 AS (
+  INSERT INTO bncc_habilidades (id, objeto_conhecimento_id, codigo_bncc, descricao, anos, etapa_ensino)
+  SELECT gen_random_uuid(), oc12.id, 'EF05LP27', 'Utilizar, ao produzir o texto, recursos de coesão pronominal (pronomes anafóricos) e articuladores de relações de sentido (tempo, causa, oposição, conclusão, comparação), com nível adequado de informatividade.', '["5º"]'::jsonb, 'anos_iniciais' FROM oc12
+)
+, oc13 AS (
   INSERT INTO bncc_objetos_conhecimento (id, unidade_tematica_id, objeto_conhecimento)
   SELECT gen_random_uuid(), ut.id, 'Formas de composição de narrativas' FROM ut
   RETURNING id
 )
-, h_10_EF35LP29 AS (
+, h_13_EF35LP29 AS (
   INSERT INTO bncc_habilidades (id, objeto_conhecimento_id, codigo_bncc, descricao, anos, etapa_ensino)
-  SELECT gen_random_uuid(), oc10.id, 'EF35LP29', 'Identificar, em narrativas, cenário, personagem central, conflito gerador, resolução e o ponto de vista com base no qual histórias são narradas, diferenciando narrativas em primeira e terceira pessoas.', '["3º","4º","5º"]'::jsonb, 'anos_iniciais' FROM oc10
+  SELECT gen_random_uuid(), oc13.id, 'EF35LP29', 'Identificar, em narrativas, cenário, personagem central, conflito gerador, resolução e o ponto de vista com base no qual histórias são narradas, diferenciando narrativas em primeira e terceira pessoas.', '["3º","4º","5º"]'::jsonb, 'anos_iniciais' FROM oc13
 )
-, oc11 AS (
+, oc14 AS (
   INSERT INTO bncc_objetos_conhecimento (id, unidade_tematica_id, objeto_conhecimento)
   SELECT gen_random_uuid(), ut.id, 'Discurso direto e indireto' FROM ut
   RETURNING id
 )
-, h_11_EF35LP30 AS (
+, h_14_EF35LP30 AS (
   INSERT INTO bncc_habilidades (id, objeto_conhecimento_id, codigo_bncc, descricao, anos, etapa_ensino)
-  SELECT gen_random_uuid(), oc11.id, 'EF35LP30', 'Diferenciar discurso indireto e discurso direto, determinando o efeito de sentido de verbos de enunciação e explicando o uso de variedades linguísticas no discurso direto, quando for o caso.', '["3º","4º","5º"]'::jsonb, 'anos_iniciais' FROM oc11
+  SELECT gen_random_uuid(), oc14.id, 'EF35LP30', 'Diferenciar discurso indireto e discurso direto, determinando o efeito de sentido de verbos de enunciação e explicando o uso de variedades linguísticas no discurso direto, quando for o caso.', '["3º","4º","5º"]'::jsonb, 'anos_iniciais' FROM oc14
 )
-, oc12 AS (
+, oc15 AS (
   INSERT INTO bncc_objetos_conhecimento (id, unidade_tematica_id, objeto_conhecimento)
   SELECT gen_random_uuid(), ut.id, 'Forma de composição de textos poéticos' FROM ut
   RETURNING id
 )
-, h_12_EF35LP31 AS (
+, h_15_EF35LP31 AS (
   INSERT INTO bncc_habilidades (id, objeto_conhecimento_id, codigo_bncc, descricao, anos, etapa_ensino)
-  SELECT gen_random_uuid(), oc12.id, 'EF35LP31', 'Identificar, em textos versificados, efeitos de sentido decorrentes do uso de recursos rítmicos e sonoros e de metáforas.', '["3º","4º","5º"]'::jsonb, 'anos_iniciais' FROM oc12
+  SELECT gen_random_uuid(), oc15.id, 'EF35LP31', 'Identificar, em textos versificados, efeitos de sentido decorrentes do uso de recursos rítmicos e sonoros e de metáforas.', '["3º","4º","5º"]'::jsonb, 'anos_iniciais' FROM oc15
+)
+, oc16 AS (
+  INSERT INTO bncc_objetos_conhecimento (id, unidade_tematica_id, objeto_conhecimento)
+  SELECT gen_random_uuid(), ut.id, 'Forma de composição de textos poéticos visuais' FROM ut
+  RETURNING id
+)
+, h_16_EF04LP26 AS (
+  INSERT INTO bncc_habilidades (id, objeto_conhecimento_id, codigo_bncc, descricao, anos, etapa_ensino)
+  SELECT gen_random_uuid(), oc16.id, 'EF04LP26', 'Observar, em poemas concretos, o formato, a distribuição e a diagramação das letras do texto na página.', '["4º"]'::jsonb, 'anos_iniciais' FROM oc16
+)
+, h_16_EF05LP28 AS (
+  INSERT INTO bncc_habilidades (id, objeto_conhecimento_id, codigo_bncc, descricao, anos, etapa_ensino)
+  SELECT gen_random_uuid(), oc16.id, 'EF05LP28', 'Observar, em ciberpoemas e minicontos infantis em mídia digital, os recursos multissemióticos presentes nesses textos digitais.', '["5º"]'::jsonb, 'anos_iniciais' FROM oc16
+)
+, oc17 AS (
+  INSERT INTO bncc_objetos_conhecimento (id, unidade_tematica_id, objeto_conhecimento)
+  SELECT gen_random_uuid(), ut.id, 'Forma de composição de textos dramáticos' FROM ut
+  RETURNING id
+)
+, h_17_EF04LP25 AS (
+  INSERT INTO bncc_habilidades (id, objeto_conhecimento_id, codigo_bncc, descricao, anos, etapa_ensino)
+  SELECT gen_random_uuid(), oc17.id, 'EF04LP25', 'Representar cenas de textos dramáticos, reproduzindo as falas das personagens, de acordo com as rubricas de interpretação e movimento indicadas pelo autor.', '["4º"]'::jsonb, 'anos_iniciais' FROM oc17
 )
 SELECT 1;
 
@@ -7798,6 +8484,14 @@ WITH ut AS (
   INSERT INTO bncc_habilidades (id, objeto_conhecimento_id, codigo_bncc, descricao, anos, etapa_ensino)
   SELECT gen_random_uuid(), oc2.id, 'EF69LP05', 'Inferir e justificar, em textos multissemióticos – tirinhas, charges, memes, gifs etc. –, o efeito de humor, ironia e/ou crítica pelo uso ambíguo de palavras, expressões ou imagens ambíguas, de clichês, de recursos iconográficos, de pontuação etc.', '["6º","7º","8º","9º"]'::jsonb, 'anos_finais' FROM oc2
 )
+, h_2_EF67LP06 AS (
+  INSERT INTO bncc_habilidades (id, objeto_conhecimento_id, codigo_bncc, descricao, anos, etapa_ensino)
+  SELECT gen_random_uuid(), oc2.id, 'EF67LP06', 'Identificar os efeitos de sentido provocados pela seleção lexical, topicalização de elementos e seleção e hierarquização de informações, uso de 3ª pessoa etc.', '["6º","7º"]'::jsonb, 'anos_finais' FROM oc2
+)
+, h_2_EF67LP07 AS (
+  INSERT INTO bncc_habilidades (id, objeto_conhecimento_id, codigo_bncc, descricao, anos, etapa_ensino)
+  SELECT gen_random_uuid(), oc2.id, 'EF67LP07', 'Identificar o uso de recursos persuasivos em textos argumentativos diversos (como a elaboração do título, escolhas lexicais, construções metafóricas, a explicitação ou a ocultação de fontes de informação) e perceber seus efeitos de sentido.', '["6º","7º"]'::jsonb, 'anos_finais' FROM oc2
+)
 , h_2_EF89LP05 AS (
   INSERT INTO bncc_habilidades (id, objeto_conhecimento_id, codigo_bncc, descricao, anos, etapa_ensino)
   SELECT gen_random_uuid(), oc2.id, 'EF89LP05', 'Analisar o efeito de sentido produzido pelo uso, em textos, de recurso a formas de apropriação textual (paráfrases, citações, discurso direto, indireto ou indireto livre).', '["8º","9º"]'::jsonb, 'anos_finais' FROM oc2
@@ -7828,6 +8522,10 @@ WITH ut AS (
   INSERT INTO bncc_habilidades (id, objeto_conhecimento_id, codigo_bncc, descricao, anos, etapa_ensino)
   SELECT gen_random_uuid(), oc4.id, 'EF69LP31', 'Utilizar pistas linguísticas – tais como “em primeiro/segundo/terceiro lugar”, “por outro lado”, “dito de outro modo”, isto é”, “por exemplo” – para compreender a hierarquização das proposições, sintetizando o conteúdo dos textos.', '["6º","7º","8º","9º"]'::jsonb, 'anos_finais' FROM oc4
 )
+, h_4_EF67LP02 AS (
+  INSERT INTO bncc_habilidades (id, objeto_conhecimento_id, codigo_bncc, descricao, anos, etapa_ensino)
+  SELECT gen_random_uuid(), oc4.id, 'EF67LP02', 'Explorar o espaço reservado ao leitor nos jornais, revistas, impressos e on-line, sites noticiosos etc., destacando notícias, fotorreportagens, entrevistas, charges, assuntos, temas, debates em foco, posicionando-se de maneira ética e respeitosa frente a esses textos e opiniões a eles relacionadas, e publicar notícias, notas jornalísticas, fotorreportagem de interesse geral nesses espaços do leitor.', '["6º","7º"]'::jsonb, 'anos_finais' FROM oc4
+)
 , oc5 AS (
   INSERT INTO bncc_objetos_conhecimento (id, unidade_tematica_id, objeto_conhecimento)
   SELECT gen_random_uuid(), ut.id, 'Reconstrução das condições de produção e recepção dos textos e adequação do texto à construção composicional e ao estilo de gênero' FROM ut
@@ -7846,9 +8544,21 @@ WITH ut AS (
   INSERT INTO bncc_habilidades (id, objeto_conhecimento_id, codigo_bncc, descricao, anos, etapa_ensino)
   SELECT gen_random_uuid(), oc6.id, 'EF69LP30', 'Comparar, com a ajuda do professor, conteúdos, dados e informações de diferentes fontes, levando em conta seus contextos de produção e referências, identificando coincidências, complementaridades e contradições, de forma a poder identificar erros/imprecisões conceituais, compreender e posicionar-se criticamente sobre os conteúdos e informações em questão.', '["6º","7º","8º","9º"]'::jsonb, 'anos_finais' FROM oc6
 )
+, h_6_EF67LP03 AS (
+  INSERT INTO bncc_habilidades (id, objeto_conhecimento_id, codigo_bncc, descricao, anos, etapa_ensino)
+  SELECT gen_random_uuid(), oc6.id, 'EF67LP03', 'Comparar informações sobre um mesmo fato divulgadas em diferentes veículos e mídias, analisando e avaliando a confiabilidade.', '["6º","7º"]'::jsonb, 'anos_finais' FROM oc6
+)
 , h_6_EF67LP27 AS (
   INSERT INTO bncc_habilidades (id, objeto_conhecimento_id, codigo_bncc, descricao, anos, etapa_ensino)
   SELECT gen_random_uuid(), oc6.id, 'EF67LP27', 'Analisar, entre os textos literários e entre estes e outras manifestações artísticas (como cinema, teatro, música, artes visuais e midiáticas), referências explícitas ou implícitas a outros textos, quanto aos temas, personagens e recursos literários e semióticos', '["6º","7º"]'::jsonb, 'anos_finais' FROM oc6
+)
+, h_6_EF08LP02 AS (
+  INSERT INTO bncc_habilidades (id, objeto_conhecimento_id, codigo_bncc, descricao, anos, etapa_ensino)
+  SELECT gen_random_uuid(), oc6.id, 'EF08LP02', 'Justificar diferenças ou semelhanças no tratamento dado a uma mesma informação veiculada em textos diferentes, consultando sites e serviços de checadores de fatos.', '["8º"]'::jsonb, 'anos_finais' FROM oc6
+)
+, h_6_EF09LP02 AS (
+  INSERT INTO bncc_habilidades (id, objeto_conhecimento_id, codigo_bncc, descricao, anos, etapa_ensino)
+  SELECT gen_random_uuid(), oc6.id, 'EF09LP02', 'Analisar e comentar a cobertura da imprensa sobre fatos de relevância social, comparando diferentes enfoques por meio do uso de ferramentas de curadoria.', '["9º"]'::jsonb, 'anos_finais' FROM oc6
 )
 , h_6_EF89LP32 AS (
   INSERT INTO bncc_habilidades (id, objeto_conhecimento_id, codigo_bncc, descricao, anos, etapa_ensino)
@@ -7916,154 +8626,195 @@ WITH ut AS (
 )
 , oc11 AS (
   INSERT INTO bncc_objetos_conhecimento (id, unidade_tematica_id, objeto_conhecimento)
-  SELECT gen_random_uuid(), ut.id, 'Estratégias e procedimentos de leitura em textos legais e normativos' FROM ut
+  SELECT gen_random_uuid(), ut.id, 'Reconstrução do contexto de produção, circulação e recepção de textos / / Caracterização do campo jornalístico e relação entre os gêneros em circulação, mídias e práticas da cultura digital' FROM ut
   RETURNING id
 )
-, h_11_EF67LP15 AS (
+, h_11_EF06LP01 AS (
   INSERT INTO bncc_habilidades (id, objeto_conhecimento_id, codigo_bncc, descricao, anos, etapa_ensino)
-  SELECT gen_random_uuid(), oc11.id, 'EF67LP15', 'Identificar a proibição imposta ou o direito garantido, bem como as circunstâncias de sua aplicação, em artigos relativos a normas, regimentos escolares, regimentos e estatutos da sociedade civil, regulamentações para o mercado publicitário, Código de Defesa do Consumidor, Código Nacional de Trânsito, ECA, Constituição, dentre outros.', '["6º","7º"]'::jsonb, 'anos_finais' FROM oc11
+  SELECT gen_random_uuid(), oc11.id, 'EF06LP01', 'Reconhecer a impossibilidade de uma neutralidade absoluta no relato de fatos e identificar diferentes graus de parcialidade/ imparcialidade dados pelo recorte feito e pelos efeitos de sentido advindos de escolhas feitas pelo autor, de forma a poder desenvolver uma atitude crítica frente aos textos jornalísticos e tornar-se consciente das escolhas feitas enquanto produtor de textos.', '["6º"]'::jsonb, 'anos_finais' FROM oc11
+)
+, h_11_EF07LP01 AS (
+  INSERT INTO bncc_habilidades (id, objeto_conhecimento_id, codigo_bncc, descricao, anos, etapa_ensino)
+  SELECT gen_random_uuid(), oc11.id, 'EF07LP01', 'Distinguir diferentes propostas editoriais – sensacionalismo, jornalismo investigativo etc. –, de forma a identificar os recursos utilizados para impactar/chocar o leitor que podem comprometer uma análise crítica da notícia e do fato noticiado.', '["7º"]'::jsonb, 'anos_finais' FROM oc11
+)
+, h_11_EF06LP02 AS (
+  INSERT INTO bncc_habilidades (id, objeto_conhecimento_id, codigo_bncc, descricao, anos, etapa_ensino)
+  SELECT gen_random_uuid(), oc11.id, 'EF06LP02', 'Estabelecer relação entre os diferentes gêneros jornalísticos, compreendendo a centralidade da notícia.', '["6º"]'::jsonb, 'anos_finais' FROM oc11
+)
+, h_11_EF07LP02 AS (
+  INSERT INTO bncc_habilidades (id, objeto_conhecimento_id, codigo_bncc, descricao, anos, etapa_ensino)
+  SELECT gen_random_uuid(), oc11.id, 'EF07LP02', 'Comparar notícias e reportagens sobre um mesmo fato divulgadas em diferentes mídias, analisando as especificidades das mídias, os processos de (re)elaboração dos textos e a convergência das mídias em notícias ou reportagens multissemióticas.', '["7º"]'::jsonb, 'anos_finais' FROM oc11
+)
+, h_11_EF67LP01 AS (
+  INSERT INTO bncc_habilidades (id, objeto_conhecimento_id, codigo_bncc, descricao, anos, etapa_ensino)
+  SELECT gen_random_uuid(), oc11.id, 'EF67LP01', 'Analisar a estrutura e funcionamento dos hiperlinks em textos noticiosos publicados na Web e vislumbrar possibilidades de uma escrita hipertextual.', '["6º","7º"]'::jsonb, 'anos_finais' FROM oc11
 )
 , oc12 AS (
   INSERT INTO bncc_objetos_conhecimento (id, unidade_tematica_id, objeto_conhecimento)
-  SELECT gen_random_uuid(), ut.id, 'Contexto de produção, circulação e recepção de textos e práticas relacionadas à defesa de direitos e à participação social' FROM ut
+  SELECT gen_random_uuid(), ut.id, 'Estratégia de leitura / Distinção de fato e opinião' FROM ut
   RETURNING id
 )
-, h_12_EF67LP16 AS (
+, h_12_EF67LP04 AS (
   INSERT INTO bncc_habilidades (id, objeto_conhecimento_id, codigo_bncc, descricao, anos, etapa_ensino)
-  SELECT gen_random_uuid(), oc12.id, 'EF67LP16', 'Explorar e analisar espaços de reclamação de direitos e de envio de solicitações (tais como ouvidorias, SAC, canais ligados a órgãos públicos, plataformas do consumidor, plataformas de reclamação), bem como de textos pertencentes a gêneros que circulam nesses espaços, reclamação ou carta de reclamação, solicitação ou carta de solicitação, como forma de ampliar as possibilidades de produção desses textos em casos que remetam a reivindicações que envolvam a escola, a comunidade ou algum de seus membros como forma de se engajar na busca de solução de problemas pessoais, dos outros e coletivos.', '["6º","7º"]'::jsonb, 'anos_finais' FROM oc12
-)
-, h_12_EF89LP18 AS (
-  INSERT INTO bncc_habilidades (id, objeto_conhecimento_id, codigo_bncc, descricao, anos, etapa_ensino)
-  SELECT gen_random_uuid(), oc12.id, 'EF89LP18', 'Explorar e analisar instâncias e canais de participação disponíveis na escola (conselho de escola, outros colegiados, grêmio livre), na comunidade (associações, coletivos, movimentos, etc.), no munícipio ou no país, incluindo formas de participação digital, como canais e plataformas de participação (como portal e-cidadania), serviços, portais e ferramentas de acompanhamentos do trabalho de políticos e de tramitação de leis, canais de educação política, bem como de propostas e proposições que circulam nesses canais, de forma a participar do debate de ideias e propostas na esfera social e a engajar-se com a busca de soluções para problemas ou questões que envolvam a vida da escola e da comunidade.', '["8º","9º"]'::jsonb, 'anos_finais' FROM oc12
+  SELECT gen_random_uuid(), oc12.id, 'EF67LP04', 'Distinguir, em segmentos descontínuos de textos, fato da opinião enunciada em relação a esse mesmo fato.', '["6º","7º"]'::jsonb, 'anos_finais' FROM oc12
 )
 , oc13 AS (
   INSERT INTO bncc_objetos_conhecimento (id, unidade_tematica_id, objeto_conhecimento)
-  SELECT gen_random_uuid(), ut.id, 'Relação entre contexto de produção e características composicionais e estilísticas dos gêneros (carta de solicitação, carta de reclamação, petição on-line, carta aberta, abaixo-assinado, proposta etc.) / Apreciação e réplica' FROM ut
+  SELECT gen_random_uuid(), ut.id, 'Estratégia de leitura: identificação de teses e argumentos / Apreciação e réplica' FROM ut
   RETURNING id
 )
-, h_13_EF67LP17 AS (
+, h_13_EF67LP05 AS (
   INSERT INTO bncc_habilidades (id, objeto_conhecimento_id, codigo_bncc, descricao, anos, etapa_ensino)
-  SELECT gen_random_uuid(), oc13.id, 'EF67LP17', 'Analisar, a partir do contexto de produção, a forma de organização das cartas de solicitação e de reclamação (datação, forma de início, apresentação contextualizada do pedido ou da reclamação, em geral, acompanhada de explicações, argumentos e/ou relatos do problema, fórmula de finalização mais ou menos cordata, dependendo do tipo de carta e subscrição) e algumas das marcas linguísticas relacionadas à argumentação, explicação ou relato de fatos, como forma de possibilitar a escrita fundamentada de cartas como essas ou de postagens em canais próprios de reclamações e solicitações em situações que envolvam questões relativas à escola, à comunidade ou a algum dos seus membros.', '["6º","7º"]'::jsonb, 'anos_finais' FROM oc13
+  SELECT gen_random_uuid(), oc13.id, 'EF67LP05', 'Identificar e avaliar teses/opiniões/posicionamentos explícitos e argumentos em textos argumentativos (carta de leitor, comentário, artigo de opinião, resenha crítica etc.), manifestando concordância ou discordância.', '["6º","7º"]'::jsonb, 'anos_finais' FROM oc13
 )
 , oc14 AS (
-  INSERT INTO bncc_objetos_conhecimento (id, unidade_tematica_id, objeto_conhecimento)
-  SELECT gen_random_uuid(), ut.id, 'Estratégias, procedimentos de leitura em textos reivindicatórios ou propositivos' FROM ut
-  RETURNING id
-)
-, h_14_EF67LP18 AS (
-  INSERT INTO bncc_habilidades (id, objeto_conhecimento_id, codigo_bncc, descricao, anos, etapa_ensino)
-  SELECT gen_random_uuid(), oc14.id, 'EF67LP18', 'Identificar o objeto da reclamação e/ou da solicitação e sua sustentação, explicação ou justificativa, de forma a poder analisar a pertinência da solicitação ou justificação.', '["6º","7º"]'::jsonb, 'anos_finais' FROM oc14
-)
-, oc15 AS (
-  INSERT INTO bncc_objetos_conhecimento (id, unidade_tematica_id, objeto_conhecimento)
-  SELECT gen_random_uuid(), ut.id, 'Curadoria de informação' FROM ut
-  RETURNING id
-)
-, h_15_EF67LP20 AS (
-  INSERT INTO bncc_habilidades (id, objeto_conhecimento_id, codigo_bncc, descricao, anos, etapa_ensino)
-  SELECT gen_random_uuid(), oc15.id, 'EF67LP20', 'Realizar pesquisa, a partir de recortes e questões definidos previamente, usando fontes indicadas e abertas.', '["6º","7º"]'::jsonb, 'anos_finais' FROM oc15
-)
-, h_15_EF89LP24 AS (
-  INSERT INTO bncc_habilidades (id, objeto_conhecimento_id, codigo_bncc, descricao, anos, etapa_ensino)
-  SELECT gen_random_uuid(), oc15.id, 'EF89LP24', 'Realizar pesquisa, estabelecendo o recorte das questões, usando fontes abertas e confiáveis.', '["8º","9º"]'::jsonb, 'anos_finais' FROM oc15
-)
-, oc16 AS (
-  INSERT INTO bncc_objetos_conhecimento (id, unidade_tematica_id, objeto_conhecimento)
-  SELECT gen_random_uuid(), ut.id, 'Estratégias de leitura / Apreciação e réplica' FROM ut
-  RETURNING id
-)
-, h_16_EF67LP28 AS (
-  INSERT INTO bncc_habilidades (id, objeto_conhecimento_id, codigo_bncc, descricao, anos, etapa_ensino)
-  SELECT gen_random_uuid(), oc16.id, 'EF67LP28', 'Ler, de forma autônoma, e compreender – selecionando procedimentos e estratégias de leitura adequados a diferentes objetivos e levando em conta características dos gêneros e suportes –, romances infantojuvenis, contos populares, contos de terror, lendas brasileiras, indígenas e africanas, narrativas de aventuras, narrativas de enigma, mitos, crônicas, autobiografias, histórias em quadrinhos, mangás, poemas de forma livre e fixa (como sonetos e cordéis), vídeo-poemas, poemas visuais, dentre outros, expressando avaliação sobre o texto lido e estabelecendo preferências por gêneros, temas, autores.', '["6º","7º"]'::jsonb, 'anos_finais' FROM oc16
-)
-, h_16_EF89LP33 AS (
-  INSERT INTO bncc_habilidades (id, objeto_conhecimento_id, codigo_bncc, descricao, anos, etapa_ensino)
-  SELECT gen_random_uuid(), oc16.id, 'EF89LP33', 'Ler, de forma autônoma, e compreender – selecionando procedimentos e estratégias de leitura adequados a diferentes objetivos e levando em conta características dos gêneros e suportes – romances, contos contemporâneos, minicontos, fábulas contemporâneas, romances juvenis, biografias romanceadas, novelas, crônicas visuais, narrativas de ficção científica, narrativas de suspense, poemas de forma livre e fixa (como haicai), poema concreto, ciberpoema, dentre outros, expressando avaliação sobre o texto lido e estabelecendo preferências por gêneros, temas, autores.', '["8º","9º"]'::jsonb, 'anos_finais' FROM oc16
-)
-, oc17 AS (
-  INSERT INTO bncc_objetos_conhecimento (id, unidade_tematica_id, objeto_conhecimento)
-  SELECT gen_random_uuid(), ut.id, 'Reconstrução da textualidade / Efeitos de sentidos provocados pelos usos de recursos linguísticos e multissemióticos' FROM ut
-  RETURNING id
-)
-, h_17_EF67LP29 AS (
-  INSERT INTO bncc_habilidades (id, objeto_conhecimento_id, codigo_bncc, descricao, anos, etapa_ensino)
-  SELECT gen_random_uuid(), oc17.id, 'EF67LP29', 'Identificar, em texto dramático, personagem, ato, cena, fala e indicações cênicas e a organização do texto: enredo, conflitos, ideias principais, pontos de vista, universos de referência.', '["6º","7º"]'::jsonb, 'anos_finais' FROM oc17
-)
-, oc18 AS (
-  INSERT INTO bncc_objetos_conhecimento (id, unidade_tematica_id, objeto_conhecimento)
-  SELECT gen_random_uuid(), ut.id, 'Reconstrução do contexto de produção, circulação e recepção de textos / Caracterização do campo jornalístico e relação entre os gêneros em circulação, mídias e práticas da cultura digital' FROM ut
-  RETURNING id
-)
-, h_18_EF89LP01 AS (
-  INSERT INTO bncc_habilidades (id, objeto_conhecimento_id, codigo_bncc, descricao, anos, etapa_ensino)
-  SELECT gen_random_uuid(), oc18.id, 'EF89LP01', 'Analisar os interesses que movem o campo jornalístico, os efeitos das novas tecnologias no campo e as condições que fazem da informação uma mercadoria, de forma a poder desenvolver uma atitude crítica frente aos textos jornalísticos.', '["8º","9º"]'::jsonb, 'anos_finais' FROM oc18
-)
-, oc19 AS (
-  INSERT INTO bncc_objetos_conhecimento (id, unidade_tematica_id, objeto_conhecimento)
-  SELECT gen_random_uuid(), ut.id, '(EF08LP01) Identificar e comparar as várias editorias de jornais impressos e digitais e de sites noticiosos, de forma a refletir sobre os tipos de fato que são noticiados e comentados, as escolhas sobre o que noticiar e o que não noticiar e o destaque/enfoque dado e a fidedignidade da informação.' FROM ut
-  RETURNING id
-)
-, h_19_EF09LP01 AS (
-  INSERT INTO bncc_habilidades (id, objeto_conhecimento_id, codigo_bncc, descricao, anos, etapa_ensino)
-  SELECT gen_random_uuid(), oc19.id, 'EF09LP01', 'Analisar o fenômeno da disseminação de notícias falsas nas redes sociais e desenvolver estratégias para reconhecê-las, a partir da verificação/avaliação do veículo, fonte, data e local da publicação, autoria, URL, da análise da formatação, da comparação de diferentes fontes, da consulta a sites de curadoria que atestam a fidedignidade do relato dos fatos e denunciam boatos etc.', '["8º","9º"]'::jsonb, 'anos_finais' FROM oc19
-)
-, oc20 AS (
-  INSERT INTO bncc_objetos_conhecimento (id, unidade_tematica_id, objeto_conhecimento)
-  SELECT gen_random_uuid(), ut.id, 'Estratégia de leitura: apreender os sentidos globais do texto / Apreciação e réplica' FROM ut
-  RETURNING id
-)
-, h_20_EF89LP03 AS (
-  INSERT INTO bncc_habilidades (id, objeto_conhecimento_id, codigo_bncc, descricao, anos, etapa_ensino)
-  SELECT gen_random_uuid(), oc20.id, 'EF89LP03', 'Analisar textos de opinião (artigos de opinião, editoriais, cartas de leitores, comentários, posts de blog e de redes sociais, charges, memes, gifs etc.) e posicionar-se de forma crítica e fundamentada, ética e respeitosa frente a fatos e opiniões relacionados a esses textos.', '["8º","9º"]'::jsonb, 'anos_finais' FROM oc20
-)
-, h_20_EF89LP04 AS (
-  INSERT INTO bncc_habilidades (id, objeto_conhecimento_id, codigo_bncc, descricao, anos, etapa_ensino)
-  SELECT gen_random_uuid(), oc20.id, 'EF89LP04', 'Identificar e avaliar teses/opiniões/posicionamentos explícitos e implícitos, argumentos e contra-argumentos em textos argumentativos do campo (carta de leitor, comentário, artigo de opinião, resenha crítica etc.), posicionando-se frente à questão controversa de forma sustentada.', '["8º","9º"]'::jsonb, 'anos_finais' FROM oc20
-)
-, oc21 AS (
-  INSERT INTO bncc_objetos_conhecimento (id, unidade_tematica_id, objeto_conhecimento)
-  SELECT gen_random_uuid(), ut.id, '(EF08LP02) Justificar diferenças ou semelhanças no tratamento dado a uma mesma informação veiculada em textos diferentes, consultando sites e serviços de checadores de fatos.' FROM ut
-  RETURNING id
-)
-, h_21_EF09LP02 AS (
-  INSERT INTO bncc_habilidades (id, objeto_conhecimento_id, codigo_bncc, descricao, anos, etapa_ensino)
-  SELECT gen_random_uuid(), oc21.id, 'EF09LP02', 'Analisar e comentar a cobertura da imprensa sobre fatos de relevância social, comparando diferentes enfoques por meio do uso de ferramentas de curadoria.', '["8º","9º"]'::jsonb, 'anos_finais' FROM oc21
-)
-, oc22 AS (
   INSERT INTO bncc_objetos_conhecimento (id, unidade_tematica_id, objeto_conhecimento)
   SELECT gen_random_uuid(), ut.id, 'Efeitos de sentido / Exploração da multissemiose' FROM ut
   RETURNING id
 )
-, h_22_EF89LP07 AS (
+, h_14_EF67LP08 AS (
   INSERT INTO bncc_habilidades (id, objeto_conhecimento_id, codigo_bncc, descricao, anos, etapa_ensino)
-  SELECT gen_random_uuid(), oc22.id, 'EF89LP07', 'Analisar, em notícias, reportagens e peças publicitárias em várias mídias, os efeitos de sentido devidos ao tratamento e à composição dos elementos nas imagens em movimento, à performance, à montagem feita (ritmo, duração e sincronização entre as linguagens – complementaridades, interferências etc.) e ao ritmo, melodia, instrumentos e sampleamentos das músicas e efeitos sonoros.', '["8º","9º"]'::jsonb, 'anos_finais' FROM oc22
+  SELECT gen_random_uuid(), oc14.id, 'EF67LP08', 'Identificar os efeitos de sentido devidos à escolha de imagens estáticas, sequenciação ou sobreposição de imagens, definição de figura/fundo, ângulo, profundidade e foco, cores/tonalidades, relação com o escrito (relações de reiteração, complementação ou oposição) etc. em notícias, reportagens, fotorreportagens, foto-denúncias, memes, gifs, anúncios publicitários e propagandas publicados em jornais, revistas, sites na internet etc.', '["6º","7º"]'::jsonb, 'anos_finais' FROM oc14
+)
+, h_14_EF89LP07 AS (
+  INSERT INTO bncc_habilidades (id, objeto_conhecimento_id, codigo_bncc, descricao, anos, etapa_ensino)
+  SELECT gen_random_uuid(), oc14.id, 'EF89LP07', 'Analisar, em notícias, reportagens e peças publicitárias em várias mídias, os efeitos de sentido devidos ao tratamento e à composição dos elementos nas imagens em movimento, à performance, à montagem feita (ritmo, duração e sincronização entre as linguagens – complementaridades, interferências etc.) e ao ritmo, melodia, instrumentos e sampleamentos das músicas e efeitos sonoros.', '["8º","9º"]'::jsonb, 'anos_finais' FROM oc14
+)
+, oc15 AS (
+  INSERT INTO bncc_objetos_conhecimento (id, unidade_tematica_id, objeto_conhecimento)
+  SELECT gen_random_uuid(), ut.id, 'Estratégias e procedimentos de leitura em textos legais e normativos' FROM ut
+  RETURNING id
+)
+, h_15_EF67LP15 AS (
+  INSERT INTO bncc_habilidades (id, objeto_conhecimento_id, codigo_bncc, descricao, anos, etapa_ensino)
+  SELECT gen_random_uuid(), oc15.id, 'EF67LP15', 'Identificar a proibição imposta ou o direito garantido, bem como as circunstâncias de sua aplicação, em artigos relativos a normas, regimentos escolares, regimentos e estatutos da sociedade civil, regulamentações para o mercado publicitário, Código de Defesa do Consumidor, Código Nacional de Trânsito, ECA, Constituição, dentre outros.', '["6º","7º"]'::jsonb, 'anos_finais' FROM oc15
+)
+, oc16 AS (
+  INSERT INTO bncc_objetos_conhecimento (id, unidade_tematica_id, objeto_conhecimento)
+  SELECT gen_random_uuid(), ut.id, 'Contexto de produção, circulação e recepção de textos e práticas relacionadas à defesa de direitos e à participação social' FROM ut
+  RETURNING id
+)
+, h_16_EF67LP16 AS (
+  INSERT INTO bncc_habilidades (id, objeto_conhecimento_id, codigo_bncc, descricao, anos, etapa_ensino)
+  SELECT gen_random_uuid(), oc16.id, 'EF67LP16', 'Explorar e analisar espaços de reclamação de direitos e de envio de solicitações (tais como ouvidorias, SAC, canais ligados a órgãos públicos, plataformas do consumidor, plataformas de reclamação), bem como de textos pertencentes a gêneros que circulam nesses espaços, reclamação ou carta de reclamação, solicitação ou carta de solicitação, como forma de ampliar as possibilidades de produção desses textos em casos que remetam a reivindicações que envolvam a escola, a comunidade ou algum de seus membros como forma de se engajar na busca de solução de problemas pessoais, dos outros e coletivos.', '["6º","7º"]'::jsonb, 'anos_finais' FROM oc16
+)
+, h_16_EF89LP18 AS (
+  INSERT INTO bncc_habilidades (id, objeto_conhecimento_id, codigo_bncc, descricao, anos, etapa_ensino)
+  SELECT gen_random_uuid(), oc16.id, 'EF89LP18', 'Explorar e analisar instâncias e canais de participação disponíveis na escola (conselho de escola, outros colegiados, grêmio livre), na comunidade (associações, coletivos, movimentos, etc.), no munícipio ou no país, incluindo formas de participação digital, como canais e plataformas de participação (como portal e-cidadania), serviços, portais e ferramentas de acompanhamentos do trabalho de políticos e de tramitação de leis, canais de educação política, bem como de propostas e proposições que circulam nesses canais, de forma a participar do debate de ideias e propostas na esfera social e a engajar-se com a busca de soluções para problemas ou questões que envolvam a vida da escola e da comunidade.', '["8º","9º"]'::jsonb, 'anos_finais' FROM oc16
+)
+, oc17 AS (
+  INSERT INTO bncc_objetos_conhecimento (id, unidade_tematica_id, objeto_conhecimento)
+  SELECT gen_random_uuid(), ut.id, 'Relação entre contexto de produção e características composicionais e estilísticas dos gêneros (carta de solicitação, carta de reclamação, petição on-line, carta aberta, abaixo-assinado, proposta etc.) / Apreciação e réplica' FROM ut
+  RETURNING id
+)
+, h_17_EF67LP17 AS (
+  INSERT INTO bncc_habilidades (id, objeto_conhecimento_id, codigo_bncc, descricao, anos, etapa_ensino)
+  SELECT gen_random_uuid(), oc17.id, 'EF67LP17', 'Analisar, a partir do contexto de produção, a forma de organização das cartas de solicitação e de reclamação (datação, forma de início, apresentação contextualizada do pedido ou da reclamação, em geral, acompanhada de explicações, argumentos e/ou relatos do problema, fórmula de finalização mais ou menos cordata, dependendo do tipo de carta e subscrição) e algumas das marcas linguísticas relacionadas à argumentação, explicação ou relato de fatos, como forma de possibilitar a escrita fundamentada de cartas como essas ou de postagens em canais próprios de reclamações e solicitações em situações que envolvam questões relativas à escola, à comunidade ou a algum dos seus membros.', '["6º","7º"]'::jsonb, 'anos_finais' FROM oc17
+)
+, oc18 AS (
+  INSERT INTO bncc_objetos_conhecimento (id, unidade_tematica_id, objeto_conhecimento)
+  SELECT gen_random_uuid(), ut.id, 'Estratégias, procedimentos de leitura em textos reivindicatórios ou propositivos' FROM ut
+  RETURNING id
+)
+, h_18_EF67LP18 AS (
+  INSERT INTO bncc_habilidades (id, objeto_conhecimento_id, codigo_bncc, descricao, anos, etapa_ensino)
+  SELECT gen_random_uuid(), oc18.id, 'EF67LP18', 'Identificar o objeto da reclamação e/ou da solicitação e sua sustentação, explicação ou justificativa, de forma a poder analisar a pertinência da solicitação ou justificação.', '["6º","7º"]'::jsonb, 'anos_finais' FROM oc18
+)
+, oc19 AS (
+  INSERT INTO bncc_objetos_conhecimento (id, unidade_tematica_id, objeto_conhecimento)
+  SELECT gen_random_uuid(), ut.id, 'Curadoria de informação' FROM ut
+  RETURNING id
+)
+, h_19_EF67LP20 AS (
+  INSERT INTO bncc_habilidades (id, objeto_conhecimento_id, codigo_bncc, descricao, anos, etapa_ensino)
+  SELECT gen_random_uuid(), oc19.id, 'EF67LP20', 'Realizar pesquisa, a partir de recortes e questões definidos previamente, usando fontes indicadas e abertas.', '["6º","7º"]'::jsonb, 'anos_finais' FROM oc19
+)
+, h_19_EF89LP24 AS (
+  INSERT INTO bncc_habilidades (id, objeto_conhecimento_id, codigo_bncc, descricao, anos, etapa_ensino)
+  SELECT gen_random_uuid(), oc19.id, 'EF89LP24', 'Realizar pesquisa, estabelecendo o recorte das questões, usando fontes abertas e confiáveis.', '["8º","9º"]'::jsonb, 'anos_finais' FROM oc19
+)
+, oc20 AS (
+  INSERT INTO bncc_objetos_conhecimento (id, unidade_tematica_id, objeto_conhecimento)
+  SELECT gen_random_uuid(), ut.id, 'Estratégias de leitura / Apreciação e réplica' FROM ut
+  RETURNING id
+)
+, h_20_EF67LP28 AS (
+  INSERT INTO bncc_habilidades (id, objeto_conhecimento_id, codigo_bncc, descricao, anos, etapa_ensino)
+  SELECT gen_random_uuid(), oc20.id, 'EF67LP28', 'Ler, de forma autônoma, e compreender – selecionando procedimentos e estratégias de leitura adequados a diferentes objetivos e levando em conta características dos gêneros e suportes –, romances infantojuvenis, contos populares, contos de terror, lendas brasileiras, indígenas e africanas, narrativas de aventuras, narrativas de enigma, mitos, crônicas, autobiografias, histórias em quadrinhos, mangás, poemas de forma livre e fixa (como sonetos e cordéis), vídeo-poemas, poemas visuais, dentre outros, expressando avaliação sobre o texto lido e estabelecendo preferências por gêneros, temas, autores.', '["6º","7º"]'::jsonb, 'anos_finais' FROM oc20
+)
+, h_20_EF89LP33 AS (
+  INSERT INTO bncc_habilidades (id, objeto_conhecimento_id, codigo_bncc, descricao, anos, etapa_ensino)
+  SELECT gen_random_uuid(), oc20.id, 'EF89LP33', 'Ler, de forma autônoma, e compreender – selecionando procedimentos e estratégias de leitura adequados a diferentes objetivos e levando em conta características dos gêneros e suportes – romances, contos contemporâneos, minicontos, fábulas contemporâneas, romances juvenis, biografias romanceadas, novelas, crônicas visuais, narrativas de ficção científica, narrativas de suspense, poemas de forma livre e fixa (como haicai), poema concreto, ciberpoema, dentre outros, expressando avaliação sobre o texto lido e estabelecendo preferências por gêneros, temas, autores.', '["8º","9º"]'::jsonb, 'anos_finais' FROM oc20
+)
+, oc21 AS (
+  INSERT INTO bncc_objetos_conhecimento (id, unidade_tematica_id, objeto_conhecimento)
+  SELECT gen_random_uuid(), ut.id, 'Reconstrução da textualidade / Efeitos de sentidos provocados pelos usos de recursos linguísticos e multissemióticos' FROM ut
+  RETURNING id
+)
+, h_21_EF67LP29 AS (
+  INSERT INTO bncc_habilidades (id, objeto_conhecimento_id, codigo_bncc, descricao, anos, etapa_ensino)
+  SELECT gen_random_uuid(), oc21.id, 'EF67LP29', 'Identificar, em texto dramático, personagem, ato, cena, fala e indicações cênicas e a organização do texto: enredo, conflitos, ideias principais, pontos de vista, universos de referência.', '["6º","7º"]'::jsonb, 'anos_finais' FROM oc21
+)
+, oc22 AS (
+  INSERT INTO bncc_objetos_conhecimento (id, unidade_tematica_id, objeto_conhecimento)
+  SELECT gen_random_uuid(), ut.id, 'Reconstrução do contexto de produção, circulação e recepção de textos / Caracterização do campo jornalístico e relação entre os gêneros em circulação, mídias e práticas da cultura digital' FROM ut
+  RETURNING id
+)
+, h_22_EF89LP01 AS (
+  INSERT INTO bncc_habilidades (id, objeto_conhecimento_id, codigo_bncc, descricao, anos, etapa_ensino)
+  SELECT gen_random_uuid(), oc22.id, 'EF89LP01', 'Analisar os interesses que movem o campo jornalístico, os efeitos das novas tecnologias no campo e as condições que fazem da informação uma mercadoria, de forma a poder desenvolver uma atitude crítica frente aos textos jornalísticos.', '["8º","9º"]'::jsonb, 'anos_finais' FROM oc22
+)
+, h_22_EF08LP01 AS (
+  INSERT INTO bncc_habilidades (id, objeto_conhecimento_id, codigo_bncc, descricao, anos, etapa_ensino)
+  SELECT gen_random_uuid(), oc22.id, 'EF08LP01', 'Identificar e comparar as várias editorias de jornais impressos e digitais e de sites noticiosos, de forma a refletir sobre os tipos de fato que são noticiados e comentados, as escolhas sobre o que noticiar e o que não noticiar e o destaque/enfoque dado e a fidedignidade da informação.', '["8º"]'::jsonb, 'anos_finais' FROM oc22
+)
+, h_22_EF09LP01 AS (
+  INSERT INTO bncc_habilidades (id, objeto_conhecimento_id, codigo_bncc, descricao, anos, etapa_ensino)
+  SELECT gen_random_uuid(), oc22.id, 'EF09LP01', 'Analisar o fenômeno da disseminação de notícias falsas nas redes sociais e desenvolver estratégias para reconhecê-las, a partir da verificação/avaliação do veículo, fonte, data e local da publicação, autoria, URL, da análise da formatação, da comparação de diferentes fontes, da consulta a sites de curadoria que atestam a fidedignidade do relato dos fatos e denunciam boatos etc.', '["9º"]'::jsonb, 'anos_finais' FROM oc22
+)
+, h_22_EF89LP02 AS (
+  INSERT INTO bncc_habilidades (id, objeto_conhecimento_id, codigo_bncc, descricao, anos, etapa_ensino)
+  SELECT gen_random_uuid(), oc22.id, 'EF89LP02', 'Analisar diferentes práticas (curtir, compartilhar, comentar, curar etc.) e textos pertencentes a diferentes gêneros da cultura digital (meme, gif, comentário, charge digital etc.) envolvidos no trato com a informação e opinião, de forma a possibilitar uma presença mais crítica e ética nas redes.', '["8º","9º"]'::jsonb, 'anos_finais' FROM oc22
 )
 , oc23 AS (
+  INSERT INTO bncc_objetos_conhecimento (id, unidade_tematica_id, objeto_conhecimento)
+  SELECT gen_random_uuid(), ut.id, 'Estratégia de leitura: apreender os sentidos globais do texto / Apreciação e réplica' FROM ut
+  RETURNING id
+)
+, h_23_EF89LP03 AS (
+  INSERT INTO bncc_habilidades (id, objeto_conhecimento_id, codigo_bncc, descricao, anos, etapa_ensino)
+  SELECT gen_random_uuid(), oc23.id, 'EF89LP03', 'Analisar textos de opinião (artigos de opinião, editoriais, cartas de leitores, comentários, posts de blog e de redes sociais, charges, memes, gifs etc.) e posicionar-se de forma crítica e fundamentada, ética e respeitosa frente a fatos e opiniões relacionados a esses textos.', '["8º","9º"]'::jsonb, 'anos_finais' FROM oc23
+)
+, h_23_EF89LP04 AS (
+  INSERT INTO bncc_habilidades (id, objeto_conhecimento_id, codigo_bncc, descricao, anos, etapa_ensino)
+  SELECT gen_random_uuid(), oc23.id, 'EF89LP04', 'Identificar e avaliar teses/opiniões/posicionamentos explícitos e implícitos, argumentos e contra-argumentos em textos argumentativos do campo (carta de leitor, comentário, artigo de opinião, resenha crítica etc.), posicionando-se frente à questão controversa de forma sustentada.', '["8º","9º"]'::jsonb, 'anos_finais' FROM oc23
+)
+, oc24 AS (
   INSERT INTO bncc_objetos_conhecimento (id, unidade_tematica_id, objeto_conhecimento)
   SELECT gen_random_uuid(), ut.id, 'Reconstrução do contexto de produção, circulação e recepção de textos legais e normativos' FROM ut
   RETURNING id
 )
-, h_23_EF89LP17 AS (
+, h_24_EF89LP17 AS (
   INSERT INTO bncc_habilidades (id, objeto_conhecimento_id, codigo_bncc, descricao, anos, etapa_ensino)
-  SELECT gen_random_uuid(), oc23.id, 'EF89LP17', 'Relacionar textos e documentos legais e normativos de importância universal, nacional ou local que envolvam direitos, em especial, de crianças, adolescentes e jovens – tais como a Declaração dos Direitos Humanos, a Constituição Brasileira, o ECA -, e a regulamentação da organização escolar – por exemplo, regimento escolar -, a seus contextos de produção, reconhecendo e analisando possíveis motivações, finalidades e sua vinculação com experiências humanas e fatos históricos e sociais, como forma de ampliar a compreensão dos direitos e deveres, de fomentar os princípios democráticos e uma atuação pautada pela ética da responsabilidade (o outro tem direito a uma vida digna tanto quanto eu tenho).', '["8º","9º"]'::jsonb, 'anos_finais' FROM oc23
+  SELECT gen_random_uuid(), oc24.id, 'EF89LP17', 'Relacionar textos e documentos legais e normativos de importância universal, nacional ou local que envolvam direitos, em especial, de crianças, adolescentes e jovens – tais como a Declaração dos Direitos Humanos, a Constituição Brasileira, o ECA -, e a regulamentação da organização escolar – por exemplo, regimento escolar -, a seus contextos de produção, reconhecendo e analisando possíveis motivações, finalidades e sua vinculação com experiências humanas e fatos históricos e sociais, como forma de ampliar a compreensão dos direitos e deveres, de fomentar os princípios democráticos e uma atuação pautada pela ética da responsabilidade (o outro tem direito a uma vida digna tanto quanto eu tenho).', '["8º","9º"]'::jsonb, 'anos_finais' FROM oc24
 )
-, oc24 AS (
+, oc25 AS (
   INSERT INTO bncc_objetos_conhecimento (id, unidade_tematica_id, objeto_conhecimento)
   SELECT gen_random_uuid(), ut.id, 'Relação entre contexto de produção e características composicionais e estilísticas dos gêneros / Apreciação e réplica' FROM ut
   RETURNING id
 )
-, h_24_EF89LP19 AS (
+, h_25_EF89LP19 AS (
   INSERT INTO bncc_habilidades (id, objeto_conhecimento_id, codigo_bncc, descricao, anos, etapa_ensino)
-  SELECT gen_random_uuid(), oc24.id, 'EF89LP19', 'Analisar, a partir do contexto de produção, a forma de organização das cartas abertas, abaixo-assinados e petições on-line (identificação dos signatários, explicitação da reivindicação feita, acompanhada ou não de uma breve apresentação da problemática e/ou de justificativas que visam sustentar a reivindicação) e a proposição, discussão e aprovação de propostas políticas ou de soluções para problemas de interesse público, apresentadas ou lidas nos canais digitais de participação, identificando suas marcas linguísticas, como forma de possibilitar a escrita ou subscrição consciente de abaixo-assinados e textos dessa natureza e poder se posicionar de forma crítica e fundamentada frente às propostas.', '["8º","9º"]'::jsonb, 'anos_finais' FROM oc24
+  SELECT gen_random_uuid(), oc25.id, 'EF89LP19', 'Analisar, a partir do contexto de produção, a forma de organização das cartas abertas, abaixo-assinados e petições on-line (identificação dos signatários, explicitação da reivindicação feita, acompanhada ou não de uma breve apresentação da problemática e/ou de justificativas que visam sustentar a reivindicação) e a proposição, discussão e aprovação de propostas políticas ou de soluções para problemas de interesse público, apresentadas ou lidas nos canais digitais de participação, identificando suas marcas linguísticas, como forma de possibilitar a escrita ou subscrição consciente de abaixo-assinados e textos dessa natureza e poder se posicionar de forma crítica e fundamentada frente às propostas.', '["8º","9º"]'::jsonb, 'anos_finais' FROM oc25
 )
-, oc25 AS (
+, oc26 AS (
   INSERT INTO bncc_objetos_conhecimento (id, unidade_tematica_id, objeto_conhecimento)
   SELECT gen_random_uuid(), ut.id, 'Estratégias e procedimentos de leitura em textos reivindicatórios ou propositivos' FROM ut
   RETURNING id
 )
-, h_25_EF89LP20 AS (
+, h_26_EF89LP20 AS (
   INSERT INTO bncc_habilidades (id, objeto_conhecimento_id, codigo_bncc, descricao, anos, etapa_ensino)
-  SELECT gen_random_uuid(), oc25.id, 'EF89LP20', 'Comparar propostas políticas e de solução de problemas, identificando o que se pretende fazer/implementar, por que (motivações, justificativas), para que (objetivos, benefícios e consequências esperados), como (ações e passos), quando etc. e a forma de avaliar a eficácia da proposta/solução, contrastando dados e informações de diferentes fontes, identificando coincidências, complementaridades e contradições, de forma a poder compreender e posicionar-se criticamente sobre os dados e informações usados em fundamentação de propostas e analisar a coerência entre os elementos, de forma a tomar decisões fundamentadas.', '["8º","9º"]'::jsonb, 'anos_finais' FROM oc25
+  SELECT gen_random_uuid(), oc26.id, 'EF89LP20', 'Comparar propostas políticas e de solução de problemas, identificando o que se pretende fazer/implementar, por que (motivações, justificativas), para que (objetivos, benefícios e consequências esperados), como (ações e passos), quando etc. e a forma de avaliar a eficácia da proposta/solução, contrastando dados e informações de diferentes fontes, identificando coincidências, complementaridades e contradições, de forma a poder compreender e posicionar-se criticamente sobre os dados e informações usados em fundamentação de propostas e analisar a coerência entre os elementos, de forma a tomar decisões fundamentadas.', '["8º","9º"]'::jsonb, 'anos_finais' FROM oc26
 )
 SELECT 1;
 
@@ -8223,6 +8974,14 @@ WITH ut AS (
   INSERT INTO bncc_habilidades (id, objeto_conhecimento_id, codigo_bncc, descricao, anos, etapa_ensino)
   SELECT gen_random_uuid(), oc13.id, 'EF67LP12', 'Produzir resenhas críticas, vlogs, vídeos, podcasts variados e produções e gêneros próprios das culturas juvenis (algumas possibilidades: fanzines, fanclipes, e-zines, gameplay, detonado etc.), que apresentem/descrevam e/ou avaliem produções culturais (livro, filme, série, game, canção, disco, videoclipe etc.) ou evento (show, sarau, slam etc.), tendo em vista o contexto de produção dado, as características do gênero, os recursos das mídias envolvidas e a textualização adequada dos textos e/ou produções.', '["6º","7º"]'::jsonb, 'anos_finais' FROM oc13
 )
+, h_13_EF08LP03 AS (
+  INSERT INTO bncc_habilidades (id, objeto_conhecimento_id, codigo_bncc, descricao, anos, etapa_ensino)
+  SELECT gen_random_uuid(), oc13.id, 'EF08LP03', 'Produzir artigos de opinião, tendo em vista o contexto de produção dado, a defesa de um ponto de vista, utilizando argumentos e contra-argumentos e articuladores de coesão que marquem relações de oposição, contraste, exempliﬁcação, ênfase.', '["8º"]'::jsonb, 'anos_finais' FROM oc13
+)
+, h_13_EF09LP03 AS (
+  INSERT INTO bncc_habilidades (id, objeto_conhecimento_id, codigo_bncc, descricao, anos, etapa_ensino)
+  SELECT gen_random_uuid(), oc13.id, 'EF09LP03', 'Produzir artigos de opinião, tendo em vista o contexto de produção dado, assumindo posição diante de tema polêmico, argumentando de acordo com a estrutura própria desse tipo de texto e utilizando diferentes tipos de argumentos – de autoridade, comprovação, exempliﬁcação princípio etc.', '["9º"]'::jsonb, 'anos_finais' FROM oc13
+)
 , oc14 AS (
   INSERT INTO bncc_objetos_conhecimento (id, unidade_tematica_id, objeto_conhecimento)
   SELECT gen_random_uuid(), ut.id, 'Produção e edição de textos publicitários' FROM ut
@@ -8283,88 +9042,21 @@ WITH ut AS (
 )
 , oc20 AS (
   INSERT INTO bncc_objetos_conhecimento (id, unidade_tematica_id, objeto_conhecimento)
-  SELECT gen_random_uuid(), ut.id, '(EF08LP03) Produzir artigos de opinião, tendo em vista o contexto de produção dado, a defesa de um ponto de vista, utilizando argumentos e contra-argumentos e articuladores de coesão que marquem relações de oposição, contraste, exempliﬁcação, ênfase.' FROM ut
-  RETURNING id
-)
-, h_20_EF09LP03 AS (
-  INSERT INTO bncc_habilidades (id, objeto_conhecimento_id, codigo_bncc, descricao, anos, etapa_ensino)
-  SELECT gen_random_uuid(), oc20.id, 'EF09LP03', 'Produzir artigos de opinião, tendo em vista o contexto de produção dado, assumindo posição diante de tema polêmico, argumentando de acordo com a estrutura própria desse tipo de texto e utilizando diferentes tipos de argumentos – de autoridade, comprovação, exempliﬁcação princípio etc.', '["8º","9º"]'::jsonb, 'anos_finais' FROM oc20
-)
-, oc21 AS (
-  INSERT INTO bncc_objetos_conhecimento (id, unidade_tematica_id, objeto_conhecimento)
   SELECT gen_random_uuid(), ut.id, 'Estratégias de produção: planejamento, textualização, revisão e edição de textos publicitários' FROM ut
   RETURNING id
 )
-, h_21_EF89LP11 AS (
+, h_20_EF89LP11 AS (
   INSERT INTO bncc_habilidades (id, objeto_conhecimento_id, codigo_bncc, descricao, anos, etapa_ensino)
-  SELECT gen_random_uuid(), oc21.id, 'EF89LP11', 'Produzir, revisar e editar peças e campanhas publicitárias, envolvendo o uso articulado e complementar de diferentes peças publicitárias: cartaz, banner, indoor, folheto, panfleto, anúncio de jornal/revista, para internet, spot, propaganda de rádio, TV, a partir da escolha da questão/problema/causa significativa para a escola e/ou a comunidade escolar, da definição do público-alvo, das peças que serão produzidas, das estratégias de persuasão e convencimento que serão utilizadas.', '["8º","9º"]'::jsonb, 'anos_finais' FROM oc21
+  SELECT gen_random_uuid(), oc20.id, 'EF89LP11', 'Produzir, revisar e editar peças e campanhas publicitárias, envolvendo o uso articulado e complementar de diferentes peças publicitárias: cartaz, banner, indoor, folheto, panfleto, anúncio de jornal/revista, para internet, spot, propaganda de rádio, TV, a partir da escolha da questão/problema/causa significativa para a escola e/ou a comunidade escolar, da definição do público-alvo, das peças que serão produzidas, das estratégias de persuasão e convencimento que serão utilizadas.', '["8º","9º"]'::jsonb, 'anos_finais' FROM oc20
 )
-, oc22 AS (
+, oc21 AS (
   INSERT INTO bncc_objetos_conhecimento (id, unidade_tematica_id, objeto_conhecimento)
   SELECT gen_random_uuid(), ut.id, 'Construção da textualidade' FROM ut
   RETURNING id
 )
-, h_22_EF89LP35 AS (
+, h_21_EF89LP35 AS (
   INSERT INTO bncc_habilidades (id, objeto_conhecimento_id, codigo_bncc, descricao, anos, etapa_ensino)
-  SELECT gen_random_uuid(), oc22.id, 'EF89LP35', 'Criar contos ou crônicas (em especial, líricas), crônicas visuais, minicontos, narrativas de aventura e de ficção científica, dentre outros, com temáticas próprias ao gênero, usando os conhecimentos sobre os constituintes estruturais e recursos expressivos típicos dos gêneros narrativos pretendidos, e, no caso de produção em grupo, ferramentas de escrita colaborativa.', '["8º","9º"]'::jsonb, 'anos_finais' FROM oc22
-)
-, oc23 AS (
-  INSERT INTO bncc_objetos_conhecimento (id, unidade_tematica_id, objeto_conhecimento)
-  SELECT gen_random_uuid(), ut.id, '(EF08LP06) Identificar, em textos lidos ou de produção própria, os termos constitutivos da oração (sujeito e seus modificadores, verbo e seus complementos e modificadores).' FROM ut
-  RETURNING id
-)
-, h_23_EF09LP05 AS (
-  INSERT INTO bncc_habilidades (id, objeto_conhecimento_id, codigo_bncc, descricao, anos, etapa_ensino)
-  SELECT gen_random_uuid(), oc23.id, 'EF09LP05', 'Identificar, em textos lidos e em produções próprias, orações com a estrutura sujeito-verbo de ligação-predicativo.', '["8º","9º"]'::jsonb, 'anos_finais' FROM oc23
-)
-, oc24 AS (
-  INSERT INTO bncc_objetos_conhecimento (id, unidade_tematica_id, objeto_conhecimento)
-  SELECT gen_random_uuid(), ut.id, '(EF08LP07) Diferenciar, em textos lidos ou de produção própria, complementos diretos e indiretos de verbos transitivos, apropriando-se da regência de verbos de uso frequente.' FROM ut
-  RETURNING id
-)
-, h_24_EF09LP06 AS (
-  INSERT INTO bncc_habilidades (id, objeto_conhecimento_id, codigo_bncc, descricao, anos, etapa_ensino)
-  SELECT gen_random_uuid(), oc24.id, 'EF09LP06', 'Diferenciar, em textos lidos e em produções próprias, o efeito de sentido do uso dos verbos de ligação “ser”, “estar”, “ficar”, “parecer” e “permanecer”.', '["8º","9º"]'::jsonb, 'anos_finais' FROM oc24
-)
-, oc25 AS (
-  INSERT INTO bncc_objetos_conhecimento (id, unidade_tematica_id, objeto_conhecimento)
-  SELECT gen_random_uuid(), ut.id, '(EF08LP08) Identificar, em textos lidos ou de produção própria, verbos na voz ativa e na voz passiva, interpretando os efeitos de sentido de sujeito ativo e passivo (agente da passiva).' FROM ut
-  RETURNING id
-)
-, h_25_EF09LP07 AS (
-  INSERT INTO bncc_habilidades (id, objeto_conhecimento_id, codigo_bncc, descricao, anos, etapa_ensino)
-  SELECT gen_random_uuid(), oc25.id, 'EF09LP07', 'Comparar o uso de regência verbal e regência nominal na norma-padrão com seu uso no português brasileiro coloquial oral.', '["8º","9º"]'::jsonb, 'anos_finais' FROM oc25
-)
-, oc26 AS (
-  INSERT INTO bncc_objetos_conhecimento (id, unidade_tematica_id, objeto_conhecimento)
-  SELECT gen_random_uuid(), ut.id, '(EF08LP12) Identificar, em textos lidos, orações subordinadas com conjunções de uso frequente, incorporando-as às suas próprias produções.' FROM ut
-  RETURNING id
-)
-, h_26_EF09LP08 AS (
-  INSERT INTO bncc_habilidades (id, objeto_conhecimento_id, codigo_bncc, descricao, anos, etapa_ensino)
-  SELECT gen_random_uuid(), oc26.id, 'EF09LP08', 'Identificar, em textos lidos e em produções próprias, a relação que conjunções (e locuções conjuntivas) coordenativas e subordinativas estabelecem entre as orações que conectam.', '["8º","9º"]'::jsonb, 'anos_finais' FROM oc26
-)
-, oc27 AS (
-  INSERT INTO bncc_objetos_conhecimento (id, unidade_tematica_id, objeto_conhecimento)
-  SELECT gen_random_uuid(), ut.id, '(EF08LP15) Estabelecer relações entre partes do texto, identificando o antecedente de um pronome relativo ou o referente comum de uma cadeia de substituições lexicais.' FROM ut
-  RETURNING id
-)
-, h_27_EF09LP10 AS (
-  INSERT INTO bncc_habilidades (id, objeto_conhecimento_id, codigo_bncc, descricao, anos, etapa_ensino)
-  SELECT gen_random_uuid(), oc27.id, 'EF09LP10', 'Comparar as regras de colocação pronominal na norma-padrão com o seu uso no português brasileiro coloquial.', '["8º","9º"]'::jsonb, 'anos_finais' FROM oc27
-)
-, h_EF09LP11 AS (
-  INSERT INTO bncc_habilidades (id, objeto_conhecimento_id, codigo_bncc, descricao, anos, etapa_ensino)
-  SELECT gen_random_uuid(), oc27.id, 'EF09LP11', 'Inferir efeitos de sentido decorrentes do uso de recursos de coesão sequencial (conjunções e articuladores textuais).', '["8º","9º"]'::jsonb, 'anos_finais' FROM oc27
-)
-, oc29 AS (
-  INSERT INTO bncc_objetos_conhecimento (id, unidade_tematica_id, objeto_conhecimento)
-  SELECT gen_random_uuid(), ut.id, 'Figuras de linguagem' FROM ut
-  RETURNING id
-)
-, h_29_EF89LP37 AS (
-  INSERT INTO bncc_habilidades (id, objeto_conhecimento_id, codigo_bncc, descricao, anos, etapa_ensino)
-  SELECT gen_random_uuid(), oc29.id, 'EF89LP37', 'Analisar os efeitos de sentido do uso de figuras de linguagem como ironia, eufemismo, antítese, aliteração, assonância, dentre outras.', '["8º","9º"]'::jsonb, 'anos_finais' FROM oc29
+  SELECT gen_random_uuid(), oc21.id, 'EF89LP35', 'Criar contos ou crônicas (em especial, líricas), crônicas visuais, minicontos, narrativas de aventura e de ficção científica, dentre outros, com temáticas próprias ao gênero, usando os conhecimentos sobre os constituintes estruturais e recursos expressivos típicos dos gêneros narrativos pretendidos, e, no caso de produção em grupo, ferramentas de escrita colaborativa.', '["8º","9º"]'::jsonb, 'anos_finais' FROM oc21
 )
 SELECT 1;
 
@@ -8567,6 +9259,10 @@ WITH ut AS (
   INSERT INTO bncc_habilidades (id, objeto_conhecimento_id, codigo_bncc, descricao, anos, etapa_ensino)
   SELECT gen_random_uuid(), oc1.id, 'EF69LP17', 'Perceber e analisar os recursos estilísticos e semióticos dos gêneros jornalísticos e publicitários, os aspectos relativos ao tratamento da informação em notícias, como a ordenação dos eventos, as escolhas lexicais, o efeito de imparcialidade do relato, a morfologia do verbo, em textos noticiosos e argumentativos, reconhecendo marcas de pessoa, número, tempo, modo, a distribuição dos verbos nos gêneros textuais (por exemplo, as formas de pretérito em relatos; as formas de presente e futuro em gêneros argumentativos; as formas de imperativo em gêneros publicitários), o uso de recursos persuasivos em textos argumentativos diversos (como a elaboração do título, escolhas lexicais, construções metafóricas, a explicitação ou a ocultação de fontes de informação) e as estratégias de persuasão e apelo ao consumo com os recursos linguístico-discursivos utilizados (tempo verbal, jogos de palavras, metáforas, imagens).', '["6º","7º","8º","9º"]'::jsonb, 'anos_finais' FROM oc1
 )
+, h_1_EF69LP18 AS (
+  INSERT INTO bncc_habilidades (id, objeto_conhecimento_id, codigo_bncc, descricao, anos, etapa_ensino)
+  SELECT gen_random_uuid(), oc1.id, 'EF69LP18', 'Utilizar, na escrita/reescrita de textos argumentativos, recursos linguísticos que marquem as relações de sentido entre parágrafos e enunciados do texto e operadores de conexão adequados aos tipos de argumento e à forma de composição de textos argumentativos, de maneira a garantir a coesão, a coerência e a progressão temática nesses textos (“primeiramente, mas, no entanto, em primeiro/segundo/terceiro lugar, finalmente, em conclusão” etc.).', '["6º","7º","8º","9º"]'::jsonb, 'anos_finais' FROM oc1
+)
 , h_1_EF89LP15 AS (
   INSERT INTO bncc_habilidades (id, objeto_conhecimento_id, codigo_bncc, descricao, anos, etapa_ensino)
   SELECT gen_random_uuid(), oc1.id, 'EF89LP15', 'Utilizar, nos debates, operadores argumentativos que marcam a defesa de ideia e de diálogo com a tese do outro: concordo, discordo, concordo parcialmente, do meu ponto de vista, na perspectiva aqui assumida etc.', '["8º","9º"]'::jsonb, 'anos_finais' FROM oc1
@@ -8598,6 +9294,10 @@ WITH ut AS (
   INSERT INTO bncc_habilidades (id, objeto_conhecimento_id, codigo_bncc, descricao, anos, etapa_ensino)
   SELECT gen_random_uuid(), oc4.id, 'EF69LP28', 'Observar os mecanismos de modalização adequados aos textos jurídicos, as modalidades deônticas, que se referem ao eixo da conduta (obrigatoriedade/permissibilidade) como, por exemplo: Proibição: “Não se deve fumar em recintos fechados.”; Obrigatoriedade: “A vida tem que valer a pena.”; Possibilidade: “É permitido a entrada de menores acompanhados de adultos responsáveis”, e os mecanismos de modalização adequados aos textos políticos e propositivos, as modalidades apreciativas, em que o locutor exprime um juízo de valor (positivo ou negativo) acerca do que enuncia. Por exemplo: “Que belo discurso!”, “Discordo das escolhas de Antônio.” “Felizmente, o buraco ainda não causou acidentes mais graves.”', '["6º","7º","8º","9º"]'::jsonb, 'anos_finais' FROM oc4
 )
+, h_4_EF07LP14 AS (
+  INSERT INTO bncc_habilidades (id, objeto_conhecimento_id, codigo_bncc, descricao, anos, etapa_ensino)
+  SELECT gen_random_uuid(), oc4.id, 'EF07LP14', 'Identificar, em textos, os efeitos de sentido do uso de estratégias de modalização e argumentatividade.', '["7º"]'::jsonb, 'anos_finais' FROM oc4
+)
 , h_4_EF89LP16 AS (
   INSERT INTO bncc_habilidades (id, objeto_conhecimento_id, codigo_bncc, descricao, anos, etapa_ensino)
   SELECT gen_random_uuid(), oc4.id, 'EF89LP16', 'Analisar a modalização realizada em textos noticiosos e argumentativos, por meio das modalidades apreciativas, viabilizadas por classes e estruturas gramaticais como adjetivos, locuções adjetivas, advérbios, locuções adverbiais, orações adjetivas e adverbiais, orações relativas restritivas e explicativas etc., de maneira a perceber a apreciação ideológica sobre os fatos noticiados ou as posições implícitas ou assumidas.', '["8º","9º"]'::jsonb, 'anos_finais' FROM oc4
@@ -8605,6 +9305,10 @@ WITH ut AS (
 , h_4_EF89LP31 AS (
   INSERT INTO bncc_habilidades (id, objeto_conhecimento_id, codigo_bncc, descricao, anos, etapa_ensino)
   SELECT gen_random_uuid(), oc4.id, 'EF89LP31', 'Analisar e utilizar modalização epistêmica, isto é, modos de indicar uma avaliação sobre o valor de verdade e as condições de verdade de uma proposição, tais como os asseverativos – quando se concorda com (“realmente, evidentemente, naturalmente, efetivamente, claro, certo, lógico, sem dúvida” etc.) ou discorda de (“de jeito nenhum, de forma alguma”) uma ideia; e os quase-asseverativos, que indicam que se considera o conteúdo como quase certo (“talvez, assim, possivelmente, provavelmente, eventualmente”).', '["8º","9º"]'::jsonb, 'anos_finais' FROM oc4
+)
+, h_4_EF08LP16 AS (
+  INSERT INTO bncc_habilidades (id, objeto_conhecimento_id, codigo_bncc, descricao, anos, etapa_ensino)
+  SELECT gen_random_uuid(), oc4.id, 'EF08LP16', 'Explicar os efeitos de sentido do uso, em textos, de estratégias de modalização e argumentatividade (sinais de pontuação, adjetivos, substantivos, expressões de grau, verbos e perífrases verbais, advérbios etc.).', '["8º"]'::jsonb, 'anos_finais' FROM oc4
 )
 , oc5 AS (
   INSERT INTO bncc_objetos_conhecimento (id, unidade_tematica_id, objeto_conhecimento)
@@ -8664,6 +9368,10 @@ WITH ut AS (
   INSERT INTO bncc_habilidades (id, objeto_conhecimento_id, codigo_bncc, descricao, anos, etapa_ensino)
   SELECT gen_random_uuid(), oc10.id, 'EF69LP56', 'Fazer uso consciente e reflexivo de regras e normas da norma-padrão em situações de fala e escrita nas quais ela deve ser usada.', '["6º","7º","8º","9º"]'::jsonb, 'anos_finais' FROM oc10
 )
+, h_10_EF09LP12 AS (
+  INSERT INTO bncc_habilidades (id, objeto_conhecimento_id, codigo_bncc, descricao, anos, etapa_ensino)
+  SELECT gen_random_uuid(), oc10.id, 'EF09LP12', 'Identificar estrangeirismos, caracterizando-os segundo a conservação, ou não, de sua forma gráfica de origem, avaliando a pertinência, ou não, de seu uso.', '["9º"]'::jsonb, 'anos_finais' FROM oc10
+)
 , oc11 AS (
   INSERT INTO bncc_objetos_conhecimento (id, unidade_tematica_id, objeto_conhecimento)
   SELECT gen_random_uuid(), ut.id, 'Textualização / Progressão temática' FROM ut
@@ -8699,6 +9407,14 @@ WITH ut AS (
   INSERT INTO bncc_habilidades (id, objeto_conhecimento_id, codigo_bncc, descricao, anos, etapa_ensino)
   SELECT gen_random_uuid(), oc13.id, 'EF67LP32', 'Escrever palavras com correção ortográfica, obedecendo as convenções da língua escrita.', '["6º","7º"]'::jsonb, 'anos_finais' FROM oc13
 )
+, h_13_EF08LP04 AS (
+  INSERT INTO bncc_habilidades (id, objeto_conhecimento_id, codigo_bncc, descricao, anos, etapa_ensino)
+  SELECT gen_random_uuid(), oc13.id, 'EF08LP04', 'Utilizar, ao produzir texto, conhecimentos linguísticos e gramaticais: ortografia, regências e concordâncias nominal e verbal, modos e tempos verbais, pontuação etc.', '["8º"]'::jsonb, 'anos_finais' FROM oc13
+)
+, h_13_EF09LP04 AS (
+  INSERT INTO bncc_habilidades (id, objeto_conhecimento_id, codigo_bncc, descricao, anos, etapa_ensino)
+  SELECT gen_random_uuid(), oc13.id, 'EF09LP04', 'Escrever textos corretamente, de acordo com a norma-padrão, com estruturas sintáticas complexas no nível da oração e do período.', '["9º"]'::jsonb, 'anos_finais' FROM oc13
+)
 , oc14 AS (
   INSERT INTO bncc_objetos_conhecimento (id, unidade_tematica_id, objeto_conhecimento)
   SELECT gen_random_uuid(), ut.id, 'Elementos notacionais da escrita' FROM ut
@@ -8710,132 +9426,245 @@ WITH ut AS (
 )
 , oc15 AS (
   INSERT INTO bncc_objetos_conhecimento (id, unidade_tematica_id, objeto_conhecimento)
-  SELECT gen_random_uuid(), ut.id, '(EF06LP03) Analisar diferenças de sentido entre palavras de uma série sinonímica.' FROM ut
+  SELECT gen_random_uuid(), ut.id, 'Léxico/morfologia' FROM ut
   RETURNING id
+)
+, h_15_EF06LP03 AS (
+  INSERT INTO bncc_habilidades (id, objeto_conhecimento_id, codigo_bncc, descricao, anos, etapa_ensino)
+  SELECT gen_random_uuid(), oc15.id, 'EF06LP03', 'Analisar diferenças de sentido entre palavras de uma série sinonímica.', '["6º"]'::jsonb, 'anos_finais' FROM oc15
 )
 , h_15_EF07LP03 AS (
   INSERT INTO bncc_habilidades (id, objeto_conhecimento_id, codigo_bncc, descricao, anos, etapa_ensino)
-  SELECT gen_random_uuid(), oc15.id, 'EF07LP03', 'Formar, com base em palavras primitivas, palavras derivadas com os prefixos e sufixos mais produtivos no português.', '["6º","7º"]'::jsonb, 'anos_finais' FROM oc15
+  SELECT gen_random_uuid(), oc15.id, 'EF07LP03', 'Formar, com base em palavras primitivas, palavras derivadas com os prefixos e sufixos mais produtivos no português.', '["7º"]'::jsonb, 'anos_finais' FROM oc15
+)
+, h_15_EF67LP34 AS (
+  INSERT INTO bncc_habilidades (id, objeto_conhecimento_id, codigo_bncc, descricao, anos, etapa_ensino)
+  SELECT gen_random_uuid(), oc15.id, 'EF67LP34', 'Formar antônimos com acréscimo de prefixos que expressam noção de negação.', '["6º","7º"]'::jsonb, 'anos_finais' FROM oc15
+)
+, h_15_EF67LP35 AS (
+  INSERT INTO bncc_habilidades (id, objeto_conhecimento_id, codigo_bncc, descricao, anos, etapa_ensino)
+  SELECT gen_random_uuid(), oc15.id, 'EF67LP35', 'Distinguir palavras derivadas por acréscimo de afixos e palavras compostas.', '["6º","7º"]'::jsonb, 'anos_finais' FROM oc15
+)
+, h_15_EF08LP05 AS (
+  INSERT INTO bncc_habilidades (id, objeto_conhecimento_id, codigo_bncc, descricao, anos, etapa_ensino)
+  SELECT gen_random_uuid(), oc15.id, 'EF08LP05', 'Analisar processos de formação de palavras por composição (aglutinação e justaposição), apropriando-se de regras básicas de uso do hífen em palavras compostas.', '["8º"]'::jsonb, 'anos_finais' FROM oc15
 )
 , oc16 AS (
   INSERT INTO bncc_objetos_conhecimento (id, unidade_tematica_id, objeto_conhecimento)
-  SELECT gen_random_uuid(), ut.id, '(EF06LP04) Analisar a função e as flexões de substantivos e adjetivos e de verbos nos modos Indicativo, Subjuntivo e Imperativo: afirmativo e negativo.' FROM ut
+  SELECT gen_random_uuid(), ut.id, 'Morfossintaxe' FROM ut
   RETURNING id
+)
+, h_16_EF06LP04 AS (
+  INSERT INTO bncc_habilidades (id, objeto_conhecimento_id, codigo_bncc, descricao, anos, etapa_ensino)
+  SELECT gen_random_uuid(), oc16.id, 'EF06LP04', 'Analisar a função e as flexões de substantivos e adjetivos e de verbos nos modos Indicativo, Subjuntivo e Imperativo: afirmativo e negativo.', '["6º"]'::jsonb, 'anos_finais' FROM oc16
 )
 , h_16_EF07LP04 AS (
   INSERT INTO bncc_habilidades (id, objeto_conhecimento_id, codigo_bncc, descricao, anos, etapa_ensino)
-  SELECT gen_random_uuid(), oc16.id, 'EF07LP04', 'Reconhecer, em textos, o verbo como o núcleo das orações.', '["6º","7º"]'::jsonb, 'anos_finais' FROM oc16
+  SELECT gen_random_uuid(), oc16.id, 'EF07LP04', 'Reconhecer, em textos, o verbo como o núcleo das orações.', '["7º"]'::jsonb, 'anos_finais' FROM oc16
+)
+, h_16_EF06LP05 AS (
+  INSERT INTO bncc_habilidades (id, objeto_conhecimento_id, codigo_bncc, descricao, anos, etapa_ensino)
+  SELECT gen_random_uuid(), oc16.id, 'EF06LP05', 'Identificar os efeitos de sentido dos modos verbais, considerando o gênero textual e a intenção comunicativa.', '["6º"]'::jsonb, 'anos_finais' FROM oc16
+)
+, h_16_EF07LP05 AS (
+  INSERT INTO bncc_habilidades (id, objeto_conhecimento_id, codigo_bncc, descricao, anos, etapa_ensino)
+  SELECT gen_random_uuid(), oc16.id, 'EF07LP05', 'Identificar, em orações de textos lidos ou de produção própria, verbos de predicação completa e incompleta: intransitivos e transitivos.', '["7º"]'::jsonb, 'anos_finais' FROM oc16
+)
+, h_16_EF06LP06 AS (
+  INSERT INTO bncc_habilidades (id, objeto_conhecimento_id, codigo_bncc, descricao, anos, etapa_ensino)
+  SELECT gen_random_uuid(), oc16.id, 'EF06LP06', 'Empregar, adequadamente, as regras de concordância nominal (relações entre os substantivos e seus determinantes) e as regras de concordância verbal (relações entre o verbo e o sujeito simples e composto).', '["6º"]'::jsonb, 'anos_finais' FROM oc16
+)
+, h_16_EF07LP06 AS (
+  INSERT INTO bncc_habilidades (id, objeto_conhecimento_id, codigo_bncc, descricao, anos, etapa_ensino)
+  SELECT gen_random_uuid(), oc16.id, 'EF07LP06', 'Empregar as regras básicas de concordância nominal e verbal em situações comunicativas e na produção de textos.', '["7º"]'::jsonb, 'anos_finais' FROM oc16
+)
+, h_16_EF07LP07 AS (
+  INSERT INTO bncc_habilidades (id, objeto_conhecimento_id, codigo_bncc, descricao, anos, etapa_ensino)
+  SELECT gen_random_uuid(), oc16.id, 'EF07LP07', 'Identificar, em textos lidos ou de produção própria, a estrutura básica da oração: sujeito, predicado, complemento (objetos direto e indireto).', '["7º"]'::jsonb, 'anos_finais' FROM oc16
+)
+, h_16_EF07LP08 AS (
+  INSERT INTO bncc_habilidades (id, objeto_conhecimento_id, codigo_bncc, descricao, anos, etapa_ensino)
+  SELECT gen_random_uuid(), oc16.id, 'EF07LP08', 'Identificar, em textos lidos ou de produção própria, adjetivos que ampliam o sentido do substantivo sujeito ou complemento verbal.', '["7º"]'::jsonb, 'anos_finais' FROM oc16
+)
+, h_16_EF07LP09 AS (
+  INSERT INTO bncc_habilidades (id, objeto_conhecimento_id, codigo_bncc, descricao, anos, etapa_ensino)
+  SELECT gen_random_uuid(), oc16.id, 'EF07LP09', 'Identificar, em textos lidos ou de produção própria, advérbios e locuções adverbiais que ampliam o sentido do verbo núcleo da oração.', '["7º"]'::jsonb, 'anos_finais' FROM oc16
+)
+, h_16_EF06LP07 AS (
+  INSERT INTO bncc_habilidades (id, objeto_conhecimento_id, codigo_bncc, descricao, anos, etapa_ensino)
+  SELECT gen_random_uuid(), oc16.id, 'EF06LP07', 'Identificar, em textos, períodos compostos por orações separadas por vírgula sem a utilização de conectivos, nomeando-os como períodos compostos por coordenação.', '["6º"]'::jsonb, 'anos_finais' FROM oc16
+)
+, h_16_EF06LP08 AS (
+  INSERT INTO bncc_habilidades (id, objeto_conhecimento_id, codigo_bncc, descricao, anos, etapa_ensino)
+  SELECT gen_random_uuid(), oc16.id, 'EF06LP08', 'Identificar, em texto ou sequência textual, orações como unidades constituídas em torno de um núcleo verbal e períodos como conjunto de orações conectadas.', '["6º"]'::jsonb, 'anos_finais' FROM oc16
+)
+, h_16_EF07LP10 AS (
+  INSERT INTO bncc_habilidades (id, objeto_conhecimento_id, codigo_bncc, descricao, anos, etapa_ensino)
+  SELECT gen_random_uuid(), oc16.id, 'EF07LP10', 'Utilizar, ao produzir texto, conhecimentos linguísticos e gramaticais: modos e tempos verbais, concordância nominal e verbal, pontuação etc.', '["7º"]'::jsonb, 'anos_finais' FROM oc16
+)
+, h_16_EF06LP09 AS (
+  INSERT INTO bncc_habilidades (id, objeto_conhecimento_id, codigo_bncc, descricao, anos, etapa_ensino)
+  SELECT gen_random_uuid(), oc16.id, 'EF06LP09', 'Classificar, em texto ou sequência textual, os períodos simples compostos.', '["6º"]'::jsonb, 'anos_finais' FROM oc16
+)
+, h_16_EF07LP11 AS (
+  INSERT INTO bncc_habilidades (id, objeto_conhecimento_id, codigo_bncc, descricao, anos, etapa_ensino)
+  SELECT gen_random_uuid(), oc16.id, 'EF07LP11', 'Identificar, em textos lidos ou de produção própria, períodos compostos nos quais duas orações são conectadas por vírgula, ou por conjunções que expressem soma de sentido (conjunção “e”) ou oposição de sentidos (conjunções “mas”, “porém”).', '["7º"]'::jsonb, 'anos_finais' FROM oc16
+)
+, h_16_EF08LP06 AS (
+  INSERT INTO bncc_habilidades (id, objeto_conhecimento_id, codigo_bncc, descricao, anos, etapa_ensino)
+  SELECT gen_random_uuid(), oc16.id, 'EF08LP06', 'Identificar, em textos lidos ou de produção própria, os termos constitutivos da oração (sujeito e seus modificadores, verbo e seus complementos e modificadores).', '["8º"]'::jsonb, 'anos_finais' FROM oc16
+)
+, h_16_EF09LP05 AS (
+  INSERT INTO bncc_habilidades (id, objeto_conhecimento_id, codigo_bncc, descricao, anos, etapa_ensino)
+  SELECT gen_random_uuid(), oc16.id, 'EF09LP05', 'Identificar, em textos lidos e em produções próprias, orações com a estrutura sujeito-verbo de ligação-predicativo.', '["9º"]'::jsonb, 'anos_finais' FROM oc16
+)
+, h_16_EF08LP07 AS (
+  INSERT INTO bncc_habilidades (id, objeto_conhecimento_id, codigo_bncc, descricao, anos, etapa_ensino)
+  SELECT gen_random_uuid(), oc16.id, 'EF08LP07', 'Diferenciar, em textos lidos ou de produção própria, complementos diretos e indiretos de verbos transitivos, apropriando-se da regência de verbos de uso frequente.', '["8º"]'::jsonb, 'anos_finais' FROM oc16
+)
+, h_16_EF09LP06 AS (
+  INSERT INTO bncc_habilidades (id, objeto_conhecimento_id, codigo_bncc, descricao, anos, etapa_ensino)
+  SELECT gen_random_uuid(), oc16.id, 'EF09LP06', 'Diferenciar, em textos lidos e em produções próprias, o efeito de sentido do uso dos verbos de ligação “ser”, “estar”, “ficar”, “parecer” e “permanecer”.', '["9º"]'::jsonb, 'anos_finais' FROM oc16
+)
+, h_16_EF08LP08 AS (
+  INSERT INTO bncc_habilidades (id, objeto_conhecimento_id, codigo_bncc, descricao, anos, etapa_ensino)
+  SELECT gen_random_uuid(), oc16.id, 'EF08LP08', 'Identificar, em textos lidos ou de produção própria, verbos na voz ativa e na voz passiva, interpretando os efeitos de sentido de sujeito ativo e passivo (agente da passiva).', '["8º"]'::jsonb, 'anos_finais' FROM oc16
+)
+, h_16_EF09LP07 AS (
+  INSERT INTO bncc_habilidades (id, objeto_conhecimento_id, codigo_bncc, descricao, anos, etapa_ensino)
+  SELECT gen_random_uuid(), oc16.id, 'EF09LP07', 'Comparar o uso de regência verbal e regência nominal na norma-padrão com seu uso no português brasileiro coloquial oral.', '["9º"]'::jsonb, 'anos_finais' FROM oc16
+)
+, h_16_EF08LP09 AS (
+  INSERT INTO bncc_habilidades (id, objeto_conhecimento_id, codigo_bncc, descricao, anos, etapa_ensino)
+  SELECT gen_random_uuid(), oc16.id, 'EF08LP09', 'Interpretar efeitos de sentido de modificadores (adjuntos adnominais – artigos definido ou indefinido, adjetivos, expressões adjetivas) em substantivos com função de sujeito ou de complemento verbal, usando-os para enriquecer seus próprios textos.', '["8º"]'::jsonb, 'anos_finais' FROM oc16
+)
+, h_16_EF08LP10 AS (
+  INSERT INTO bncc_habilidades (id, objeto_conhecimento_id, codigo_bncc, descricao, anos, etapa_ensino)
+  SELECT gen_random_uuid(), oc16.id, 'EF08LP10', 'Interpretar, em textos lidos ou de produção própria, efeitos de sentido de modificadores do verbo (adjuntos adverbiais – advérbios e expressões adverbiais), usando-os para enriquecer seus próprios textos.', '["8º"]'::jsonb, 'anos_finais' FROM oc16
+)
+, h_16_EF08LP11 AS (
+  INSERT INTO bncc_habilidades (id, objeto_conhecimento_id, codigo_bncc, descricao, anos, etapa_ensino)
+  SELECT gen_random_uuid(), oc16.id, 'EF08LP11', 'Identificar, em textos lidos ou de produção própria, agrupamento de orações em períodos, diferenciando coordenação de subordinação.', '["8º"]'::jsonb, 'anos_finais' FROM oc16
+)
+, h_16_EF08LP12 AS (
+  INSERT INTO bncc_habilidades (id, objeto_conhecimento_id, codigo_bncc, descricao, anos, etapa_ensino)
+  SELECT gen_random_uuid(), oc16.id, 'EF08LP12', 'Identificar, em textos lidos, orações subordinadas com conjunções de uso frequente, incorporando-as às suas próprias produções.', '["8º"]'::jsonb, 'anos_finais' FROM oc16
+)
+, h_16_EF09LP08 AS (
+  INSERT INTO bncc_habilidades (id, objeto_conhecimento_id, codigo_bncc, descricao, anos, etapa_ensino)
+  SELECT gen_random_uuid(), oc16.id, 'EF09LP08', 'Identificar, em textos lidos e em produções próprias, a relação que conjunções (e locuções conjuntivas) coordenativas e subordinativas estabelecem entre as orações que conectam.', '["9º"]'::jsonb, 'anos_finais' FROM oc16
+)
+, h_16_EF08LP13 AS (
+  INSERT INTO bncc_habilidades (id, objeto_conhecimento_id, codigo_bncc, descricao, anos, etapa_ensino)
+  SELECT gen_random_uuid(), oc16.id, 'EF08LP13', 'Inferir efeitos de sentido decorrentes do uso de recursos de coesão sequencial: conjunções e articuladores textuais.', '["8º"]'::jsonb, 'anos_finais' FROM oc16
 )
 , oc17 AS (
   INSERT INTO bncc_objetos_conhecimento (id, unidade_tematica_id, objeto_conhecimento)
-  SELECT gen_random_uuid(), ut.id, '(EF06LP05) Identificar os efeitos de sentido dos modos verbais, considerando o gênero textual e a intenção comunicativa.' FROM ut
+  SELECT gen_random_uuid(), ut.id, 'Sintaxe' FROM ut
   RETURNING id
 )
-, h_17_EF07LP05 AS (
+, h_17_EF06LP10 AS (
   INSERT INTO bncc_habilidades (id, objeto_conhecimento_id, codigo_bncc, descricao, anos, etapa_ensino)
-  SELECT gen_random_uuid(), oc17.id, 'EF07LP05', 'Identificar, em orações de textos lidos ou de produção própria, verbos de predicação completa e incompleta: intransitivos e transitivos.', '["6º","7º"]'::jsonb, 'anos_finais' FROM oc17
+  SELECT gen_random_uuid(), oc17.id, 'EF06LP10', 'Identificar sintagmas nominais e verbais como constituintes imediatos da oração.', '["6º"]'::jsonb, 'anos_finais' FROM oc17
 )
 , oc18 AS (
   INSERT INTO bncc_objetos_conhecimento (id, unidade_tematica_id, objeto_conhecimento)
-  SELECT gen_random_uuid(), ut.id, '(EF06LP06) Empregar, adequadamente, as regras de concordância nominal (relações entre os substantivos e seus determinantes) e as regras de concordância verbal (relações entre o verbo e o sujeito simples e composto).' FROM ut
+  SELECT gen_random_uuid(), ut.id, 'Elementos notacionais da escrita/morfossintaxe' FROM ut
   RETURNING id
 )
-, h_18_EF07LP06 AS (
+, h_18_EF06LP11 AS (
   INSERT INTO bncc_habilidades (id, objeto_conhecimento_id, codigo_bncc, descricao, anos, etapa_ensino)
-  SELECT gen_random_uuid(), oc18.id, 'EF07LP06', 'Empregar as regras básicas de concordância nominal e verbal em situações comunicativas e na produção de textos.', '["6º","7º"]'::jsonb, 'anos_finais' FROM oc18
+  SELECT gen_random_uuid(), oc18.id, 'EF06LP11', 'Utilizar, ao produzir texto, conhecimentos linguísticos e gramaticais: tempos verbais, concordância nominal e verbal, regras ortográficas, pontuação etc.', '["6º"]'::jsonb, 'anos_finais' FROM oc18
 )
-, h_EF07LP07 AS (
+, h_18_EF09LP09 AS (
   INSERT INTO bncc_habilidades (id, objeto_conhecimento_id, codigo_bncc, descricao, anos, etapa_ensino)
-  SELECT gen_random_uuid(), oc18.id, 'EF07LP07', 'Identificar, em textos lidos ou de produção própria, a estrutura básica da oração: sujeito, predicado, complemento (objetos direto e indireto).', '["6º","7º"]'::jsonb, 'anos_finais' FROM oc18
+  SELECT gen_random_uuid(), oc18.id, 'EF09LP09', 'Identificar efeitos de sentido do uso de orações adjetivas restritivas e explicativas em um período composto.', '["9º"]'::jsonb, 'anos_finais' FROM oc18
 )
-, h_EF07LP08 AS (
-  INSERT INTO bncc_habilidades (id, objeto_conhecimento_id, codigo_bncc, descricao, anos, etapa_ensino)
-  SELECT gen_random_uuid(), oc18.id, 'EF07LP08', 'Identificar, em textos lidos ou de produção própria, adjetivos que ampliam o sentido do substantivo sujeito ou complemento verbal.', '["6º","7º"]'::jsonb, 'anos_finais' FROM oc18
+, oc19 AS (
+  INSERT INTO bncc_objetos_conhecimento (id, unidade_tematica_id, objeto_conhecimento)
+  SELECT gen_random_uuid(), ut.id, 'Semântica / Coesão' FROM ut
+  RETURNING id
 )
-, h_EF07LP09 AS (
+, h_19_EF06LP12 AS (
   INSERT INTO bncc_habilidades (id, objeto_conhecimento_id, codigo_bncc, descricao, anos, etapa_ensino)
-  SELECT gen_random_uuid(), oc18.id, 'EF07LP09', 'Identificar, em textos lidos ou de produção própria, advérbios e locuções adverbiais que ampliam o sentido do verbo núcleo da oração.', '["6º","7º"]'::jsonb, 'anos_finais' FROM oc18
+  SELECT gen_random_uuid(), oc19.id, 'EF06LP12', 'Utilizar, ao produzir texto, recursos de coesão referencial (nome e pronomes), recursos semânticos de sinonímia, antonímia e homonímia e mecanismos de representação de diferentes vozes (discurso direto e indireto).', '["6º"]'::jsonb, 'anos_finais' FROM oc19
 )
-, h_EF07LP13 AS (
+, h_19_EF07LP12 AS (
   INSERT INTO bncc_habilidades (id, objeto_conhecimento_id, codigo_bncc, descricao, anos, etapa_ensino)
-  SELECT gen_random_uuid(), oc18.id, 'EF07LP13', 'Estabelecer relações entre partes do texto, identificando substituições lexicais (de substantivos por sinônimos) ou pronominais (uso de pronomes anafóricos – pessoais, possessivos, demonstrativos), que contribuem para a continuidade do texto.', '["6º","7º"]'::jsonb, 'anos_finais' FROM oc18
+  SELECT gen_random_uuid(), oc19.id, 'EF07LP12', 'Reconhecer recursos de coesão referencial: substituições lexicais (de substantivos por sinônimos) ou pronominais (uso de pronomes anafóricos – pessoais, possessivos, demonstrativos).', '["7º"]'::jsonb, 'anos_finais' FROM oc19
 )
 , oc20 AS (
-  INSERT INTO bncc_objetos_conhecimento (id, unidade_tematica_id, objeto_conhecimento)
-  SELECT gen_random_uuid(), ut.id, '(EF06LP08) Identificar, em texto ou sequência textual, orações como unidades constituídas em torno de um núcleo verbal e períodos como conjunto de orações conectadas.' FROM ut
-  RETURNING id
-)
-, h_20_EF07LP10 AS (
-  INSERT INTO bncc_habilidades (id, objeto_conhecimento_id, codigo_bncc, descricao, anos, etapa_ensino)
-  SELECT gen_random_uuid(), oc20.id, 'EF07LP10', 'Utilizar, ao produzir texto, conhecimentos linguísticos e gramaticais: modos e tempos verbais, concordância nominal e verbal, pontuação etc.', '["6º","7º"]'::jsonb, 'anos_finais' FROM oc20
-)
-, oc21 AS (
-  INSERT INTO bncc_objetos_conhecimento (id, unidade_tematica_id, objeto_conhecimento)
-  SELECT gen_random_uuid(), ut.id, '(EF06LP09) Classificar, em texto ou sequência textual, os períodos simples compostos.' FROM ut
-  RETURNING id
-)
-, h_21_EF07LP11 AS (
-  INSERT INTO bncc_habilidades (id, objeto_conhecimento_id, codigo_bncc, descricao, anos, etapa_ensino)
-  SELECT gen_random_uuid(), oc21.id, 'EF07LP11', 'Identificar, em textos lidos ou de produção própria, períodos compostos nos quais duas orações são conectadas por vírgula, ou por conjunções que expressem soma de sentido (conjunção “e”) ou oposição de sentidos (conjunções “mas”, “porém”).', '["6º","7º"]'::jsonb, 'anos_finais' FROM oc21
-)
-, oc22 AS (
-  INSERT INTO bncc_objetos_conhecimento (id, unidade_tematica_id, objeto_conhecimento)
-  SELECT gen_random_uuid(), ut.id, '(EF06LP12) Utilizar, ao produzir texto, recursos de coesão referencial (nome e pronomes), recursos semânticos de sinonímia, antonímia e homonímia e mecanismos de representação de diferentes vozes (discurso direto e indireto).' FROM ut
-  RETURNING id
-)
-, h_22_EF07LP12 AS (
-  INSERT INTO bncc_habilidades (id, objeto_conhecimento_id, codigo_bncc, descricao, anos, etapa_ensino)
-  SELECT gen_random_uuid(), oc22.id, 'EF07LP12', 'Reconhecer recursos de coesão referencial: substituições lexicais (de substantivos por sinônimos) ou pronominais (uso de pronomes anafóricos – pessoais, possessivos, demonstrativos).', '["6º","7º"]'::jsonb, 'anos_finais' FROM oc22
-)
-, oc23 AS (
   INSERT INTO bncc_objetos_conhecimento (id, unidade_tematica_id, objeto_conhecimento)
   SELECT gen_random_uuid(), ut.id, 'Coesão' FROM ut
   RETURNING id
 )
-, h_23_EF67LP36 AS (
+, h_20_EF67LP36 AS (
   INSERT INTO bncc_habilidades (id, objeto_conhecimento_id, codigo_bncc, descricao, anos, etapa_ensino)
-  SELECT gen_random_uuid(), oc23.id, 'EF67LP36', 'Utilizar, ao produzir texto, recursos de coesão referencial (léxica e pronominal) e sequencial e outros recursos expressivos adequados ao gênero textual.', '["6º","7º"]'::jsonb, 'anos_finais' FROM oc23
+  SELECT gen_random_uuid(), oc20.id, 'EF67LP36', 'Utilizar, ao produzir texto, recursos de coesão referencial (léxica e pronominal) e sequencial e outros recursos expressivos adequados ao gênero textual.', '["6º","7º"]'::jsonb, 'anos_finais' FROM oc20
 )
-, oc24 AS (
+, h_20_EF07LP13 AS (
+  INSERT INTO bncc_habilidades (id, objeto_conhecimento_id, codigo_bncc, descricao, anos, etapa_ensino)
+  SELECT gen_random_uuid(), oc20.id, 'EF07LP13', 'Estabelecer relações entre partes do texto, identificando substituições lexicais (de substantivos por sinônimos) ou pronominais (uso de pronomes anafóricos – pessoais, possessivos, demonstrativos), que contribuem para a continuidade do texto.', '["7º"]'::jsonb, 'anos_finais' FROM oc20
+)
+, h_20_EF08LP15 AS (
+  INSERT INTO bncc_habilidades (id, objeto_conhecimento_id, codigo_bncc, descricao, anos, etapa_ensino)
+  SELECT gen_random_uuid(), oc20.id, 'EF08LP15', 'Estabelecer relações entre partes do texto, identificando o antecedente de um pronome relativo ou o referente comum de uma cadeia de substituições lexicais.', '["8º"]'::jsonb, 'anos_finais' FROM oc20
+)
+, h_20_EF09LP10 AS (
+  INSERT INTO bncc_habilidades (id, objeto_conhecimento_id, codigo_bncc, descricao, anos, etapa_ensino)
+  SELECT gen_random_uuid(), oc20.id, 'EF09LP10', 'Comparar as regras de colocação pronominal na norma-padrão com o seu uso no português brasileiro coloquial.', '["9º"]'::jsonb, 'anos_finais' FROM oc20
+)
+, h_20_EF09LP11 AS (
+  INSERT INTO bncc_habilidades (id, objeto_conhecimento_id, codigo_bncc, descricao, anos, etapa_ensino)
+  SELECT gen_random_uuid(), oc20.id, 'EF09LP11', 'Inferir efeitos de sentido decorrentes do uso de recursos de coesão sequencial (conjunções e articuladores textuais).', '["9º"]'::jsonb, 'anos_finais' FROM oc20
+)
+, oc21 AS (
   INSERT INTO bncc_objetos_conhecimento (id, unidade_tematica_id, objeto_conhecimento)
   SELECT gen_random_uuid(), ut.id, 'Sequências textuais' FROM ut
   RETURNING id
 )
-, h_24_EF67LP37 AS (
+, h_21_EF67LP37 AS (
   INSERT INTO bncc_habilidades (id, objeto_conhecimento_id, codigo_bncc, descricao, anos, etapa_ensino)
-  SELECT gen_random_uuid(), oc24.id, 'EF67LP37', 'Analisar, em diferentes textos, os efeitos de sentido decorrentes do uso de recursos linguístico-discursivos de prescrição, causalidade, sequências descritivas e expositivas e ordenação de eventos.', '["6º","7º"]'::jsonb, 'anos_finais' FROM oc24
+  SELECT gen_random_uuid(), oc21.id, 'EF67LP37', 'Analisar, em diferentes textos, os efeitos de sentido decorrentes do uso de recursos linguístico-discursivos de prescrição, causalidade, sequências descritivas e expositivas e ordenação de eventos.', '["6º","7º"]'::jsonb, 'anos_finais' FROM oc21
 )
-, oc25 AS (
+, oc22 AS (
   INSERT INTO bncc_objetos_conhecimento (id, unidade_tematica_id, objeto_conhecimento)
   SELECT gen_random_uuid(), ut.id, 'Figuras de linguagem' FROM ut
   RETURNING id
 )
-, h_25_EF67LP38 AS (
+, h_22_EF67LP38 AS (
   INSERT INTO bncc_habilidades (id, objeto_conhecimento_id, codigo_bncc, descricao, anos, etapa_ensino)
-  SELECT gen_random_uuid(), oc25.id, 'EF67LP38', 'Analisar os efeitos de sentido do uso de figuras de linguagem, como comparação, metáfora, metonímia, personificação, hipérbole, dentre outras.', '["6º","7º"]'::jsonb, 'anos_finais' FROM oc25
+  SELECT gen_random_uuid(), oc22.id, 'EF67LP38', 'Analisar os efeitos de sentido do uso de figuras de linguagem, como comparação, metáfora, metonímia, personificação, hipérbole, dentre outras.', '["6º","7º"]'::jsonb, 'anos_finais' FROM oc22
 )
-, oc26 AS (
+, h_22_EF89LP37 AS (
+  INSERT INTO bncc_habilidades (id, objeto_conhecimento_id, codigo_bncc, descricao, anos, etapa_ensino)
+  SELECT gen_random_uuid(), oc22.id, 'EF89LP37', 'Analisar os efeitos de sentido do uso de figuras de linguagem como ironia, eufemismo, antítese, aliteração, assonância, dentre outras.', '["8º","9º"]'::jsonb, 'anos_finais' FROM oc22
+)
+, oc23 AS (
   INSERT INTO bncc_objetos_conhecimento (id, unidade_tematica_id, objeto_conhecimento)
   SELECT gen_random_uuid(), ut.id, 'Argumentação: movimentos argumentativos, tipos de argumento e força argumentativa' FROM ut
   RETURNING id
 )
-, h_26_EF89LP14 AS (
+, h_23_EF89LP14 AS (
   INSERT INTO bncc_habilidades (id, objeto_conhecimento_id, codigo_bncc, descricao, anos, etapa_ensino)
-  SELECT gen_random_uuid(), oc26.id, 'EF89LP14', 'Analisar, em textos argumentativos e propositivos, os movimentos argumentativos de sustentação, refutação e negociação e os tipos de argumentos, avaliando a força/tipo dos argumentos utilizados.', '["8º","9º"]'::jsonb, 'anos_finais' FROM oc26
+  SELECT gen_random_uuid(), oc23.id, 'EF89LP14', 'Analisar, em textos argumentativos e propositivos, os movimentos argumentativos de sustentação, refutação e negociação e os tipos de argumentos, avaliando a força/tipo dos argumentos utilizados.', '["8º","9º"]'::jsonb, 'anos_finais' FROM oc23
 )
-, oc27 AS (
+, oc24 AS (
   INSERT INTO bncc_objetos_conhecimento (id, unidade_tematica_id, objeto_conhecimento)
   SELECT gen_random_uuid(), ut.id, 'Movimentos argumentativos e força dos argumentos' FROM ut
   RETURNING id
 )
-, h_27_EF89LP23 AS (
+, h_24_EF89LP23 AS (
   INSERT INTO bncc_habilidades (id, objeto_conhecimento_id, codigo_bncc, descricao, anos, etapa_ensino)
-  SELECT gen_random_uuid(), oc27.id, 'EF89LP23', 'Analisar, em textos argumentativos, reivindicatórios e propositivos, os movimentos argumentativos utilizados (sustentação, refutação e negociação), avaliando a força dos argumentos utilizados.', '["8º","9º"]'::jsonb, 'anos_finais' FROM oc27
+  SELECT gen_random_uuid(), oc24.id, 'EF89LP23', 'Analisar, em textos argumentativos, reivindicatórios e propositivos, os movimentos argumentativos utilizados (sustentação, refutação e negociação), avaliando a força dos argumentos utilizados.', '["8º","9º"]'::jsonb, 'anos_finais' FROM oc24
+)
+, oc25 AS (
+  INSERT INTO bncc_objetos_conhecimento (id, unidade_tematica_id, objeto_conhecimento)
+  SELECT gen_random_uuid(), ut.id, 'Semântica' FROM ut
+  RETURNING id
+)
+, h_25_EF08LP14 AS (
+  INSERT INTO bncc_habilidades (id, objeto_conhecimento_id, codigo_bncc, descricao, anos, etapa_ensino)
+  SELECT gen_random_uuid(), oc25.id, 'EF08LP14', 'Utilizar, ao produzir texto, recursos de coesão sequencial (articuladores) e referencial (léxica e pronominal), construções passivas e impessoais, discurso direto e indireto e outros recursos expressivos adequados ao gênero textual.', '["8º"]'::jsonb, 'anos_finais' FROM oc25
 )
 SELECT 1;
-
-
-
-
-
-

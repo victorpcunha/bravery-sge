@@ -16,10 +16,6 @@ const FILES = [
   { file: 'Fundamental - Português.txt', disciplina: 'Português' },
 ];
 
-function etapaFromYear(y) {
-  return y >= 1 && y <= 5 ? 'anos_iniciais' : 'anos_finais';
-}
-
 /** Parse "Xº", "X°" to integer */
 function parseYearNum(s) {
   return parseInt(s.replace(/[°º]/, '').trim(), 10);
@@ -135,6 +131,13 @@ function stripBrTags(t) {
  * Parse a single (year section) table block.
  * Each year section has its own <thead> and <tbody>.
  *
+ * Cell classification rules (table columns: UT | OC | HAB...):
+ *  - <th> cell                     → UT (unidade temática), tracked via rowspan
+ *  - <td> cell containing a code   → habilidade cell (may contain 1+ codes)
+ *  - <td> cell with plain text     → OC (objeto de conhecimento), tracked via rowspan
+ *  - <td> empty cell               → ignored
+ *  - single <th colspan> row       → section header (CAMPO..., EIXO...), skipped
+ *
  * Returns array of rows: { ut, oc, habilidades: [{code, desc}] }
  */
 function parseYearSection(htmlBlock) {
@@ -156,68 +159,68 @@ function parseYearSection(htmlBlock) {
     const trHtml = trMatch[1];
     const cells = extractCells(trHtml);
     
-    // Skip rows with colspan cells (section headers like "EIXO ORALIDADE", "CAMPO...")
-    if (cells.length === 1 && cells[0].attrs.includes('colspan')) {
+    // Skip section header rows (single <th> with colspan, e.g. "CAMPO...", "EIXO...")
+    if (cells.length === 1 && cells[0].tag === 'th' && cells[0].attrs.includes('colspan')) {
       continue;
     }
     
-    // Skip header rows within tbody (rare but possible)
-    if (cells.length >= 1 && cells.length <= 3) {
-      // Determine if we have a UT cell (th), OC cell (td), and HAB cell (td)
-      // Possible cases:
-      // A: <th>UT</th><td>OC</td><td>HAB</td>  (3 cells, first is th)
-      // B: <td>OC</td><td>HAB</td>              (2 cells, no th - UT from rowspan)
-      // C: <tr><td>OC2</td><td>HAB</td></tr>   (after OC rowspan)
-      
-      let utText = null;
-      let ocText = null;
-      
-      // Find which cells are th (UT) and which are td
-      if (cells.length === 3) {
-        // Three cells: th=UT, td=OC, td=HAB
-        if (cells[0].tag === 'th') {
-          utText = cleanText(stripBrTags(cells[0].raw));
-        }
-        ocText = cleanText(stripBrTags(cells[1].raw));
-        const habs = parseHabilidades(cells[2].raw);
-        
-        if (utText) currentUT = utText;
-        currentOC = ocText;
-        
-        if (currentUT && currentOC) {
-          rows.push({ ut: currentUT, oc: currentOC, habilidades: habs });
-        }
-        
-      } else if (cells.length === 2) {
-        // Two cells: either <td>OC</td><td>HAB</td> (UT from rowspan)
-        // or <th>UT</th><td>HAB</td> (if thead had colspan)
-        if (cells[0].tag === 'th') {
-          utText = cleanText(stripBrTags(cells[0].raw));
-          currentUT = utText;
-          // No OC - HAB directly
-          const habs = parseHabilidades(cells[1].raw);
-          rows.push({ ut: currentUT, oc: null, habilidades: habs });
-        } else {
-          // td + td: OC from rowspan? No, OC is td, HAB is td
-          ocText = cleanText(stripBrTags(cells[0].raw));
-          currentOC = ocText;
-          const habs = parseHabilidades(cells[1].raw);
-          if (currentUT) {
-            rows.push({ ut: currentUT, oc: currentOC, habilidades: habs });
-          }
-        }
-      } else if (cells.length === 1) {
-        // Single td: another OC under the same UT (OC rowspan in first rows)
-        // Or single th: UT without OC
-        if (cells[0].tag === 'th') {
-          utText = cleanText(stripBrTags(cells[0].raw));
-          currentUT = utText;
-        }
+    let utText = null;
+    let ocText = null;
+    const habilidades = [];
+    
+    for (const cell of cells) {
+      if (cell.tag === 'th') {
+        // UT cell (rowspan) — the first column header inside tbody
+        const t = cleanText(stripBrTags(cell.raw));
+        if (t) utText = t;
+        continue;
       }
+      
+      // td cell: habilidade if it contains a code, else OC if non-empty
+      const habs = parseHabilidades(cell.raw);
+      if (habs.length > 0) {
+        habilidades.push(...habs);
+      } else {
+        const t = cleanText(stripBrTags(cell.raw));
+        if (t) ocText = t;
+      }
+    }
+    
+    if (utText) currentUT = utText;
+    if (ocText) currentOC = ocText;
+    
+    // Rows may update only UT or only OC (rowspan continuation) with no habilidade
+    if (habilidades.length > 0 && currentUT) {
+      rows.push({ ut: currentUT, oc: currentOC, habilidades });
     }
   }
   
   return rows;
+}
+
+/**
+ * Derive the school years from a BNCC habilidade code.
+ * EF01-EF09 → single year; EF12→1-2; EF15→1-5; EF35→3-5; EF67→6-7; EF69→6-9; EF89→8-9
+ */
+function anosFromCode(code) {
+  const m = (code || '').match(/^EF(\d{1,2})/);
+  if (!m) return [];
+  const n = parseInt(m[1], 10);
+  const ranges = {
+    1: [1], 2: [2], 3: [3], 4: [4], 5: [5],
+    6: [6], 7: [7], 8: [8], 9: [9],
+    12: [1, 2], 15: [1, 2, 3, 4, 5], 35: [3, 4, 5],
+    67: [6, 7], 69: [6, 7, 8, 9], 89: [8, 9],
+  };
+  return ranges[n] || [];
+}
+
+/**
+ * Derive the etapa_ensino from the first year of a habilidade code.
+ */
+function etapaFromCode(code) {
+  const anos = anosFromCode(code);
+  return anos.length > 0 && anos[0] <= 5 ? 'anos_iniciais' : 'anos_finais';
 }
 
 /**
@@ -229,40 +232,37 @@ function parseFile(content, disciplina) {
   const lines = content.split('\n');
   
   let currentBlock = [];
-  let currentYears = null;
-  let currentEtapa = null;
   let inTable = false;
+  
+  // Flush a buffered table block into results
+  const flushBlock = () => {
+    if (!inTable || currentBlock.length === 0) return;
+    const rows = parseYearSection(currentBlock.join('\n'));
+    for (const row of rows) {
+      for (const hab of row.habilidades) {
+        if (hab.code && hab.desc) {
+          results.push({
+            disciplina,
+            etapa_ensino: etapaFromCode(hab.code),
+            anos: anosFromCode(hab.code),
+            ut: row.ut,
+            oc: row.oc,
+            code: hab.code,
+            desc: hab.desc,
+          });
+        }
+      }
+    }
+    currentBlock = [];
+    inTable = false;
+  };
   
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i].trim();
     
-    // Check for year header
-    const yh = parseYearHeader(line);
-    if (yh) {
-      // Process previous block if any
-      if (inTable && currentBlock.length > 0 && currentYears) {
-        const rows = parseYearSection(currentBlock.join('\n'));
-        for (const row of rows) {
-          for (const hab of row.habilidades) {
-            if (hab.code && hab.desc) {
-              results.push({
-                disciplina,
-                etapa_ensino: currentEtapa,
-                anos: currentYears,
-                ut: row.ut,
-                oc: row.oc,
-                code: hab.code,
-                desc: hab.desc,
-              });
-            }
-          }
-        }
-      }
-      
-      currentBlock = [];
-      currentYears = yh.years;
-      currentEtapa = etapaFromYear(yh.years[0]);
-      inTable = false;
+    // Check for year header (acts as a section boundary)
+    if (parseYearHeader(line)) {
+      flushBlock();
       continue;
     }
     
@@ -277,49 +277,12 @@ function parseFile(content, disciplina) {
     
     // Detect end of tbody
     if (inTable && line.includes('</tbody>')) {
-      // Process this block
-      if (currentBlock.length > 0 && currentYears) {
-        const rows = parseYearSection(currentBlock.join('\n'));
-        for (const row of rows) {
-          for (const hab of row.habilidades) {
-            if (hab.code && hab.desc) {
-              results.push({
-                disciplina,
-                etapa_ensino: currentEtapa,
-                anos: currentYears,
-                ut: row.ut,
-                oc: row.oc,
-                code: hab.code,
-                desc: hab.desc,
-              });
-            }
-          }
-        }
-      }
-      currentBlock = [];
-      inTable = false;
+      flushBlock();
     }
   }
   
   // Process any remaining block
-  if (inTable && currentBlock.length > 0 && currentYears) {
-    const rows = parseYearSection(currentBlock.join('\n'));
-    for (const row of rows) {
-      for (const hab of row.habilidades) {
-        if (hab.code && hab.desc) {
-          results.push({
-            disciplina,
-            etapa_ensino: currentEtapa,
-            anos: currentYears,
-            ut: row.ut,
-            oc: row.oc,
-            code: hab.code,
-            desc: hab.desc,
-          });
-        }
-      }
-    }
-  }
+  flushBlock();
   
   return results;
 }
@@ -415,13 +378,13 @@ function generateSql(allData) {
           
           if (ocName) {
             lines.push(`, h_${oi}_${h.code.replace(/[^a-zA-Z0-9]/g, '_')} AS (`);
-            lines.push(`  INSERT INTO bncc_habilidades (id, objeto_conhecimento_id, codigo_bncc, descricao, anos)`);
-            lines.push(`  SELECT gen_random_uuid(), oc${oi}.id, '${code}', '${desc}', '${anosJson}'::jsonb FROM oc${oi}`);
+            lines.push(`  INSERT INTO bncc_habilidades (id, objeto_conhecimento_id, codigo_bncc, descricao, anos, etapa_ensino)`);
+            lines.push(`  SELECT gen_random_uuid(), oc${oi}.id, '${code}', '${desc}', '${anosJson}'::jsonb, '${etapa}' FROM oc${oi}`);
             lines.push(`)`);
           } else {
             lines.push(`, h_${h.code.replace(/[^a-zA-Z0-9]/g, '_')} AS (`);
-            lines.push(`  INSERT INTO bncc_habilidades (id, objeto_conhecimento_id, codigo_bncc, descricao, anos)`);
-            lines.push(`  SELECT gen_random_uuid(), NULL, '${code}', '${desc}', '${anosJson}'::jsonb FROM ut`);
+            lines.push(`  INSERT INTO bncc_habilidades (id, objeto_conhecimento_id, codigo_bncc, descricao, anos, etapa_ensino)`);
+            lines.push(`  SELECT gen_random_uuid(), NULL, '${code}', '${desc}', '${anosJson}'::jsonb, '${etapa}' FROM ut`);
             lines.push(`)`);
           }
         }
