@@ -5,80 +5,93 @@ import { useParams, useRouter } from 'next/navigation'
 import { useAuth } from '@/components/providers/auth-provider'
 import { usePermissoes } from '@/hooks/use-permissoes'
 import {
-  listarPlanoAula,
-  criarPlanoAula,
-  editarPlanoAula,
+  listarPlanoAulaComQuadro,
   excluirPlanoAula,
   listarPeriodosPlanoEnsino,
   buscarBNCCBase,
-  type PlanoAula,
+  listarPlanosEnsino,
+  type PlanoAulaQuadro,
 } from '@/lib/actions/plano-ensino'
-import { listarPlanosEnsino } from '@/lib/actions/plano-ensino'
+import { PlanoAulaForm } from '@/components/plano-ensino/plano-aula-form'
+import { PlanoAulaDetalheDialog } from '@/components/plano-ensino/plano-aula-detalhe-dialog'
+import { ConfirmDialog } from '@/components/feedback/confirm-dialog'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Input } from '@/components/ui/input'
-import { Textarea } from '@/components/ui/textarea'
-import { Label } from '@/components/ui/label'
-import { Checkbox } from '@/components/ui/checkbox'
-import { Badge } from '@/components/ui/badge'
+import { Card, CardContent } from '@/components/ui/card'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { PageContainer } from '@/components/layout/page-container'
 import { PageHeader } from '@/components/layout/page-header'
-import { cn } from '@/lib/utils'
 import { Skeleton } from '@/components/ui/skeleton'
-import { ArrowLeft, Plus, Pencil, Trash2, Save, X, BookOpen, Loader2, GraduationCap } from 'lucide-react'
+import {
+  ArrowLeft, Plus, Pencil, Trash2, Eye, BookOpen, GraduationCap,
+  Clock, Hourglass, Layers,
+} from 'lucide-react'
 import { toast } from 'sonner'
 
-type BnccItem = {
-  tipo: string
-  id: string
-  codigo?: string
-  nome?: string
-  descricao?: string
+function formatarPeriodos(periodos?: number[]) {
+  if (!periodos?.length) return '—'
+  const sorted = [...periodos].sort((a, b) => a - b)
+  if (sorted.length === 1) return `${sorted[0]}º Período`
+  const first = sorted[0]
+  const last = sorted[sorted.length - 1]
+  const isSequencia = sorted.length === last - first + 1
+  if (isSequencia) return `${first}º ao ${last}º Período`
+  return sorted.map(p => `${p}º`).join(' e ')
+}
+
+function formatarMinutos(minutos: number) {
+  const h = Math.floor(minutos / 60)
+  const m = minutos % 60
+  if (h === 0) return `${m}min`
+  if (m === 0) return `${h}h`
+  return `${h}h${String(m).padStart(2, '0')}`
+}
+
+function formatarDataCurta(iso?: string | null) {
+  if (!iso) return '—'
+  const [y, m, d] = iso.split('-')
+  if (!y || !m || !d) return '—'
+  return `${d}/${m}`
+}
+
+function truncarTexto(texto: string, max: number) {
+  if (texto.length <= max) return texto
+  return `${texto.slice(0, max).trimEnd()}...`
+}
+
+const TIPOS_HABILIDADE = ['habilidade', 'habilidade_medio', 'objetivo']
+
+function contarHabilidades(fields?: any[]) {
+  return (fields || []).filter(f => TIPOS_HABILIDADE.includes(f.tipo)).length
+}
+
+function InfoChip({ icon: Icon, children }: { icon: any; children: React.ReactNode }) {
+  return (
+    <span className="inline-flex items-center gap-1.5 rounded-md bg-muted px-2 py-1 text-[13px] font-medium text-foreground">
+      <Icon className="h-3.5 w-3.5 text-primary/70" />
+      {children}
+    </span>
+  )
 }
 
 export default function PlanoEnsinoDetailPage() {
   const params = useParams()
   const router = useRouter()
   const planoId = params.id as string
-  const { user, schoolId } = useAuth()
+  const { schoolId } = useAuth()
   const [pessoaId, setPessoaId] = useState<string | null>(null)
   const [plano, setPlano] = useState<any>(null)
   const [periodos, setPeriodos] = useState<number[]>([])
   const [periodoAtivo, setPeriodoAtivo] = useState(1)
-  const [aulas, setAulas] = useState<PlanoAula[]>([])
+  const [aulas, setAulas] = useState<PlanoAulaQuadro[]>([])
   const [loading, setLoading] = useState(true)
   const [showForm, setShowForm] = useState(false)
-  const [editingId, setEditingId] = useState<string | null>(null)
-
-  // Form state
-  const [tema, setTema] = useState('')
-  const [conteudo, setConteudo] = useState('')
-  const [dataInicio, setDataInicio] = useState('')
-  const [dataFim, setDataFim] = useState('')
-  const [recursos, setRecursos] = useState('')
-  const [metodologia, setMetodologia] = useState('')
-  const [avaliacao, setAvaliacao] = useState('')
-  const [referencias, setReferencias] = useState('')
-  const [selectedPeriodos, setSelectedPeriodos] = useState<number[]>([])
-  const [saving, setSaving] = useState(false)
+  const [editingAula, setEditingAula] = useState<PlanoAulaQuadro | null>(null)
+  const [aulaDetalhe, setAulaDetalhe] = useState<PlanoAulaQuadro | null>(null)
+  const [deleteTarget, setDeleteTarget] = useState<PlanoAulaQuadro | null>(null)
 
   // BNCC state
   const [bnccData, setBnccData] = useState<any>(null)
   const [bnccLoading, setBnccLoading] = useState(false)
-  const [selectedBncc, setSelectedBncc] = useState<BnccItem[]>([])
-
-  // Derived BNCC filters: IDs of N1 (unidade_tematica/campo_experiencia/area_conhecimento) and N2 (objeto_conhecimento/competencia)
-  // selected from the UI; N3 (habilidades) filters by N2
-  const selectedN1Ids = selectedBncc
-    .filter(x => ['unidade_tematica', 'campo_experiencia', 'area_conhecimento'].includes(x.tipo))
-    .map(x => x.id)
-  const selectedN2Ids = selectedBncc
-    .filter(x => ['objeto_conhecimento', 'competencia'].includes(x.tipo))
-    .map(x => x.id)
-
-  // BNCC selection drilldown
-  const [bnccNivel1, setBnccNivel1] = useState<string[]>([])
 
   const { loaded: permLoaded, pessoaId: pid } = usePermissoes(schoolId || '')
 
@@ -97,7 +110,6 @@ export default function PlanoEnsinoDetailPage() {
         const { periodos } = await listarPeriodosPlanoEnsino(encontrado.turma_id)
         setPeriodos(periodos)
         setPeriodoAtivo(periodos[0] || 1)
-        setSelectedPeriodos([periodos[0] || 1])
       }
     } catch {
       toast.error('Erro ao carregar plano')
@@ -107,18 +119,24 @@ export default function PlanoEnsinoDetailPage() {
   }, [schoolId, pessoaId, planoId])
 
   useEffect(() => {
-    carregarPlano()
-  }, [carregarPlano])
+    if (permLoaded) carregarPlano()
+  }, [carregarPlano, permLoaded])
 
   const carregarAulas = useCallback(async () => {
-    if (!planoId) return
+    if (!planoId || !plano) return
     try {
-      const data = await listarPlanoAula(planoId, periodoAtivo)
+      const data = await listarPlanoAulaComQuadro(
+        planoId,
+        plano.turma_id,
+        (plano.disciplinas || []).map((d: any) => d.matriz_disciplina_id),
+        periodoAtivo,
+        pessoaId
+      )
       setAulas(data)
     } catch {
       toast.error('Erro ao carregar planos de aula')
     }
-  }, [planoId, periodoAtivo])
+  }, [planoId, plano, periodoAtivo, pessoaId])
 
   useEffect(() => {
     if (planoId) carregarAulas()
@@ -134,124 +152,23 @@ export default function PlanoEnsinoDetailPage() {
       .finally(() => setBnccLoading(false))
   }, [plano?.etapa_tipo, plano?.id])
 
-  const resetForm = () => {
-    setTema('')
-    setConteudo('')
-    setDataInicio('')
-    setDataFim('')
-    setRecursos('')
-    setMetodologia('')
-    setAvaliacao('')
-    setReferencias('')
-    setSelectedPeriodos(periodos.length > 0 ? [periodoAtivo] : [1])
-    setSelectedBncc([])
-    setEditingId(null)
-    setShowForm(false)
-  }
-
-  const openEdit = (aula: PlanoAula) => {
-    setTema(aula.tema)
-    setConteudo(aula.conteudo || '')
-    setDataInicio(aula.data_inicio || '')
-    setDataFim(aula.data_fim || '')
-    setRecursos(aula.recursos_didaticos || '')
-    setMetodologia(aula.metodologia || '')
-    setAvaliacao(aula.avaliacao || '')
-    setReferencias(aula.referencias || '')
-    setSelectedPeriodos(aula.periodos || [periodoAtivo])
-    setSelectedBncc(aula.bncc_fields || [])
-    setEditingId(aula.id)
-    setShowForm(true)
-  }
-
-  const togglePeriodo = (p: number) => {
-    setSelectedPeriodos(prev =>
-      prev.includes(p) ? prev.filter(x => x !== p) : [...prev, p]
-    )
-  }
-
-  const toggleBnccItem = (item: BnccItem) => {
-    setSelectedBncc(prev => {
-      const exists = prev.find(x => x.tipo === item.tipo && x.id === item.id)
-      if (exists) return prev.filter(x => x !== exists)
-      return [...prev, item]
-    })
-  }
-
-  const isBnccSelected = (tipo: string, id: string) =>
-    selectedBncc.some(x => x.tipo === tipo && x.id === id)
-
-  const handleSave = async () => {
-    if (!tema.trim()) {
-      toast.error('O campo Tema é obrigatório')
-      return
-    }
-    if (selectedPeriodos.length === 0) {
-      toast.error('Selecione pelo menos um período')
-      return
-    }
-    setSaving(true)
+  const handleExcluir = async () => {
+    if (!deleteTarget) return
     try {
-      if (editingId) {
-        await editarPlanoAula(editingId, {
-          periodos: selectedPeriodos,
-          tema: tema.trim(),
-          conteudo: conteudo || null,
-          data_inicio: dataInicio || null,
-          data_fim: dataFim || null,
-          recursos_didaticos: recursos || null,
-          metodologia: metodologia || null,
-          avaliacao: avaliacao || null,
-          referencias: referencias || null,
-          bncc_fields: selectedBncc,
-        }, pessoaId)
-        toast.success('Plano de aula atualizado')
-      } else {
-        await criarPlanoAula({
-          plano_ensino_id: planoId,
-          periodos: selectedPeriodos,
-          tema: tema.trim(),
-          conteudo: conteudo || null,
-          data_inicio: dataInicio || null,
-          data_fim: dataFim || null,
-          recursos_didaticos: recursos || null,
-          metodologia: metodologia || null,
-          avaliacao: avaliacao || null,
-          referencias: referencias || null,
-          bncc_fields: selectedBncc,
-        }, pessoaId)
-        toast.success('Plano de aula criado')
-      }
-      resetForm()
-      carregarAulas()
-    } catch (err: any) {
-      toast.error(err?.message || 'Erro ao salvar')
-    } finally {
-      setSaving(false)
-    }
-  }
-
-  const handleExcluir = async (id: string) => {
-    if (!confirm('Excluir este plano de aula?')) return
-    try {
-      await excluirPlanoAula(id, pessoaId)
-      setAulas(prev => prev.filter(a => a.id !== id))
+      await excluirPlanoAula(deleteTarget.id, pessoaId)
+      setAulas(prev => prev.filter(a => a.id !== deleteTarget.id))
+      setDeleteTarget(null)
       toast.success('Plano de aula excluído')
     } catch {
       toast.error('Erro ao excluir')
     }
   }
 
-  const etapaTipo = plano?.etapa_tipo || ''
-  const isInfantil = etapaTipo === 'infantil'
-  const isFundamental = ['fundamental_inicial', 'fundamental_final', 'fundamental_outros', 'eja'].includes(etapaTipo)
-  const isMedio = etapaTipo === 'medio'
-
   if (loading) {
     return (
       <PageContainer>
-        <Skeleton className="h-8 w-48 mb-4" />
-        <Skeleton className="h-32 w-full rounded-lg mb-4" />
+        <Skeleton className="h-8 w-64 mb-4" />
+        <Skeleton className="h-12 w-full rounded-lg mb-4" />
         <Skeleton className="h-64 w-full rounded-lg" />
       </PageContainer>
     )
@@ -265,343 +182,201 @@ export default function PlanoEnsinoDetailPage() {
     )
   }
 
+  const tituloPlano = plano.is_interdisciplinar
+    ? `Plano de Ensino - Interdisciplinar - ${plano.turma_nome}`
+    : `Plano de Ensino - ${plano.disciplinas?.[0]?.nome || 'Sem disciplina'} - ${plano.turma_nome}`
+
+  const anoEscolar = plano.etapa_nome?.match(/(\d+)º/)?.[1]
+
+  const abrirCriacao = () => {
+    setEditingAula(null)
+    setShowForm(true)
+  }
+
+  const abrirEdicao = (aula: PlanoAulaQuadro) => {
+    setAulaDetalhe(null)
+    setEditingAula(aula)
+    setShowForm(true)
+  }
+
+  const cancelarForm = () => {
+    setEditingAula(null)
+    setShowForm(false)
+  }
+
+  const aoSalvar = () => {
+    setShowForm(false)
+    setEditingAula(null)
+    carregarAulas()
+  }
+
   return (
     <PageContainer>
       <PageHeader
-        title={plano.turma_nome}
+        title={tituloPlano}
         description={plano.etapa_nome}
         icon={GraduationCap}
-        breadcrumbs={[
-          { label: 'Plano de Ensino', href: '/gestao-pedagogica/plano-ensino' },
-          { label: plano.turma_nome },
-        ]}
+        actions={
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => (showForm ? cancelarForm() : router.push('/gestao-pedagogica/plano-ensino'))}
+          >
+            <ArrowLeft className="h-4 w-4 mr-1.5" />
+            {showForm ? 'Cancelar' : 'Voltar'}
+          </Button>
+        }
       />
 
-      <Card className="mb-6">
-        <CardContent className="p-5">
-          <h2 className="text-xl font-bold text-foreground">{plano.turma_nome}</h2>
-          <p className="text-sm text-muted-foreground mt-1">{plano.etapa_nome}</p>
-          {plano.disciplinas.length > 0 && (
-            <div className="flex flex-wrap gap-1 mt-2">
-              {plano.disciplinas.map((d: any) => (
-                <span key={d.id} className="text-xs bg-muted text-muted-foreground px-2 py-0.5 rounded">{d.nome}</span>
+      {showForm ? (
+        <PlanoAulaForm
+          planoId={plano.id}
+          turmaId={plano.turma_id}
+          disciplinas={plano.disciplinas || []}
+          periodos={periodos}
+          periodoInicial={periodoAtivo}
+          etapaTipo={plano.etapa_tipo || ''}
+          anoEscolar={anoEscolar}
+          bnccData={bnccData}
+          bnccLoading={bnccLoading}
+          editingAula={editingAula}
+          pessoaId={pessoaId}
+          onCancel={cancelarForm}
+          onSaved={aoSalvar}
+        />
+      ) : (
+        <Tabs
+          value={String(periodoAtivo)}
+          onValueChange={v => {
+            setPeriodoAtivo(Number(v))
+            setShowForm(false)
+            setEditingAula(null)
+          }}
+        >
+          <div className="relative -mx-4 sm:mx-0 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+            <TabsList className="mx-4 mb-6 flex h-auto w-max min-h-[48px] gap-1 rounded-lg border border-border bg-card p-1 shadow-xs sm:mx-0 sm:w-1/2">
+              {periodos.map(p => (
+                <TabsTrigger
+                  key={p}
+                  value={String(p)}
+                  className="h-10 min-h-[40px] flex-1 rounded-md px-4 text-[14px] font-semibold text-foreground/80 transition-colors hover:bg-accent/10 hover:text-accent-foreground data-active:bg-primary data-active:text-primary-foreground data-active:shadow-sm"
+                >
+                  {p}º Período
+                </TabsTrigger>
               ))}
-            </div>
-          )}
-          {plano.is_interdisciplinar && (
-            <span className="text-xs bg-warning/10 text-warning px-2 py-0.5 rounded inline-block mt-2">Interdisciplinar</span>
-          )}
-        </CardContent>
-      </Card>
+            </TabsList>
+          </div>
 
-      <Tabs value={String(periodoAtivo)} onValueChange={v => setPeriodoAtivo(Number(v))}>
-        <TabsList className="mb-4">
           {periodos.map(p => (
-            <TabsTrigger key={p} value={String(p)}>{p}º Período</TabsTrigger>
-          ))}
-        </TabsList>
-
-        {periodos.map(p => (
-          <TabsContent key={p} value={String(p)}>
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-base font-semibold text-foreground">Planos de Aula — {p}º Período</h3>
-              {!showForm && (
-                <Button size="sm" onClick={() => { resetForm(); setShowForm(true) }}>
-                  <Plus className="h-4 w-4 mr-1" />
+            <TabsContent key={p} value={String(p)}>
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-[16px] font-semibold text-foreground">Planos de Aula — {p}º Período</h3>
+                <Button onClick={abrirCriacao}>
+                  <Plus className="h-4 w-4 mr-1.5" />
                   Criar Plano de Aula
                 </Button>
+              </div>
+
+              {aulas.length === 0 && (
+                <div className="py-8 text-center text-muted-foreground">
+                  <BookOpen className="h-10 w-10 mx-auto mb-3 opacity-30" />
+                  <p>Nenhum Plano de Aula cadastrado.</p>
+                </div>
               )}
-            </div>
 
-            {showForm && (
-              <Card className="mb-6 border-primary/30">
-                <CardHeader className="pb-3">
-                  <CardTitle className="text-sm font-semibold">
-                    {editingId ? 'Editar Plano de Aula' : 'Novo Plano de Aula'}
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div>
-                    <Label className="text-xs">Tema *</Label>
-                    <Input value={tema} onChange={e => setTema(e.target.value)} placeholder="Ex: Frações" className="mt-1" />
-                  </div>
-
-                  <div>
-                    <Label className="text-xs">Períodos *</Label>
-                    <div className="flex flex-wrap gap-3 mt-1">
-                      {periodos.map(per => (
-                        <label key={per} className="flex items-center gap-1.5 text-sm cursor-pointer">
-                          <Checkbox checked={selectedPeriodos.includes(per)} onCheckedChange={() => togglePeriodo(per)} />
-                          {per}º Período
-                        </label>
-                      ))}
-                    </div>
-                  </div>
-
-                  <div>
-                    <Label className="text-xs">Conteúdo</Label>
-                    <Textarea value={conteudo} onChange={e => setConteudo(e.target.value)} rows={3}
-                      className="mt-1" placeholder="Conteúdo programático da aula" />
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <Label className="text-xs">Data Início</Label>
-                      <Input type="date" value={dataInicio} onChange={e => setDataInicio(e.target.value)} className="mt-1" />
-                    </div>
-                    <div>
-                      <Label className="text-xs">Data Fim</Label>
-                      <Input type="date" value={dataFim} onChange={e => setDataFim(e.target.value)} className="mt-1" />
-                    </div>
-                  </div>
-
-                  {/* BNCC selectors */}
-                  {bnccData && (
-                    <div className="space-y-4 pt-2 border-t">
-                      <Label className="text-xs font-semibold">Estrutura BNCC</Label>
-
-                      {isInfantil && (
-                        <>
-                          <div>
-                            <Label className="text-xs text-muted-foreground">Campos de Experiência</Label>
-                            <div className="flex flex-wrap gap-2 mt-1">
-                              {bnccData.campos_experiencia?.map((c: any) => (
-                                <Badge key={c.id} variant={isBnccSelected('campo_experiencia', c.id) ? 'default' : 'outline'}
-                                  className="cursor-pointer" onClick={() => toggleBnccItem({ tipo: 'campo_experiencia', id: c.id, nome: c.sigla + ' - ' + c.nome })}>
-                                  {c.sigla} — {c.nome}
-                                </Badge>
-                              ))}
-                            </div>
+              {aulas.length > 0 && (
+                <div className="space-y-3">
+                  {aulas.map(aula => {
+                    const qtdHabilidades = contarHabilidades(aula.bncc_fields)
+                    return (
+                      <Card key={aula.id} className="border-border overflow-hidden">
+                        <CardContent className="p-0 flex">
+                          <div className="shrink-0 w-20 sm:w-28 bg-primary/5 border-r border-border flex flex-col items-center justify-center py-4 px-1 text-center">
+                            <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">Início</span>
+                            <span className="text-[15px] sm:text-[16px] font-bold text-primary tabular-nums mt-0.5">
+                              {formatarDataCurta(aula.data_inicio)}
+                            </span>
+                            <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold mt-3">Fim</span>
+                            <span className="text-[15px] sm:text-[16px] font-bold text-primary tabular-nums mt-0.5">
+                              {formatarDataCurta(aula.data_fim)}
+                            </span>
                           </div>
-                          {selectedN1Ids.length > 0 && (
-                            <div>
-                              <Label className="text-xs text-muted-foreground">Objetivos de Aprendizagem</Label>
-                              <div className="max-h-48 overflow-y-auto space-y-1 mt-1 border rounded-lg p-2">
-                                {bnccData.objetivos
-                                  ?.filter((o: any) => selectedN1Ids.length === 0 || selectedBncc
-                                    .filter(x => x.tipo === 'campo_experiencia')
-                                    .some(c => o.campo_experiencia?.toLowerCase().includes(c.nome?.toLowerCase() || '')))
-                                  .map((o: any) => (
-                                    <label key={o.id} className="flex items-start gap-2 text-sm cursor-pointer">
-                                      <Checkbox checked={isBnccSelected('objetivo', o.id)}
-                                        onCheckedChange={() => toggleBnccItem({ tipo: 'objetivo', id: o.id, codigo: o.codigo_bncc, descricao: o.descricao })} />
-                                      <div>
-                                        <span className="font-mono text-xs font-semibold">{o.codigo_bncc}</span>
-                                        <p className="text-xs text-muted-foreground">{o.descricao}</p>
-                                      </div>
-                                    </label>
-                                  ))}
-                              </div>
-                            </div>
-                          )}
-                        </>
-                      )}
 
-                      {isFundamental && (
-                        <>
-                          <div>
-                            <Label className="text-xs text-muted-foreground">Unidades Temáticas</Label>
-                            <div className="flex flex-wrap gap-2 mt-1">
-                              {bnccData.unidades_tematicas?.map((u: any) => (
-                                <Badge key={u.id} variant={isBnccSelected('unidade_tematica', u.id) ? 'default' : 'outline'}
-                                  className="cursor-pointer" onClick={() => toggleBnccItem({ tipo: 'unidade_tematica', id: u.id, nome: u.unidade_tematica })}>
-                                  {u.unidade_tematica}
-                                </Badge>
-                              ))}
-                            </div>
-                          </div>
-                          {selectedN1Ids.length > 0 && (
-                            <div>
-                              <Label className="text-xs text-muted-foreground">Objetos de Conhecimento</Label>
-                              <div className="max-h-36 overflow-y-auto space-y-1 mt-1 border rounded-lg p-2">
-                                {bnccData.objetos_conhecimento
-                                  ?.filter((o: any) => selectedN1Ids.includes(o.unidade_tematica_id))
-                                  .map((o: any) => (
-                                    <label key={o.id} className="flex items-start gap-2 text-sm cursor-pointer">
-                                      <Checkbox checked={isBnccSelected('objeto_conhecimento', o.id)}
-                                        onCheckedChange={() => toggleBnccItem({ tipo: 'objeto_conhecimento', id: o.id, nome: o.objeto_conhecimento })} />
-                                      <span className="text-xs">{o.objeto_conhecimento}</span>
-                                    </label>
-                                  ))}
-                              </div>
-                            </div>
-                          )}
-                          {selectedN2Ids.length > 0 && (
-                            <div>
-                              <Label className="text-xs text-muted-foreground">Habilidades</Label>
-                              <div className="max-h-48 overflow-y-auto space-y-1 mt-1 border rounded-lg p-2">
-                                {bnccData.habilidades
-                                  ?.filter((h: any) => selectedN2Ids.includes(h.objeto_conhecimento_id))
-                                  .map((h: any) => (
-                                    <label key={h.id} className="flex items-start gap-2 text-sm cursor-pointer">
-                                      <Checkbox checked={isBnccSelected('habilidade', h.id)}
-                                        onCheckedChange={() => toggleBnccItem({ tipo: 'habilidade', id: h.id, codigo: h.codigo_bncc, descricao: h.descricao })} />
-                                      <div>
-                                        <span className="font-mono text-xs font-semibold">{h.codigo_bncc}</span>
-                                        <p className="text-xs text-muted-foreground">{h.descricao}</p>
-                                      </div>
-                                    </label>
-                                  ))}
-                              </div>
-                            </div>
-                          )}
-                        </>
-                      )}
+                          <div className="flex-1 min-w-0 p-4">
+                            <h4 className="text-[16px] font-semibold text-foreground">{aula.tema}</h4>
 
-                      {isMedio && (
-                        <>
-                          <div>
-                            <Label className="text-xs text-muted-foreground">Áreas de Conhecimento</Label>
-                            <div className="flex flex-wrap gap-2 mt-1">
-                              {bnccData.areas_conhecimento?.map((a: any) => (
-                                <Badge key={a.id} variant={isBnccSelected('area_conhecimento', a.id) ? 'default' : 'outline'}
-                                  className="cursor-pointer" onClick={() => toggleBnccItem({ tipo: 'area_conhecimento', id: a.id, nome: a.nome })}>
-                                  {a.nome}
-                                </Badge>
-                              ))}
+                            <div className="mt-2.5 flex flex-wrap gap-2">
+                              <InfoChip icon={Layers}>{formatarPeriodos(aula.periodos)}</InfoChip>
+                              <InfoChip icon={Clock}>
+                                {aula.aulas_quadro == null ? '—' : `${aula.aulas_quadro} aula${aula.aulas_quadro === 1 ? '' : 's'}`}
+                              </InfoChip>
+                              <InfoChip icon={Hourglass}>
+                                {aula.horas_quadro == null ? '—' : formatarMinutos(aula.horas_quadro)}
+                              </InfoChip>
+                              <InfoChip icon={BookOpen}>
+                                {qtdHabilidades} habilidade{qtdHabilidades === 1 ? '' : 's'} BNCC
+                              </InfoChip>
                             </div>
-                          </div>
-                          {selectedN1Ids.length > 0 && (
-                            <div>
-                              <Label className="text-xs text-muted-foreground">Competências Específicas</Label>
-                              <div className="max-h-36 overflow-y-auto space-y-1 mt-1 border rounded-lg p-2">
-                                {bnccData.competencias
-                                  ?.filter((c: any) => selectedN1Ids.includes(c.area_id))
-                                  .map((c: any) => (
-                                    <label key={c.id} className="flex items-start gap-2 text-sm cursor-pointer">
-                                      <Checkbox checked={isBnccSelected('competencia', c.id)}
-                                        onCheckedChange={() => toggleBnccItem({ tipo: 'competencia', id: c.id, codigo: c.codigo, descricao: c.descricao })} />
-                                      <div>
-                                        <span className="font-mono text-xs font-semibold">Competência {c.codigo}</span>
-                                        <p className="text-xs text-muted-foreground">{c.descricao}</p>
-                                      </div>
-                                    </label>
-                                  ))}
-                              </div>
-                            </div>
-                          )}
-                          {selectedN2Ids.length > 0 && (
-                            <div>
-                              <Label className="text-xs text-muted-foreground">Habilidades</Label>
-                              <div className="max-h-48 overflow-y-auto space-y-1 mt-1 border rounded-lg p-2">
-                                {bnccData.habilidades_medio
-                                  ?.filter((h: any) => selectedN2Ids.some(compId => {
-                                    const comp = bnccData.competencias?.find((c: any) => c.id === compId)
-                                    return comp && h.area_id === comp.area_id && h.competencia_codigo === comp.codigo
-                                  }))
-                                  .map((h: any) => (
-                                    <label key={h.id} className="flex items-start gap-2 text-sm cursor-pointer">
-                                      <Checkbox checked={isBnccSelected('habilidade_medio', h.id)}
-                                        onCheckedChange={() => toggleBnccItem({ tipo: 'habilidade_medio', id: h.id, codigo: h.codigo, descricao: h.descricao })} />
-                                      <div>
-                                        <span className="font-mono text-xs font-semibold">{h.codigo}</span>
-                                        <p className="text-xs text-muted-foreground">{h.descricao}</p>
-                                      </div>
-                                    </label>
-                                  ))}
-                              </div>
-                            </div>
-                          )}
-                        </>
-                      )}
-                    </div>
-                  )}
 
-                  <div>
-                    <Label className="text-xs">Recursos Didáticos</Label>
-                    <Textarea value={recursos} onChange={e => setRecursos(e.target.value)} rows={2}
-                      className="mt-1" placeholder="Recursos utilizados na aula" />
-                  </div>
-                  <div>
-                    <Label className="text-xs">Metodologia</Label>
-                    <Textarea value={metodologia} onChange={e => setMetodologia(e.target.value)} rows={2}
-                      className="mt-1" placeholder="Estratégias e métodos de ensino" />
-                  </div>
-                  <div>
-                    <Label className="text-xs">Avaliação</Label>
-                    <Textarea value={avaliacao} onChange={e => setAvaliacao(e.target.value)} rows={2}
-                      className="mt-1" placeholder="Forma de avaliação da aula" />
-                  </div>
-                  <div>
-                    <Label className="text-xs">Referências</Label>
-                    <Textarea value={referencias} onChange={e => setReferencias(e.target.value)} rows={2}
-                      className="mt-1" placeholder="Referências bibliográficas" />
-                  </div>
-                  <div className="flex justify-end gap-2 pt-2">
-                    <Button variant="outline" size="sm" onClick={resetForm}>
-                      <X className="h-3.5 w-3.5 mr-1" /> Cancelar
-                    </Button>
-                    <Button size="sm" onClick={handleSave} disabled={saving}>
-                      {saving ? <Loader2 className="h-3.5 w-3.5 mr-1 animate-spin" /> : <Save className="h-3.5 w-3.5 mr-1" />}
-                      {saving ? 'Salvando...' : editingId ? 'Atualizar' : 'Salvar'}
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-            )}
-
-            {aulas.length === 0 && !showForm && (
-              <div className="py-8 text-center text-muted-foreground">
-                <BookOpen className="h-10 w-10 mx-auto mb-3 opacity-30" />
-                <p>Nenhum Plano de Aula cadastrado.</p>
-              </div>
-            )}
-
-            {aulas.length > 0 && (
-              <div className="space-y-3">
-                {aulas.map(aula => (
-                  <Card key={aula.id} className="border-border">
-                    <CardContent className="p-4">
-                      <div className="flex items-start justify-between">
-                        <div className="flex-1">
-                          <div className="flex flex-wrap items-center gap-2">
-                            <h4 className="font-semibold text-foreground">{aula.tema}</h4>
-                            {aula.periodos && aula.periodos.length > 0 && (
-                              <div className="flex gap-1">
-                                {aula.periodos.map(per => (
-                                  <span key={per} className="text-[10px] bg-info/10 text-info border border-info/20 px-1.5 py-0.5 rounded">{per}ºP</span>
-                                ))}
-                              </div>
+                            {aula.conteudo && (
+                              <p className="mt-2.5 text-[14px] text-muted-foreground whitespace-pre-wrap">
+                                {truncarTexto(aula.conteudo, 100)}
+                              </p>
                             )}
-                          </div>
-                          {aula.conteudo && (
-                            <p className="text-sm text-muted-foreground mt-1 whitespace-pre-wrap">{aula.conteudo}</p>
-                          )}
-                          <div className="flex flex-wrap gap-4 mt-2 text-xs text-muted-foreground">
-                            {aula.data_inicio && <span>Início: {aula.data_inicio}</span>}
-                            {aula.data_fim && <span>Fim: {aula.data_fim}</span>}
-                            {aula.recursos_didaticos && <span>Recursos: {aula.recursos_didaticos}</span>}
-                            {aula.metodologia && <span>Metodologia: {aula.metodologia}</span>}
-                            {aula.avaliacao && <span>Avaliação: {aula.avaliacao}</span>}
-                            {aula.referencias && <span>Referências: {aula.referencias}</span>}
-                          </div>
-                          {aula.bncc_fields && aula.bncc_fields.length > 0 && (
-                            <div className="flex flex-wrap gap-1 mt-2">
-                              {aula.bncc_fields.map((item: any, idx: number) => (
-                                <span key={idx} className="text-[10px] bg-success/5 text-success border border-success/20 px-1.5 py-0.5 rounded">
-                                  {item.codigo || item.nome || item.tipo}
-                                </span>
-                              ))}
+
+                            <div className="mt-4 flex flex-wrap items-center gap-2">
+                              <Button variant="outline" size="sm" className="h-9" onClick={() => setAulaDetalhe(aula)}>
+                                <Eye className="h-3.5 w-3.5 mr-1.5" />
+                                Visualizar plano de aula
+                              </Button>
+                              <Button variant="ghost" size="sm" className="h-9" onClick={() => abrirEdicao(aula)}>
+                                <Pencil className="h-3.5 w-3.5 mr-1.5" />
+                                Editar
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="h-9 text-destructive hover:text-destructive"
+                                onClick={() => setDeleteTarget(aula)}
+                              >
+                                <Trash2 className="h-3.5 w-3.5 mr-1.5" />
+                                Excluir plano de aula
+                              </Button>
                             </div>
-                          )}
-                        </div>
-                        <div className="flex gap-1 ml-4 shrink-0">
-                          <Button variant="ghost" size="icon" onClick={() => openEdit(aula)}>
-                            <Pencil className="h-3.5 w-3.5" />
-                          </Button>
-                          <Button variant="ghost" size="icon" onClick={() => handleExcluir(aula.id)}>
-                            <Trash2 className="h-3.5 w-3.5 text-destructive" />
-                          </Button>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-            )}
-          </TabsContent>
-        ))}
-      </Tabs>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    )
+                  })}
+                </div>
+              )}
+            </TabsContent>
+          ))}
+        </Tabs>
+      )}
+
+      <PlanoAulaDetalheDialog
+        plano={aulaDetalhe}
+        onOpenChange={open => { if (!open) setAulaDetalhe(null) }}
+        footerAction={
+          aulaDetalhe && (
+            <Button onClick={() => abrirEdicao(aulaDetalhe)}>
+              <Pencil className="h-4 w-4 mr-1.5" />
+              Editar plano de aula
+            </Button>
+          )
+        }
+      />
+
+      <ConfirmDialog
+        open={!!deleteTarget}
+        onOpenChange={open => { if (!open) setDeleteTarget(null) }}
+        title="Excluir plano de aula"
+        description={deleteTarget ? `Tem certeza que deseja excluir o plano "${deleteTarget.tema}"? Esta ação não pode ser desfeita.` : undefined}
+        confirmLabel="Excluir"
+        variant="destructive"
+        onConfirm={handleExcluir}
+      />
     </PageContainer>
   )
 }

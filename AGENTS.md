@@ -80,6 +80,13 @@ Sistema de Gestão Escolar completo: turmas, quadro de aulas, indicadores de ava
   - **FASE E — Acessibilidade**: subsumida pela FASE D; tab cycle via Radix UI
   - **Notas**: reuso integral do `<Pagination>` da spec 007; matriz com 50+ recursos em mobile fica longa (virtualizar em spec futura)
   - **Notas**: 0 hex hardcoded; 0 novas deps npm; 11 builds verdes durante execução
+- **Plano de Ensino — Modernização de Telas (spec 012)**:
+  - Spec + plan + tasks em `specs/012-plano-ensino-modernizacao/`
+  - **Lista**: card de filtros (`PageSection compact` + `FilterBar`): escola p/ superadmin ("Selecione uma escola", sem "Todas as Escolas"), ano letivo com **padrão ativo** (`status==='ativo'` calculado no cliente), turma, disciplina ("Selecione uma disciplina" default + "Todas"), período em **pills multi-select** (`ClickablePill`); mini-cards ricos (disciplina em destaque, turma, bimestre = união de períodos, professor via `turmas_profissionais`, aulas+horas do Quadro de Aulas, última atualização, "Ver Plano"); botão "Novo Plano de Ensino" no header da `PageSection`; superadmin cria via `?escola=` (query param da lista)
+  - **Criação**: sem breadcrumbs; card Identificação 100% largura com Ano Letivo + Turma 50/50; disciplinas como **cards interativos** (border-primary + bg-primary/5 + Check no canto superior direito); toggle interdisciplinar mantido
+  - **Plano de Aula (detalhe)**: sem breadcrumbs; form extraído p/ `src/components/plano-ensino/plano-aula-form.tsx` em **3 cards** (Identificação e Conteúdo, Estrutura da BNCC, Planejamento Pedagógico); períodos e BNCC N1/N2 em pills; Habilidades com **código em Badge**; **cômputo de aulas/horas do Quadro de Aulas** por disciplina (`calcularAulasDoQuadro`, debounce 500ms) no intervalo de datas; footer **sticky bottom** com Cancelar/Salvar `h-11`
+  - **Server actions**: `listarPlanosEnsino(schoolId, pessoaId, opts)` com filtros `{anoLetivoId, turmaId, matrizDisciplinaId, periodos}` + enriquecimento em batch (disciplinas c/ matriz id, professores, periodos, aulas_quadro+horas_quadro, ultima_atualizacao); nova `calcularAulasDoQuadro`
+  - **Notas**: 0 migrations; 0 novas deps npm; 1 build verde (`npx next build`)
 
 ## Known Issues
 - All server actions use `'use server'` + `getSupabaseAdmin()` (service_role, bypass RLS)

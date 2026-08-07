@@ -22,6 +22,13 @@ const RESOURCE = 'gestao-pedagogica.plano-ensino'
 
 // ─── Tipos ───
 
+export type PlanoEnsinoDisciplina = {
+  matriz_disciplina_id: string
+  disciplina_id: string
+  nome: string
+  nome_abreviado: string
+}
+
 export type PlanoEnsino = {
   id: string
   school_id: string
@@ -33,8 +40,12 @@ export type PlanoEnsino = {
   turma_nome?: string
   etapa_nome?: string
   etapa_tipo?: string
-  disciplinas?: { id: string; nome: string }[]
-  total_aulas?: number
+  disciplinas?: PlanoEnsinoDisciplina[]
+  professores?: { matriz_disciplina_id: string; nome: string }[]
+  periodos?: number[]
+  aulas_quadro?: number
+  horas_quadro?: number
+  ultima_atualizacao?: string | null
   created_at: string
 }
 
@@ -51,6 +62,7 @@ export type PlanoAula = {
   avaliacao: string | null
   referencias: string | null
   bncc_fields: any[]
+  updated_at?: string | null
 }
 
 export type BnccFieldItem = {
@@ -59,13 +71,112 @@ export type BnccFieldItem = {
   [key: string]: any
 }
 
+export type ListarPlanosEnsinoOptions = {
+  anoLetivoId?: string
+  turmaId?: string
+  matrizDisciplinaId?: string
+  periodos?: number[]
+}
+
+// ─── Helpers de datas / Quadro de Aulas ───
+
+type QuadroTurma = {
+  quadro: { id: string; data_inicial: string; data_final: string } | null
+  horarios: {
+    id: string
+    dia_semana: number
+    horario_inicial: string
+    horario_final: string
+    disciplina_id: string
+  }[]
+}
+
+function isoToDate(iso: string) {
+  const [y, m, d] = iso.split('-').map(Number)
+  return new Date(y, (m || 1) - 1, d || 1)
+}
+
+function maxIso(a?: string | null, b?: string | null) {
+  if (!a) return b || ''
+  if (!b) return a
+  return a > b ? a : b
+}
+
+function minIso(a?: string | null, b?: string | null) {
+  if (!a) return b || ''
+  if (!b) return a
+  return a < b ? a : b
+}
+
+function minutosDoHorario(inicio: string, fim: string) {
+  const [hi, mi] = (inicio || '').split(':').map(Number)
+  const [hf, mf] = (fim || '').split(':').map(Number)
+  if (Number.isNaN(hi) || Number.isNaN(hf)) return 50
+  return (hf * 60 + (mf || 0)) - (hi * 60 + (mi || 0))
+}
+
+async function carregarQuadroDaTurma(turmaId: string): Promise<QuadroTurma> {
+  const { data: quadro } = await supabase
+    .from('quadro_aulas')
+    .select('id, data_inicial, data_final')
+    .eq('turma_id', turmaId)
+    .eq('ativo', true)
+    .maybeSingle()
+
+  if (!quadro) return { quadro: null, horarios: [] }
+
+  const { data: horarios } = await supabase
+    .from('quadro_aulas_horarios')
+    .select('id, dia_semana, horario_inicial, horario_final, disciplina_id')
+    .eq('quadro_aula_id', quadro.id)
+    .eq('ativo', true)
+
+  return {
+    quadro: { id: quadro.id, data_inicial: quadro.data_inicial, data_final: quadro.data_final },
+    horarios: horarios || [],
+  }
+}
+
+function contarAulasNoIntervalo(
+  quadro: { data_inicial: string; data_final: string },
+  horarios: QuadroTurma['horarios'],
+  matrizIds: string[],
+  dataInicio?: string | null,
+  dataFim?: string | null
+) {
+  if (!matrizIds.length || !dataInicio || !dataFim) {
+    return { totalAulas: 0, totalMinutos: 0 }
+  }
+
+  const inicio = maxIso(dataInicio, quadro.data_inicial)
+  const fim = minIso(dataFim, quadro.data_final)
+  if (!inicio || !fim || inicio > fim) return { totalAulas: 0, totalMinutos: 0 }
+
+  const horariosDisc = horarios.filter(h => matrizIds.includes(h.disciplina_id))
+  if (!horariosDisc.length) return { totalAulas: 0, totalMinutos: 0 }
+
+  const primeiro = isoToDate(inicio)
+  const ultimo = isoToDate(fim)
+  let totalAulas = 0
+  let totalMinutos = 0
+
+  for (const h of horariosDisc) {
+    for (let d = new Date(primeiro); d <= ultimo; d.setDate(d.getDate() + 1)) {
+      if (d.getDay() !== h.dia_semana) continue
+      totalAulas++
+      totalMinutos += minutosDoHorario(h.horario_inicial, h.horario_final)
+    }
+  }
+
+  return { totalAulas, totalMinutos }
+}
+
 // ─── FASE 1: Listagem ───
 
 export async function listarPlanosEnsino(
   schoolId: string | null,
   pessoaId: string | null,
-  anoLetivoId?: string,
-  turmaId?: string
+  opts?: ListarPlanosEnsinoOptions
 ) {
   await validarPermRead(RESOURCE, pessoaId)
 
@@ -94,18 +205,29 @@ export async function listarPlanosEnsino(
     .from('planos_ensino')
     .select(`
       id, school_id, turma_id, ano_letivo_id, etapa_id, subetapa_id,
-      is_interdisciplinar, created_at,
+      is_interdisciplinar, created_at, updated_at,
       turmas!inner(nome),
       academico_etapas_ensino!inner(etapa_nome, etapa_tipo)
     `)
 
   if (schoolId) query = query.eq('school_id', schoolId)
 
-  if (anoLetivoId) {
-    query = query.eq('ano_letivo_id', anoLetivoId)
+  if (opts?.anoLetivoId) {
+    query = query.eq('ano_letivo_id', opts.anoLetivoId)
   }
-  if (turmaId) {
-    query = query.eq('turma_id', turmaId)
+  if (opts?.turmaId) {
+    query = query.eq('turma_id', opts.turmaId)
+  }
+
+  if (opts?.matrizDisciplinaId) {
+    const { data: planosDaDisc } = await supabase
+      .from('planos_ensino_disciplinas')
+      .select('plano_ensino_id')
+      .eq('matriz_disciplina_id', opts.matrizDisciplinaId)
+
+    const planoIds = planosDaDisc?.map(p => p.plano_ensino_id) || []
+    if (planoIds.length === 0) return []
+    query = query.in('id', planoIds)
   }
 
   if (usaVinculo && pessoaId) {
@@ -120,57 +242,179 @@ export async function listarPlanosEnsino(
   }
 
   const { data } = await query.order('created_at', { ascending: false })
-  if (!data) return []
+  if (!data || data.length === 0) return []
 
-  const planos = await Promise.all(
-    (data as any[]).map(async (p) => {
-      const { data: discData } = await supabase
-        .from('planos_ensino_disciplinas')
-        .select('matriz_disciplina_id')
-        .eq('plano_ensino_id', p.id)
+  const planoIds = (data as any[]).map(p => p.id)
 
-      const matrizIds = discData?.map(d => d.matriz_disciplina_id) || []
+  // Disciplinas vinculadas (batch)
+  const { data: planosDisc } = await supabase
+    .from('planos_ensino_disciplinas')
+    .select('plano_ensino_id, matriz_disciplina_id')
+    .in('plano_ensino_id', planoIds)
 
-      let disciplinas: { id: string; nome: string }[] = []
-      if (matrizIds.length > 0) {
-        const { data: matrizes } = await supabase
-          .from('academico_matriz_disciplinas')
-          .select('id, disciplina_id')
-          .in('id', matrizIds)
+  const matrizIds = [...new Set((planosDisc || []).map(d => d.matriz_disciplina_id))]
 
-        const discIds = matrizes?.map(m => m.disciplina_id).filter(Boolean) || []
-        if (discIds.length > 0) {
-          const { data: nomes } = await supabase
-            .from('academico_disciplinas')
-            .select('id, nome')
-            .in('id', discIds)
+  const matrizMap = new Map<string, string>() // matriz id → disciplina id
+  if (matrizIds.length > 0) {
+    const { data: matrizes } = await supabase
+      .from('academico_matriz_disciplinas')
+      .select('id, disciplina_id')
+      .in('id', matrizIds)
 
-          disciplinas = (nomes || []).map(d => ({ id: d.id, nome: d.nome }))
+    for (const m of matrizes || []) matrizMap.set(m.id, m.disciplina_id)
+  }
+
+  const discIds = [...new Set([...matrizMap.values()].filter(Boolean))]
+  const discMap = new Map<string, { id: string; nome: string; nome_abreviado: string }>()
+  if (discIds.length > 0) {
+    const { data: disciplinas } = await supabase
+      .from('academico_disciplinas')
+      .select('id, nome, nome_abreviado')
+      .in('id', discIds)
+
+    for (const d of disciplinas || []) discMap.set(d.id, d)
+  }
+
+  // Planos de aula (batch)
+  const { data: planosAula } = await supabase
+    .from('planos_aula')
+    .select('plano_ensino_id, periodos, data_inicio, data_fim, updated_at')
+    .in('plano_ensino_id', planoIds)
+
+  const aulasPorPlano = new Map<string, PlanoAula[]>()
+  for (const pa of planosAula || []) {
+    const list = aulasPorPlano.get(pa.plano_ensino_id) || []
+    list.push(pa as PlanoAula)
+    aulasPorPlano.set(pa.plano_ensino_id, list)
+  }
+
+  // Filtro por períodos (client-side)
+  const periodosFiltro = opts?.periodos?.filter(Boolean) || []
+  let planosFiltrados = data as any[]
+  if (periodosFiltro.length > 0) {
+    planosFiltrados = planosFiltrados.filter(p => {
+      const aulas = aulasPorPlano.get(p.id) || []
+      return aulas.some(pa => (pa.periodos || []).some(per => periodosFiltro.includes(per)))
+    })
+  }
+
+  const turmaIds = [...new Set(planosFiltrados.map(p => p.turma_id))]
+
+  // Professores por turma (turmas_profissionais)
+  const profPorTurma = new Map<string, Map<string, string[]>>()
+  if (turmaIds.length > 0) {
+    const { data: vinculos } = await supabase
+      .from('turmas_profissionais')
+      .select('turma_id, person_id, disciplinas_ids, people(nome_completo)')
+      .in('turma_id', turmaIds)
+      .eq('ativo', true)
+
+    for (const v of vinculos || []) {
+      const nome = (v.people as any)?.nome_completo || ''
+      for (const matrizId of (v.disciplinas_ids || []) as string[]) {
+        let inner = profPorTurma.get(v.turma_id)
+        if (!inner) {
+          inner = new Map()
+          profPorTurma.set(v.turma_id, inner)
         }
+        const nomes = inner.get(matrizId) || []
+        if (nome) nomes.push(nome)
+        inner.set(matrizId, nomes)
       }
+    }
+  }
 
-      const { count } = await supabase
-        .from('planos_aula')
-        .select('*', { count: 'exact', head: true })
-        .eq('plano_ensino_id', p.id)
+  // Quadro de Aulas por turma (batch)
+  const quadroPorTurma = new Map<string, QuadroTurma>()
+  if (turmaIds.length > 0) {
+    const { data: quadros } = await supabase
+      .from('quadro_aulas')
+      .select('id, turma_id, data_inicial, data_final')
+      .in('turma_id', turmaIds)
+      .eq('ativo', true)
 
+    if (quadros?.length) {
+      const quadroIds = quadros.map(q => q.id)
+      const { data: horarios } = await supabase
+        .from('quadro_aulas_horarios')
+        .select('id, quadro_aula_id, dia_semana, horario_inicial, horario_final, disciplina_id')
+        .in('quadro_aula_id', quadroIds)
+        .eq('ativo', true)
+
+      for (const q of quadros) {
+        quadroPorTurma.set(q.turma_id, {
+          quadro: { id: q.id, data_inicial: q.data_inicial, data_final: q.data_final },
+          horarios: (horarios || []).filter(h => h.quadro_aula_id === q.id),
+        })
+      }
+    }
+  }
+
+  const planos = planosFiltrados.map((p: any) => {
+    const discRows = (planosDisc || []).filter(d => d.plano_ensino_id === p.id)
+    const disciplinas: PlanoEnsinoDisciplina[] = discRows.map(dr => {
+      const discId = matrizMap.get(dr.matriz_disciplina_id)
+      const disc = discId ? discMap.get(discId) : undefined
       return {
-        id: p.id,
-        school_id: p.school_id,
-        turma_id: p.turma_id,
-        ano_letivo_id: p.ano_letivo_id,
-        etapa_id: p.etapa_id,
-        subetapa_id: p.subetapa_id,
-        is_interdisciplinar: p.is_interdisciplinar,
-        turma_nome: (p.turmas as any)?.nome || '',
-        etapa_nome: (p.academico_etapas_ensino as any)?.etapa_nome || '',
-        etapa_tipo: (p.academico_etapas_ensino as any)?.etapa_tipo || '',
-        disciplinas,
-        total_aulas: count || 0,
-        created_at: p.created_at,
+        matriz_disciplina_id: dr.matriz_disciplina_id,
+        disciplina_id: discId || '',
+        nome: disc?.nome || '',
+        nome_abreviado: disc?.nome_abreviado || '',
       }
     })
-  )
+
+    const aulasDoPlano = aulasPorPlano.get(p.id) || []
+    const periodosSet = new Set<number>()
+    for (const pa of aulasDoPlano) for (const per of pa.periodos || []) periodosSet.add(per)
+
+    let ultima = p.updated_at || p.created_at
+    for (const pa of aulasDoPlano) {
+      if (pa.updated_at && pa.updated_at > ultima) ultima = pa.updated_at
+    }
+
+    let aulasQuadro = 0
+    let minutosQuadro = 0
+    const qd = quadroPorTurma.get(p.turma_id)
+    const matrizDoPlano = disciplinas.map(d => d.matriz_disciplina_id)
+    if (qd?.quadro && matrizDoPlano.length) {
+      for (const pa of aulasDoPlano) {
+        if (!pa.data_inicio || !pa.data_fim) continue
+        const c = contarAulasNoIntervalo(qd.quadro, qd.horarios, matrizDoPlano, pa.data_inicio, pa.data_fim)
+        aulasQuadro += c.totalAulas
+        minutosQuadro += c.totalMinutos
+      }
+    }
+
+    const profs = profPorTurma.get(p.turma_id)
+    const professores: { matriz_disciplina_id: string; nome: string }[] = []
+    if (profs) {
+      for (const d of disciplinas) {
+        for (const nome of profs.get(d.matriz_disciplina_id) || []) {
+          professores.push({ matriz_disciplina_id: d.matriz_disciplina_id, nome })
+        }
+      }
+    }
+
+    return {
+      id: p.id,
+      school_id: p.school_id,
+      turma_id: p.turma_id,
+      ano_letivo_id: p.ano_letivo_id,
+      etapa_id: p.etapa_id,
+      subetapa_id: p.subetapa_id,
+      is_interdisciplinar: p.is_interdisciplinar,
+      turma_nome: (p.turmas as any)?.nome || '',
+      etapa_nome: (p.academico_etapas_ensino as any)?.etapa_nome || '',
+      etapa_tipo: (p.academico_etapas_ensino as any)?.etapa_tipo || '',
+      disciplinas,
+      professores,
+      periodos: [...periodosSet].sort((a, b) => a - b),
+      aulas_quadro: aulasQuadro,
+      horas_quadro: minutosQuadro,
+      ultima_atualizacao: ultima || null,
+      created_at: p.created_at,
+    }
+  })
 
   return planos as PlanoEnsino[]
 }
@@ -303,6 +547,35 @@ export async function listarPlanoAula(planoEnsinoId: string, periodo?: number) {
   return (data || []) as PlanoAula[]
 }
 
+export type PlanoAulaQuadro = PlanoAula & {
+  aulas_quadro?: number | null
+  horas_quadro?: number | null
+}
+
+export async function listarPlanoAulaComQuadro(
+  planoEnsinoId: string,
+  turmaId: string,
+  matrizDisciplinaIds: string[],
+  periodo?: number,
+  pessoaId?: string | null
+): Promise<PlanoAulaQuadro[]> {
+  await validarPermRead(RESOURCE, pessoaId)
+
+  const aulas = await listarPlanoAula(planoEnsinoId, periodo)
+  const ids = (matrizDisciplinaIds || []).filter(Boolean)
+  if (!ids.length) return aulas.map(pa => ({ ...pa, aulas_quadro: null, horas_quadro: null }))
+
+  const { quadro, horarios } = await carregarQuadroDaTurma(turmaId)
+
+  return aulas.map(pa => {
+    if (!quadro || !pa.data_inicio || !pa.data_fim) {
+      return { ...pa, aulas_quadro: null, horas_quadro: null }
+    }
+    const c = contarAulasNoIntervalo(quadro, horarios, ids, pa.data_inicio, pa.data_fim)
+    return { ...pa, aulas_quadro: c.totalAulas, horas_quadro: c.totalMinutos }
+  })
+}
+
 export async function criarPlanoAula(
   data: {
     plano_ensino_id: string
@@ -410,6 +683,49 @@ export async function getTurmaEtapaEnsino(turmaId: string) {
   }
 }
 
+// ─── Cômputo de aulas do Quadro de Aulas ───
+
+export type AulasQuadroDisciplina = {
+  matriz_disciplina_id: string
+  total_aulas: number
+  total_minutos: number
+}
+
+export async function calcularAulasDoQuadro(
+  turmaId: string,
+  matrizDisciplinaIds: string[],
+  dataInicio: string,
+  dataFim: string,
+  pessoaId?: string | null
+): Promise<{ porDisciplina: AulasQuadroDisciplina[]; total_aulas: number; total_minutos: number }> {
+  await validarPermRead(RESOURCE, pessoaId)
+
+  const ids = (matrizDisciplinaIds || []).filter(Boolean)
+  if (!ids.length || !dataInicio || !dataFim) {
+    return { porDisciplina: [], total_aulas: 0, total_minutos: 0 }
+  }
+
+  const { quadro, horarios } = await carregarQuadroDaTurma(turmaId)
+  if (!quadro) return { porDisciplina: [], total_aulas: 0, total_minutos: 0 }
+
+  const porDisciplina: AulasQuadroDisciplina[] = []
+  let totalAulas = 0
+  let totalMinutos = 0
+
+  for (const matrizId of ids) {
+    const c = contarAulasNoIntervalo(quadro, horarios, [matrizId], dataInicio, dataFim)
+    porDisciplina.push({
+      matriz_disciplina_id: matrizId,
+      total_aulas: c.totalAulas,
+      total_minutos: c.totalMinutos,
+    })
+    totalAulas += c.totalAulas
+    totalMinutos += c.totalMinutos
+  }
+
+  return { porDisciplina, total_aulas: totalAulas, total_minutos: totalMinutos }
+}
+
 // ─── FASE 5: BNCC ───
 
 type BnccCamposExperiencia = { id: string; sigla: string; nome: string }
@@ -420,6 +736,16 @@ type BnccHabilidade = { id: string; codigo_bncc: string; descricao: string; anos
 type BnccAreaConhecimento = { id: string; nome: string; tipo_ensino: string }
 type BnccCompetencia = { id: string; area_id: string; codigo: string; descricao: string }
 type BnccHabilidadeMedio = { id: string; codigo: string; descricao: string; area_id: string; competencia_codigo: string }
+
+function normalizarDisciplina(nome: string): string {
+  return (nome || '')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
+}
 
 export async function buscarBNCCBase(etapaTipo: string, disciplinaNome?: string) {
   const resultado: any = { etapa_tipo: etapaTipo }
@@ -444,15 +770,36 @@ export async function buscarBNCCBase(etapaTipo: string, disciplinaNome?: string)
       : etapaTipo === 'fundamental_final' ? 'anos_finais'
       : null
 
-    let query = supabase
-      .from('bncc_unidades_tematicas')
-      .select('id, unidade_tematica, disciplina, etapa_ensino')
-      .order('unidade_tematica')
+    const baseQuery = () =>
+      supabase
+        .from('bncc_unidades_tematicas')
+        .select('id, unidade_tematica, disciplina, etapa_ensino')
+        .order('unidade_tematica')
 
-    if (disciplinaNome) query = query.eq('disciplina', disciplinaNome)
-    if (etapaEnsinoDB) query = query.eq('etapa_ensino', etapaEnsinoDB)
+    let unidades: BnccUnidadeTematica[] = []
 
-    const { data: unidades } = await query
+    if (disciplinaNome) {
+      const queryExata = baseQuery().eq('disciplina', disciplinaNome)
+      if (etapaEnsinoDB) queryExata.eq('etapa_ensino', etapaEnsinoDB)
+      const { data: exatos } = await queryExata
+      unidades = (exatos as BnccUnidadeTematica[]) || []
+    }
+
+    if (unidades.length === 0) {
+      const queryTodas = baseQuery()
+      if (etapaEnsinoDB) queryTodas.eq('etapa_ensino', etapaEnsinoDB)
+      const { data: todas } = await queryTodas
+      const todasLinhas = (todas as BnccUnidadeTematica[]) || []
+      if (disciplinaNome) {
+        const alvo = normalizarDisciplina(disciplinaNome)
+        unidades = todasLinhas.filter(u => normalizarDisciplina(u.disciplina).includes(alvo))
+        if (unidades.length === 0) {
+          unidades = todasLinhas.filter(u => alvo.includes(normalizarDisciplina(u.disciplina)))
+        }
+      } else {
+        unidades = todasLinhas
+      }
+    }
 
     const { data: objetos } = await supabase
       .from('bncc_objetos_conhecimento')
@@ -464,7 +811,7 @@ export async function buscarBNCCBase(etapaTipo: string, disciplinaNome?: string)
       .select('id, codigo_bncc, descricao, anos, objeto_conhecimento_id')
       .order('codigo_bncc')
 
-    resultado.unidades_tematicas = unidades as BnccUnidadeTematica[] || []
+    resultado.unidades_tematicas = unidades
     resultado.objetos_conhecimento = objetos as BnccObjetoConhecimento[] || []
     resultado.habilidades = habilidades as BnccHabilidade[] || []
 
