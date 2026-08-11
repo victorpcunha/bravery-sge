@@ -6,11 +6,14 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { BookOpen, Plus, Search, ChevronDown, ChevronRight } from 'lucide-react'
+import { StatCard } from '@/components/ui/stat-card'
+import { BookOpen, Plus, ChevronDown, ChevronRight, Layers, Box } from 'lucide-react'
 import { useAuth } from '@/components/providers/auth-provider'
 import { PageContainer } from '@/components/layout/page-container'
 import { PageHeader } from '@/components/layout/page-header'
+import { PageSection } from '@/components/layout/page-section'
+import { FilterBar } from '@/components/layout/filter-bar'
+import { SearchInput } from '@/components/layout/search-input'
 
 type Disciplina = {
   id: string
@@ -22,6 +25,7 @@ type EtapaEnsino = {
   id: string
   etapa_nome: string
   etapa_tipo: string
+  etapa_codigo: number
 }
 
 type ObjetoConhecimento = {
@@ -38,8 +42,8 @@ type ObjetoConhecimento = {
 
 export default function ObjetosConhecimentoPage() {
   const { schoolId } = useAuth()
-  const [disciplina, setDisciplina] = useState('all')
-  const [etapa, setEtapa] = useState('all')
+  const [disciplina, setDisciplina] = useState('')
+  const [etapa, setEtapa] = useState('')
   const [disciplinasList, setDisciplinasList] = useState<Disciplina[]>([])
   const [etapasList, setEtapasList] = useState<EtapaEnsino[]>([])
   const [objetos, setObjetos] = useState<ObjetoConhecimento[]>([])
@@ -48,11 +52,9 @@ export default function ObjetosConhecimentoPage() {
   const [expandedUnidade, setExpandedUnidade] = useState<string | null>(null)
 
   useEffect(() => {
-    if (schoolId) {
-      loadDisciplinas()
-      loadEtapas()
-    }
-  }, [schoolId])
+    loadDisciplinas()
+    loadEtapas()
+  }, [])
 
   useEffect(() => {
     loadObjetos()
@@ -61,16 +63,36 @@ export default function ObjetosConhecimentoPage() {
   async function loadDisciplinas() {
     try {
       const supabase = getSupabaseClient()
+      const { data: bnccDiscs } = await supabase
+        .from('bncc_unidades_tematicas')
+        .select('disciplina')
+        .not('disciplina', 'is', null)
+
+      if (!bnccDiscs) { setDisciplinasList([]); return }
+
+      const nomesBncc: string[] = [...new Set(bnccDiscs.map(d => d.disciplina))]
+
+      if (!schoolId) {
+        setDisciplinasList(nomesBncc.map(n => ({ id: n, nome: n, tipo_ensino: '' })))
+        return
+      }
+
       const { data } = await supabase
         .from('academico_disciplinas')
         .select('id, nome, tipo_ensino')
         .eq('school_id', schoolId)
         .eq('ativo', true)
+        .in('nome', nomesBncc)
         .order('nome')
-      
-      if (data) setDisciplinasList(data)
+
+      if (data && data.length > 0) {
+        setDisciplinasList(data as Disciplina[])
+      } else {
+        setDisciplinasList(nomesBncc.map(n => ({ id: n, nome: n, tipo_ensino: '' })))
+      }
     } catch (err) {
       console.error(err)
+      setDisciplinasList([])
     }
   }
 
@@ -78,19 +100,38 @@ export default function ObjetosConhecimentoPage() {
     try {
       const supabase = getSupabaseClient()
       const { data } = await supabase
-        .from('academico_etapas_ensino')
-        .select('id, etapa_nome, etapa_tipo')
-        .eq('school_id', schoolId)
-        .eq('ativa', true)
-        .order('etapa_nome')
-      
-      if (data) setEtapasList(data)
+        .from('bncc_habilidades')
+        .select('anos')
+
+      const anosSet = new Set<string>()
+      data?.forEach((h: any) => {
+        (h.anos || []).forEach((a: string) => anosSet.add(a))
+      })
+
+      const sorted = [...anosSet].sort((a, b) => {
+        const na = parseInt(a)
+        const nb = parseInt(b)
+        return (isNaN(na) ? 0 : na) - (isNaN(nb) ? 0 : nb)
+      })
+
+      setEtapasList(sorted.map(ano => ({
+        id: ano,
+        etapa_nome: `${ano} Ano`,
+        etapa_tipo: 'fundamental',
+        etapa_codigo: parseInt(ano) || 0,
+      })))
     } catch (err) {
       console.error(err)
+      setEtapasList([])
     }
   }
 
   async function loadObjetos() {
+    if (!disciplina || !etapa) {
+      setObjetos([])
+      setLoading(false)
+      return
+    }
     setLoading(true)
     try {
       const supabase = getSupabaseClient()
@@ -128,9 +169,7 @@ export default function ObjetosConhecimentoPage() {
         
         let filtered = dedup
         
-        if (disciplina !== 'all') {
-          filtered = filtered.filter(o => o.unidade_tematica?.disciplina === disciplina)
-        }
+        filtered = filtered.filter(o => o.unidade_tematica?.disciplina === disciplina)
         
         const objetosComContagem = await Promise.all(
           filtered.map(async (obj) => {
@@ -141,7 +180,7 @@ export default function ObjetosConhecimentoPage() {
             
             let habilidadesCount = count || 0
             
-            if (etapa !== 'all' && habilidadesCount > 0) {
+            if (habilidadesCount > 0) {
               const { data: habilidades } = await supabase
                 .from('bncc_habilidades')
                 .select('anos')
@@ -159,9 +198,7 @@ export default function ObjetosConhecimentoPage() {
           })
         )
         
-        const finalFiltered = etapa === 'all' 
-          ? objetosComContagem 
-          : objetosComContagem.filter(o => o.habilidades_count > 0)
+        const finalFiltered = objetosComContagem.filter(o => o.habilidades_count > 0)
         
         setObjetos(finalFiltered)
       }
@@ -192,6 +229,7 @@ export default function ObjetosConhecimentoPage() {
 
   const totalObjetos = filteredObjetos.length
   const totalHabilidades = objetos.reduce((acc, obj) => acc + obj.habilidades_count, 0)
+  const totalUnidades = Object.keys(groupedByUnidade).length
 
   return (
     <PageContainer>
@@ -206,62 +244,57 @@ export default function ObjetosConhecimentoPage() {
         }
       />
 
-      <Card className="mb-6 border-0 shadow-sm animate-fade-in-up delay-75">
-        <CardContent className="pt-6">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <div>
-              <label className="text-sm font-medium mb-2 block text-foreground">Disciplina</label>
-              <Select value={disciplina} onValueChange={setDisciplina}>
-                <SelectTrigger className="border-border focus:border-primary [&_svg:not([class*='rotate'])]:rotate-0">
-                  <SelectValue placeholder="Selecione" />
-                </SelectTrigger>
-                <SelectContent position="popper" side="bottom" sideOffset={5}>
-                  <SelectItem value="all">Todas as Disciplinas</SelectItem>
-                  {disciplinasList.map(d => (
-                    <SelectItem key={d.id} value={d.nome}>{d.nome}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+      <PageSection variant="compact" title="Filtros" className="mb-6">
+        <FilterBar>
+          <Select value={disciplina} onValueChange={setDisciplina}>
+            <SelectTrigger className="w-auto min-w-[200px] h-9">
+              <SelectValue placeholder="Selecione uma disciplina" />
+            </SelectTrigger>
+            <SelectContent position="popper" side="bottom" sideOffset={5}>
+              {disciplinasList.map(d => (
+                <SelectItem key={d.id} value={d.nome}>{d.nome}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
 
-            <div>
-              <label className="text-sm font-medium mb-2 block text-foreground">Etapa de Ensino</label>
-              <Select value={etapa} onValueChange={setEtapa}>
-                <SelectTrigger className="border-border focus:border-primary [&_svg:not([class*='rotate'])]:rotate-0">
-                  <SelectValue placeholder="Selecione" />
-                </SelectTrigger>
-                <SelectContent position="popper" side="bottom" sideOffset={5}>
-                  <SelectItem value="all">Todos os Anos</SelectItem>
-                  {etapasList.map(e => (
-                    <SelectItem key={e.id} value={e.etapa_nome}>{e.etapa_nome}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+          <Select value={etapa} onValueChange={setEtapa}>
+            <SelectTrigger className="w-auto min-w-[200px] h-9">
+              <SelectValue placeholder="Selecione uma Etapa de Ensino" />
+            </SelectTrigger>
+            <SelectContent position="popper" side="bottom" sideOffset={5}>
+              {etapasList.map(e => (
+                <SelectItem key={e.id} value={e.etapa_nome}>{e.etapa_nome}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
 
-            <div className="md:col-span-2">
-              <label className="text-sm font-medium mb-2 block text-foreground">Buscar</label>
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground z-10" />
-                <Input
-                  placeholder="Buscar objeto de conhecimento..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10"
-                />
-              </div>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+          <SearchInput
+            value={searchTerm}
+            onChange={setSearchTerm}
+            placeholder="Buscar objeto de conhecimento..."
+          />
+        </FilterBar>
+      </PageSection>
 
-      <div className="flex gap-4 mb-6">
-        <Badge className="bg-primary/10 text-primary hover:bg-primary/20 text-lg px-4 py-2">
-          {totalObjetos} Objetos de Conhecimento
-        </Badge>
-        <Badge className="bg-secondary/10 text-secondary hover:bg-secondary/20 text-lg px-4 py-2">
-          {totalHabilidades} Habilidades linkedas
-        </Badge>
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+        <StatCard
+          icon={Layers}
+          value={totalUnidades}
+          label="Unidades Temáticas"
+          variant="success"
+        />
+        <StatCard
+          icon={Box}
+          value={totalObjetos}
+          label="Objetos de Conhecimento"
+          variant="warning"
+        />
+        <StatCard
+          icon={BookOpen}
+          value={totalHabilidades}
+          label="Habilidades Cadastradas"
+          variant="default"
+        />
       </div>
 
       {loading ? (
@@ -275,10 +308,21 @@ export default function ObjetosConhecimentoPage() {
             <div className="w-20 h-20 bg-gradient-to-br from-primary/10 to-secondary/10 rounded-2xl flex items-center justify-center mb-6">
               <BookOpen className="h-10 w-10 text-primary" />
             </div>
-            <h3 className="text-xl font-semibold text-foreground mb-2">Nenhum objeto de conhecimento encontrado</h3>
-            <p className="text-muted-foreground text-center">
-              Não há objetos de conhecimento cadastrados para os filtros selecionados.
-            </p>
+            {!disciplina || !etapa ? (
+              <>
+                <h3 className="text-xl font-semibold text-foreground mb-2">Selecione os filtros</h3>
+                <p className="text-muted-foreground text-center">
+                  Escolha uma <strong>disciplina</strong> e uma <strong>etapa de ensino</strong> para visualizar os objetos de conhecimento.
+                </p>
+              </>
+            ) : (
+              <>
+                <h3 className="text-xl font-semibold text-foreground mb-2">Nenhum objeto de conhecimento encontrado</h3>
+                <p className="text-muted-foreground text-center">
+                  Não há objetos de conhecimento cadastrados para os filtros selecionados.
+                </p>
+              </>
+            )}
           </CardContent>
         </Card>
       ) : (

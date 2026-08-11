@@ -36,7 +36,7 @@ const areaBadgeColors: Record<string, string> = {
 }
 
 export default function AreasConhecimentoPage() {
-  const [tipoEnsino, setTipoEnsino] = useState('fundamental')
+  const [tipoEnsino, setTipoEnsino] = useState('medio')
   const [areas, setAreas] = useState<any[]>([])
   const [selectedArea, setSelectedArea] = useState<string | null>(null)
   const [competencias, setCompetencias] = useState<any[]>([])

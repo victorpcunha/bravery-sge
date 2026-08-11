@@ -19,6 +19,7 @@ import {
   PanelRight,
   FileText,
 } from 'lucide-react'
+import type { LucideIcon } from 'lucide-react'
 import {
   Sidebar,
   SidebarHeader,
@@ -34,7 +35,40 @@ import {
   useSidebar,
 } from '@/components/ui/sidebar'
 
-const modules = [
+type SubmenuItem = {
+  title: string
+  href: string
+  recurso: string | null
+}
+
+type SubmenuGroup = {
+  group: string
+  items: SubmenuItem[]
+}
+
+type SubmenuEntry = SubmenuItem | SubmenuGroup
+
+type Module = {
+  title: string
+  href?: string
+  icon: LucideIcon
+  recurso?: string | null
+  submenu?: SubmenuEntry[]
+}
+
+const isSubmenuGroup = (entry: SubmenuEntry): entry is SubmenuGroup =>
+  'group' in entry && Array.isArray((entry as SubmenuGroup).items)
+
+const submenuMatchesPath = (entry: SubmenuEntry, pathname: string): boolean => {
+  if (isSubmenuGroup(entry)) {
+    return entry.items.some(
+      i => pathname === i.href || (i.href !== '/' && pathname.startsWith(i.href))
+    )
+  }
+  return pathname === entry.href || (entry.href !== '/' && pathname.startsWith(entry.href))
+}
+
+const modules: Module[] = [
   {
     title: 'Dashboard',
     href: '/',
@@ -95,15 +129,30 @@ const modules = [
     icon: BookOpen,
     recurso: null,
     submenu: [
-      { title: 'Direitos de Aprendizagem', href: '/bncc/direitos-aprendizagem', recurso: 'bncc.direitos-aprendizagem' },
       { title: 'Consulta da BNCC', href: '/bncc/consulta', recurso: 'bncc.consulta' },
-      { title: 'Campos de Experiência', href: '/bncc/campos-experiencia', recurso: 'bncc.campos-experiencia' },
-      { title: 'Objetivos de Aprendizagem', href: '/bncc/objetivos', recurso: 'bncc.objetivos' },
-      { title: 'Habilidades', href: '/bncc/habilidades', recurso: 'bncc.habilidades' },
-      { title: 'Objetos de Conhecimento', href: '/bncc/objetos-conhecimento', recurso: 'bncc.objetos-conhecimento' },
-      { title: 'Unidades Temáticas', href: '/bncc/unidades-tematicas', recurso: 'bncc.unidades-tematicas' },
-      { title: 'Áreas do Conhecimento', href: '/bncc/areas-conhecimento', recurso: 'bncc.areas-conhecimento' },
-      { title: 'Competências e Habilidades', href: '/bncc/competencias-habilidades', recurso: 'bncc.competencias-habilidades' },
+      {
+        group: 'Educação Infantil',
+        items: [
+          { title: 'Direitos de Aprendizagem', href: '/bncc/direitos-aprendizagem', recurso: 'bncc.direitos-aprendizagem' },
+          { title: 'Campos de Experiência', href: '/bncc/campos-experiencia', recurso: 'bncc.campos-experiencia' },
+          { title: 'Objetivos de Aprendizagem', href: '/bncc/objetivos', recurso: 'bncc.objetivos' },
+        ],
+      },
+      {
+        group: 'Ensino Fundamental',
+        items: [
+          { title: 'Habilidades', href: '/bncc/habilidades', recurso: 'bncc.habilidades' },
+          { title: 'Objetos de Conhecimento', href: '/bncc/objetos-conhecimento', recurso: 'bncc.objetos-conhecimento' },
+          { title: 'Unidades Temáticas', href: '/bncc/unidades-tematicas', recurso: 'bncc.unidades-tematicas' },
+        ],
+      },
+      {
+        group: 'Ensino Médio',
+        items: [
+          { title: 'Áreas do Conhecimento', href: '/bncc/areas-conhecimento', recurso: 'bncc.areas-conhecimento' },
+          { title: 'Competências e Habilidades', href: '/bncc/competencias-habilidades', recurso: 'bncc.competencias-habilidades' },
+        ],
+      },
     ],
   },
   {
@@ -119,6 +168,7 @@ export function AppSidebar() {
   const { schoolId, isSuperAdmin } = useAuth()
   const { state, toggleSidebar } = useSidebar()
   const [openSubmenu, setOpenSubmenu] = useState<string | null>(null)
+  const [collapsedGroups, setCollapsedGroups] = useState<string[]>([])
   const [isHovering, setIsHovering] = useState(false)
   const { loaded: permLoaded, pode, isSetup } = usePermissoes(schoolId)
 
@@ -134,31 +184,47 @@ export function AppSidebar() {
 
   useEffect(() => {
     const activeModule = modules.find(
-      m => m.submenu?.some(s => pathname === s.href || (s.href !== '/' && pathname.startsWith(s.href)))
+      m => m.submenu?.some(s => submenuMatchesPath(s, pathname))
     )
     if (activeModule) {
       setOpenSubmenu(activeModule.title)
     }
+    modules.forEach(m => {
+      m.submenu?.forEach(entry => {
+        if (isSubmenuGroup(entry) && submenuMatchesPath(entry, pathname)) {
+          setCollapsedGroups(prev => prev.filter(g => g !== entry.group))
+        }
+      })
+    })
   }, [pathname])
 
   const toggleSubmenu = (title: string) => {
     setOpenSubmenu(prev => prev === title ? null : title)
   }
 
-  const visibleModules = modules.filter(module => {
+  const toggleGroup = (group: string) => {
+    setCollapsedGroups(prev => prev.includes(group) ? prev.filter(g => g !== group) : [...prev, group])
+  }
+
+  const filterSubmenuEntry = (entry: SubmenuEntry): SubmenuEntry | null => {
+    if (isSubmenuGroup(entry)) {
+      const items = entry.items.filter(i => isVisible(i.recurso))
+      if (items.length === 0) return null
+      return { ...entry, items }
+    }
+    return isVisible(entry.recurso) ? entry : null
+  }
+
+  const visibleModules = modules.map(module => {
     if (!module.submenu) {
-      return isVisible(module.recurso)
+      return isVisible(module.recurso) ? module : null
     }
-    const visibleChildren = module.submenu.filter(s => isVisible(s.recurso))
-    if (visibleChildren.length === 0) return false
-    return true
-  }).map(module => {
-    if (!module.submenu) return module
-    return {
-      ...module,
-      submenu: module.submenu.filter(s => isVisible(s.recurso)),
-    }
-  })
+    const submenu = module.submenu
+      .map(filterSubmenuEntry)
+      .filter((e): e is SubmenuEntry => e !== null)
+    if (submenu.length === 0) return null
+    return { ...module, submenu }
+  }).filter((m): m is Module => m !== null)
 
   return (
     <Sidebar collapsible="icon" variant="sidebar">
@@ -216,8 +282,8 @@ export function AppSidebar() {
                   const hasSubmenu = module.submenu && module.submenu.length > 0
                   const submenuOpen = hasSubmenu && openSubmenu === module.title
 
-                  const isSubmenuActive = hasSubmenu && module.submenu!.some(sub =>
-                    pathname === sub.href || (sub.href !== '/' && pathname.startsWith(sub.href))
+                  const isSubmenuActive = hasSubmenu && module.submenu!.some(entry =>
+                    submenuMatchesPath(entry, pathname)
                   )
 
                   const effectiveActive = isActive || isSubmenuActive
@@ -315,14 +381,61 @@ export function AppSidebar() {
 
                           {submenuOpen && (
                             <SidebarMenuSub className={effectivelyCollapsed ? 'hidden' : '!flex'}>
-                              {module.submenu!.map((subitem) => {
-                                const isSubActive = pathname === subitem.href ||
-                                  (subitem.href !== '/' && pathname.startsWith(subitem.href))
+                              {module.submenu!.map((entry) => {
+                                if (isSubmenuGroup(entry)) {
+                                  const isGroupCollapsed = collapsedGroups.includes(entry.group)
+                                  return (
+                                    <SidebarMenuSubItem key={entry.group} className="pt-1 pb-1">
+                                      <button
+                                        onClick={() => toggleGroup(entry.group)}
+                                        className={cn(
+                                          'flex w-full items-center gap-1 px-3 py-1 rounded-sm text-[11px] font-semibold uppercase tracking-wider transition-colors',
+                                          'text-sidebar-foreground/60 hover:text-sidebar-foreground hover:bg-sidebar-accent/70 dark:hover:text-sidebar-accent-foreground'
+                                        )}
+                                      >
+                                        <span className="flex-1 text-left truncate">{entry.group}</span>
+                                        {isGroupCollapsed ? (
+                                          <ChevronRight className="h-3 w-3 shrink-0" />
+                                        ) : (
+                                          <ChevronDown className="h-3 w-3 shrink-0" />
+                                        )}
+                                      </button>
+                                      {!isGroupCollapsed && (
+                                        <SidebarMenuSub className="!flex">
+                                          {entry.items.map((subitem) => {
+                                            const isSubActive = pathname === subitem.href ||
+                                              (subitem.href !== '/' && pathname.startsWith(subitem.href))
+                                            return (
+                                              <SidebarMenuSubItem key={subitem.href}>
+                                                <Link
+                                                  href={subitem.href}
+                                                  className={cn(
+                                                    'flex items-center px-3 py-1.5 rounded-sm text-sm transition-colors',
+                                                    isSubActive
+                                                      ? 'bg-sidebar-accent text-accent-foreground dark:text-sidebar-accent-foreground font-medium'
+                                                      : 'text-sidebar-foreground hover:text-accent-foreground hover:bg-sidebar-accent dark:hover:text-sidebar-accent-foreground'
+                                                  )}
+                                                >
+                                                  {isSubActive && (
+                                                    <span className="absolute left-0 top-1/2 -translate-y-1/2 w-0.5 h-4 bg-sidebar-primary rounded-full" />
+                                                  )}
+                                                  {subitem.title}
+                                                </Link>
+                                              </SidebarMenuSubItem>
+                                            )
+                                          })}
+                                        </SidebarMenuSub>
+                                      )}
+                                    </SidebarMenuSubItem>
+                                  )
+                                }
+                                const isSubActive = pathname === entry.href ||
+                                  (entry.href !== '/' && pathname.startsWith(entry.href))
 
                                 return (
-                                  <SidebarMenuSubItem key={subitem.href}>
+                                  <SidebarMenuSubItem key={entry.href}>
                                     <Link
-                                      href={subitem.href}
+                                      href={entry.href}
                                       className={cn(
                                         'flex items-center px-3 py-1.5 rounded-sm text-sm transition-colors',
                                         isSubActive
@@ -333,7 +446,7 @@ export function AppSidebar() {
                                       {isSubActive && (
                                         <span className="absolute left-0 top-1/2 -translate-y-1/2 w-0.5 h-4 bg-sidebar-primary rounded-full" />
                                       )}
-                                      {subitem.title}
+                                      {entry.title}
                                     </Link>
                                   </SidebarMenuSubItem>
                                 )

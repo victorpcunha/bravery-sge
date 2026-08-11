@@ -6,11 +6,15 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { BookOpen, Plus, Search, Edit, Trash2, ChevronDown, ChevronRight } from 'lucide-react'
+import { StatCard } from '@/components/ui/stat-card'
+import { BookOpen, Plus, Edit, Trash2, ChevronDown, ChevronRight, Layers, CalendarRange, Box } from 'lucide-react'
 import { useAuth } from '@/components/providers/auth-provider'
 import { PageContainer } from '@/components/layout/page-container'
 import { PageHeader } from '@/components/layout/page-header'
+import { PageSection } from '@/components/layout/page-section'
+import { FilterBar } from '@/components/layout/filter-bar'
+import { SearchInput } from '@/components/layout/search-input'
+import { cn } from '@/lib/utils'
 
 type Disciplina = {
   id: string
@@ -44,22 +48,20 @@ type Habilidade = {
 
 export default function HabilidadesPage() {
   const { schoolId } = useAuth()
-  const [disciplina, setDisciplina] = useState('all')
-  const [etapa, setEtapa] = useState('all')
+  const [disciplina, setDisciplina] = useState('')
+  const [etapa, setEtapa] = useState('')
   const [disciplinasList, setDisciplinasList] = useState<Disciplina[]>([])
   const [etapasList, setEtapasList] = useState<EtapaEnsino[]>([])
   const [habilidades, setHabilidades] = useState<Habilidade[]>([])
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState('')
-  const [expandedUnidade, setExpandedUnidade] = useState<string | null>(null)
   const [expandedObjeto, setExpandedObjeto] = useState<string | null>(null)
+  const [expandedUnidade, setExpandedUnidade] = useState<string | null>(null)
 
   useEffect(() => {
-    if (schoolId) {
-      loadDisciplinas()
-      loadEtapas()
-    }
-  }, [schoolId])
+    loadDisciplinas()
+    loadEtapas()
+  }, [])
 
   useEffect(() => {
     loadHabilidades()
@@ -68,16 +70,36 @@ export default function HabilidadesPage() {
   async function loadDisciplinas() {
     try {
       const supabase = getSupabaseClient()
+      const { data: bnccDiscs } = await supabase
+        .from('bncc_unidades_tematicas')
+        .select('disciplina')
+        .not('disciplina', 'is', null)
+
+      if (!bnccDiscs) { setDisciplinasList([]); return }
+
+      const nomesBncc: string[] = [...new Set(bnccDiscs.map(d => d.disciplina))]
+
+      if (!schoolId) {
+        setDisciplinasList(nomesBncc.map(n => ({ id: n, nome: n, tipo_ensino: '' })))
+        return
+      }
+
       const { data } = await supabase
         .from('academico_disciplinas')
         .select('id, nome, tipo_ensino')
         .eq('school_id', schoolId)
         .eq('ativo', true)
+        .in('nome', nomesBncc)
         .order('nome')
-      
-      if (data) setDisciplinasList(data)
+
+      if (data && data.length > 0) {
+        setDisciplinasList(data as Disciplina[])
+      } else {
+        setDisciplinasList(nomesBncc.map(n => ({ id: n, nome: n, tipo_ensino: '' })))
+      }
     } catch (err) {
       console.error(err)
+      setDisciplinasList([])
     }
   }
 
@@ -85,19 +107,38 @@ export default function HabilidadesPage() {
     try {
       const supabase = getSupabaseClient()
       const { data } = await supabase
-        .from('academico_etapas_ensino')
-        .select('id, etapa_nome, etapa_tipo, etapa_codigo')
-        .eq('school_id', schoolId)
-        .eq('ativa', true)
-        .order('etapa_codigo')
-      
-      if (data) setEtapasList(data)
+        .from('bncc_habilidades')
+        .select('anos')
+
+      const anosSet = new Set<string>()
+      data?.forEach((h: any) => {
+        (h.anos || []).forEach((a: string) => anosSet.add(a))
+      })
+
+      const sorted = [...anosSet].sort((a, b) => {
+        const na = parseInt(a)
+        const nb = parseInt(b)
+        return (isNaN(na) ? 0 : na) - (isNaN(nb) ? 0 : nb)
+      })
+
+      setEtapasList(sorted.map(ano => ({
+        id: ano,
+        etapa_nome: `${ano} Ano`,
+        etapa_tipo: 'fundamental',
+        etapa_codigo: parseInt(ano) || 0,
+      })))
     } catch (err) {
       console.error(err)
+      setEtapasList([])
     }
   }
 
   async function loadHabilidades() {
+    if (!disciplina || !etapa) {
+      setHabilidades([])
+      setLoading(false)
+      return
+    }
     setLoading(true)
     try {
       const supabase = getSupabaseClient()
@@ -119,7 +160,7 @@ export default function HabilidadesPage() {
           )
         `)
 
-      if (disciplina !== 'all') {
+      if (disciplina) {
         q = q.eq('objeto_conhecimento.unidade_tematica.disciplina', disciplina)
       }
 
@@ -132,7 +173,7 @@ export default function HabilidadesPage() {
         const habilidadesData = data as unknown as Habilidade[]
         
         let filtered = habilidadesData
-        if (etapa !== 'all') {
+        if (etapa) {
           const anoNormalizado = etapa.replace(/ Ano$/, '')
           filtered = filtered.filter(h => {
             const match = h.anos?.some((a: string) => a.includes(anoNormalizado))
@@ -174,12 +215,16 @@ export default function HabilidadesPage() {
   const uniqueCodes = new Set(filteredHabilidades.map(h => h.codigo_bncc))
   const totalHabilidades = uniqueCodes.size
   const totalUnidades = Object.keys(groupedByUnidade).length
+  const totalObjetos = Object.values(groupedByUnidade).reduce(
+    (acc, objetos) => acc + Object.keys(objetos).length,
+    0
+  )
 
   return (
     <PageContainer>
       <PageHeader
         title="Habilidades"
-        description="Habilidades do Ensino Fundamental e Médio conforme BNCC"
+        description="Habilidades do Ensino Fundamental conforme BNCC"
         actions={
           <Button disabled>
             <Plus className="w-4 h-4 mr-2" />
@@ -188,62 +233,57 @@ export default function HabilidadesPage() {
         }
       />
 
-      <Card className="mb-6 border-0 shadow-sm animate-fade-in-up delay-75">
-        <CardContent className="pt-6">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <div>
-              <label className="text-sm font-medium mb-2 block text-foreground">Disciplina</label>
-              <Select value={disciplina} onValueChange={setDisciplina}>
-                <SelectTrigger className="border-border focus:border-primary [&_svg:not([class*='rotate'])]:rotate-0">
-                  <SelectValue placeholder="Selecione" />
-                </SelectTrigger>
-                <SelectContent position="popper" side="bottom" sideOffset={5}>
-                  <SelectItem value="all">Todas as Disciplinas</SelectItem>
-                  {disciplinasList.map(d => (
-                    <SelectItem key={d.id} value={d.nome}>{d.nome}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+      <PageSection variant="compact" title="Filtros" className="mb-6">
+        <FilterBar>
+          <Select value={disciplina} onValueChange={setDisciplina}>
+            <SelectTrigger className="w-auto min-w-[200px] h-9">
+              <SelectValue placeholder="Selecione uma disciplina" />
+            </SelectTrigger>
+            <SelectContent position="popper" side="bottom" sideOffset={5}>
+              {disciplinasList.map(d => (
+                <SelectItem key={d.id} value={d.nome}>{d.nome}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
 
-            <div>
-              <label className="text-sm font-medium mb-2 block text-foreground">Etapa de Ensino</label>
-              <Select value={etapa} onValueChange={setEtapa}>
-                <SelectTrigger className="border-border focus:border-primary [&_svg:not([class*='rotate'])]:rotate-0">
-                  <SelectValue placeholder="Selecione" />
-                </SelectTrigger>
-                <SelectContent position="popper" side="bottom" sideOffset={5}>
-                  <SelectItem value="all">Todos os Anos</SelectItem>
-                  {etapasList.map(e => (
-                    <SelectItem key={e.id} value={e.etapa_nome}>{e.etapa_nome}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+          <Select value={etapa} onValueChange={setEtapa}>
+            <SelectTrigger className="w-auto min-w-[200px] h-9">
+              <SelectValue placeholder="Selecione uma Etapa de Ensino" />
+            </SelectTrigger>
+            <SelectContent position="popper" side="bottom" sideOffset={5}>
+              {etapasList.map(e => (
+                <SelectItem key={e.id} value={e.etapa_nome}>{e.etapa_nome}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
 
-            <div className="md:col-span-2">
-              <label className="text-sm font-medium mb-2 block text-foreground">Buscar</label>
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground z-10" />
-                <Input
-                  placeholder="Buscar por código ou descrição..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10"
-                />
-              </div>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+          <SearchInput
+            value={searchTerm}
+            onChange={setSearchTerm}
+            placeholder="Buscar por código ou descrição..."
+          />
+        </FilterBar>
+      </PageSection>
 
-      <div className="flex gap-4 mb-6">
-        <Badge className="bg-primary/10 text-primary hover:bg-primary/20 text-lg px-4 py-2">
-          {totalHabilidades} Habilidades cadastradas
-        </Badge>
-        <Badge className="bg-secondary/10 text-secondary hover:bg-secondary/20 text-lg px-4 py-2">
-          {totalUnidades} Unidades Temáticas
-        </Badge>
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+        <StatCard
+          icon={Layers}
+          value={totalUnidades}
+          label="Unidades Temáticas"
+          variant="success"
+        />
+        <StatCard
+          icon={Box}
+          value={totalObjetos}
+          label="Objetos de Conhecimento"
+          variant="warning"
+        />
+        <StatCard
+          icon={BookOpen}
+          value={totalHabilidades}
+          label="Habilidades Cadastradas"
+          variant="default"
+        />
       </div>
 
       {loading ? (
@@ -257,108 +297,146 @@ export default function HabilidadesPage() {
             <div className="w-20 h-20 bg-gradient-to-br from-primary/10 to-secondary/10 rounded-2xl flex items-center justify-center mb-6">
               <BookOpen className="h-10 w-10 text-primary" />
             </div>
-            <h3 className="text-xl font-semibold text-foreground mb-2">Nenhuma habilidade encontrada</h3>
-            <p className="text-muted-foreground text-center">
-              Não há habilidades cadastradas para os filtros selecionados.
-            </p>
+            {!disciplina || !etapa ? (
+              <>
+                <h3 className="text-xl font-semibold text-foreground mb-2">Selecione os filtros</h3>
+                <p className="text-muted-foreground text-center">
+                  Escolha uma <strong>disciplina</strong> e uma <strong>etapa de ensino</strong> para visualizar as habilidades.
+                </p>
+              </>
+            ) : (
+              <>
+                <h3 className="text-xl font-semibold text-foreground mb-2">Nenhuma habilidade encontrada</h3>
+                <p className="text-muted-foreground text-center">
+                  Não há habilidades cadastradas para os filtros selecionados.
+                </p>
+              </>
+            )}
           </CardContent>
         </Card>
       ) : (
-        <div className="space-y-4">
-          {Object.entries(groupedByUnidade).map(([unidade, objetos], unitIndex) => (
-            <Card 
-              key={unidade} 
-              className="border-0 shadow-sm"
-            >
-              <CardHeader 
-                className="cursor-pointer hover:bg-muted/50 transition-all duration-200 bg-muted/30"
-                onClick={() => setExpandedUnidade(expandedUnidade === unidade ? null : unidade)}
-              >
-                <div className="flex items-center justify-between">
-                  <div>
-                    <CardTitle className="text-lg font-semibold text-foreground">{unidade}</CardTitle>
-                    <p className="text-sm text-muted-foreground mt-1">
-                      {Object.keys(objetos).length} Objeto(s) de Conhecimento
-                    </p>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Badge className="bg-secondary/10 text-secondary hover:bg-secondary/20 border-0">
-                      {Object.values(objetos).flat().length} habilidades
-                    </Badge>
-                    {expandedUnidade === unidade ? (
-                      <ChevronDown className="h-5 w-5 text-muted-foreground" />
-                    ) : (
-                      <ChevronRight className="h-5 w-5 text-muted-foreground" />
-                    )}
-                  </div>
-                </div>
-              </CardHeader>
-              
-              {expandedUnidade === unidade && (
-                <CardContent className="space-y-4 pt-0">
-                  {Object.entries(objetos).map(([objeto, habilidadesObj]) => (
-                    <div key={objeto} className="border border-border rounded-xl overflow-hidden">
-                      <div 
-                        className="cursor-pointer hover:bg-muted/50 p-4 bg-card/50 transition-all duration-200"
-                        onClick={() => setExpandedObjeto(expandedObjeto === objeto ? null : objeto)}
-                      >
-                        <div className="flex items-center justify-between">
-                          <span className="font-medium text-foreground">{objeto}</span>
-                          <div className="flex items-center gap-2">
-                            <Badge variant="outline" className="text-xs">
-                              {habilidadesObj.length} habilidades
-                            </Badge>
-                            {expandedObjeto === objeto ? (
-                              <ChevronDown className="h-4 w-4 text-muted-foreground" />
-                            ) : (
-                              <ChevronRight className="h-4 w-4 text-muted-foreground" />
-                            )}
-                          </div>
-                        </div>
+        <div className="space-y-5">
+          {Object.entries(groupedByUnidade).map(([unidade, objetos]) => {
+            const totalHabilidadesUnidade = Object.values(objetos).flat().length
+            const unidadeIsOpen = expandedUnidade === unidade
+            return (
+              <Card key={unidade} className="border-0 shadow-sm overflow-hidden">
+                <CardHeader
+                  className="bg-muted/30 border-b border-border cursor-pointer hover:bg-muted/40 transition-colors"
+                  onClick={() => setExpandedUnidade(unidadeIsOpen ? null : unidade)}
+                >
+                  <div className="flex items-center justify-between gap-4">
+                    <div className="flex items-center gap-3 min-w-0">
+                      <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-secondary flex items-center justify-center shrink-0">
+                        <BookOpen className="w-5 h-5 text-primary-foreground" />
                       </div>
-                      
-                      {expandedObjeto === objeto && (
-                        <div className="p-4 space-y-3 bg-muted/20">
-                          {habilidadesObj.map(h => (
-                            <div 
-                              key={h.id}
-                              className="p-4 rounded-xl border border-border/50 bg-card/50 hover:bg-muted/50 transition-all duration-200"
-                            >
-                              <div className="flex items-start justify-between gap-4">
-                                <div className="flex items-start gap-3 flex-1">
-                                  <Badge className="shrink-0 font-mono text-xs bg-primary text-primary-foreground border-0">
-                                    {h.codigo_bncc}
-                                  </Badge>
-                                  <div className="flex-1">
-                                    <p className="text-sm text-foreground leading-relaxed">{h.descricao}</p>
-                                    <div className="flex gap-1 mt-2 flex-wrap">
-                                      {h.anos?.map((ano, i) => (
-                                        <Badge key={i} variant="outline" className="text-xs">
-                                          {ano}
-                                        </Badge>
-                                      ))}
+                      <div className="min-w-0">
+                        <CardTitle className="text-lg font-semibold text-foreground">{unidade}</CardTitle>
+                        <p className="text-sm text-muted-foreground mt-0.5">
+                          {Object.keys(objetos).length} Objeto(s) de Conhecimento
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-3 shrink-0">
+                      <span className="inline-flex items-center gap-2 rounded-lg bg-primary px-3 py-1.5 shadow-sm">
+                        <span className="text-[15px] font-bold text-primary-foreground tabular-nums">{totalHabilidadesUnidade}</span>
+                        <span className="text-xs font-medium text-primary-foreground/80">habilidades</span>
+                      </span>
+                      <span className={cn(
+                        'w-7 h-7 rounded-md flex items-center justify-center transition-colors',
+                        unidadeIsOpen
+                          ? 'bg-primary/10 text-primary'
+                          : 'bg-muted text-muted-foreground'
+                      )}>
+                        {unidadeIsOpen ? (
+                          <ChevronDown className="h-4 w-4" />
+                        ) : (
+                          <ChevronRight className="h-4 w-4" />
+                        )}
+                      </span>
+                    </div>
+                  </div>
+                </CardHeader>
+
+                {unidadeIsOpen && (
+                  <CardContent className="pt-3 space-y-2">
+                  {Object.entries(objetos).map(([objeto, habilidadesObj]) => {
+                    const objetoKey = `${unidade}|${objeto}`
+                    const isOpen = expandedObjeto === objetoKey
+                    return (
+                      <div key={objeto} className="border border-border rounded-xl overflow-hidden">
+                        <button
+                          type="button"
+                          onClick={() => setExpandedObjeto(isOpen ? null : objetoKey)}
+                          className="w-full flex items-center justify-between gap-4 px-4 py-3 bg-card hover:bg-muted/50 transition-all duration-200 text-left"
+                        >
+                          <div className="flex items-center gap-3 min-w-0">
+                            <span className={cn(
+                              'w-6 h-6 rounded-md flex items-center justify-center shrink-0 transition-colors',
+                              isOpen
+                                ? 'bg-primary/10 text-primary'
+                                : 'bg-muted text-muted-foreground'
+                            )}>
+                              {isOpen ? (
+                                <ChevronDown className="h-4 w-4" />
+                              ) : (
+                                <ChevronRight className="h-4 w-4" />
+                              )}
+                            </span>
+                            <span className="font-medium text-foreground text-[15px]">{objeto}</span>
+                          </div>
+                          <Badge variant="outline" className="shrink-0 text-xs bg-card">
+                            {habilidadesObj.length} habilidade{habilidadesObj.length === 1 ? '' : 's'}
+                          </Badge>
+                        </button>
+
+                        {isOpen && (
+                          <div className="pl-4 sm:pl-6 bg-muted/20 border-t border-border/50">
+                            <div className="py-3 pr-4 space-y-2.5">
+                              {habilidadesObj.map(h => (
+                                <div key={h.id} className="p-3.5 rounded-lg border border-border/50 bg-card hover:bg-muted/40 transition-all duration-200">
+                                  <div className="flex items-start justify-between gap-3">
+                                    <div className="flex items-start gap-3 flex-1">
+                                      <Badge className="shrink-0 font-mono text-xs bg-primary text-primary-foreground border-0 shadow-sm mt-0.5">
+                                        {h.codigo_bncc}
+                                      </Badge>
+                                      <div className="flex-1">
+                                        <p className="text-sm text-foreground leading-relaxed">{h.descricao}</p>
+                                        <div className="flex items-center gap-1.5 mt-2 flex-wrap">
+                                          <span className="inline-flex items-center gap-1 text-[11px] font-medium uppercase tracking-wider text-muted-foreground mr-0.5">
+                                            <CalendarRange className="h-3 w-3" />
+                                            Etapas:
+                                          </span>
+                                          {h.anos?.map((ano, i) => (
+                                            <span key={i} className="inline-flex items-center justify-center min-w-[26px] h-[22px] px-1.5 rounded-md bg-secondary/10 text-secondary text-xs font-semibold border border-secondary/20">
+                                              {ano}
+                                            </span>
+                                          ))}
+                                        </div>
+                                      </div>
+                                    </div>
+                                    <div className="flex gap-1 shrink-0">
+                                      <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-primary">
+                                        <Edit className="h-4 w-4" />
+                                      </Button>
+                                      <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-destructive">
+                                        <Trash2 className="h-4 w-4" />
+                                      </Button>
                                     </div>
                                   </div>
                                 </div>
-                                <div className="flex gap-1">
-                                  <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-primary">
-                                    <Edit className="h-4 w-4" />
-                                  </Button>
-                                  <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-destructive">
-                                    <Trash2 className="h-4 w-4" />
-                                  </Button>
-                                </div>
-                              </div>
+                              ))}
                             </div>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  ))}
+                          </div>
+                        )}
+                      </div>
+                    )
+                  })}
                 </CardContent>
-              )}
-            </Card>
-          ))}
+                )}
+              </Card>
+            )
+          })}
         </div>
       )}
 
