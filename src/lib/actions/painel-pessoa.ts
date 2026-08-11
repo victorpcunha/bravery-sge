@@ -40,10 +40,18 @@ export type DadosPessoais = {
   sexo: string | null
   cpf: string | null
   logradouro: string | null
+  numero: string | null
   bairro: string | null
+  complemento: string | null
+  municipio_residencia: string | null
   telefone_celular: string | null
   telefone_fixo: string | null
+  whatsapp: string | null
+  telefone_secundario: string | null
   email: string | null
+  filiacao_declarada: string | null
+  filiacao_1: string | null
+  filiacao_2: string | null
 }
 
 export type SaudeEstudante = {
@@ -351,7 +359,7 @@ export async function getDadosPessoais(
 
   const { data } = await supabase
     .from('people')
-    .select('id, nome_completo, data_nascimento, sexo, cpf, logradouro, bairro, telefone_celular, telefone_fixo, email')
+    .select('id, nome_completo, data_nascimento, sexo, cpf, logradouro, numero, bairro, complemento, municipio_residencia, telefone_celular, telefone_fixo, whatsapp, telefone_secundario, email, filiacao_declarada, filiacao_1, filiacao_2')
     .eq('id', pessoaId)
     .single()
 
@@ -407,8 +415,19 @@ export async function getFrequenciaGeral(
 ): Promise<FrequenciaGeral | null> {
   await validarPermRead(pessoaLogadaId)
 
+  const { data: turma } = await supabase
+    .from('turmas')
+    .select('school_id, ano_letivo_id, etapa_ensino_id')
+    .eq('id', turmaId)
+    .maybeSingle()
+
+  const criterioMap = await resolverCriterioFrequencia(
+    turma ? [{ id: turmaId, ...turma }] : []
+  )
+  const freqTable = criterioMap.get(turmaId) === 'por_aula' ? 'academico_frequencias_aula' : 'academico_frequencias_dia'
+
   const { count: presencas, error: errP } = await supabase
-    .from('academico_frequencias_dia')
+    .from(freqTable)
     .select('*', { count: 'exact', head: true })
     .eq('turma_id', turmaId)
     .eq('aluno_id', pessoaId)
@@ -417,7 +436,7 @@ export async function getFrequenciaGeral(
   if (errP) return null
 
   const { count: total, error: errT } = await supabase
-    .from('academico_frequencias_dia')
+    .from(freqTable)
     .select('*', { count: 'exact', head: true })
     .eq('turma_id', turmaId)
     .eq('aluno_id', pessoaId)
@@ -584,6 +603,63 @@ export async function getDesempenhoComparativo(
   return { disciplinas, periodo: periodo || 0 }
 }
 
+type TurmaCombo = {
+  id: string
+  school_id: string
+  ano_letivo_id: string
+  etapa_ensino_id: string | null
+}
+
+async function resolverCriterioFrequencia(turmas: TurmaCombo[]): Promise<Map<string, string>> {
+  const mapa = new Map<string, string>()
+  if (!turmas.length) return mapa
+
+  const combosUnicos = new Map<string, TurmaCombo>()
+  for (const t of turmas) {
+    if (!t.school_id || !t.ano_letivo_id || !t.etapa_ensino_id) continue
+    const key = `${t.school_id}|${t.ano_letivo_id}|${t.etapa_ensino_id}`
+    combosUnicos.set(key, t)
+  }
+
+  const metodoPorCombo = new Map<string, string>()
+  if (combosUnicos.size) {
+    const orFilters = [...combosUnicos.values()].map(
+      c =>
+        `and(school_id.eq.${c.school_id},ano_letivo_id.eq.${c.ano_letivo_id},etapa_ensino_id.eq.${c.etapa_ensino_id})`
+    )
+    const { data: matrizes } = await supabase
+      .from('academico_matrizes_curriculares')
+      .select('school_id, ano_letivo_id, etapa_ensino_id, metodo_avaliacao_id')
+      .or(orFilters.join(','))
+
+    const metodoIds = [...new Set((matrizes || []).map(m => m.metodo_avaliacao_id).filter(Boolean))]
+    const criterioPorMetodo = new Map<string, string>()
+    if (metodoIds.length) {
+      const { data: metodos } = await supabase
+        .from('academico_metodos_avaliacao')
+        .select('id, criterio_frequencia')
+        .in('id', metodoIds)
+      for (const mt of metodos || []) {
+        criterioPorMetodo.set(mt.id, mt.criterio_frequencia || 'por_dia')
+      }
+    }
+
+    for (const m of matrizes || []) {
+      const key = `${m.school_id}|${m.ano_letivo_id}|${m.etapa_ensino_id}`
+      if (m.metodo_avaliacao_id) {
+        metodoPorCombo.set(key, criterioPorMetodo.get(m.metodo_avaliacao_id) || 'por_dia')
+      }
+    }
+  }
+
+  for (const t of turmas) {
+    const key = `${t.school_id}|${t.ano_letivo_id}|${t.etapa_ensino_id}`
+    mapa.set(t.id, metodoPorCombo.get(key) || 'por_dia')
+  }
+
+  return mapa
+}
+
 export async function getHistoricoSistema(
   pessoaId: string,
   pessoaLogadaId?: string | null
@@ -608,7 +684,7 @@ export async function getHistoricoSistema(
 
   const { data: turmas } = await supabase
     .from('turmas')
-    .select('id, nome, etapa_ensino_id')
+    .select('id, nome, school_id, ano_letivo_id, etapa_ensino_id')
     .in('id', turmaIds)
 
   const etapaIds = [...new Set((turmas || []).map(t => t.etapa_ensino_id).filter(Boolean))]
@@ -624,22 +700,25 @@ export async function getHistoricoSistema(
   const turmaMap = new Map((turmas || []).map(t => [t.id, t]))
   const etapaMap = new Map((etapas || []).map((e: any) => [e.id, e.etapa_nome]))
 
+  const criterioMap = await resolverCriterioFrequencia((turmas || []) as TurmaCombo[])
+
   const historico: HistoricoAno[] = []
 
   for (const m of data) {
     const rawAno = anoMap.get(m.ano_letivo_id)
     const ano = rawAno ?? 0
     const turma = turmaMap.get(m.turma_id)
+    const freqTable = criterioMap.get(m.turma_id) === 'por_aula' ? 'academico_frequencias_aula' : 'academico_frequencias_dia'
 
     const { count: presencas } = await supabase
-      .from('academico_frequencias_dia')
+      .from(freqTable)
       .select('*', { count: 'exact', head: true })
       .eq('aluno_id', pessoaId)
       .eq('turma_id', m.turma_id)
       .in('status', ['P', 'FJ'])
 
     const { count: total } = await supabase
-      .from('academico_frequencias_dia')
+      .from(freqTable)
       .select('*', { count: 'exact', head: true })
       .eq('aluno_id', pessoaId)
       .eq('turma_id', m.turma_id)
@@ -771,7 +850,7 @@ export async function getNotasDetalhadas(
     .select('disciplina_id')
     .eq('aluno_id', pessoaId)
     .eq('turma_id', turmaId)
-    .eq('status', 'F')
+    .in('status', ['F', 'FJ'])
 
   if (dataInicio) faltasQuery = faltasQuery.gte(dateCol, dataInicio)
   if (dataFim) faltasQuery = faltasQuery.lte(dateCol, dataFim)
@@ -783,6 +862,9 @@ export async function getNotasDetalhadas(
     const did = (f as any).disciplina_id
     if (did) faltaMap.set(did, (faltaMap.get(did) || 0) + 1)
   }
+
+  const totalFaltasGeral = faltas?.length || 0
+  const faltasPorDisciplina = criterioFrequencia === 'por_aula'
 
   let freqPresencasQuery = supabase
     .from(freqTable)
@@ -835,7 +917,7 @@ export async function getNotasDetalhadas(
   const disciplinas = discIds.map(id => {
     const perMap = discMap.get(id)!
     const recDiscMap = recMap.get(id)
-    const totalFaltas = faltaMap.get(id) || 0
+    const totalFaltas = faltasPorDisciplina ? (faltaMap.get(id) || 0) : totalFaltasGeral
 
     const periodos = [...perMap.entries()]
       .sort(([a], [b]) => a - b)
@@ -921,7 +1003,8 @@ export async function getIndicadoresAvaliados(
       observacao,
       indicadores_avaliacao!indicador_id(
         descricao,
-        disciplina_id
+        disciplina_id,
+        campo_experiencia
       )
     `)
     .eq('aluno_id', pessoaId)
@@ -931,7 +1014,8 @@ export async function getIndicadoresAvaliados(
   if (!data?.length) return { disciplinas: [] }
 
   const discMap = new Map<string, {
-    disciplina_id: string
+    disciplina_id: string | null
+    campo_experiencia: string | null
     indicadores: Map<string, {
       indicador_id: string
       descricao: string
@@ -939,16 +1023,22 @@ export async function getIndicadoresAvaliados(
     }>
   }>()
 
-  const indicadorIds = new Set<string>()
+  const nivelIds = new Set<string>()
   for (const a of data) {
-    const ind = a.indicadores_avaliacao as unknown as { descricao: string; disciplina_id: string } | null
-    if (!ind?.disciplina_id) continue
-    indicadorIds.add(a.indicador_id)
+    const ind = a.indicadores_avaliacao as unknown as { descricao: string; disciplina_id: string; campo_experiencia: string } | null
+    if (!ind?.descricao) continue
+    if (a.nivel_id) nivelIds.add(a.nivel_id)
 
-    if (!discMap.has(ind.disciplina_id)) {
-      discMap.set(ind.disciplina_id, { disciplina_id: ind.disciplina_id, indicadores: new Map() })
+    const key = ind.disciplina_id || ind.campo_experiencia || '__sem_vinculo__'
+
+    if (!discMap.has(key)) {
+      discMap.set(key, {
+        disciplina_id: ind.disciplina_id || null,
+        campo_experiencia: ind.campo_experiencia || null,
+        indicadores: new Map(),
+      })
     }
-    const disc = discMap.get(ind.disciplina_id)!
+    const disc = discMap.get(key)!
     if (!disc.indicadores.has(a.indicador_id)) {
       disc.indicadores.set(a.indicador_id, {
         indicador_id: a.indicador_id,
@@ -964,8 +1054,8 @@ export async function getIndicadoresAvaliados(
     })
   }
 
-  const { data: niveis } = indicadorIds.size
-    ? await supabase.from('indicadores_niveis').select('id, descricao, sigla').in('id', [...indicadorIds])
+  const { data: niveis } = nivelIds.size
+    ? await supabase.from('indicadores_niveis').select('id, descricao, sigla').in('id', [...nivelIds])
     : { data: [] }
 
   const nivelMap = new Map<string, { descricao: string; sigla: string }>()
@@ -973,8 +1063,9 @@ export async function getIndicadoresAvaliados(
     nivelMap.set(n.id, { descricao: n.descricao, sigla: n.sigla })
   }
 
-  const { data: discNomes } = discMap.size
-    ? await supabase.from('academico_disciplinas').select('id, nome').in('id', [...discMap.keys()])
+  const discIds = [...discMap.values()].map(d => d.disciplina_id).filter(Boolean) as string[]
+  const { data: discNomes } = discIds.length
+    ? await supabase.from('academico_disciplinas').select('id, nome').in('id', discIds)
     : { data: [] }
 
   const discNomeMap = new Map<string, string>()
@@ -984,6 +1075,7 @@ export async function getIndicadoresAvaliados(
 
   const disciplinas = [...discMap.values()].map(disc => {
     const indicadores = [...disc.indicadores.values()].map(ind => {
+
       const periodos = [...ind.periodos.entries()]
         .sort(([a], [b]) => a - b)
         .map(([periodo, p]) => {
@@ -999,9 +1091,14 @@ export async function getIndicadoresAvaliados(
       return { indicador_id: ind.indicador_id, descricao: ind.descricao, periodos }
     })
 
+    const nome =
+      (disc.disciplina_id && discNomeMap.get(disc.disciplina_id)) ||
+      disc.campo_experiencia ||
+      'Sem vínculo'
+
     return {
-      disciplina_id: disc.disciplina_id,
-      disciplina_nome: discNomeMap.get(disc.disciplina_id) || disc.disciplina_id,
+      disciplina_id: disc.disciplina_id || disc.campo_experiencia || nome,
+      disciplina_nome: nome,
       indicadores,
     }
   })

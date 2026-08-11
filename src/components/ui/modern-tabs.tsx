@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
 import { cn } from '@/lib/utils'
@@ -41,13 +41,6 @@ export function ModernTabs({
   const [activeTab, setActiveTab] = useState<string>(
     isValid(tabFromUrl) ? (tabFromUrl as string) : fallback
   )
-
-  useEffect(() => {
-    if (isValid(tabFromUrl) && tabFromUrl !== activeTab) {
-      setActiveTab(tabFromUrl)
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [tabFromUrl, activeTab])
 
   const handleChange = (value: string) => {
     setActiveTab(value)

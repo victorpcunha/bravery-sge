@@ -2,9 +2,8 @@
 
 import { useState, useEffect } from 'react'
 import { getQuadroAulas, type QuadroAulaItem } from '@/lib/actions/painel-pessoa'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Table, TableHeader, TableBody, TableHead, TableRow, TableCell } from '@/components/ui/table'
-import { Calendar, Loader2 } from 'lucide-react'
+import { Loader2 } from 'lucide-react'
 
 type Props = {
   turmaId: string
@@ -33,33 +32,20 @@ export default function CardQuadroAulas({ turmaId, pessoaLogadaId }: Props) {
 
   if (loading) {
     return (
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-[15px] flex items-center gap-2">
-            <Calendar className="h-4 w-4" />
-            Quadro de Aulas
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
-        </CardContent>
-      </Card>
+      <div className="space-y-3" aria-busy="true">
+        <div className="flex items-center justify-center gap-2 py-6">
+          <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" aria-hidden="true" />
+          <span className="text-[14px] text-muted-foreground">Carregando quadro de aulas...</span>
+        </div>
+      </div>
     )
   }
 
   if (aulas.length === 0) {
     return (
-      <Card>
-        <CardHeader className="pb-2">
-          <CardTitle className="text-[15px] flex items-center gap-2">
-            <Calendar className="h-4 w-4 text-info" />
-            Quadro de Aulas
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <p className="text-[14px] text-muted-foreground">Nenhum quadro de aulas configurado para esta turma.</p>
-        </CardContent>
-      </Card>
+      <p className="text-[15px] text-muted-foreground py-2">
+        Nenhum quadro de aulas configurado para esta turma.
+      </p>
     )
   }
 
@@ -78,50 +64,49 @@ export default function CardQuadroAulas({ turmaId, pessoaLogadaId }: Props) {
   const diasUteis = [1, 2, 3, 4, 5]
 
   return (
-    <Card>
-      <CardHeader className="pb-3">
-        <CardTitle className="text-[15px] font-semibold flex items-center gap-2">
-          <Calendar className="h-4 w-4 text-info" />
-          Quadro de Aulas
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="py-4">
-        <div className="overflow-x-auto rounded-lg border border-border">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead className="sticky left-0 bg-muted z-10 text-[13px] uppercase tracking-wider">Horário</TableHead>
-                {diasUteis.map(dia => (
-                  <TableHead key={dia} className="text-center text-[13px] uppercase tracking-wider min-w-[100px]">
-                    {DIAS_SEMANA_LABEL[dia]}
-                  </TableHead>
-                ))}
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {horarios.map(horario => (
-                <TableRow key={horario}>
-                  <TableCell className="sticky left-0 bg-card z-10 text-[13px] text-muted-foreground font-mono whitespace-nowrap">
-                    {horario}
+    <div className="overflow-x-auto rounded-lg border border-border">
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead className="sticky left-0 bg-muted z-10 text-[13px] uppercase tracking-wider text-muted-foreground">
+              Horário
+            </TableHead>
+            {diasUteis.map(dia => (
+              <TableHead
+                key={dia}
+                className="bg-muted text-center text-[13px] uppercase tracking-wider text-muted-foreground min-w-[120px]"
+              >
+                {DIAS_SEMANA_LABEL[dia]}
+              </TableHead>
+            ))}
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {horarios.map((horario, idx) => (
+            <TableRow key={horario} className={idx % 2 === 0 ? 'bg-card' : 'bg-muted/20 hover:bg-muted/30'}>
+              <TableCell className="sticky left-0 bg-inherit z-10 whitespace-nowrap">
+                <span className="inline-flex items-center rounded-md bg-muted px-2 py-1 text-[13px] font-mono font-medium text-foreground">
+                  {horario}
+                </span>
+              </TableCell>
+              {diasUteis.map(dia => {
+                const nome = mapa.get(`${dia}|${horario}`)
+                return (
+                  <TableCell key={dia} className="text-center">
+                    {nome ? (
+                      <span className="inline-flex items-center justify-center rounded-md bg-primary/5 px-2.5 py-1 text-[14px] font-medium text-primary">
+                        {nome}
+                      </span>
+                    ) : (
+                      <span className="text-[14px] text-muted-foreground/60">—</span>
+                    )}
                   </TableCell>
-                  {diasUteis.map(dia => {
-                    const nome = mapa.get(`${dia}|${horario}`)
-                    return (
-                      <TableCell key={dia} className="text-center text-[14px]">
-                        {nome ? (
-                          <span className="font-medium text-foreground">{nome}</span>
-                        ) : (
-                          <span className="text-muted-foreground">—</span>
-                        )}
-                      </TableCell>
-                    )
-                  })}
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </div>
-      </CardContent>
-    </Card>
+                )
+              })}
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+    </div>
   )
 }

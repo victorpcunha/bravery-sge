@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
 import { cn } from '@/lib/utils'
@@ -32,12 +32,6 @@ export function PainelTabs({ hasTurma, children }: PainelTabsProps) {
   const [activeTab, setActiveTab] = useState<PainelTabValue>(
     isValidTab(tabFromUrl) ? tabFromUrl : 'visao-geral'
   )
-
-  useEffect(() => {
-    if (isValidTab(tabFromUrl) && tabFromUrl !== activeTab) {
-      setActiveTab(tabFromUrl)
-    }
-  }, [tabFromUrl, activeTab])
 
   const handleChange = (value: string) => {
     if (!isValidTab(value)) return

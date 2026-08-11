@@ -497,7 +497,6 @@ export function PessoaForm({ schoolId: propSchoolId, person, onSaved, onCancel }
       delete payload.permitir_acesso
       delete payload.senha
       delete payload.confirmacao_senha
-      delete payload.telefone_secundario
       delete payload.email_responsavel
       delete payload.perfis_acesso
       for (let i = 1; i <= 3; i++) {

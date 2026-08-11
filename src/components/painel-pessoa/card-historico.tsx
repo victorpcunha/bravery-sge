@@ -3,21 +3,21 @@
 import { useState, useEffect, useCallback, Fragment } from 'react'
 import { getHistoricoSistema, getNotasDetalhadas, getIndicadoresAvaliados, type HistoricoAno, type NotasDetalhadas, type IndicadoresAvaliados, type HistoricoManualRecord } from '@/lib/actions/painel-pessoa'
 import { listarHistoricoManual, removerHistoricoManual } from '@/lib/actions/historico-manual'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Table, TableHeader, TableBody, TableHead, TableRow, TableCell } from '@/components/ui/table'
 import { ScrollArea } from '@/components/ui/scroll-area'
-import { GraduationCap, Loader2, Plus, ChevronDown, ChevronUp, Trash2 } from 'lucide-react'
+import { Loader2, ChevronDown, ChevronUp, Trash2, CalendarDays, GraduationCap } from 'lucide-react'
 import { ConfirmDialog } from '@/components/feedback/confirm-dialog'
+import { StatusBadge } from '@/components/feedback/status-badge'
+import { cn } from '@/lib/utils'
 import ExpansaoNotas from './expansao-notas'
 import ExpansaoIndicadores from './expansao-indicadores'
-import ModalHistoricoManual from './modal-historico-manual'
 import { toast } from 'sonner'
 
 type Props = {
   pessoaId: string
-  schoolId: string | null
   pessoaLogadaId: string | null
+  refreshKey?: number
 }
 
 type RowData = {
@@ -33,14 +33,47 @@ type UnifiedRow = {
   turma_nome: string
   etapa_nome: string
   situacao: string
-  frequencia: string
   systemData?: HistoricoAno
   manualData?: HistoricoManualRecord
 }
 
-export default function CardHistorico({ pessoaId, schoolId, pessoaLogadaId }: Props) {
+const SITUACAO_BADGE: Record<string, 'success' | 'warning' | 'destructive' | 'info' | 'primary' | 'muted'> = {
+  'Ativo': 'primary',
+  'Aprovado': 'success',
+  'Aprovado por conselho de classe': 'success',
+  'Reclassificado': 'success',
+  'Remanejado': 'success',
+  'Reprovado': 'destructive',
+  'Reprovado por frequência': 'destructive',
+  'Óbito': 'destructive',
+  'Transferido': 'warning',
+  'Desistente': 'warning',
+}
+
+function situacaoStatus(situacao: string) {
+  return SITUACAO_BADGE[situacao] || 'muted'
+}
+
+function FrequencyBar({ percent }: { percent: number | null }) {
+  if (percent === null) {
+    return <span className="text-[14px] text-muted-foreground">—</span>
+  }
+
+  const barClass = percent >= 75 ? 'bg-success' : percent >= 50 ? 'bg-warning' : 'bg-destructive'
+  const textClass = percent >= 75 ? 'text-success' : percent >= 50 ? 'text-warning' : 'text-destructive'
+
+  return (
+    <div className="flex items-center gap-2 min-w-[120px]" title={`Frequência: ${percent}%`}>
+      <div className="h-1.5 w-16 sm:w-24 rounded-full bg-muted overflow-hidden" role="img" aria-label={`Frequência ${percent}%`}>
+        <div className={cn('h-full rounded-full', barClass)} style={{ width: `${Math.min(percent, 100)}%` }} />
+      </div>
+      <span className={cn('text-[13px] tabular-nums', textClass)}>{percent}%</span>
+    </div>
+  )
+}
+
+export default function CardHistorico({ pessoaId, pessoaLogadaId, refreshKey }: Props) {
   const [loading, setLoading] = useState(true)
-  const [modalOpen, setModalOpen] = useState(false)
   const [expandedId, setExpandedId] = useState<string | null>(null)
   const [expandedData, setExpandedData] = useState<RowData>({ notas: null, indicadores: null, loading: false })
   const [rows, setRows] = useState<UnifiedRow[]>([])
@@ -58,7 +91,6 @@ export default function CardHistorico({ pessoaId, schoolId, pessoaLogadaId }: Pr
           turma_nome: s.turma_nome,
           etapa_nome: s.etapa_nome,
           situacao: s.situacao,
-          frequencia: s.frequencia_percentual !== null ? `${s.frequencia_percentual}%` : '-',
           systemData: s,
         }))
 
@@ -72,7 +104,6 @@ export default function CardHistorico({ pessoaId, schoolId, pessoaLogadaId }: Pr
                 turma_nome: m.unidade_escolar || '-',
                 etapa_nome: m.etapa_nome || '-',
                 situacao: m.situacao || '-',
-                frequencia: '-',
                 manualData: m,
               })
             }
@@ -86,7 +117,7 @@ export default function CardHistorico({ pessoaId, schoolId, pessoaLogadaId }: Pr
 
   useEffect(() => {
     if (pessoaId) carregar()
-  }, [pessoaId, carregar])
+  }, [pessoaId, carregar, refreshKey])
 
   const toggleExpand = async (row: UnifiedRow) => {
     if (expandedId === row.key) {
@@ -137,52 +168,28 @@ export default function CardHistorico({ pessoaId, schoolId, pessoaLogadaId }: Pr
 
   if (loading) {
     return (
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-[15px] flex items-center gap-2">
-            <GraduationCap className="h-4 w-4" />
-            Histórico Escolar
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
-        </CardContent>
-      </Card>
+      <div className="flex items-center gap-2 py-4" role="status">
+        <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" aria-hidden="true" />
+        <span className="text-[14px] text-muted-foreground">Carregando histórico...</span>
+      </div>
     )
   }
 
   return (
     <>
-      <Card>
-        <CardHeader className="pb-2">
-          <CardTitle className="text-[15px] flex items-center gap-2">
-            <GraduationCap className="h-4 w-4 text-warning" />
-            Histórico Escolar
-            <Button
-              variant="outline"
-              size="sm"
-              className="ml-auto h-7 gap-1"
-              onClick={() => setModalOpen(true)}
-            >
-              <Plus className="h-3 w-3" />
-              Adicionar Histórico
-            </Button>
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          {rows.length === 0 ? (
-            <p className="text-[14px] text-muted-foreground">Nenhum registro de histórico escolar.</p>
-          ) : (
+      {rows.length === 0 ? (
+        <p className="text-[15px] text-muted-foreground py-2">Nenhum registro de histórico escolar.</p>
+      ) : (
             <ScrollArea className="max-h-[800px]">
               <Table className="table-fixed w-full">
                 <TableHeader>
                   <TableRow>
-                    <TableHead className="w-8" />
-                    <TableHead>Ano</TableHead>
-                    <TableHead>Etapa</TableHead>
-                    <TableHead>Freq.</TableHead>
-                    <TableHead className="text-right pr-3">Situação</TableHead>
-                    <TableHead className="w-8" />
+                    <TableHead className="w-8 bg-muted" />
+                    <TableHead className="bg-muted text-[13px] uppercase tracking-wider text-muted-foreground">Ano</TableHead>
+                    <TableHead className="bg-muted text-[13px] uppercase tracking-wider text-muted-foreground">Etapa</TableHead>
+                    <TableHead className="bg-muted text-[13px] uppercase tracking-wider text-muted-foreground">Frequência</TableHead>
+                    <TableHead className="bg-muted text-center text-[13px] uppercase tracking-wider text-muted-foreground">Situação</TableHead>
+                    <TableHead className="w-8 bg-muted" />
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -193,27 +200,44 @@ export default function CardHistorico({ pessoaId, schoolId, pessoaLogadaId }: Pr
                       <Fragment key={row.key}>
                         <TableRow
                           key={row.key}
-                          className="cursor-pointer hover:bg-muted/50"
+                          className={cn(
+                            'cursor-pointer transition-colors hover:bg-primary/5',
+                            isExpanded && 'bg-primary/[0.03]'
+                          )}
                           onClick={() => toggleExpand(row)}
                           aria-expanded={isExpanded}
                         >
                           <TableCell className="p-2">
-                            {isExpanded
-                              ? <ChevronUp className="h-3.5 w-3.5 text-muted-foreground" aria-hidden="true" />
-                              : <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" aria-hidden="true" />
-                            }
-                          </TableCell>
-                          <TableCell className="font-medium text-[14px]">
-                            {row.label}
-                            {row.type === 'manual' && (
-                              <span className="ml-2 text-[11px] bg-accent/10 text-accent px-1.5 py-0.5 rounded">
-                                Manual
-                              </span>
+                            {isExpanded ? (
+                              <ChevronUp className="h-3.5 w-3.5 text-primary" aria-hidden="true" />
+                            ) : (
+                              <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" aria-hidden="true" />
                             )}
                           </TableCell>
-                          <TableCell className="text-[14px]">{row.etapa_nome}</TableCell>
-                          <TableCell className="text-[14px] tabular-nums">{row.frequencia}</TableCell>
-                          <TableCell className="text-[14px] text-right pr-3">{row.situacao}</TableCell>
+                          <TableCell className="text-[15px] font-semibold text-foreground">
+                            <span className="inline-flex items-center gap-2">
+                              <span className="flex h-6 w-6 items-center justify-center rounded-md bg-primary/10 text-primary">
+                                <CalendarDays className="h-3.5 w-3.5" aria-hidden="true" />
+                              </span>
+                              {row.label}
+                              {row.type === 'manual' && (
+                                <span className="text-[11px] bg-accent/10 text-accent px-1.5 py-0.5 rounded">
+                                  Manual
+                                </span>
+                              )}
+                            </span>
+                          </TableCell>
+                          <TableCell className="text-[14px] text-muted-foreground">{row.etapa_nome}</TableCell>
+                          <TableCell className="text-[14px] tabular-nums">
+                            {row.type === 'manual' ? (
+                              <span className="text-[14px] text-muted-foreground">—</span>
+                            ) : (
+                              <FrequencyBar percent={row.systemData?.frequencia_percentual ?? null} />
+                            )}
+                          </TableCell>
+                          <TableCell className="text-center">
+                            <StatusBadge status={situacaoStatus(row.situacao)}>{row.situacao}</StatusBadge>
+                          </TableCell>
                           <TableCell className="p-1">
                             {row.type === 'manual' && (
                               <Button
@@ -231,19 +255,14 @@ export default function CardHistorico({ pessoaId, schoolId, pessoaLogadaId }: Pr
                         {isExpanded && (
                           <TableRow key={`${row.key}-expanded`}>
                             <TableCell colSpan={6} className="p-0">
-                              <div className="px-3 sm:px-6 py-3 bg-muted/30 border-t border-border min-w-0">
+                              <div className="px-3 sm:px-6 py-3 bg-primary/[0.03] border-t border-border min-w-0">
                                 {row.type === 'system' && (
                                   <>
-                                    <div className="grid grid-cols-2 gap-4 mb-3">
-                                      <div>
-                                        <span className="text-[13px] text-muted-foreground">Ano Letivo: </span>
-                                        <span className="text-[13px] font-medium">{row.label}</span>
-                                      </div>
-                                      <div>
-                                        <span className="text-[13px] text-muted-foreground">Turma: </span>
-                                        <span className="text-[13px] font-medium">{row.turma_nome}</span>
-                                      </div>
-                                    </div>
+                                    <p className="flex items-center gap-1.5 text-[13px] text-muted-foreground mb-3">
+                                      <GraduationCap className="h-4 w-4 text-primary" aria-hidden="true" />
+                                      Turma:{' '}
+                                      <span className="font-medium text-foreground">{row.turma_nome}</span>
+                                    </p>
 
                                     {expandedData.loading ? (
                                       <div className="flex items-center gap-2 py-3" role="status">
@@ -251,10 +270,10 @@ export default function CardHistorico({ pessoaId, schoolId, pessoaLogadaId }: Pr
                                         <span className="text-[13px] text-muted-foreground">Carregando avaliações...</span>
                                       </div>
                                     ) : (
-                                      <>
+                                      <div className="space-y-5">
                                         <ExpansaoNotas data={expandedData.notas || { disciplinas: [], total_dias_letivos: null }} />
                                         <ExpansaoIndicadores data={expandedData.indicadores || { disciplinas: [] }} />
-                                      </>
+                                      </div>
                                     )}
                                   </>
                                 )}
@@ -341,12 +360,10 @@ export default function CardHistorico({ pessoaId, schoolId, pessoaLogadaId }: Pr
                       </Fragment>
                     )
                   })}
-                </TableBody>
-              </Table>
-            </ScrollArea>
-          )}
-        </CardContent>
-      </Card>
+              </TableBody>
+            </Table>
+          </ScrollArea>
+      )}
 
       <ConfirmDialog
         open={!!deleteTarget}
@@ -356,15 +373,6 @@ export default function CardHistorico({ pessoaId, schoolId, pessoaLogadaId }: Pr
         onConfirm={handleRemove}
         loading={deleting}
         variant="destructive"
-      />
-
-      <ModalHistoricoManual
-        open={modalOpen}
-        onClose={() => setModalOpen(false)}
-        onSuccess={carregar}
-        personId={pessoaId}
-        schoolId={schoolId}
-        pessoaLogadaId={pessoaLogadaId}
       />
     </>
   )

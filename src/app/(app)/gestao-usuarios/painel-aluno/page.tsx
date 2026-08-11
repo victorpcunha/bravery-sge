@@ -13,13 +13,15 @@ import CardEvolucao from '@/components/painel-pessoa/card-evolucao'
 import CardQuadroAulas from '@/components/painel-pessoa/card-quadro-aulas'
 import CardHistorico from '@/components/painel-pessoa/card-historico'
 import CardOcorrencias from '@/components/painel-pessoa/card-ocorrencias'
+import ModalHistoricoManual from '@/components/painel-pessoa/modal-historico-manual'
 import { PainelTabs } from '@/components/painel-pessoa/painel-tabs'
 import { PageContainer } from '@/components/layout/page-container'
 import { PageHeader } from '@/components/layout/page-header'
 import { PageSection } from '@/components/layout/page-section'
 import { EmptyState } from '@/components/ui/empty-state'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { User, Loader2 } from 'lucide-react'
+import { Button } from '@/components/ui/button'
+import { User, Loader2, Plus } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
 
@@ -31,6 +33,8 @@ export default function PainelAlunoPage() {
   const [turmaId, setTurmaId] = useState<string>('')
   const [loadingTurmas, setLoadingTurmas] = useState(false)
   const [situacao, setSituacao] = useState<string | null>(null)
+  const [historicoModalOpen, setHistoricoModalOpen] = useState(false)
+  const [historicoRefreshKey, setHistoricoRefreshKey] = useState(0)
 
   const { loaded: permLoaded, pessoaId, pode } = usePermissoes(schoolId || '')
 
@@ -72,7 +76,7 @@ export default function PainelAlunoPage() {
 
   if (authLoading || !permLoaded) {
     return (
-      <PageContainer className="max-w-5xl">
+      <PageContainer>
         <PageHeader title="Painel do Aluno" description="Visualização completa do aluno" icon={User} />
         <PageSection variant="default" title="Carregando...">
           <div className="space-y-3 animate-pulse">
@@ -94,7 +98,7 @@ export default function PainelAlunoPage() {
   const hasTurma = !!turmaId
 
   return (
-    <PageContainer className="max-w-5xl">
+    <PageContainer>
       <PageHeader
         title="Painel do Aluno"
         description="Visualização completa do aluno"
@@ -231,8 +235,24 @@ export default function PainelAlunoPage() {
 
           {/* Aba: Histórico */}
           <div className="space-y-6">
-            <PageSection title="Histórico Escolar">
-              <CardHistorico pessoaId={pessoaSelecionada.id} schoolId={schoolId!} pessoaLogadaId={pessoaId} />
+            <PageSection
+              title="Histórico Escolar"
+              actions={
+                <Button
+                  variant="outline"
+                  className="gap-1 h-9"
+                  onClick={() => setHistoricoModalOpen(true)}
+                >
+                  <Plus className="h-4 w-4" />
+                  Adicionar Histórico
+                </Button>
+              }
+            >
+              <CardHistorico
+                pessoaId={pessoaSelecionada.id}
+                pessoaLogadaId={pessoaId}
+                refreshKey={historicoRefreshKey}
+              />
             </PageSection>
 
             {hasTurma ? (
@@ -250,6 +270,17 @@ export default function PainelAlunoPage() {
             )}
           </div>
         </PainelTabs>
+      )}
+
+      {pessoaSelecionada && (
+        <ModalHistoricoManual
+          open={historicoModalOpen}
+          onClose={() => setHistoricoModalOpen(false)}
+          onSuccess={() => setHistoricoRefreshKey(k => k + 1)}
+          personId={pessoaSelecionada.id}
+          schoolId={schoolId}
+          pessoaLogadaId={pessoaId}
+        />
       )}
 
       {!pessoaSelecionada && canSearch && (

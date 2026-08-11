@@ -23,6 +23,21 @@ type Props = {
   selectedId?: string
 }
 
+function formatarCpf(cpf: string | null | undefined): string {
+  if (!cpf) return ''
+  const d = cpf.replace(/\D/g, '')
+  if (d.length !== 11) return cpf
+  return `${d.slice(0, 3)}.${d.slice(3, 6)}.${d.slice(6, 9)}-${d.slice(9)}`
+}
+
+function iniciais(nome: string): string {
+  const partes = nome.trim().split(/\s+/).filter(Boolean)
+  if (partes.length === 0) return '?'
+  const primeira = partes[0][0] || ''
+  const ultima = partes.length > 1 ? partes[partes.length - 1][0] : ''
+  return (primeira + ultima).toUpperCase()
+}
+
 export default function FiltroPessoa({ schoolId, pessoaLogadaId, onSelect, selectedId }: Props) {
   const [open, setOpen] = useState(false)
   const [termo, setTermo] = useState('')
@@ -64,14 +79,17 @@ export default function FiltroPessoa({ schoolId, pessoaLogadaId, onSelect, selec
           role="combobox"
           aria-expanded={open}
           aria-label="Buscar aluno por nome ou CPF"
-          className="w-full justify-between h-9 font-normal text-[14px]"
+          className="relative w-full h-9 justify-start rounded-md border-border bg-card pl-10 pr-3 text-[14px] font-normal shadow-xs hover:bg-card"
         >
+          <Search
+            className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 shrink-0 text-muted-foreground"
+            aria-hidden="true"
+          />
           {selecionado ? (
-            <span className="truncate">{selecionado.nome_completo}</span>
+            <span className="truncate text-foreground">{selecionado.nome_completo}</span>
           ) : (
-            <span className="text-muted-foreground">Buscar por nome ou CPF...</span>
+            <span className="truncate text-muted-foreground">Buscar por nome ou CPF...</span>
           )}
-          <Search className="ml-2 h-4 w-4 shrink-0 text-muted-foreground" aria-hidden="true" />
         </Button>
       </PopoverTrigger>
       <PopoverContent
@@ -127,13 +145,23 @@ export default function FiltroPessoa({ schoolId, pessoaLogadaId, onSelect, selec
                     }}
                     className="cursor-pointer"
                   >
-                    <div className="flex flex-col flex-1 min-w-0">
-                      <span className="font-medium text-[14px] truncate">{p.nome_completo}</span>
-                      {p.cpf && (
-                        <span className="text-[13px] text-muted-foreground">
-                          CPF: {p.cpf}
-                        </span>
-                      )}
+                    <div className="flex items-center gap-3 flex-1 min-w-0">
+                      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary/10 text-[13px] font-bold text-primary">
+                        {iniciais(p.nome_completo)}
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate text-[15px] font-semibold text-foreground">
+                          {p.nome_completo}
+                        </p>
+                        {p.cpf && (
+                          <p className="text-[13px] text-muted-foreground">
+                            CPF:{' '}
+                            <span className="font-medium text-foreground/80 tabular-nums">
+                              {formatarCpf(p.cpf)}
+                            </span>
+                          </p>
+                        )}
+                      </div>
                     </div>
                     {selectedId === p.id && (
                       <Check className="h-4 w-4 text-primary shrink-0" aria-hidden="true" />

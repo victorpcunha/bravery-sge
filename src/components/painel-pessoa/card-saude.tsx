@@ -2,9 +2,8 @@
 
 import { useState, useEffect } from 'react'
 import { getSaudeEstudante, type SaudeEstudante } from '@/lib/actions/painel-pessoa'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { StatusBadge } from '@/components/feedback/status-badge'
-import { Heart, Pill, Activity, Loader2, Stethoscope, Brain } from 'lucide-react'
+import { Heart, Pill, Activity, Stethoscope, Brain, Loader2 } from 'lucide-react'
 
 type Props = {
   pessoaId: string
@@ -51,6 +50,23 @@ const RECURSOS_SAEB: Record<string, string> = {
   tempo_adicional: 'Tempo Adicional',
 }
 
+type SectionHeaderProps = {
+  icon: React.ReactNode
+  title: string
+  chipClass: string
+}
+
+function SectionHeader({ icon, title, chipClass }: SectionHeaderProps) {
+  return (
+    <div className="flex items-center gap-2.5">
+      <div className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg ${chipClass}`}>
+        {icon}
+      </div>
+      <h4 className="text-[14px] font-semibold text-foreground">{title}</h4>
+    </div>
+  )
+}
+
 export default function CardSaude({ pessoaId, schoolId, pessoaLogadaId }: Props) {
   const [dados, setDados] = useState<SaudeEstudante | null>(null)
   const [loading, setLoading] = useState(true)
@@ -65,17 +81,14 @@ export default function CardSaude({ pessoaId, schoolId, pessoaLogadaId }: Props)
 
   if (loading) {
     return (
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-[15px] flex items-center gap-2">
-            <Heart className="h-4 w-4" />
-            Saúde
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
-        </CardContent>
-      </Card>
+      <div className="space-y-4" aria-busy="true">
+        <div className="h-6 w-40 bg-muted rounded-md animate-pulse" />
+        <div className="flex flex-wrap gap-2">
+          {[0, 1, 2].map(i => (
+            <div key={i} className="h-7 w-32 bg-muted rounded-full animate-pulse" />
+          ))}
+        </div>
+      </div>
     )
   }
 
@@ -96,95 +109,89 @@ export default function CardSaude({ pessoaId, schoolId, pessoaLogadaId }: Props)
 
   if (!temAlgo) {
     return (
-      <Card>
-        <CardHeader className="pb-2">
-          <CardTitle className="text-[15px] flex items-center gap-2">
-            <Heart className="h-4 w-4 text-destructive" />
-            Saúde
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <p className="text-[14px] text-muted-foreground">Nenhuma informação de saúde cadastrada.</p>
-        </CardContent>
-      </Card>
+      <div className="flex items-center gap-3">
+        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-destructive/10 text-destructive">
+          <Heart className="h-4 w-4" aria-hidden="true" />
+        </div>
+        <p className="text-[15px] text-muted-foreground">Nenhuma informação de saúde cadastrada.</p>
+      </div>
     )
   }
 
   return (
-    <Card>
-      <CardHeader className="pb-2">
-        <CardTitle className="text-[15px] flex items-center gap-2">
-          <Heart className="h-4 w-4 text-destructive" />
-          Saúde
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-3">
-        {condicoesAtivas.length > 0 && (
-          <div>
-            <p className="text-[13px] text-muted-foreground flex items-center gap-1 mb-1">
-              <Stethoscope className="h-3 w-3" /> Deficiências
-            </p>
-            <div className="flex flex-wrap gap-1">
-              {condicoesAtivas.map(c => (
-                <StatusBadge key={c} status="destructive">
-                  {c}
-                </StatusBadge>
-              ))}
-            </div>
+    <div className="space-y-5">
+      {condicoesAtivas.length > 0 && (
+        <div className="space-y-2">
+          <SectionHeader
+            icon={<Stethoscope className="h-4 w-4" aria-hidden="true" />}
+            title="Tipos de Deficiência"
+            chipClass="bg-destructive/10 text-destructive"
+          />
+          <div className="flex flex-wrap gap-1.5 pl-10">
+            {condicoesAtivas.map(c => (
+              <StatusBadge key={c} status="destructive">
+                {c}
+              </StatusBadge>
+            ))}
           </div>
-        )}
+        </div>
+      )}
 
-        {transtornosAtivos.length > 0 && (
-          <div>
-            <p className="text-[13px] text-muted-foreground flex items-center gap-1 mb-1">
-              <Brain className="h-3 w-3" /> Transtornos / Neurodesenvolvimento
-            </p>
-            <div className="flex flex-wrap gap-1">
-              {transtornosAtivos.map(t => (
-                <StatusBadge key={t} status="warning">
-                  {t}
-                </StatusBadge>
-              ))}
-            </div>
+      {transtornosAtivos.length > 0 && (
+        <div className="space-y-2">
+          <SectionHeader
+            icon={<Brain className="h-4 w-4" aria-hidden="true" />}
+            title="Tipos de Transtorno"
+            chipClass="bg-warning/10 text-warning"
+          />
+          <div className="flex flex-wrap gap-1.5 pl-10">
+            {transtornosAtivos.map(t => (
+              <StatusBadge key={t} status="warning">
+                {t}
+              </StatusBadge>
+            ))}
           </div>
-        )}
+        </div>
+      )}
 
-        {recursosSaeb.length > 0 && (
-          <div>
-            <p className="text-[13px] text-muted-foreground flex items-center gap-1 mb-1">
-              <Activity className="h-3 w-3" /> Recursos SAEB
-            </p>
-            <div className="flex flex-wrap gap-1">
-              {recursosSaeb.map(r => (
-                <StatusBadge key={r} status="info">
-                  {r}
-                </StatusBadge>
-              ))}
-            </div>
-            {dados?.condicoes && (
-              <p className="text-[14px] whitespace-pre-wrap mt-2">{dados.condicoes}</p>
-            )}
+      {recursosSaeb.length > 0 && (
+        <div className="space-y-2">
+          <SectionHeader
+            icon={<Activity className="h-4 w-4" aria-hidden="true" />}
+            title="Recursos de Acessibilidade"
+            chipClass="bg-info/10 text-info"
+          />
+          <div className="flex flex-wrap gap-1.5 pl-10">
+            {recursosSaeb.map(r => (
+              <StatusBadge key={r} status="info">
+                {r}
+              </StatusBadge>
+            ))}
           </div>
-        )}
+        </div>
+      )}
 
-        {dados?.medicamentos && (
-          <div>
-            <p className="text-[13px] text-muted-foreground flex items-center gap-1 mb-1">
-              <Pill className="h-3 w-3" /> Medicamentos / Outras informações
-            </p>
-            <p className="text-[14px] whitespace-pre-wrap">{dados.medicamentos}</p>
-          </div>
-        )}
+      {dados?.medicamentos && (
+        <div className="space-y-1.5">
+          <SectionHeader
+            icon={<Pill className="h-4 w-4" aria-hidden="true" />}
+            title="Medicamentos / Outras informações"
+            chipClass="bg-muted text-muted-foreground"
+          />
+          <p className="text-[15px] text-foreground whitespace-pre-wrap pl-10">{dados.medicamentos}</p>
+        </div>
+      )}
 
-        {recursosSaeb.length === 0 && dados?.condicoes && (
-          <div>
-            <p className="text-[13px] text-muted-foreground flex items-center gap-1 mb-1">
-              <Activity className="h-3 w-3" /> Condições de Saúde
-            </p>
-            <p className="text-[14px] whitespace-pre-wrap">{dados.condicoes}</p>
-          </div>
-        )}
-      </CardContent>
-    </Card>
+      {recursosSaeb.length === 0 && dados?.condicoes && (
+        <div className="space-y-1.5">
+          <SectionHeader
+            icon={<Heart className="h-4 w-4" aria-hidden="true" />}
+            title="Condições de Saúde"
+            chipClass="bg-primary/10 text-primary"
+          />
+          <p className="text-[15px] text-foreground whitespace-pre-wrap pl-10">{dados.condicoes}</p>
+        </div>
+      )}
+    </div>
   )
 }
