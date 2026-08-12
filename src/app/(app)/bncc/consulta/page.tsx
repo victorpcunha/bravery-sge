@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { getSupabaseClient } from '@/lib/auth'
 import { getEtapasEnsino } from '@/lib/actions/etapas-ensino'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -10,6 +10,8 @@ import { BookOpen, ChevronDown, ChevronRight } from 'lucide-react'
 import { useAuth } from '@/components/providers/auth-provider'
 import { PageContainer } from '@/components/layout/page-container'
 import { PageHeader } from '@/components/layout/page-header'
+import { PageSection } from '@/components/layout/page-section'
+import { FilterBar } from '@/components/layout/filter-bar'
 
 type EtapaEnsino = {
   id: string
@@ -39,7 +41,6 @@ export default function BNCCConsultaPage() {
   const { schoolId } = useAuth()
   const [etapas, setEtapas] = useState<EtapaEnsino[]>([])
   const [etapa, setEtapa] = useState('')
-  const [etapaTipo, setEtapaTipo] = useState('')
 
   const [faixaEtaria, setFaixaEtaria] = useState('')
   const [disciplina, setDisciplina] = useState('')
@@ -53,6 +54,11 @@ export default function BNCCConsultaPage() {
   const [loading, setLoading] = useState(true)
   const [expandedGrupo, setExpandedGrupo] = useState<string | null>(null)
 
+  const reqRef = useRef(0)
+
+  const etapaSelecionada = etapas.find(e => e.etapa_nome === etapa)
+  const tipo = etapaSelecionada ? getBroadTipo(etapaSelecionada.etapa_tipo) : null
+
   useEffect(() => {
     loadEtapas()
     loadDisciplinas()
@@ -61,31 +67,22 @@ export default function BNCCConsultaPage() {
 
   useEffect(() => {
     setFaixaEtaria(''); setDisciplina(''); setAreaId('')
-    if (etapa) {
-      const found = etapas.find(e => e.etapa_nome === etapa)
-      if (found) setEtapaTipo(found.etapa_tipo)
-    }
-  }, [etapa, etapas])
+    setExpandedGrupo(null)
+  }, [etapa])
 
   useEffect(() => {
-    if (!etapa || !etapaTipo) return
-    const tipo = getBroadTipo(etapaTipo)
     if (tipo === 'infantil') loadFaixas()
-  }, [etapa, etapaTipo])
+  }, [tipo, etapa])
 
   useEffect(() => {
     loadDados()
-  }, [etapa, faixaEtaria, disciplina, areaId])
+  }, [tipo, etapa, faixaEtaria, disciplina, areaId])
 
   async function loadEtapas() {
     const data = await getEtapasEnsino(schoolId)
     if (data && data.length > 0) {
       const filtered = data.filter(e => !e.etapa_nome?.toLowerCase().includes('unificada'))
       setEtapas(filtered)
-      if (!etapa && filtered.length > 0) {
-        setEtapa(filtered[0].etapa_nome)
-        setEtapaTipo(filtered[0].etapa_tipo)
-      }
     }
   }
 
@@ -136,17 +133,28 @@ export default function BNCCConsultaPage() {
   }
 
   async function loadDados() {
-    if (!etapa || !etapaTipo) { setDados([]); setLoading(false); return }
+    if (!etapa || !tipo) { setDados([]); setLoading(false); return }
+    const reqId = ++reqRef.current
     setLoading(true)
     const supabase = getSupabaseClient()
-    const tipo = getBroadTipo(etapaTipo)
+
+    if (tipo === 'fundamental' && !disciplina) {
+      setDados([])
+      setLoading(false)
+      return
+    }
+    if (tipo === 'medio' && !areaId) {
+      setDados([])
+      setLoading(false)
+      return
+    }
 
     try {
       if (tipo === 'infantil') {
         let q = supabase.from('bncc_objetivos').select('*').eq('etapa', getEtapaDb(etapa))
         if (faixaEtaria) q = q.eq('faixa_etaria', faixaEtaria)
         const { data } = await q
-        setDados(data || [])
+        if (reqId === reqRef.current) setDados(data || [])
       } else if (tipo === 'fundamental') {
         let q = supabase.from('bncc_habilidades').select(`
           id, codigo_bncc, descricao, anos, etapa_ensino,
@@ -155,9 +163,7 @@ export default function BNCCConsultaPage() {
             unidade_tematica:bncc_unidades_tematicas!inner(id, unidade_tematica, disciplina)
           )
         `)
-        if (disciplina) {
-          q = q.eq('objeto_conhecimento.unidade_tematica.disciplina', disciplina)
-        }
+        q = q.eq('objeto_conhecimento.unidade_tematica.disciplina', disciplina)
         const { data } = await q
         // Filtrar pelo ano escolar no cliente (contorna bug do contains JSONB)
         const anoMatch = etapa.match(/(\d+)º/)
@@ -165,22 +171,20 @@ export default function BNCCConsultaPage() {
         const filtered = anoEscolar
           ? (data || []).filter((h: any) => Array.isArray(h.anos) && h.anos.includes(anoEscolar))
           : (data || [])
-        setDados(filtered as any[])
+        if (reqId === reqRef.current) setDados(filtered as any[])
       } else {
         let q = supabase.from('bncc_habilidades_medio')
           .select('id, codigo, descricao, competencia_codigo')
-        if (areaId) q = q.eq('area_id', areaId)
+        q = q.eq('area_id', areaId)
         q = q.order('competencia_codigo').order('codigo')
         const { data } = await q
-        setDados((data || []) as any[])
+        if (reqId === reqRef.current) setDados((data || []) as any[])
       }
     } catch {
-      setDados([])
+      if (reqId === reqRef.current) setDados([])
     }
-    setLoading(false)
+    if (reqId === reqRef.current) setLoading(false)
   }
-
-  const tipo = etapaTipo ? getBroadTipo(etapaTipo) : null
 
   const grupos = dados.reduce((acc: any, d: any) => {
     let chave = ''
@@ -195,6 +199,18 @@ export default function BNCCConsultaPage() {
 
   const totalUnicos = new Set(dados.map((d: any) => d.codigo_bncc || d.codigo)).size
 
+  const tituloAgrupamento = tipo === 'infantil'
+    ? 'Campos de Experiências'
+    : tipo === 'fundamental'
+      ? 'Unidades Temáticas'
+      : 'Competências Específicas'
+
+  const descricaoAgrupamento = tipo === 'infantil'
+    ? `Objetivos de aprendizagem agrupados por campo de experiência — ${etapa}`
+    : tipo === 'fundamental'
+      ? `Habilidades agrupadas por unidade temática — ${etapa}`
+      : 'Habilidades agrupadas por competência específica'
+
   return (
     <PageContainer>
       <PageHeader
@@ -202,103 +218,88 @@ export default function BNCCConsultaPage() {
         description="Base Nacional Comum Curricular"
       />
 
-      <Card className="mb-6 border-0 shadow-sm animate-fade-in-up delay-75">
-        <CardContent className="pt-6">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <div>
-              <label className="text-sm font-medium mb-2 block text-foreground">Etapa de Ensino</label>
-              <Select value={etapa} onValueChange={setEtapa}>
-                <SelectTrigger className="border-border focus:border-primary [&_svg:not([class*='rotate'])]:rotate-0">
-                  <SelectValue placeholder="Selecione" />
-                </SelectTrigger>
-                <SelectContent position="popper" side="bottom" sideOffset={5}>
-                  {(() => {
-                    const grupos: Record<string, EtapaEnsino[]> = {}
-                    for (const e of etapas) {
-                      const chave = getBroadTipo(e.etapa_tipo)
-                      if (!grupos[chave]) grupos[chave] = []
-                      grupos[chave].push(e)
-                    }
-                    const labels: Record<string, string> = {
-                      infantil: 'Educação Infantil',
-                      fundamental: 'Ensino Fundamental',
-                      medio: 'Ensino Médio'
-                    }
-                    return Object.entries(grupos).flatMap(([tipo, lista]) => [
-                      <SelectGroup key={tipo}>
-                        <SelectLabel className="text-xs font-semibold text-muted-foreground uppercase tracking-wider px-2 py-1">
-                          {labels[tipo] || tipo}
-                        </SelectLabel>
-                        {lista.map(e => (
-                          <SelectItem key={e.id} value={e.etapa_nome}>{e.etapa_nome}</SelectItem>
-                        ))}
-                      </SelectGroup>
-                    ])
-                  })()}
-                </SelectContent>
-              </Select>
-            </div>
-
-            {tipo === 'infantil' && (
-              <div>
-                <label className="text-sm font-medium mb-2 block text-foreground">Faixa Etária</label>
-                <Select value={faixaEtaria} onValueChange={setFaixaEtaria}>
-                  <SelectTrigger className="border-border focus:border-primary min-w-[240px] [&_svg:not([class*='rotate'])]:rotate-0 [&>span]:truncate">
-                    <SelectValue placeholder="Selecione uma faixa etária" />
-                  </SelectTrigger>
-                  <SelectContent position="popper" side="bottom" sideOffset={5}>
-                    {faixas.map(f => (
-                      <SelectItem key={f} value={f}>{f}</SelectItem>
+      <PageSection variant="compact" title="Filtros" className="mb-6">
+        <FilterBar>
+          <Select value={etapa} onValueChange={setEtapa}>
+            <SelectTrigger className="w-auto min-w-[240px] h-9">
+              <SelectValue placeholder="Selecione uma Etapa de Ensino" />
+            </SelectTrigger>
+            <SelectContent position="popper" side="bottom" sideOffset={5}>
+              {(() => {
+                const grupos: Record<string, EtapaEnsino[]> = {}
+                for (const e of etapas) {
+                  const chave = getBroadTipo(e.etapa_tipo)
+                  if (!grupos[chave]) grupos[chave] = []
+                  grupos[chave].push(e)
+                }
+                const labels: Record<string, string> = {
+                  infantil: 'Educação Infantil',
+                  fundamental: 'Ensino Fundamental',
+                  medio: 'Ensino Médio'
+                }
+                return Object.entries(grupos).flatMap(([tipo, lista]) => [
+                  <SelectGroup key={tipo}>
+                    <SelectLabel className="text-xs font-semibold text-muted-foreground uppercase tracking-wider px-2 py-1">
+                      {labels[tipo] || tipo}
+                    </SelectLabel>
+                    {lista.map(e => (
+                      <SelectItem key={e.id} value={e.etapa_nome}>{e.etapa_nome}</SelectItem>
                     ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            )}
+                  </SelectGroup>
+                ])
+              })()}
+            </SelectContent>
+          </Select>
 
-            {tipo === 'fundamental' && (
-              <div>
-                <label className="text-sm font-medium mb-2 block text-foreground">Disciplina</label>
-                <Select value={disciplina} onValueChange={setDisciplina}>
-                  <SelectTrigger className="border-border focus:border-primary [&_svg:not([class*='rotate'])]:rotate-0">
-                    <SelectValue placeholder="Selecione uma disciplina" />
-                  </SelectTrigger>
-                  <SelectContent position="popper" side="bottom" sideOffset={5}>
-                    {disciplinas.map(d => (
-                      <SelectItem key={d.id} value={d.nome}>{d.nome}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            )}
+          {tipo === 'infantil' && (
+            <Select value={faixaEtaria} onValueChange={setFaixaEtaria}>
+              <SelectTrigger className="w-auto min-w-[220px] h-9">
+                <SelectValue placeholder="Selecione uma faixa etária" />
+              </SelectTrigger>
+              <SelectContent position="popper" side="bottom" sideOffset={5}>
+                {faixas.map(f => (
+                  <SelectItem key={f} value={f}>{f}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
 
-            {tipo === 'medio' && (
-              <div>
-                <label className="text-sm font-medium mb-2 block text-foreground">Área do Conhecimento</label>
-                <Select value={areaId} onValueChange={setAreaId}>
-                  <SelectTrigger className="border-border focus:border-primary [&_svg:not([class*='rotate'])]:rotate-0">
-                    <SelectValue placeholder="Todas" />
-                  </SelectTrigger>
-                  <SelectContent position="popper" side="bottom" sideOffset={5}>
-                    <SelectItem value="all">Todas</SelectItem>
-                    {areas.map(a => (
-                      <SelectItem key={a.id} value={a.id}>{a.nome}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            )}
+          {tipo === 'fundamental' && (
+            <Select value={disciplina} onValueChange={setDisciplina}>
+              <SelectTrigger className="w-auto min-w-[200px] h-9">
+                <SelectValue placeholder="Selecione uma disciplina" />
+              </SelectTrigger>
+              <SelectContent position="popper" side="bottom" sideOffset={5}>
+                {disciplinas.map(d => (
+                  <SelectItem key={d.id} value={d.nome}>{d.nome}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
 
-            <div>
-              <label className="text-sm font-medium mb-2 block text-foreground">Total</label>
-              <div className="h-10 flex items-center">
-                <Badge className="bg-primary/10 text-primary text-lg px-3 py-1">
-                  {totalUnicos} {tipo === 'infantil' ? 'objetivos' : 'habilidades'}
-                </Badge>
-              </div>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+          {tipo === 'medio' && (
+            <Select value={areaId} onValueChange={setAreaId}>
+              <SelectTrigger className="w-auto min-w-[200px] h-9">
+                <SelectValue placeholder="Selecione uma área" />
+              </SelectTrigger>
+              <SelectContent position="popper" side="bottom" sideOffset={5}>
+                {areas.map(a => (
+                  <SelectItem key={a.id} value={a.id}>{a.nome}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
+
+          {dados.length > 0 && (
+            <span className="inline-flex items-center gap-2 rounded-lg bg-primary px-3 py-1.5 shadow-sm">
+              <span className="text-[15px] font-bold text-primary-foreground tabular-nums">{totalUnicos}</span>
+              <span className="text-xs font-medium text-primary-foreground/80">
+                {tipo === 'infantil' ? 'objetivos' : 'habilidades'}
+              </span>
+            </span>
+          )}
+        </FilterBar>
+      </PageSection>
 
       {loading ? (
         <div className="text-center py-12">
@@ -311,14 +312,54 @@ export default function BNCCConsultaPage() {
             <div className="w-20 h-20 bg-gradient-to-br from-primary/10 to-secondary/10 rounded-2xl flex items-center justify-center mb-6">
               <BookOpen className="h-10 w-10 text-primary" />
             </div>
-            <h3 className="text-xl font-semibold text-foreground mb-2">Nenhum resultado encontrado</h3>
-            <p className="text-muted-foreground text-center">
-              Nenhum registro encontrado para os filtros selecionados.
-            </p>
+            {!etapa ? (
+              <>
+                <h3 className="text-xl font-semibold text-foreground mb-2">Selecione os filtros</h3>
+                <p className="text-muted-foreground text-center">
+                  Escolha uma <strong>etapa de ensino</strong> para consultar a BNCC.
+                </p>
+              </>
+            ) : tipo === 'fundamental' && !disciplina ? (
+              <>
+                <h3 className="text-xl font-semibold text-foreground mb-2">Selecione a disciplina</h3>
+                <p className="text-muted-foreground text-center">
+                  Escolha uma <strong>disciplina</strong> para visualizar as habilidades.
+                </p>
+              </>
+            ) : tipo === 'medio' && !areaId ? (
+              <>
+                <h3 className="text-xl font-semibold text-foreground mb-2">Selecione a área</h3>
+                <p className="text-muted-foreground text-center">
+                  Escolha uma <strong>área do conhecimento</strong> para visualizar as habilidades.
+                </p>
+              </>
+            ) : (
+              <>
+                <h3 className="text-xl font-semibold text-foreground mb-2">Nenhum resultado encontrado</h3>
+                <p className="text-muted-foreground text-center">
+                  Nenhum registro encontrado para os filtros selecionados.
+                </p>
+              </>
+            )}
           </CardContent>
         </Card>
       ) : (
-        <div className="space-y-4">
+        <Card className="border-0 shadow-sm overflow-hidden animate-fade-in-up">
+          <CardHeader className="bg-muted/40 border-b border-border">
+            <div className="flex items-center justify-between gap-4">
+              <div className="min-w-0">
+                <CardTitle className="text-[20px] font-semibold text-foreground tracking-tight">{tituloAgrupamento}</CardTitle>
+                <p className="text-[15px] text-muted-foreground mt-1">{descricaoAgrupamento}</p>
+              </div>
+              <span className="inline-flex items-center gap-2 rounded-lg bg-primary px-3 py-1.5 shadow-sm shrink-0">
+                <span className="text-[15px] font-bold text-primary-foreground tabular-nums">{Object.keys(grupos).length}</span>
+                <span className="text-xs font-medium text-primary-foreground/80">
+                  {tipo === 'infantil' ? 'campos' : 'grupos'}
+                </span>
+              </span>
+            </div>
+          </CardHeader>
+          <CardContent className="p-4 sm:p-5 space-y-4 bg-muted/30">
           {Object.entries(grupos as Record<string, any[]>).map(([grupo, items], idx) => (
             <Card key={grupo} className="border-0 shadow-sm animate-fade-in-up">
               <CardHeader
@@ -328,7 +369,12 @@ export default function BNCCConsultaPage() {
                 <div className="flex items-center justify-between">
                   <CardTitle className="text-lg font-semibold text-foreground">{grupo}</CardTitle>
                   <div className="flex items-center gap-2">
-                    <Badge className="bg-secondary/10 text-secondary border-0">{items.length}</Badge>
+                    <span className="inline-flex items-center gap-2 rounded-lg bg-primary px-3 py-1.5 shadow-sm">
+                      <span className="text-[15px] font-bold text-primary-foreground tabular-nums">{items.length}</span>
+                      <span className="text-xs font-medium text-primary-foreground/80">
+                        {tipo === 'infantil' ? 'objetivos' : 'habilidades'}
+                      </span>
+                    </span>
                     {expandedGrupo === grupo ? (
                       <ChevronDown className="h-5 w-5 text-muted-foreground" />
                     ) : (
@@ -362,7 +408,8 @@ export default function BNCCConsultaPage() {
               )}
             </Card>
           ))}
-        </div>
+          </CardContent>
+        </Card>
       )}
     </PageContainer>
   )

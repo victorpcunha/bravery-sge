@@ -4,36 +4,14 @@ import { useState, useEffect } from 'react'
 import { getSupabaseClient } from '@/lib/auth'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Badge } from '@/components/ui/badge'
 import { BookOpen, Lightbulb } from 'lucide-react'
 import { PageContainer } from '@/components/layout/page-container'
 import { PageHeader } from '@/components/layout/page-header'
+import { PageSection } from '@/components/layout/page-section'
+import { FilterBar } from '@/components/layout/filter-bar'
 
-const areaColors: Record<string, string> = {
-  'Linguagens': 'from-primary to-secondary',
-  'Linguagens e suas tecnologias': 'from-primary to-secondary',
-  'Matemática': 'from-success to-success/80',
-  'Matemática e suas tecnologias': 'from-success to-success/80',
-  'Ciências da Natureza': 'from-info to-info/80',
-  'Ciências da Natureza e suas tecnologias': 'from-info to-info/80',
-  'Ciências Humanas': 'from-warning to-warning/80',
-  'Ciências Humanas e Sociais Aplicadas': 'from-warning to-warning/80',
-  'Ensino Religioso': 'from-destructive to-destructive/80',
-  'Computação': 'from-ring to-ring/80',
-}
-
-const areaBadgeColors: Record<string, string> = {
-  'Linguagens': 'bg-primary/10 text-primary',
-  'Linguagens e suas tecnologias': 'bg-primary/10 text-primary',
-  'Matemática': 'bg-success/10 text-success',
-  'Matemática e suas tecnologias': 'bg-success/10 text-success',
-  'Ciências da Natureza': 'bg-info/10 text-info',
-  'Ciências da Natureza e suas tecnologias': 'bg-info/10 text-info',
-  'Ciências Humanas': 'bg-warning/10 text-warning',
-  'Ciências Humanas e Sociais Aplicadas': 'bg-warning/10 text-warning',
-  'Ensino Religioso': 'bg-destructive/10 text-destructive',
-  'Computação': 'bg-ring/10 text-ring',
-}
+const areaColor = 'from-primary to-secondary'
+const areaBadgeColor = 'bg-primary/10 text-primary'
 
 export default function AreasConhecimentoPage() {
   const [tipoEnsino, setTipoEnsino] = useState('medio')
@@ -82,42 +60,28 @@ export default function AreasConhecimentoPage() {
         description="Competências Específicas da BNCC por Área do Conhecimento"
       />
 
-      <Card className="mb-6 border-0 shadow-sm animate-fade-in-up delay-75">
-        <CardContent className="pt-6">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div>
-              <label className="text-sm font-medium mb-2 block text-foreground">Tipo de Ensino</label>
-              <Select value={tipoEnsino} onValueChange={(v) => { setTipoEnsino(v); setSelectedArea(null) }}>
-                <SelectTrigger className="border-border focus:border-primary [&_svg:not([class*='rotate'])]:rotate-0">
-                  <SelectValue placeholder="Selecione" />
-                </SelectTrigger>
-                <SelectContent position="popper" side="bottom" sideOffset={5}>
-                  <SelectItem value="fundamental">Ensino Fundamental</SelectItem>
-                  <SelectItem value="medio">Ensino Médio</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div>
-              <label className="text-sm font-medium mb-2 block text-foreground">Área do Conhecimento</label>
-              <Select value={selectedArea || ''} onValueChange={setSelectedArea}>
-                <SelectTrigger className="border-border focus:border-primary [&_svg:not([class*='rotate'])]:rotate-0">
-                  <SelectValue placeholder="Selecione" />
-                </SelectTrigger>
-                <SelectContent position="popper" side="bottom" sideOffset={5}>
-                  {areas.map(a => <SelectItem key={a.id} value={a.id}>{a.nome}</SelectItem>)}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="flex items-end">
-              {currentArea && (
-                <Badge className={`${areaBadgeColors[currentArea.nome] || 'bg-primary/10 text-primary'} text-sm px-3 py-1`}>
-                  {currentArea.competencias_count} competências
-                </Badge>
-              )}
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+      <PageSection variant="compact" title="Filtros" className="mb-6">
+        <FilterBar>
+          <Select value={tipoEnsino} onValueChange={(v) => { setTipoEnsino(v); setSelectedArea(null) }}>
+            <SelectTrigger className="w-auto min-w-[200px] h-9">
+              <SelectValue placeholder="Selecione" />
+            </SelectTrigger>
+            <SelectContent position="popper" side="bottom" sideOffset={5}>
+              <SelectItem value="fundamental">Ensino Fundamental</SelectItem>
+              <SelectItem value="medio">Ensino Médio</SelectItem>
+            </SelectContent>
+          </Select>
+
+          <Select value={selectedArea || ''} onValueChange={setSelectedArea}>
+            <SelectTrigger className="w-auto min-w-[220px] h-9">
+              <SelectValue placeholder="Selecione uma área" />
+            </SelectTrigger>
+            <SelectContent position="popper" side="bottom" sideOffset={5}>
+              {areas.map(a => <SelectItem key={a.id} value={a.id}>{a.nome}</SelectItem>)}
+            </SelectContent>
+          </Select>
+        </FilterBar>
+      </PageSection>
 
       {loadingAreas ? (
         <div className="text-center py-12">
@@ -134,68 +98,48 @@ export default function AreasConhecimentoPage() {
             <p className="text-muted-foreground text-center">Não há áreas do conhecimento cadastradas para o tipo de ensino selecionado.</p>
           </CardContent>
         </Card>
-      ) : (
-        <div className="space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {areas.map((area) => (
-              <Card key={area.id} className={`border-0 shadow-sm hover:shadow-md transition-all duration-300 cursor-pointer ${selectedArea === area.id ? 'ring-2 ring-primary' : ''}`}
-                onClick={() => setSelectedArea(area.id)}>
-                <CardHeader className="pb-3">
-                  <div className="flex items-center gap-3">
-                    <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${areaColors[area.nome] || 'from-primary to-secondary'} flex items-center justify-center`}>
-                      <BookOpen className="w-6 h-6 text-primary-foreground" />
-                    </div>
-                    <div>
-                      <CardTitle className="text-lg font-semibold text-foreground">{area.nome}</CardTitle>
-                      <p className="text-xs text-muted-foreground mt-0.5">{area.competencias_count} competências</p>
-                    </div>
-                  </div>
-                </CardHeader>
-              </Card>
-            ))}
-          </div>
-
-          {currentArea && (
-            <Card className="border-0 shadow-sm animate-fade-in-up">
-              <CardHeader>
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${areaColors[currentArea.nome] || 'from-primary to-secondary'} flex items-center justify-center`}>
-                      <Lightbulb className="w-5 h-5 text-primary-foreground" />
-                    </div>
-                    <div>
-                      <CardTitle className="text-xl font-semibold text-foreground">Competências Específicas de {currentArea.nome}</CardTitle>
-                      <p className="text-sm text-muted-foreground">{tipoEnsino === 'fundamental' ? 'Ensino Fundamental' : 'Ensino Médio'}</p>
-                    </div>
-                  </div>
-                  <Badge className={`${areaBadgeColors[currentArea.nome] || 'bg-primary/10 text-primary'} text-sm px-3 py-1`}>{currentArea.competencias_count} competências</Badge>
+      ) : currentArea && (
+        <Card className="border-0 shadow-sm animate-fade-in-up">
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${areaColor} flex items-center justify-center`}>
+                  <Lightbulb className="w-5 h-5 text-primary-foreground" />
                 </div>
-              </CardHeader>
-              <CardContent>
-                {loadingCompetencias ? (
-                  <div className="text-center py-8"><div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary mx-auto"></div></div>
-                ) : competencias.length === 0 ? (
-                  <p className="text-muted-foreground text-center py-4">Nenhuma competência cadastrada.</p>
-                ) : (
-                  <div className="space-y-4">
-                    {competencias.map((comp) => (
-                      <div key={comp.id} className="p-5 rounded-xl border border-border/50 bg-card/50 hover:bg-muted/50 transition-all duration-200">
-                        <div className="flex items-start gap-4">
-                          <div className={`shrink-0 w-10 h-10 rounded-full bg-gradient-to-br ${areaColors[currentArea.nome] || 'from-primary to-secondary'} flex items-center justify-center`}>
-                            <span className="text-sm font-bold text-primary-foreground">{comp.codigo}</span>
-                          </div>
-                          <div className="flex-1 pt-1">
-                            <p className="text-sm text-foreground leading-relaxed">{comp.descricao}</p>
-                          </div>
-                        </div>
+                <div>
+                  <CardTitle className="text-xl font-semibold text-foreground">Competências Específicas de {currentArea.nome}</CardTitle>
+                  <p className="text-sm text-muted-foreground">{tipoEnsino === 'fundamental' ? 'Ensino Fundamental' : 'Ensino Médio'}</p>
+                </div>
+              </div>
+              <span className={`inline-flex items-center gap-2 rounded-lg px-3 py-1.5 shadow-sm ${areaBadgeColor}`}>
+                <span className="text-[15px] font-bold tabular-nums">{currentArea.competencias_count}</span>
+                <span className="text-xs font-medium opacity-80">competências</span>
+              </span>
+            </div>
+          </CardHeader>
+          <CardContent>
+            {loadingCompetencias ? (
+              <div className="text-center py-8"><div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary mx-auto"></div></div>
+            ) : competencias.length === 0 ? (
+              <p className="text-muted-foreground text-center py-4">Nenhuma competência cadastrada.</p>
+            ) : (
+              <div className="space-y-4">
+                {competencias.map((comp) => (
+                  <div key={comp.id} className="p-5 rounded-xl border border-border/50 bg-card/50 hover:bg-muted/50 transition-all duration-200">
+                    <div className="flex items-start gap-4">
+                      <div className={`shrink-0 w-10 h-10 rounded-full bg-gradient-to-br ${areaColor} flex items-center justify-center`}>
+                        <span className="text-sm font-bold text-primary-foreground">{comp.codigo}</span>
                       </div>
-                    ))}
+                      <div className="flex-1 pt-1">
+                        <p className="text-sm text-foreground leading-relaxed">{comp.descricao}</p>
+                      </div>
+                    </div>
                   </div>
-                )}
-              </CardContent>
-            </Card>
-          )}
-        </div>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
       )}
 
       <div className="mt-8 p-5 bg-muted/50 rounded-2xl border border-border">

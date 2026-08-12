@@ -8,14 +8,10 @@ import { Badge } from '@/components/ui/badge'
 import { BookOpen, Lightbulb, ChevronDown, ChevronRight } from 'lucide-react'
 import { PageContainer } from '@/components/layout/page-container'
 import { PageHeader } from '@/components/layout/page-header'
+import { PageSection } from '@/components/layout/page-section'
+import { FilterBar } from '@/components/layout/filter-bar'
 
-const areaColors: Record<string, string> = {
-  'Linguagens e suas tecnologias': 'from-primary to-secondary',
-  'Matemática e suas tecnologias': 'from-success to-success/80',
-  'Ciências da Natureza e suas tecnologias': 'from-info to-info/80',
-  'Ciências Humanas e Sociais Aplicadas': 'from-warning to-warning/80',
-  'Computação': 'from-ring to-ring/80',
-}
+const areaColor = 'from-primary to-secondary'
 
 const AREA_LINGUAGENS = 'Linguagens e suas tecnologias'
 
@@ -27,13 +23,7 @@ const camposAtuacao = [
   { value: 'artistico_literario', label: 'Artístico-Literário' },
 ]
 
-const campoColors: Record<string, string> = {
-  vida_pessoal: 'from-primary to-secondary',
-  vida_publica: 'from-warning to-warning/80',
-  praticas_estudo: 'from-success to-success/80',
-  jornalistico_midiatico: 'from-info to-info/80',
-  artistico_literario: 'from-destructive to-destructive/80',
-}
+const campoColor = 'from-primary to-secondary'
 
 export default function CompetenciasHabilidadesPage() {
   const [areas, setAreas] = useState<any[]>([])
@@ -134,37 +124,38 @@ export default function CompetenciasHabilidadesPage() {
         description={`Habilidades da BNCC do Ensino Médio${isLp ? ' - Língua Portuguesa por Campo de Atuação' : ''}`}
       />
 
-      <Card className="mb-6 border-0 shadow-sm animate-fade-in-up delay-75">
-        <CardContent className="pt-6">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div>
-              <label className="text-sm font-medium mb-2 block text-foreground">Tipo de Ensino</label>
-              <div className="h-10 flex items-center px-3 bg-card/80 border border-border rounded-lg text-sm text-foreground font-medium">Ensino Médio</div>
-            </div>
-            <div>
-              <label className="text-sm font-medium mb-2 block text-foreground">Área do Conhecimento</label>
-              <Select value={selectedArea} onValueChange={setSelectedArea}>
-                <SelectTrigger className="border-border focus:border-primary [&_svg:not([class*='rotate'])]:rotate-0"><SelectValue placeholder="Selecione" /></SelectTrigger>
-                <SelectContent position="popper" side="bottom" sideOffset={5}>
-                  {areas.map((a: any) => <SelectItem key={a.id} value={a.id}>{a.nome}</SelectItem>)}
-                </SelectContent>
-              </Select>
-            </div>
-            {showComponente && (
-              <div>
-                <label className="text-sm font-medium mb-2 block text-foreground">Componente</label>
-                <Select value={componente} onValueChange={setComponente}>
-                  <SelectTrigger className="border-border focus:border-primary [&_svg:not([class*='rotate'])]:rotate-0"><SelectValue /></SelectTrigger>
-                  <SelectContent position="popper" side="bottom" sideOffset={5}>
-                    <SelectItem value="geral">Geral</SelectItem>
-                    <SelectItem value="lingua_portuguesa">Língua Portuguesa</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            )}
+      <PageSection variant="compact" title="Filtros" className="mb-6">
+        <FilterBar>
+          <div className="h-9 flex items-center px-3 bg-card border border-border rounded-sm text-sm text-foreground font-medium">
+            Ensino Médio
           </div>
-        </CardContent>
-      </Card>
+          <Select value={selectedArea} onValueChange={setSelectedArea}>
+            <SelectTrigger className="w-auto min-w-[220px] h-9">
+              <SelectValue placeholder="Selecione uma área" />
+            </SelectTrigger>
+            <SelectContent position="popper" side="bottom" sideOffset={5}>
+              {areas.map((a: any) => <SelectItem key={a.id} value={a.id}>{a.nome}</SelectItem>)}
+            </SelectContent>
+          </Select>
+          {showComponente && (
+            <Select value={componente} onValueChange={setComponente}>
+              <SelectTrigger className="w-auto min-w-[180px] h-9">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent position="popper" side="bottom" sideOffset={5}>
+                <SelectItem value="geral">Geral</SelectItem>
+                <SelectItem value="lingua_portuguesa">Língua Portuguesa</SelectItem>
+              </SelectContent>
+            </Select>
+          )}
+          {selectedArea && totalHabilidades > 0 && (
+            <span className="inline-flex items-center gap-2 rounded-lg bg-primary px-3 py-1.5 shadow-sm">
+              <span className="text-[15px] font-bold text-primary-foreground tabular-nums">{totalHabilidades}</span>
+              <span className="text-xs font-medium text-primary-foreground/80">habilidades</span>
+            </span>
+          )}
+        </FilterBar>
+      </PageSection>
 
       {!selectedArea ? (
         <Card className="border-0 shadow-sm">
@@ -180,7 +171,6 @@ export default function CompetenciasHabilidadesPage() {
         <div className="text-center py-12"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div><p className="text-muted-foreground">Carregando...</p></div>
       ) : isLp ? (
         <div className="space-y-4 animate-fade-in-up">
-          <Badge className="bg-primary/10 text-primary text-sm px-4 py-2">{totalHabilidades} habilidade(s)</Badge>
           {habilidadesPorCampo.map(campo => {
             const isExp = expandedCampo === campo.value
             return (
@@ -188,7 +178,7 @@ export default function CompetenciasHabilidadesPage() {
                 <CardHeader className="cursor-pointer hover:bg-muted/30" onClick={() => setExpandedCampo(isExp ? null : campo.value)}>
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
-                      <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${campoColors[campo.value] || 'from-primary to-secondary'} flex items-center justify-center`}>
+                      <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${campoColor} flex items-center justify-center`}>
                         <BookOpen className="w-5 h-5 text-primary-foreground" />
                       </div>
                       <div>
@@ -236,7 +226,6 @@ export default function CompetenciasHabilidadesPage() {
         </div>
       ) : (
         <div className="space-y-4 animate-fade-in-up">
-          <Badge className="bg-primary/10 text-primary text-sm px-4 py-2">{totalHabilidades} habilidade(s)</Badge>
           {compKeys.length === 0 ? (
             <Card className="border-0 shadow-sm">
               <CardContent className="text-center py-8"><p className="text-muted-foreground">Nenhuma habilidade encontrada.</p></CardContent>
@@ -251,7 +240,7 @@ export default function CompetenciasHabilidadesPage() {
                   <CardHeader className="cursor-pointer hover:bg-muted/30" onClick={() => setExpandedCard(isExp ? null : `comp-${compCodigo}`)}>
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-3">
-                        <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${areaColors[currentArea?.nome || ''] || 'from-primary to-secondary'} flex items-center justify-center`}>
+                        <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${areaColor} flex items-center justify-center`}>
                           <Lightbulb className="w-5 h-5 text-primary-foreground" />
                         </div>
                         <div>
