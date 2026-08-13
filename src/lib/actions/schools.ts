@@ -14,6 +14,7 @@ export type School = {
   nome_gestor: string | null
   cpf_secretario: string | null
   nome_secretario: string | null
+  ddd: string | null
   telefone_1: string | null
   telefone_2: string | null
   email: string | null
@@ -33,17 +34,26 @@ export type UserAuthInfo = {
   allSchools: { id: string; nome_escola: string }[]
 }
 
-export async function getSchools() {
-  const { data, error } = await supabase
+export async function getSchoolsEscopadas(ids: string[] | null) {
+  let query = supabase
     .from('schools')
     .select('*')
     .order('nome_escola', { ascending: true })
+
+  if (ids) query = query.in('id', ids)
+
+  const { data, error } = await query
 
   if (error) throw error
   return data as School[]
 }
 
-export async function getSchool(id: string) {
+export async function getSchool(id: string, pessoaId?: string | null) {
+  if (pessoaId) {
+    const { validarPermissaoEstrita } = await import('./perfis')
+    await validarPermissaoEstrita(pessoaId, 'escolas', 'visualizar')
+  }
+
   const { data, error } = await supabase
     .from('schools')
     .select('*')
@@ -119,7 +129,10 @@ export async function getUserAuthInfo(userId: string, email: string): Promise<Us
   return { schoolIds, isSuperAdmin, allSchools }
 }
 
-export async function createSchool(school: Partial<School>) {
+export async function createSchool(school: Partial<School>, pessoaId?: string | null) {
+  const { validarPermissaoEstrita } = await import('./perfis')
+  await validarPermissaoEstrita(pessoaId || '', 'escolas', 'criar')
+
   const { data, error } = await supabase
     .from('schools')
     .insert(school)
@@ -130,7 +143,10 @@ export async function createSchool(school: Partial<School>) {
   return data as School
 }
 
-export async function updateSchool(id: string, school: Partial<School>) {
+export async function updateSchool(id: string, school: Partial<School>, pessoaId?: string | null) {
+  const { validarPermissaoEstrita } = await import('./perfis')
+  await validarPermissaoEstrita(pessoaId || '', 'escolas', 'editar')
+
   const { data, error } = await supabase
     .from('schools')
     .update(school)
@@ -142,7 +158,10 @@ export async function updateSchool(id: string, school: Partial<School>) {
   return data as School
 }
 
-export async function deleteSchool(id: string) {
+export async function deleteSchool(id: string, pessoaId?: string | null) {
+  const { validarPermissaoEstrita } = await import('./perfis')
+  await validarPermissaoEstrita(pessoaId || '', 'escolas', 'excluir')
+
   const { error } = await supabase
     .from('schools')
     .delete()

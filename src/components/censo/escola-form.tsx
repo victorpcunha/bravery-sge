@@ -1,6 +1,7 @@
 'use client'
 
 import { useForm, useWatch } from 'react-hook-form'
+import { useEffect } from 'react'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { Loader2 } from 'lucide-react'
@@ -37,6 +38,9 @@ import {
   CardTitle,
 } from '@/components/ui/card'
 import { Separator } from '@/components/ui/separator'
+import { Combobox } from '@/components/ui/combobox'
+import { MUNICIPIOS_CEARA } from '@/data/censo/municipios-ceara'
+import { ORGAOS_REGIONAIS_CEARA } from '@/data/censo/orgaos-regionais-ceara'
 
 // ───────────────────── Zod Schema ─────────────────────
 
@@ -62,10 +66,8 @@ const escolaFormSchema = z.object({
   formato_organizacional: z.string().optional(),
   localizacao: z.string().min(1, 'Localização é obrigatória'),
   localizacao_diferenciada: z.string().min(1, 'Localização diferenciada é obrigatória'),
-  data_inicio_ano: z.string().optional(),
-  data_fim_ano: z.string().optional(),
 
-  // Tab 2: Endereço e Contato
+  // Tab 2: Endereço
   cep: digitString(8, 'CEP deve ter 8 dígitos'),
   municipio: digitString(7, 'Código do município deve ter 7 dígitos'),
   distrito: digitString(2, 'Distrito deve ter 2 dígitos'),
@@ -329,6 +331,7 @@ interface EscolaFormProps {
   onCancel?: () => void
   submitLabel?: string
   title?: string
+  readOnly?: boolean
 }
 
 // ───────────────────── Helpers ─────────────────────
@@ -416,6 +419,7 @@ function InputField({
   type,
   maxLength,
   disabled,
+  digitsOnly,
 }: {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   control: any
@@ -425,6 +429,7 @@ function InputField({
   type?: string
   maxLength?: number
   disabled?: boolean
+  digitsOnly?: boolean
 }) {
   return (
     <FormField
@@ -439,8 +444,14 @@ function InputField({
               type={type || 'text'}
               maxLength={maxLength}
               disabled={disabled}
+              inputMode={digitsOnly ? 'numeric' : undefined}
               {...field}
               value={field.value || ''}
+              onChange={
+                digitsOnly
+                  ? (e) => field.onChange(e.target.value.replace(/[^0-9]/g, ''))
+                  : field.onChange
+              }
             />
           </FormControl>
           <FormMessage />
@@ -459,6 +470,7 @@ export function EscolaForm({
   onCancel,
   submitLabel = 'Salvar Escola',
   title = 'Nova Escola',
+  readOnly = false,
 }: EscolaFormProps) {
   const form = useForm<EscolaFormValues>({
     resolver: zodResolver(escolaFormSchema),
@@ -480,6 +492,41 @@ export function EscolaForm({
   const internetAlunos = useWatch({ control, name: 'internet_alunos' })
   const internetInexistente = useWatch({ control, name: 'internet_inexistente' })
   const regulamentacao = useWatch({ control, name: 'regulamentacao' })
+  const municipioWatch = useWatch({ control, name: 'municipio' })
+  const distritoWatch = useWatch({ control, name: 'distrito' })
+
+  const municipiosOptions = MUNICIPIOS_CEARA.map(m => ({
+    value: m.codigo,
+    label: `${m.nome} / ${m.uf}`,
+  }))
+
+  const orgaosOptions = ORGAOS_REGIONAIS_CEARA.map(o => ({
+    value: o.codigo,
+    label: `${o.nome} (${o.codigo})`,
+  }))
+
+  const municipioSelecionado = MUNICIPIOS_CEARA.find(m => m.codigo === municipioWatch)
+  const distritosOptions = (municipioSelecionado?.distritos ?? []).map(d => ({
+    value: d.importCodigo,
+    label: d.nome,
+  }))
+
+  useEffect(() => {
+    if (!municipioSelecionado) {
+      if (distritoWatch) form.setValue('distrito', '')
+      return
+    }
+    const distritoValido = municipioSelecionado.distritos.some(d => d.importCodigo === distritoWatch)
+    if (!distritoValido) {
+      const sede =
+        municipioSelecionado.distritos.find(d => d.nome === municipioSelecionado.nome) ||
+        municipioSelecionado.distritos[0]
+      if (sede) form.setValue('distrito', sede.importCodigo)
+    }
+    if (municipioSelecionado.ddd) {
+      form.setValue('ddd', municipioSelecionado.ddd)
+    }
+  }, [municipioWatch, municipioSelecionado, distritoWatch, form])
 
   const submitHandler = (data: EscolaFormValues) => {
     return onSubmit(data as unknown as Record<string, unknown>)
@@ -581,7 +628,6 @@ export function EscolaForm({
     { value: '2', label: 'Sim — atualizado há mais de 5 anos' },
   ]
 
-  const showDatas = situacaoFuncionamento === '1'
   const mostraOrgaos = ['1', '2', '3'].includes(dependenciaAdministrativa)
   const mostraMantenedora = dependenciaAdministrativa === '4' && situacaoFuncionamento === '1'
   const mostraCategoriaPrivada = dependenciaAdministrativa === '4'
@@ -835,17 +881,63 @@ export function EscolaForm({
           className="flex flex-col gap-6"
         >
           <Tabs defaultValue="identificacao" className="w-full">
-            <TabsList className="mb-4 flex-wrap h-auto gap-1">
-              <TabsTrigger value="identificacao">Identificação</TabsTrigger>
-              <TabsTrigger value="endereco">Endereço e Contato</TabsTrigger>
-              <TabsTrigger value="administrativo">Administrativo</TabsTrigger>
-              <TabsTrigger value="local-saneamento">Local e Saneamento</TabsTrigger>
-              <TabsTrigger value="dependencias">Dependências Físicas</TabsTrigger>
-              <TabsTrigger value="acessibilidade">Acessibilidade e Salas</TabsTrigger>
-              <TabsTrigger value="equipamentos">Equipamentos e Internet</TabsTrigger>
-              <TabsTrigger value="profissionais">Profissionais e Materiais</TabsTrigger>
-              <TabsTrigger value="gestao">Gestão Escolar</TabsTrigger>
-            </TabsList>
+            <TabsList className="scrollbar-thin flex h-auto min-h-[54px] w-full flex-nowrap gap-1 overflow-x-auto overflow-y-hidden rounded-lg bg-muted/60 px-1 pt-1 pb-[10px] [&_[data-slot='tabs-trigger']]:min-w-max">
+              <TabsTrigger
+                value="identificacao"
+                className="h-10 min-h-[40px] rounded-md px-4 text-[14px] font-semibold text-foreground/80 transition-colors hover:bg-accent/10 hover:text-accent-foreground data-active:bg-primary data-active:text-primary-foreground data-active:shadow-sm data-active:hover:bg-primary data-active:hover:text-primary-foreground"
+              >
+                Identificação
+              </TabsTrigger>
+                <TabsTrigger
+                  value="endereco"
+                  className="h-10 min-h-[40px] rounded-md px-4 text-[14px] font-semibold text-foreground/80 transition-colors hover:bg-accent/10 hover:text-accent-foreground data-active:bg-primary data-active:text-primary-foreground data-active:shadow-sm data-active:hover:bg-primary data-active:hover:text-primary-foreground"
+                >
+                  Endereço
+                </TabsTrigger>
+                <TabsTrigger
+                  value="administrativo"
+                  className="h-10 min-h-[40px] rounded-md px-4 text-[14px] font-semibold text-foreground/80 transition-colors hover:bg-accent/10 hover:text-accent-foreground data-active:bg-primary data-active:text-primary-foreground data-active:shadow-sm data-active:hover:bg-primary data-active:hover:text-primary-foreground"
+                >
+                  Administrativo
+                </TabsTrigger>
+                <TabsTrigger
+                  value="local-saneamento"
+                  className="h-10 min-h-[40px] rounded-md px-4 text-[14px] font-semibold text-foreground/80 transition-colors hover:bg-accent/10 hover:text-accent-foreground data-active:bg-primary data-active:text-primary-foreground data-active:shadow-sm data-active:hover:bg-primary data-active:hover:text-primary-foreground"
+                >
+                  Local e Saneamento
+                </TabsTrigger>
+                <TabsTrigger
+                  value="dependencias"
+                  className="h-10 min-h-[40px] rounded-md px-4 text-[14px] font-semibold text-foreground/80 transition-colors hover:bg-accent/10 hover:text-accent-foreground data-active:bg-primary data-active:text-primary-foreground data-active:shadow-sm data-active:hover:bg-primary data-active:hover:text-primary-foreground"
+                >
+                  Dependências Físicas
+                </TabsTrigger>
+                <TabsTrigger
+                  value="acessibilidade"
+                  className="h-10 min-h-[40px] rounded-md px-4 text-[14px] font-semibold text-foreground/80 transition-colors hover:bg-accent/10 hover:text-accent-foreground data-active:bg-primary data-active:text-primary-foreground data-active:shadow-sm data-active:hover:bg-primary data-active:hover:text-primary-foreground"
+                >
+                  Acessibilidade e Salas
+                </TabsTrigger>
+                <TabsTrigger
+                  value="equipamentos"
+                  className="h-10 min-h-[40px] rounded-md px-4 text-[14px] font-semibold text-foreground/80 transition-colors hover:bg-accent/10 hover:text-accent-foreground data-active:bg-primary data-active:text-primary-foreground data-active:shadow-sm data-active:hover:bg-primary data-active:hover:text-primary-foreground"
+                >
+                  Equipamentos e Internet
+                </TabsTrigger>
+                <TabsTrigger
+                  value="profissionais"
+                  className="h-10 min-h-[40px] rounded-md px-4 text-[14px] font-semibold text-foreground/80 transition-colors hover:bg-accent/10 hover:text-accent-foreground data-active:bg-primary data-active:text-primary-foreground data-active:shadow-sm data-active:hover:bg-primary data-active:hover:text-primary-foreground"
+                >
+                  Profissionais e Materiais
+                </TabsTrigger>
+                <TabsTrigger
+                  value="gestao"
+                  className="h-10 min-h-[40px] rounded-md px-4 text-[14px] font-semibold text-foreground/80 transition-colors hover:bg-accent/10 hover:text-accent-foreground data-active:bg-primary data-active:text-primary-foreground data-active:shadow-sm data-active:hover:bg-primary data-active:hover:text-primary-foreground"
+                >
+                  Gestão Escolar
+                </TabsTrigger>
+              </TabsList>
+              <fieldset disabled={readOnly} className="contents">
 
             {/* ══════ Tab 1: Identificação ══════ */}
             <TabsContent value="identificacao">
@@ -854,140 +946,61 @@ export function EscolaForm({
                   <CardTitle>Identificação da Escola (Registro 00)</CardTitle>
                 </CardHeader>
                 <CardContent className="flex flex-col gap-6">
-                  <InputField
-                    control={control}
-                    name="nome_escola"
-                    label="Nome da Escola *"
-                    placeholder="Nome completo da escola"
-                  />
-
-                  <InputField
-                    control={control}
-                    name="codigo_inep"
-                    label="Código INEP"
-                    placeholder="8 dígitos"
-                    maxLength={8}
-                  />
-
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <SelectField
-                      control={control}
-                      name="situacao_funcionamento"
-                      label="Situação de Funcionamento *"
-                      options={situacaoOptions}
-                    />
-                    <SelectField
-                      control={control}
-                      name="dependencia_administrativa"
-                      label="Dependência Administrativa *"
-                      options={dependenciaOptions}
-                    />
-                  </div>
-
-                  <SelectField
-                    control={control}
-                    name="formato_organizacional"
-                    label="Formato Organizacional"
-                    options={formatoOrganizacionalOptions}
-                  />
-
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <SelectField
-                      control={control}
-                      name="localizacao"
-                      label="Localização *"
-                      options={localizacaoOptions}
-                    />
-                    <SelectField
-                      control={control}
-                      name="localizacao_diferenciada"
-                      label="Localização Diferenciada *"
-                      options={localizacaoDiferenciadaOptions}
-                    />
-                  </div>
-
-                  {showDatas && (
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                    <div className="md:col-span-2">
                       <InputField
                         control={control}
-                        name="data_inicio_ano"
-                        label="Data de Início do Ano Letivo"
-                        type="date"
-                      />
-                      <InputField
-                        control={control}
-                        name="data_fim_ano"
-                        label="Data de Fim do Ano Letivo"
-                        type="date"
+                        name="nome_escola"
+                        label="Nome da Escola *"
+                        placeholder="Nome completo da escola"
                       />
                     </div>
-                  )}
-                </CardContent>
-              </Card>
-            </TabsContent>
-
-            {/* ══════ Tab 2: Endereço e Contato ══════ */}
-            <TabsContent value="endereco">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Endereço e Contato (Registro 00)</CardTitle>
-                </CardHeader>
-                <CardContent className="flex flex-col gap-6">
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <InputField
-                      control={control}
-                      name="cep"
-                      label="CEP"
-                      placeholder="8 dígitos"
-                      maxLength={8}
-                    />
-                    <InputField
-                      control={control}
-                      name="municipio"
-                      label="Código do Município"
-                      placeholder="7 dígitos"
-                      maxLength={7}
-                    />
-                    <InputField
-                      control={control}
-                      name="distrito"
-                      label="Distrito"
-                      placeholder="2 dígitos"
-                      maxLength={2}
-                    />
+                    <div className="md:col-span-1">
+                      <InputField
+                        control={control}
+                        name="codigo_inep"
+                        label="Código INEP"
+                        placeholder="8 dígitos"
+                        maxLength={8}
+                      />
+                    </div>
+                    <div className="md:col-span-1">
+                      <SelectField
+                        control={control}
+                        name="situacao_funcionamento"
+                        label="Situação de Funcionamento *"
+                        options={situacaoOptions}
+                      />
+                    </div>
                   </div>
 
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <InputField
-                      control={control}
-                      name="endereco"
-                      label="Endereço / Logradouro"
-                      placeholder="Rua, Avenida, etc."
-                    />
-                    <InputField
-                      control={control}
-                      name="numero"
-                      label="Número"
-                      placeholder="Nº"
-                    />
+                  <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                    <div className="md:col-span-2">
+                      <InputField
+                        control={control}
+                        name="email"
+                        label="E-mail"
+                        placeholder="email@exemplo.com"
+                        type="email"
+                      />
+                    </div>
+                    <div className="md:col-span-1">
+                      <SelectField
+                        control={control}
+                        name="dependencia_administrativa"
+                        label="Dependência Administrativa *"
+                        options={dependenciaOptions}
+                      />
+                    </div>
+                    <div className="md:col-span-1">
+                      <SelectField
+                        control={control}
+                        name="formato_organizacional"
+                        label="Formato Organizacional"
+                        options={formatoOrganizacionalOptions}
+                      />
+                    </div>
                   </div>
-
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <InputField
-                      control={control}
-                      name="complemento"
-                      label="Complemento"
-                      placeholder="Apto, Bloco, etc."
-                    />
-                    <InputField
-                      control={control}
-                      name="bairro"
-                      label="Bairro"
-                      placeholder="Bairro"
-                    />
-                  </div>
-
-                  <Separator />
 
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <InputField
@@ -1012,20 +1025,137 @@ export function EscolaForm({
                       maxLength={9}
                     />
                   </div>
+                </CardContent>
+              </Card>
+            </TabsContent>
 
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* ══════ Tab 2: Endereço ══════ */}
+            <TabsContent value="endereco">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Endereço (Registro 00)</CardTitle>
+                </CardHeader>
+                <CardContent className="flex flex-col gap-6">
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <InputField
                       control={control}
-                      name="email"
-                      label="E-mail"
-                      placeholder="email@exemplo.com"
-                      type="email"
+                      name="cep"
+                      label="CEP"
+                      placeholder="8 dígitos"
+                      maxLength={8}
+                      digitsOnly
+                    />
+                    <FormField
+                      control={control}
+                      name="municipio"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Município</FormLabel>
+                          <FormControl>
+                            <Combobox
+                              options={municipiosOptions}
+                              value={field.value || ''}
+                              onChange={field.onChange}
+                              placeholder="Selecione o município"
+                              searchPlaceholder="Buscar município..."
+                              emptyMessage="Nenhum município encontrado."
+                              disabled={readOnly}
+                              maxOptions={200}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={control}
+                      name="distrito"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Distrito</FormLabel>
+                          <FormControl>
+                            <Combobox
+                              options={distritosOptions}
+                              value={field.value || ''}
+                              onChange={field.onChange}
+                              placeholder={
+                                municipioSelecionado
+                                  ? 'Selecione o distrito'
+                                  : 'Selecione o município primeiro'
+                              }
+                              searchPlaceholder="Buscar distrito..."
+                              emptyMessage="Nenhum distrito encontrado."
+                              disabled={readOnly || !municipioSelecionado}
+                              maxOptions={200}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                    <InputField
+                      control={control}
+                      name="bairro"
+                      label="Bairro"
+                      placeholder="Bairro"
                     />
                     <InputField
                       control={control}
+                      name="endereco"
+                      label="Logradouro"
+                      placeholder="Rua, Avenida, etc."
+                    />
+                    <InputField
+                      control={control}
+                      name="numero"
+                      label="Número"
+                      placeholder="Nº"
+                    />
+                    <InputField
+                      control={control}
+                      name="complemento"
+                      label="Complemento"
+                      placeholder="Apto, Bloco, etc."
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <SelectField
+                      control={control}
+                      name="localizacao"
+                      label="Localização *"
+                      options={localizacaoOptions}
+                    />
+                    <SelectField
+                      control={control}
+                      name="localizacao_diferenciada"
+                      label="Localização Diferenciada *"
+                      options={localizacaoDiferenciadaOptions}
+                    />
+                    <FormField
+                      control={control}
                       name="codigo_orgao_regional"
-                      label="Código do Órgão Regional de Ensino"
-                      placeholder="Código do órgão regional"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Órgão Regional de Ensino</FormLabel>
+                          <FormControl>
+                            <Combobox
+                              options={orgaosOptions}
+                              value={field.value || ''}
+                              onChange={field.onChange}
+                              placeholder="Selecione o órgão regional"
+                              searchPlaceholder="Buscar órgão regional..."
+                              emptyMessage="Nenhum órgão regional encontrado."
+                              disabled={readOnly}
+                              maxOptions={100}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
                     />
                   </div>
                 </CardContent>
@@ -1783,31 +1913,34 @@ export function EscolaForm({
                 </CardContent>
               </Card>
             </TabsContent>
+            </fieldset>
           </Tabs>
 
           {/* ──────── Bottom Buttons ──────── */}
-          <Separator />
-          <div className="flex justify-end gap-3">
+          <div className="sticky bottom-0 z-10 flex justify-end gap-3 border-t border-border bg-background/95 px-1 py-4 backdrop-blur">
             {onCancel && (
               <Button
                 type="button"
                 variant="outline"
                 onClick={onCancel}
                 disabled={isSubmitting}
+                className="h-11"
               >
-                Cancelar
+                {readOnly ? 'Voltar' : 'Cancelar'}
               </Button>
             )}
-            <Button type="submit" disabled={isSubmitting}>
-              {isSubmitting ? (
-                <>
-                  <Loader2 className="size-4 animate-spin" data-icon="inline-start" />
-                  Salvando...
-                </>
-              ) : (
-                submitLabel
-              )}
-            </Button>
+            {!readOnly && (
+              <Button type="submit" disabled={isSubmitting} className="min-h-[44px]">
+                {isSubmitting ? (
+                  <>
+                    <Loader2 className="size-4 animate-spin" data-icon="inline-start" />
+                    Salvando...
+                  </>
+                ) : (
+                  submitLabel
+                )}
+              </Button>
+            )}
           </div>
         </form>
       </Form>

@@ -12,6 +12,7 @@ import { ETAPAS_FORMAS_ORGANIZACAO } from '@/data/censo/etapas-formas-organizaca
 import { ETAPAS_ENSINO } from '@/data/censo/etapas-ensino'
 import { AREAS_CONHECIMENTO } from '@/data/censo/areas-conhecimento'
 import { COMPATIBILIDADE_MEDIACAO_TURMA_ETAPA } from '@/data/censo/tipo-turma-mediacao'
+import { MUNICIPIOS_CEARA } from '@/data/censo/municipios-ceara'
 
 const supabase = getSupabaseAdmin()
 
@@ -50,7 +51,7 @@ export async function validarCenso(
     errosDescaracterizacao,
     errosHorarios,
   ] = await Promise.all([
-    validarRegistro00(schoolId),
+    validarRegistro00(schoolId, anoLetivoId),
     validarRegistro10(schoolId),
     validarRegistro20(schoolId),
     validarRegistro30(schoolId),
@@ -96,7 +97,7 @@ export async function validarCenso(
 // REGISTRO 00 — DADOS DA ESCOLA
 // ---------------------------------------------------------------------------
 
-export async function validarRegistro00(schoolId: string): Promise<ErroValidacao[]> {
+export async function validarRegistro00(schoolId: string, anoLetivoId?: string): Promise<ErroValidacao[]> {
   const erros: ErroValidacao[] = []
 
   const { data: school, error } = await supabase
@@ -117,6 +118,14 @@ export async function validarRegistro00(schoolId: string): Promise<ErroValidacao
     )
     return erros
   }
+
+  const { data: anoLetivo } = anoLetivoId
+    ? await supabase
+        .from('academico_anos_letivos')
+        .select('id, descricao, data_inicio, data_termino, status')
+        .eq('id', anoLetivoId)
+        .single()
+    : { data: null }
 
   const entidadeId = schoolId
   const entidadeNome = school.nome_escola || schoolId
@@ -303,11 +312,8 @@ export async function validarRegistro00(schoolId: string): Promise<ErroValidacao
   // -----------------------------------------------------------------------
 
   if (isAtiva) {
-    const dataInicio = school.data_inicio_ano
-    const dataFim = school.data_fim_ano
-    const inicioMin = new Date('2025-05-29')
-    const inicioMax = new Date('2026-05-27')
-    const fimMax = new Date('2027-05-26')
+    const dataInicio = anoLetivo?.data_inicio || school.data_inicio_ano
+    const dataFim = anoLetivo?.data_termino || school.data_fim_ano
 
     if (!dataInicio) {
       addErro(
@@ -318,18 +324,15 @@ export async function validarRegistro00(schoolId: string): Promise<ErroValidacao
         'ano-letivo',
         'data_inicio_ano',
       )
-    } else {
-      const di = new Date(dataInicio)
-      if (di < inicioMin || di > inicioMax) {
-        addErro(
-          'data_inicio_ano', 4,
-          'Data de início do ano letivo',
-          'Deve estar entre 29/05/2025 e 27/05/2026.',
-          new Date(dataInicio).toLocaleDateString('pt-BR'),
-          'ano-letivo',
-          'data_inicio_ano',
-        )
-      }
+    } else if (isNaN(new Date(dataInicio).getTime())) {
+      addErro(
+        'data_inicio_ano', 4,
+        'Data de início do ano letivo',
+        'Data de início do ano letivo inválida.',
+        String(dataInicio),
+        'ano-letivo',
+        'data_inicio_ano',
+      )
     }
 
     if (!dataFim) {
@@ -341,28 +344,24 @@ export async function validarRegistro00(schoolId: string): Promise<ErroValidacao
         'ano-letivo',
         'data_fim_ano',
       )
-    } else {
-      const df = new Date(dataFim)
-      if (df > fimMax) {
-        addErro(
-          'data_fim_ano', 5,
-          'Data de término do ano letivo',
-          'Deve ser anterior a 26/05/2027.',
-          new Date(dataFim).toLocaleDateString('pt-BR'),
-          'ano-letivo',
-          'data_fim_ano',
-        )
-      }
-      if (dataInicio && new Date(dataInicio) >= df) {
-        addErro(
-          'data_fim_ano', 5,
-          'Data de término do ano letivo',
-          'Deve ser posterior à data de início do ano letivo.',
-          new Date(dataFim).toLocaleDateString('pt-BR'),
-          'ano-letivo',
-          'data_fim_ano',
-        )
-      }
+    } else if (isNaN(new Date(dataFim).getTime())) {
+      addErro(
+        'data_fim_ano', 5,
+        'Data de término do ano letivo',
+        'Data de término do ano letivo inválida.',
+        String(dataFim),
+        'ano-letivo',
+        'data_fim_ano',
+      )
+    } else if (dataInicio && new Date(dataInicio) >= new Date(dataFim)) {
+      addErro(
+        'data_fim_ano', 5,
+        'Data de término do ano letivo',
+        'Deve ser posterior à data de início do ano letivo.',
+        new Date(dataFim).toLocaleDateString('pt-BR'),
+        'ano-letivo',
+        'data_fim_ano',
+      )
     }
   }
 
@@ -386,13 +385,14 @@ export async function validarRegistro00(schoolId: string): Promise<ErroValidacao
     )
   }
 
-  // 4b. DDD deve corresponder aos 2 primeiros dígitos do município
+  // 4b. DDD × Município: DDD deve corresponder à Tabela de DDD do INEP
   if (ddd && /^\d{2}$/.test(ddd) && municipio && /^\d{7}$/.test(municipio)) {
-    if (ddd !== municipio.substring(0, 2)) {
+    const municipioEncontrado = MUNICIPIOS_CEARA.find(m => m.codigo === municipio)
+    if (municipioEncontrado && municipioEncontrado.ddd && ddd !== municipioEncontrado.ddd) {
       addErro(
         'ddd', 14,
         'DDD × Município',
-        'O DDD deve corresponder aos 2 primeiros dígitos do código do município.',
+        `O DDD deve corresponder à Tabela de DDD do Censo Escolar para ${municipioEncontrado.nome}.`,
         ddd,
         'contato',
         'ddd',

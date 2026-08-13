@@ -409,3 +409,27 @@ export async function validarPermissaoServer(
     throw new Error('Acesso negado: permissão insuficiente')
   }
 }
+
+// -------- Validação estrita (exige perfil com permissão) --------
+
+export async function validarPermissaoEstrita(
+  pessoaId: string,
+  recursoCodigo: string,
+  acao: 'visualizar' | 'criar' | 'editar' | 'excluir'
+) {
+  if (!pessoaId) {
+    return
+  }
+
+  const { data: pessoa } = await supabase
+    .from('people')
+    .select('perfil_id')
+    .eq('id', pessoaId)
+    .maybeSingle()
+
+  if (!pessoa?.perfil_id) {
+    throw new Error('Acesso negado: permissão insuficiente')
+  }
+
+  await validarPermissaoServer(pessoaId, recursoCodigo, acao)
+}

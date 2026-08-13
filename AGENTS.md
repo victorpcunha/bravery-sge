@@ -37,6 +37,17 @@ Sistema de Gestão Escolar completo: turmas, quadro de aulas, indicadores de ava
   - Componente `plano-aula-diario.tsx`, ação `diario-planos.ts`
   - `criarPlanoAulaDoDiario` removido de `plano-ensino.ts` (dead code)
   - `disciplinaSelecionada` removido de `plano-aula-diario.tsx` (variável não usada)
+- **Unidade Escolar — Acesso por perfil + atualização (spec 013)**:
+  - Spec + plan + tasks em `specs/013-unidade-escolar-modernizacao/`
+  - **Regras**: contrato = escola cadastrada (listagem do superadmin); a escola acessa a própria unidade pela mesma tela de edição e pode editar tudo; **Perfis e Permissões controla os ajustes** (recurso `escolas`); acesso à própria unidade é sempre garantido (visualização read-only)
+  - **Server actions** (`schools.ts`): `getSchoolsEscopadas(ids|null)` substitui `getSchools` (escopo por usuário — corrige vazamento via URL); `getSchool(id, {pessoaId, escolaDoUsuario})` não exige permissão para a própria unidade; `createSchool`/`updateSchool`/`deleteSchool(pessoaId?)` com `validarPermissaoEstrita` ('criar'/'editar'/'excluir')
+  - **Perfis**: nova `validarPermissaoEstrita` em `perfis.ts` (exige perfil com permissão — pessoa sem `perfil_id` é NEGADA; `pessoaId` vazio/superadmin passa). Edição estrita (`!isSetup && pode.editar`) nas páginas
+  - **Lista `/escolas`**: client component; filtros (busca nome/INEP + Selects situação/dependência/localização); cards ricos + `<Pagination>` 10/pág; "Nova Escola" condicional a `pode.criar`; empty states contextuais + estado "nenhuma escola vinculada"
+  - **Tela `/escolas/[id]`**: escopo `foraDeEscopo` → ShieldAlert; banner warning "Visualização somente" + `EscolaForm readOnly` quando sem `podeEditar`; breadcrumbs só superadmin; Excluir via `ConfirmDialog` (só `podeExcluir`); loading spinner oficial
+  - **Criação `/escolas/novo`**: guard `podeCriar` (nega setup) → ShieldAlert
+  - **Sidebar**: link direto da escola renomeado "Escola" → **"Unidade Escolar"**
+  - **Form (`escola-form.tsx`)**: prop `readOnly` via `<fieldset disabled className="contents">` (tabs continuam clicáveis para navegar); tabs modernizadas (padrão PessoaForm: `bg-card border shadow-xs`, ativa `bg-primary`); footer **sticky bottom** (h-11, "Voltar" em read-only)
+  - **Notas**: 0 migrations; 0 novas deps npm; build verde
 - **Painel do Aluno (Visão 360º)**:
   - **FASE 1 — Migrações**: `saude_estudantes.sql`, `ocorrencias.sql`, `historico_manual.sql`, `patch_add_permite_historico_manual.sql`, `patch_recurso_painel_aluno.sql`, `fn_buscar_pessoas_matriculadas.sql`
   - **FASE 2 — Server Actions**: `painel-pessoa.ts` (12 funções), `historico-manual.ts` (ações de histórico manual)

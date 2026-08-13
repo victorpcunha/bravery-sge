@@ -28,6 +28,13 @@ export async function exportarCenso(schoolId: string, anoLetivoId: string): Prom
   const { data: school } = await sb.from('schools').select('*').eq('id', schoolId).single()
   if (!school) return { sucesso: false, erros: [] }
 
+  const { data: anoLetivo } = await sb
+    .from('academico_anos_letivos')
+    .select('id, descricao, data_inicio, data_termino, status')
+    .eq('id', anoLetivoId)
+    .single()
+  if (!anoLetivo) return { sucesso: false, erros: [] }
+
   const situacao = school.situacao_funcionamento
   const isDesativada = situacao === '2' || situacao === '3'
 
@@ -151,7 +158,7 @@ export async function exportarCenso(schoolId: string, anoLetivoId: string): Prom
 
   const linhas: string[] = []
 
-  linhas.push(buildRegistro00(school))
+  linhas.push(buildRegistro00(school, anoLetivo))
   linhas.push(buildRegistro10(school))
 
     if (!isDesativada) {
@@ -248,13 +255,13 @@ export async function exportarCenso(schoolId: string, anoLetivoId: string): Prom
 // REGISTRO 00 — DADOS CADASTRAIS DA ESCOLA (46 fields)
 // ---------------------------------------------------------------------------
 
-function buildRegistro00(school: any): string {
+function buildRegistro00(school: any, anoLetivo?: any): string {
   const fields = [
     '00',
     school.codigo_inep || '',
     school.situacao_funcionamento || '',
-    formatDate(school.data_inicio_ano),
-    formatDate(school.data_fim_ano),
+    formatDate(anoLetivo?.data_inicio ?? school.data_inicio_ano),
+    formatDate(anoLetivo?.data_termino ?? school.data_fim_ano),
     (school.nome_escola || '').replace(/[^A-Za-z0-9À-ÿªº\-\/\.\, ]/g, ''),
     school.cep || '',
     school.municipio || '',

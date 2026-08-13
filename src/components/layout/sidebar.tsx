@@ -216,6 +216,9 @@ export function AppSidebar() {
   }
 
   const visibleModules = modules.map(module => {
+    if (module.title === 'Escolas' && permLoaded && !pode.visualizar('escolas')) {
+      return null
+    }
     if (!module.submenu) {
       return isVisible(module.recurso) ? module : null
     }
@@ -290,8 +293,8 @@ export function AppSidebar() {
 
                   return (
                     <SidebarMenuItem key={module.title}>
-                      {/* Escolas: link direto para gestor de uma escola; submenu para Super Admin */}
-                      {module.title === 'Escolas' && !isSuperAdmin && schoolId ? (
+                      {/* Unidade Escolar: link direto para gestor com permissão; submenu para Super Admin */}
+                      {module.title === 'Escolas' && !isSuperAdmin && schoolId && pode.visualizar('escolas') ? (
                         <Link
                           href={`/escolas/${schoolId}`}
                           className={cn(
@@ -313,7 +316,7 @@ export function AppSidebar() {
                             'truncate transition-opacity duration-200',
                             effectivelyCollapsed ? 'opacity-0 invisible w-0' : 'opacity-100 visible'
                           )}>
-                            Escola
+                            Unidade Escolar
                           </span>
                         </Link>
                       ) : module.href ? (
