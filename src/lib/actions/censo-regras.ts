@@ -1069,7 +1069,30 @@ export async function validarRegistro10(schoolId: string): Promise<ErroValidacao
   validarNenhum('Abastecimento de água', 'agua_inexistente', ['agua_rede_publica', 'agua_poco_artesiano', 'agua_cacimba', 'agua_fonte', 'agua_carro_pipa'], 23)
   validarNenhum('Energia elétrica', 'energia_inexistente', ['energia_rede_publica', 'energia_gerador', 'energia_renovavel'], 27)
   validarNenhum('Esgotamento sanitário', 'esgoto_inexistente', ['esgoto_rede_publica', 'esgoto_fossa_septica', 'esgoto_fossa_rudimentar'], 31)
+
+  // Fossa rudimentar (30) não pode ser 1 quando Fossa séptica (29) for 1
+  if (b('esgoto_fossa_rudimentar') && b('esgoto_fossa_septica')) {
+    erros.push(
+      criarErro(
+        '10', 'esgoto_fossa_rudimentar', 30, 'CONFLITO_FOSSAS',
+        'Esgotamento sanitário: "Fossa rudimentar/comum" não pode ser marcada quando "Fossa séptica" está marcada.',
+        schoolId, nomeEscola, schoolId, s('esgoto_fossa_rudimentar'), 'infraestrutura', 'esgoto_fossa_rudimentar',
+      ),
+    )
+  }
   validarNenhum('Dependências físicas', 'dep_nenhuma', DEPENDENCIAS.filter((c) => c !== 'dep_nenhuma'), 80)
+
+  // Banheiro (44) deve ser 1 quando qualquer dos campos 45-48 for 1
+  const BANHEIROS_DETALHADOS = ['dep_banheiro_pcd', 'dep_banheiro_infantil', 'dep_banheiro_funcionarios', 'dep_vestiario']
+  if (!b('dep_banheiro') && BANHEIROS_DETALHADOS.some((c) => b(c))) {
+    erros.push(
+      criarErro(
+        '10', 'dep_banheiro', 44, 'BANHEIRO_OBRIGATORIO',
+        'Banheiro deve ser marcado quando qualquer banheiro acessível, de educação infantil, exclusivo para funcionários ou vestiário com chuveiro estiver marcado.',
+        schoolId, nomeEscola, schoolId, s('dep_banheiro'), 'infraestrutura', 'dep_banheiro',
+      ),
+    )
+  }
   validarNenhum('Acessibilidade', 'acess_nenhum', ACESSIBILIDADE.filter((c) => c !== 'acess_nenhum'), 90)
   validarNenhum('Equipamentos', 'eq_nenhum', EQUIPAMENTOS.filter((c) => c !== 'eq_nenhum'), 102)
   validarNenhum('Internet', 'internet_inexistente', ['internet_administrativo', 'internet_ensino', 'internet_alunos', 'internet_comunidade'], 115)
@@ -1191,6 +1214,57 @@ export async function validarRegistro10(schoolId: string): Promise<ErroValidacao
         schoolId, nomeEscola, schoolId, String(n('qtd_salas_fora')), 'infraestrutura', 'qtd_salas_fora',
       ),
     )
+  }
+
+  // qtd_salas_dentro: deve ser nulo quando local_predio for falso
+  if (!b('local_predio') && n('qtd_salas_dentro') > 0) {
+    erros.push(
+      criarErro(
+        '10', 'qtd_salas_dentro', 91, 'DEVE_SER_NULO',
+        'qtd_salas_dentro deve ser nulo quando o prédio escolar não estiver marcado.',
+        schoolId, nomeEscola, schoolId, String(n('qtd_salas_dentro')), 'infraestrutura', 'qtd_salas_dentro',
+      ),
+    )
+  }
+
+  // qtd_salas_fora: obrigatório quando local_predio for falso
+  if (!b('local_predio') && n('qtd_salas_fora') < 1) {
+    erros.push(
+      criarErro(
+        '10', 'qtd_salas_fora', 92, 'OBRIGATORIO',
+        'qtd_salas_fora é obrigatório quando o prédio escolar não estiver marcado.',
+        schoolId, nomeEscola, schoolId, String(n('qtd_salas_fora')), 'infraestrutura', 'qtd_salas_fora',
+      ),
+    )
+  }
+
+  // 93-95: 1-9999 quando dentro/fora preenchido, senão nulo
+  const temSalas = n('qtd_salas_dentro') > 0 || n('qtd_salas_fora') > 0
+  const camposSalasDetalhe: { campo: string; num: number; nome: string }[] = [
+    { campo: 'qtd_salas_climatizadas', num: 93, nome: 'qtd_salas_climatizadas' },
+    { campo: 'qtd_salas_acessiveis', num: 94, nome: 'qtd_salas_acessiveis' },
+    { campo: 'qtd_salas_leitura', num: 95, nome: 'qtd_salas_leitura' },
+  ]
+  for (const cs of camposSalasDetalhe) {
+    if (temSalas) {
+      if (n(cs.campo) < 1 || n(cs.campo) > 9999) {
+        erros.push(
+          criarErro(
+            '10', cs.campo, cs.num, 'FAIXA_INVALIDA',
+            `${cs.nome} deve ser entre 1 e 9999 quando houver salas de aula dentro ou fora do prédio.`,
+            schoolId, nomeEscola, schoolId, String(n(cs.campo)), 'infraestrutura', cs.campo,
+          ),
+        )
+      }
+    } else if (n(cs.campo) > 0) {
+      erros.push(
+        criarErro(
+          '10', cs.campo, cs.num, 'DEVE_SER_NULO',
+          `${cs.nome} deve ser nulo quando não houver salas de aula dentro ou fora do prédio.`,
+          schoolId, nomeEscola, schoolId, String(n(cs.campo)), 'infraestrutura', cs.campo,
+        ),
+      )
+    }
   }
 
   // qtd_salas_climatizadas ≤ total salas

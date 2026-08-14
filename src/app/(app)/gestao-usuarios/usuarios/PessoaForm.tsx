@@ -1,7 +1,6 @@
 'use client'
 
 import { useState, useEffect, useMemo } from 'react'
-import { cn } from '@/lib/utils'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -12,6 +11,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 import { DatePicker } from '@/components/ui/date-picker'
 import { Combobox } from '@/components/ui/combobox'
+import { ClickablePill } from '@/components/ui/clickable-pill'
 import { Textarea } from '@/components/ui/textarea'
 import { FormCard } from '@/components/layout/form-card'
 import { paises } from '@/data/paises'
@@ -21,7 +21,7 @@ import { cursosSuperiores } from '@/data/cursos-superiores'
 import { iesList } from '@/data/ies'
 import { areasConhecimento } from '@/data/areas-conhecimento'
 import { areasPosGraduacao } from '@/data/areas-pos-graduacao'
-import { Plus, Trash2, X, Check } from 'lucide-react'
+import { Plus, Trash2, X } from 'lucide-react'
 import { toast } from 'sonner'
 import { useAuth } from '@/components/providers/auth-provider'
 import { createPerson, updatePerson, Person, getVinculosResponsavel, vincularResponsavel, desvincularResponsavel, buscarAlunos, criarAuthUser, salvarSaudeEstudante } from '@/lib/actions/people'
@@ -803,10 +803,10 @@ export function PessoaForm({ schoolId: propSchoolId, person, onSaved, onCancel }
                   {perfis.map(p => {
                     const isChecked = (form.perfil as string[]).includes(p.value)
                     return (
-                      <button
+                      <ClickablePill
                         key={p.value}
-                        type="button"
-                        aria-pressed={isChecked}
+                        label={p.label}
+                        active={isChecked}
                         onClick={() => {
                           const current = form.perfil as string[]
                           if (isChecked) {
@@ -815,17 +815,7 @@ export function PessoaForm({ schoolId: propSchoolId, person, onSaved, onCancel }
                             set('perfil', [...current, p.value])
                           }
                         }}
-                        className={cn(
-                          'inline-flex items-center gap-2 rounded-full border px-4 h-9 min-h-[36px] text-[14px] font-medium transition-colors',
-                          'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
-                          isChecked
-                            ? 'bg-primary text-primary-foreground border-primary shadow-sm hover:bg-primary hover:text-primary-foreground'
-                            : 'bg-muted/40 text-foreground border-border hover:bg-accent/10 hover:text-accent-foreground'
-                        )}
-                      >
-                        {isChecked && <Check className="h-3.5 w-3.5" aria-hidden="true" />}
-                        {p.label}
-                      </button>
+                      />
                     )
                   })}
                 </div>

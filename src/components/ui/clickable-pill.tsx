@@ -21,7 +21,7 @@ export function ClickablePill({ label, active, onClick, disabled, title, classNa
       disabled={disabled}
       onClick={onClick}
       className={cn(
-        'inline-flex items-center gap-1.5 rounded-full border px-3.5 h-9 min-h-[36px] text-[14px] font-medium transition-colors',
+        'inline-flex items-center gap-1.5 rounded-md border px-3.5 h-9 min-h-[36px] text-[14px] font-medium transition-colors',
         'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
         'disabled:opacity-50 disabled:pointer-events-none',
         active
