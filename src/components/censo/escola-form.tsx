@@ -499,6 +499,35 @@ const escolaFormSchema = z.object({
       })
     }
   }
+
+  const eqCamposAntecedentes = [
+    'eq_antena_parabolica', 'eq_computadores', 'eq_copiadora', 'eq_impressora',
+    'eq_impressora_multifuncional', 'eq_scanner',
+  ] as const
+
+  if (values.eq_nenhum === '1' && eqCamposAntecedentes.some((c) => values[c] === '1')) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ['eq_nenhum'],
+      message: '"Nenhum dos equipamentos listados" não pode ser marcado junto com outros equipamentos.',
+    })
+  }
+
+  const qtdEquipamentos = [
+    'qtd_dvd', 'qtd_som', 'qtd_tv', 'qtd_lousa_digital',
+    'qtd_projetor', 'qtd_desktop_alunos', 'qtd_portateis_alunos', 'qtd_tablets_alunos',
+  ] as const
+
+  for (const c of qtdEquipamentos) {
+    const v = Number(values[c]) || 0
+    if (v > 0 && (v < 1 || v > 9999)) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: [c],
+        message: 'Deve ser nulo ou número de 1 a 9999.',
+      })
+    }
+  }
 })
 
 type EscolaFormValues = z.infer<typeof escolaFormSchema>
@@ -593,7 +622,7 @@ function SelectField({
   name: string
   label: string
   placeholder?: string
-  options: { value: string; label: string }[]
+  options?: { value: string; label: string }[]
   disabled?: boolean
 }) {
   return (
@@ -603,28 +632,63 @@ function SelectField({
       render={({ field }) => (
         <FormItem>
           <FormLabel>{label}</FormLabel>
-          <Select
-            onValueChange={field.onChange}
-            value={field.value || ''}
-            disabled={disabled}
-          >
-            <FormControl>
+          <FormControl>
+            <Select
+              value={field.value || ''}
+              onValueChange={field.onChange}
+              disabled={disabled}
+            >
               <SelectTrigger>
-                <SelectValue placeholder={placeholder || 'Selecione...'} />
+                <SelectValue placeholder={placeholder} />
               </SelectTrigger>
-            </FormControl>
-            <SelectContent>
-              {options.filter((opt) => opt.value !== '').map((opt) => (
-                <SelectItem key={opt.value} value={opt.value}>
-                  {opt.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+              <SelectContent>
+                {options?.map((o) => (
+                  <SelectItem key={o.value} value={o.value}>
+                    {o.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </FormControl>
           <FormMessage />
         </FormItem>
       )}
     />
+  )
+}
+
+function QtdEquipField({
+  control,
+  name,
+  label,
+  value,
+  onChange,
+}: {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  control: any
+  name: string
+  label: string
+  value: string
+  onChange: (v: string) => void
+}) {
+  const ativo = !!value && Number(value) > 0
+  return (
+    <div className="flex flex-col gap-2">
+      <ClickablePill
+        label={label}
+        active={ativo}
+        onClick={() => onChange(ativo ? '' : '1')}
+        className="w-full justify-center text-center whitespace-normal"
+      />
+      <InputField
+        control={control}
+        name={name}
+        label="Quantidade"
+        type="number"
+        digitsOnly
+        disabled={!ativo}
+      />
+    </div>
   )
 }
 
@@ -733,6 +797,21 @@ export function EscolaForm({
   const esgotoFossaSeptica = useWatch({ control, name: 'esgoto_fossa_septica' })
   const depNenhuma = useWatch({ control, name: 'dep_nenhuma' })
   const acessNenhum = useWatch({ control, name: 'acess_nenhum' })
+  const eqNenhum = useWatch({ control, name: 'eq_nenhum' })
+  const qtdEquipValues = useWatch({
+    control,
+    name: [
+      'qtd_dvd', 'qtd_som', 'qtd_tv', 'qtd_lousa_digital',
+      'qtd_projetor', 'qtd_desktop_alunos', 'qtd_portateis_alunos', 'qtd_tablets_alunos',
+    ],
+  })
+  const eqDemais = useWatch({
+    control,
+    name: [
+      'eq_antena_parabolica', 'eq_computadores', 'eq_copiadora', 'eq_impressora',
+      'eq_impressora_multifuncional', 'eq_scanner',
+    ],
+  })
   const acessDemais = useWatch({
     control,
     name: [
@@ -1021,6 +1100,18 @@ export function EscolaForm({
     }
   }, [acessNenhum, form])
 
+  useEffect(() => {
+    if (eqNenhum === '1') {
+      const outros = [
+        'eq_antena_parabolica', 'eq_computadores', 'eq_copiadora', 'eq_impressora',
+        'eq_impressora_multifuncional', 'eq_scanner',
+      ] as const
+      for (const c of outros) {
+        if (form.getValues(c) === '1') form.setValue(c, '0')
+      }
+    }
+  }, [eqNenhum, form])
+
   const mostraFormaOcupacao = localPredio === '1'
   const mostraCompartilhamento = localPredio === '1' && predioCompartilhado === '1'
   const mostraCotas = exameSelecao === '1'
@@ -1173,10 +1264,21 @@ export function EscolaForm({
     { name: 'eq_computadores', label: 'Computadores' },
     { name: 'eq_copiadora', label: 'Copiadora' },
     { name: 'eq_impressora', label: 'Impressora' },
-    { name: 'eq_impressora_multifuncional', label: 'Impressora multifuncional' },
+    { name: 'eq_impressora_multifuncional', label: 'Impressora Multifuncional' },
     { name: 'eq_scanner', label: 'Scanner' },
-    { name: 'eq_nenhum', label: 'Nenhum' },
+    { name: 'eq_nenhum', label: 'Nenhum dos equipamentos listados' },
   ]
+
+  const qtdEquipChecks = [
+    { name: 'qtd_dvd', label: 'Aparelho de DVD/Blu-ray' },
+    { name: 'qtd_som', label: 'Aparelho de som' },
+    { name: 'qtd_tv', label: 'Aparelho de Televisão' },
+    { name: 'qtd_lousa_digital', label: 'Lousa digital' },
+    { name: 'qtd_projetor', label: 'Projetor Multimídia (Data show)' },
+    { name: 'qtd_desktop_alunos', label: 'Computadores de mesa (desktop) em uso pelos alunos' },
+    { name: 'qtd_portateis_alunos', label: 'Computadores portáteis em uso pelos alunos' },
+    { name: 'qtd_tablets_alunos', label: 'Tablets em uso pelos alunos' },
+  ] as const
 
   const internetChecks = [
     { name: 'internet_administrativo', label: 'Internet — uso administrativo' },
@@ -2079,13 +2181,17 @@ export function EscolaForm({
                     <h4 className="text-sm font-semibold text-foreground mb-3">
                       Equipamentos Administrativos
                     </h4>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2">
                       {eqChecks.map((c) => (
-                        <CheckboxField
+                        <PillCheckboxField
                           key={c.name}
                           control={control}
                           name={c.name}
                           label={c.label}
+                          className="w-full h-full justify-center text-center whitespace-normal"
+                          disabled={c.name === 'eq_nenhum'
+                            ? eqDemais.some((v) => v === '1')
+                            : eqNenhum === '1'}
                         />
                       ))}
                     </div>
@@ -2096,63 +2202,17 @@ export function EscolaForm({
                     <h4 className="text-sm font-semibold text-foreground mb-3">
                       Quantidade de Equipamentos
                     </h4>
-                    <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                      <InputField
-                        control={control}
-                        name="qtd_dvd"
-                        label="DVD / Blu-ray"
-                        type="number"
-                        digitsOnly
-                      />
-                      <InputField
-                        control={control}
-                        name="qtd_som"
-                        label="Aparelhos de som"
-                        type="number"
-                        digitsOnly
-                      />
-                      <InputField
-                        control={control}
-                        name="qtd_tv"
-                        label="TVs / Videoconferência"
-                        type="number"
-                        digitsOnly
-                      />
-                      <InputField
-                        control={control}
-                        name="qtd_lousa_digital"
-                        label="Lousas digitais"
-                        type="number"
-                        digitsOnly
-                      />
-                      <InputField
-                        control={control}
-                        name="qtd_projetor"
-                        label="Projetores"
-                        type="number"
-                        digitsOnly
-                      />
-                      <InputField
-                        control={control}
-                        name="qtd_desktop_alunos"
-                        label="Desktops para alunos"
-                        type="number"
-                        digitsOnly
-                      />
-                      <InputField
-                        control={control}
-                        name="qtd_portateis_alunos"
-                        label="Portáteis para alunos"
-                        type="number"
-                        digitsOnly
-                      />
-                      <InputField
-                        control={control}
-                        name="qtd_tablets_alunos"
-                        label="Tablets para alunos"
-                        type="number"
-                        digitsOnly
-                      />
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                      {qtdEquipChecks.map((c, i) => (
+                        <QtdEquipField
+                          key={c.name}
+                          control={control}
+                          name={c.name}
+                          label={c.label}
+                          value={qtdEquipValues[i] || ''}
+                          onChange={(v) => form.setValue(c.name, v)}
+                        />
+                      ))}
                     </div>
                   </div>
 

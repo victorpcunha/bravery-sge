@@ -452,6 +452,9 @@ function buildRegistro10(school: any): string {
     s('qtd_tv'),
     s('qtd_lousa_digital'),
     s('qtd_projetor'),
+    s('qtd_desktop_alunos'),
+    s('qtd_portateis_alunos'),
+    s('qtd_tablets_alunos'),
 
     // Internet (108-115)
     b('internet_administrativo'),

@@ -1033,6 +1033,30 @@ export async function validarRegistro10(schoolId: string): Promise<ErroValidacao
   ]
   validarGrupoBoolean('Equipamentos', EQUIPAMENTOS, 96)
 
+  // Quantidades de equipamentos (103-110): nulo ou 1-9999
+  const QTD_EQUIPAMENTOS = [
+    { campo: 'qtd_dvd', num: 103 },
+    { campo: 'qtd_som', num: 104 },
+    { campo: 'qtd_tv', num: 105 },
+    { campo: 'qtd_lousa_digital', num: 106 },
+    { campo: 'qtd_projetor', num: 107 },
+    { campo: 'qtd_desktop_alunos', num: 108 },
+    { campo: 'qtd_portateis_alunos', num: 109 },
+    { campo: 'qtd_tablets_alunos', num: 110 },
+  ]
+  for (const qe of QTD_EQUIPAMENTOS) {
+    const v = n(qe.campo)
+    if (v > 0 && (v < 1 || v > 9999)) {
+      erros.push(
+        criarErro(
+          '10', qe.campo, qe.num, 'FAIXA_INVALIDA',
+          `${qe.campo} deve ser nulo ou um número de 1 a 9999.`,
+          schoolId, nomeEscola, schoolId, String(v), 'infraestrutura', qe.campo,
+        ),
+      )
+    }
+  }
+
   // Internet (campos 111-115) — 5 fields
   const INTERNET = ['internet_administrativo', 'internet_ensino', 'internet_alunos', 'internet_comunidade', 'internet_inexistente']
   validarGrupoBoolean('Internet', INTERNET, 111)
