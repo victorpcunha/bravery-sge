@@ -31,3 +31,25 @@ export const CENSO_FUNCOES: { nome: string; codigo: string }[] = [
   { nome: 'Tradutor e Intérprete de Libras (fora de sala de aula)', codigo: '136' },
   { nome: 'Revisor de texto Braille, assistente vidente', codigo: '137' },
 ]
+
+export const PROFISSOES_CENSO: { field: string; codigo: string; label: string }[] = [
+  { field: 'prof_agronomos', codigo: '119', label: 'Agrônomos(as), horticultores(as), técnicos ou monitores(as) responsáveis pela gestão da área de horta, plantio e/ou produção agrícola' },
+  { field: 'prof_assistente_social', codigo: '120', label: 'Assistente social' },
+  { field: 'prof_aux_admin', codigo: '121', label: 'Auxiliares de secretaria ou auxiliares administrativos, atendentes' },
+  { field: 'prof_aux_servicos', codigo: '122', label: 'Auxiliar de serviços gerais, porteiro(a), zelador(a), faxineiro(a), jardineiro(a)' },
+  { field: 'prof_bibliotecario', codigo: '123', label: 'Bibliotecário(a), auxiliar de biblioteca ou monitor(a) da sala de leitura' },
+  { field: 'prof_bombeiro', codigo: '124', label: 'Bombeiro(a) brigadista, profissionais de assistência a saúde (urgência e emergência), enfermeiro(a), técnico(a) de enfermagem e socorrista' },
+  { field: 'prof_coordenador', codigo: '125', label: 'Coordenador(a) de turno/disciplinar' },
+  { field: 'prof_fonoaudiologo', codigo: '126', label: 'Fonoaudiólogo(a)' },
+  { field: 'prof_nutricionista', codigo: '127', label: 'Nutricionista' },
+  { field: 'prof_psicologo', codigo: '128', label: 'Psicólogo(a) escolar' },
+  { field: 'prof_cozinheiro', codigo: '129', label: 'Profissionais de preparação e segurança alimentar, cozinheiro(a), merendeira e auxiliar de cozinha' },
+  { field: 'prof_supervisao', codigo: '130', label: 'Profissionais de apoio e supervisão pedagógica: pedagogo(a), coordenador(a) pedagógico(a), orientador(a) educacional, supervisor(a) escolar e coordenador(a) de área de ensino' },
+  { field: 'prof_secretario', codigo: '131', label: 'Secretário(a) escolar' },
+  { field: 'prof_seguranca', codigo: '132', label: 'Segurança, guarda ou segurança patrimonial' },
+  { field: 'prof_tecnicos', codigo: '133', label: 'Técnicos(as), monitores(as), supervisores(as) ou auxiliares de laboratório(s), de apoio a tecnologias educacionais ou em multimeios/multimídias eletrônico-digitais' },
+  { field: 'prof_vice_diretor', codigo: '134', label: 'Vice-diretor(a) ou diretor(a) adjunto(a), profissionais responsáveis pela gestão administrativa e/ou financeira' },
+  { field: 'prof_orientador_comun', codigo: '135', label: 'Orientador(a) comunitário(a)' },
+  { field: 'prof_tradutor_libras', codigo: '136', label: 'Tradutor e Intérprete de Libras para atendimento em outros ambientes da escola que não seja sala de aula' },
+  { field: 'prof_revisor_braille', codigo: '137', label: 'Revisor de texto Braille, assistente vidente (assistente de revisão do texto em Braille)' },
+]

@@ -87,6 +87,7 @@ export default function NovaEscolaPage() {
         onSubmit={handleSubmit}
         isSubmitting={isSubmitting}
         title=""
+        schoolId={null}
         onCancel={() => router.push('/escolas')}
         submitLabel="Salvar Escola"
       />

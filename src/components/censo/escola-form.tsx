@@ -4,7 +4,7 @@ import { useForm, useWatch } from 'react-hook-form'
 import { useEffect, useState } from 'react'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { Loader2, Plus, Trash2 } from 'lucide-react'
+import { Loader2, Plus, Trash2, Users, Eye } from 'lucide-react'
 
 import {
   Form,
@@ -40,12 +40,39 @@ import {
 import { Separator } from '@/components/ui/separator'
 import { Combobox } from '@/components/ui/combobox'
 import { ClickablePill } from '@/components/ui/clickable-pill'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog'
+import { EmptyState } from '@/components/ui/empty-state'
+import { PROFISSOES_CENSO } from '@/data/funcoes-censo'
+import { getProfissionaisCenso, type ProfissionalCenso } from '@/lib/actions/censo-profissionais'
+import { useRouter } from 'next/navigation'
 import { MUNICIPIOS_CEARA } from '@/data/censo/municipios-ceara'
 import { ORGAOS_REGIONAIS_CEARA } from '@/data/censo/orgaos-regionais-ceara'
 
 // ───────────────────── Zod Schema ─────────────────────
 
 const checkboxValue = z.string().optional()
+
+function formatCpf(cpf: string | null | undefined) {
+  if (!cpf) return '—'
+  const d = cpf.replace(/\D/g, '')
+  if (d.length !== 11) return cpf
+  return `${d.slice(0, 3)}.${d.slice(3, 6)}.${d.slice(6, 9)}-${d.slice(9)}`
+}
+
+function formatDataNascimento(data: string | null | undefined) {
+  if (!data) return '—'
+  const date = new Date(data)
+  if (isNaN(date.getTime())) return data
+  const dd = String(date.getDate()).padStart(2, '0')
+  const mm = String(date.getMonth() + 1).padStart(2, '0')
+  return `${dd}/${mm}/${date.getFullYear()}`
+}
 
 const digitString = (len: number, msg: string) =>
   z
@@ -265,8 +292,8 @@ const escolaFormSchema = z.object({
   qtd_portateis_alunos: z.string().optional(),
   qtd_tablets_alunos: z.string().optional(),
   internet_administrativo: checkboxValue,
+  internet_ensino: checkboxValue,
   internet_alunos: checkboxValue,
-  internet_administrativo_alunos: checkboxValue,
   internet_comunidade: checkboxValue,
   internet_inexistente: checkboxValue,
   internet_equip_alunos: z.string().optional(),
@@ -275,44 +302,44 @@ const escolaFormSchema = z.object({
 
   // Tab 8: Profissionais e Materiais
   prof_agronomos: z.string().optional(),
-  prof_pedagogos: z.string().optional(),
-  prof_psicologos: z.string().optional(),
-  prof_assistentes_sociais: z.string().optional(),
-  prof_fonoaudiologos: z.string().optional(),
-  prof_nutricionistas: z.string().optional(),
-  prof_psicopedagogos: z.string().optional(),
-  prof_bombeiros: z.string().optional(),
-  prof_medicos: z.string().optional(),
-  prof_enfermeiros: z.string().optional(),
-  prof_tecnicos_enfermagem: z.string().optional(),
-  prof_dentistas: z.string().optional(),
-  prof_tecnicos_saude_bucal: z.string().optional(),
-  prof_auxiliares_saude_bucal: z.string().optional(),
-  prof_agentes_saude: z.string().optional(),
-  prof_monitores: z.string().optional(),
-  prof_assistentes_alfabetizacao: z.string().optional(),
+  prof_assistente_social: z.string().optional(),
+  prof_aux_admin: z.string().optional(),
+  prof_aux_servicos: z.string().optional(),
+  prof_bibliotecario: z.string().optional(),
+  prof_bombeiro: z.string().optional(),
+  prof_coordenador: z.string().optional(),
+  prof_fonoaudiologo: z.string().optional(),
+  prof_nutricionista: z.string().optional(),
+  prof_psicologo: z.string().optional(),
+  prof_cozinheiro: z.string().optional(),
+  prof_supervisao: z.string().optional(),
+  prof_secretario: z.string().optional(),
+  prof_seguranca: z.string().optional(),
+  prof_tecnicos: z.string().optional(),
+  prof_vice_diretor: z.string().optional(),
+  prof_orientador_comun: z.string().optional(),
   prof_tradutor_libras: z.string().optional(),
   prof_revisor_braille: z.string().optional(),
   prof_nenhum: checkboxValue,
   mat_acervo_multimidia: checkboxValue,
-  mat_brinquedos: checkboxValue,
-  mat_jogos_educativos: checkboxValue,
-  mat_livros_didaticos: checkboxValue,
-  mat_livros_literatura: checkboxValue,
-  mat_mapas: checkboxValue,
-  mat_materiais_cientificos: checkboxValue,
-  mat_materiais_esportivos: checkboxValue,
-  mat_materiais_artisticos: checkboxValue,
-  mat_materiais_educacao_etnica: checkboxValue,
-  mat_materiais_indigenas: checkboxValue,
-  mat_materiais_quilombolas: checkboxValue,
-  mat_materiais_campo: checkboxValue,
+  mat_brinquedos_infantil: checkboxValue,
+  mat_cientificos: checkboxValue,
+  mat_amplificacao_som: checkboxValue,
+  mat_audiovisuais: checkboxValue,
+  mat_horta: checkboxValue,
   mat_instrumentos_musicais: checkboxValue,
-  mat_fantasias: checkboxValue,
-  mat_acervo_braille: checkboxValue,
-  mat_acervo_libras: checkboxValue,
-  mat_acervo_audio: checkboxValue,
-  mat_acervo_digital: checkboxValue,
+  mat_jogos_educativos: checkboxValue,
+  mat_kits_robotica: checkboxValue,
+  mat_atividades_culturais: checkboxValue,
+  mat_educacao_emocional: checkboxValue,
+  mat_educacao_profissional: checkboxValue,
+  mat_pratica_desportiva: checkboxValue,
+  mat_bilingue_surdos: checkboxValue,
+  mat_educacao_indigena: checkboxValue,
+  mat_etnico_raciais: checkboxValue,
+  mat_educacao_campo: checkboxValue,
+  mat_educacao_quilombola: checkboxValue,
+  mat_educacao_especial: checkboxValue,
   mat_nenhum: checkboxValue,
 
   // Tab 9: Gestão Escolar
@@ -324,26 +351,26 @@ const escolaFormSchema = z.object({
   exame_selecao: checkboxValue,
   cota_ppi: checkboxValue,
   cota_renda: checkboxValue,
-  cota_publica: checkboxValue,
-  cota_deficiencia: checkboxValue,
+  cota_escola_publica: checkboxValue,
+  cota_pcd: checkboxValue,
   cota_outros: checkboxValue,
   cota_nenhum: checkboxValue,
   site_blog: checkboxValue,
   compartilha_espacos: checkboxValue,
   usa_entorno: checkboxValue,
   org_associacao_pais: checkboxValue,
-  org_gremio_estudantil: checkboxValue,
+  org_associacao_mestres: checkboxValue,
   org_conselho_escolar: checkboxValue,
-  org_colegiado_escolar: checkboxValue,
-  org_grafica_estudantil: checkboxValue,
+  org_gremio: checkboxValue,
+  org_outros: checkboxValue,
   org_nenhum: checkboxValue,
   ppp_atualizado: z.string().optional(),
   educacao_ambiental: checkboxValue,
   amb_conteudo: checkboxValue,
-  amb_projetos: checkboxValue,
-  amb_comunidade: checkboxValue,
+  amb_componente: checkboxValue,
+  amb_eixo: checkboxValue,
+  amb_eventos: checkboxValue,
   amb_transversal: checkboxValue,
-  amb_agenda21: checkboxValue,
   amb_nenhum: checkboxValue,
 }).superRefine((values, ctx) => {
   const precisaCnpjMant =
@@ -528,6 +555,102 @@ const escolaFormSchema = z.object({
       })
     }
   }
+
+  const internetAntecedentes = [
+    'internet_administrativo', 'internet_ensino', 'internet_alunos', 'internet_comunidade',
+  ] as const
+
+  if (values.internet_inexistente === '1' && internetAntecedentes.some((c) => values[c] === '1')) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ['internet_inexistente'],
+      message: '"Não possui acesso à internet" não pode ser marcado junto com outros usos da internet.',
+    })
+  }
+
+  const iea = values.internet_equip_alunos
+  if (iea && !['1', '2', '3'].includes(iea)) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ['internet_equip_alunos'],
+      message: 'Deve ser 1, 2 ou 3.',
+    })
+  }
+
+  if (
+    (iea === '1' || iea === '3') &&
+    !(Number(values.qtd_desktop_alunos) || 0) &&
+    !(Number(values.qtd_portateis_alunos) || 0) &&
+    !(Number(values.qtd_tablets_alunos) || 0)
+  ) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ['internet_equip_alunos'],
+      message: 'Não pode ser 1 ou 3 quando não houver quantidade de computadores de mesa, portáteis ou tablets para alunos.',
+    })
+  }
+
+  if (values.internet_banda_larga === '1' && values.internet_inexistente === '1') {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ['internet_banda_larga'],
+      message: 'Não pode ser marcado quando "Não possui acesso à internet" estiver marcado.',
+    })
+  }
+
+  const rl = values.rede_local
+  if (rl && !['0', '1', '2', '3'].includes(rl)) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ['rede_local'],
+      message: 'Deve ser 0, 1, 2 ou 3.',
+    })
+  }
+
+  const le = values.lingua_ensino
+  if (le && !['0', '1', '2', '3'].includes(le)) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ['lingua_ensino'],
+      message: 'Deve ser 0, 1, 2 ou 3.',
+    })
+  }
+
+  const cotasAntecedentes = [
+    'cota_ppi', 'cota_renda', 'cota_escola_publica', 'cota_pcd', 'cota_outros',
+  ] as const
+
+  if (values.cota_nenhum === '1' && cotasAntecedentes.some((c) => values[c] === '1')) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ['cota_nenhum'],
+      message: '"Sem reservas de vagas (ampla concorrência)" não pode ser marcado junto com outra modalidade de cota.',
+    })
+  }
+
+  const orgAntecedentes = [
+    'org_associacao_pais', 'org_associacao_mestres', 'org_conselho_escolar', 'org_gremio', 'org_outros',
+  ] as const
+
+  if (values.org_nenhum === '1' && orgAntecedentes.some((c) => values[c] === '1')) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ['org_nenhum'],
+      message: '"Não há órgãos colegiados em funcionamento" não pode ser marcado junto com outro órgão colegiado.',
+    })
+  }
+
+  const ambAntecedentes = [
+    'amb_conteudo', 'amb_componente', 'amb_eixo', 'amb_eventos', 'amb_transversal',
+  ] as const
+
+  if (values.amb_nenhum === '1' && ambAntecedentes.some((c) => values[c] === '1')) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ['amb_nenhum'],
+      message: '"Nenhuma das opções listadas" não pode ser marcado junto com outra forma de educação ambiental.',
+    })
+  }
 })
 
 type EscolaFormValues = z.infer<typeof escolaFormSchema>
@@ -542,6 +665,7 @@ interface EscolaFormProps {
   submitLabel?: string
   title?: string
   readOnly?: boolean
+  schoolId?: string | null
 }
 
 // ───────────────────── Helpers ─────────────────────
@@ -604,6 +728,42 @@ function PillCheckboxField({
           onClick={() => field.onChange(field.value === '1' ? '0' : '1')}
           className={className}
         />
+      )}
+    />
+  )
+}
+
+function PillRadioField({
+  control,
+  name,
+  options,
+  className,
+}: {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  control: any
+  name: string
+  options: { value: string; label: string }[]
+  className?: string
+}) {
+  return (
+    <FormField
+      control={control}
+      name={name}
+      render={({ field }) => (
+        <div className="flex flex-wrap gap-2">
+          {options.map((o) => {
+            const ativo = field.value === o.value
+            return (
+              <ClickablePill
+                key={o.value}
+                label={o.label}
+                active={ativo}
+                onClick={() => field.onChange(ativo ? '' : o.value)}
+                className={className}
+              />
+            )
+          })}
+        </div>
       )}
     />
   )
@@ -673,21 +833,23 @@ function QtdEquipField({
 }) {
   const ativo = !!value && Number(value) > 0
   return (
-    <div className="flex flex-col gap-2">
+    <div className="flex items-stretch gap-3">
       <ClickablePill
         label={label}
         active={ativo}
         onClick={() => onChange(ativo ? '' : '1')}
-        className="w-full justify-center text-center whitespace-normal"
+        className="w-1/2 flex-none justify-center text-center whitespace-normal h-auto min-h-full"
       />
-      <InputField
-        control={control}
-        name={name}
-        label="Quantidade"
-        type="number"
-        digitsOnly
-        disabled={!ativo}
-      />
+      <div className="w-28 shrink-0">
+        <InputField
+          control={control}
+          name={name}
+          label="Quantidade"
+          type="number"
+          digitsOnly
+          disabled={!ativo}
+        />
+      </div>
     </div>
   )
 }
@@ -752,6 +914,7 @@ export function EscolaForm({
   submitLabel = 'Salvar Escola',
   title = 'Nova Escola',
   readOnly = false,
+  schoolId = null,
 }: EscolaFormProps) {
   const form = useForm<EscolaFormValues>({
     resolver: zodResolver(escolaFormSchema),
@@ -772,6 +935,42 @@ export function EscolaForm({
     const preenchidos = chaves.filter((c) => form.getValues(c)).length
     return preenchidos > 0 ? preenchidos : 1
   })
+
+  const router = useRouter()
+  const [contagensProf, setContagensProf] = useState<Record<string, number>>({})
+  const [profsCenso, setProfsCenso] = useState<ProfissionalCenso[]>([])
+  const [carregandoProfs, setCarregandoProfs] = useState(false)
+  const [modalFuncao, setModalFuncao] = useState<{ codigo: string; label: string } | null>(null)
+
+  useEffect(() => {
+    if (!schoolId || readOnly) return
+    let ativo = true
+    setCarregandoProfs(true)
+    getProfissionaisCenso(schoolId)
+      .then(({ resumo, profissionais }) => {
+        if (!ativo) return
+        const mapa: Record<string, number> = {}
+        for (const r of resumo) mapa[r.tipo_censo] = r.total
+        setContagensProf(mapa)
+        setProfsCenso(profissionais)
+        const totalGeral = Object.values(mapa).reduce((a, b) => a + b, 0)
+        if (totalGeral === 0) {
+          form.setValue('prof_nenhum', '1')
+        } else {
+          form.setValue('prof_nenhum', '0')
+        }
+      })
+      .catch(() => {
+        if (!ativo) return
+        setContagensProf({})
+      })
+      .finally(() => {
+        if (ativo) setCarregandoProfs(false)
+      })
+    return () => {
+      ativo = false
+    }
+  }, [schoolId, readOnly, form])
 
   const situacaoFuncionamento = useWatch({ control, name: 'situacao_funcionamento' })
   const dependenciaAdministrativa = useWatch({ control, name: 'dependencia_administrativa' })
@@ -798,6 +997,7 @@ export function EscolaForm({
   const depNenhuma = useWatch({ control, name: 'dep_nenhuma' })
   const acessNenhum = useWatch({ control, name: 'acess_nenhum' })
   const eqNenhum = useWatch({ control, name: 'eq_nenhum' })
+  const matNenhum = useWatch({ control, name: 'mat_nenhum' })
   const qtdEquipValues = useWatch({
     control,
     name: [
@@ -805,6 +1005,10 @@ export function EscolaForm({
       'qtd_projetor', 'qtd_desktop_alunos', 'qtd_portateis_alunos', 'qtd_tablets_alunos',
     ],
   })
+  const temEquipEscola =
+    (Number(qtdEquipValues[5]) || 0) > 0 ||
+    (Number(qtdEquipValues[6]) || 0) > 0 ||
+    (Number(qtdEquipValues[7]) || 0) > 0
   const eqDemais = useWatch({
     control,
     name: [
@@ -845,6 +1049,10 @@ export function EscolaForm({
   const linguaEnsino = useWatch({ control, name: 'lingua_ensino' })
   const internetAlunos = useWatch({ control, name: 'internet_alunos' })
   const internetInexistente = useWatch({ control, name: 'internet_inexistente' })
+  const internetDemais = useWatch({
+    control,
+    name: ['internet_administrativo', 'internet_ensino', 'internet_alunos', 'internet_comunidade'],
+  })
   const regulamentacao = useWatch({ control, name: 'regulamentacao' })
   const mantSemFinsLucrativos = useWatch({ control, name: 'mant_sem_fins_lucrativos' })
   const municipioWatch = useWatch({ control, name: 'municipio' })
@@ -884,7 +1092,14 @@ export function EscolaForm({
   }, [municipioWatch, municipioSelecionado, distritoWatch, form])
 
   const submitHandler = (data: EscolaFormValues) => {
-    return onSubmit(data as unknown as Record<string, unknown>)
+    for (const p of PROFISSOES_CENSO) {
+      const total = contagensProf[p.codigo] || 0
+      form.setValue(p.field as keyof EscolaFormValues, total > 0 ? String(total) : '')
+    }
+    const totalGeral = Object.values(contagensProf).reduce((a, b) => a + b, 0)
+    form.setValue('prof_nenhum', totalGeral === 0 ? '1' : '0')
+    const novosDados = form.getValues()
+    return onSubmit(novosDados as unknown as Record<string, unknown>)
   }
 
   // ──────── Common Select Options ────────
@@ -958,29 +1173,29 @@ export function EscolaForm({
   ]
 
   const internetEquipOptions = [
-    { value: '1', label: 'Sim — Computadores de mesa' },
-    { value: '2', label: 'Sim — Dispositivos portáteis' },
-    { value: '3', label: 'Sim — Ambos' },
+    { value: '1', label: 'Computadores de mesa, portáteis e tablets da escola (laboratório de informática, biblioteca, salas de aula, etc.)' },
+    { value: '2', label: 'Dispositivos pessoais (computadores portáteis, celulares, tablets, etc.)' },
+    { value: '3', label: 'Computadores de mesa, portáteis e tablets da escola (no laboratório de informática, biblioteca, sala de aula, etc.) e Dispositivos pessoais (computadores portáteis, celulares, tablets, etc.)' },
   ]
 
   const redeLocalOptions = [
-    { value: '0', label: 'Não há rede local' },
-    { value: '1', label: 'Rede a cabo' },
-    { value: '2', label: 'Rede sem fio (wireless)' },
-    { value: '3', label: 'Rede a cabo e sem fio' },
+    { value: '0', label: 'Não há rede local interligando computadores' },
+    { value: '1', label: 'A cabo' },
+    { value: '2', label: 'Wireless' },
+    { value: '3', label: 'A cabo e Wireless' },
   ]
 
   const linguaOptions = [
-    { value: '1', label: 'Português' },
-    { value: '2', label: 'Libras' },
-    { value: '3', label: 'Indígena e Português' },
-    { value: '4', label: 'Libras e Português' },
+    { value: '0', label: 'Não oferece educação indígena' },
+    { value: '1', label: 'Língua indígena' },
+    { value: '2', label: 'Língua portuguesa' },
+    { value: '3', label: 'Língua indígena e língua portuguesa' },
   ]
 
   const pppOptions = [
     { value: '0', label: 'Não' },
-    { value: '1', label: 'Sim — atualizado nos últimos 5 anos' },
-    { value: '2', label: 'Sim — atualizado há mais de 5 anos' },
+    { value: '1', label: 'Sim' },
+    { value: '2', label: 'A escola não possui PPP / proposta pedagógica' },
   ]
 
   const mostraOrgaos = ['1', '2', '3'].includes(dependenciaAdministrativa)
@@ -1112,6 +1327,39 @@ export function EscolaForm({
     }
   }, [eqNenhum, form])
 
+  useEffect(() => {
+    if (matNenhum === '1') {
+      const outros = [
+        'mat_acervo_multimidia', 'mat_brinquedos_infantil', 'mat_cientificos', 'mat_amplificacao_som',
+        'mat_audiovisuais', 'mat_horta', 'mat_instrumentos_musicais', 'mat_jogos_educativos',
+        'mat_kits_robotica', 'mat_atividades_culturais', 'mat_educacao_emocional',
+        'mat_educacao_profissional', 'mat_pratica_desportiva', 'mat_bilingue_surdos',
+        'mat_educacao_indigena', 'mat_etnico_raciais', 'mat_educacao_campo',
+        'mat_educacao_quilombola', 'mat_educacao_especial',
+      ] as const
+      for (const c of outros) {
+        if (form.getValues(c) === '1') form.setValue(c, '0')
+      }
+    }
+  }, [matNenhum, form])
+
+  useEffect(() => {
+    if (internetInexistente === '1') {
+      const outros = [
+        'internet_administrativo', 'internet_ensino', 'internet_alunos', 'internet_comunidade',
+      ] as const
+      for (const c of outros) {
+        if (form.getValues(c) === '1') form.setValue(c, '0')
+      }
+    }
+  }, [internetInexistente, form])
+
+  useEffect(() => {
+    if (internetAlunos === '1' && !temEquipEscola && ['1', '3'].includes(form.getValues('internet_equip_alunos') || '')) {
+      form.setValue('internet_equip_alunos', '')
+    }
+  }, [internetAlunos, temEquipEscola, form])
+
   const mostraFormaOcupacao = localPredio === '1'
   const mostraCompartilhamento = localPredio === '1' && predioCompartilhado === '1'
   const mostraCotas = exameSelecao === '1'
@@ -1119,6 +1367,10 @@ export function EscolaForm({
   const mostraLinguaIndigena = ['1', '3'].includes(linguaEnsino || '')
   const mostraInternetEquipAlunos = internetAlunos === '1' && internetInexistente !== '1'
   const mostraBandaLarga = internetInexistente !== '1'
+
+  const internetEquipOptionsFiltradas = internetEquipOptions.filter(
+    (o) => temEquipEscola || o.value === '2',
+  )
 
   // ──────── Checkbox field arrays ────────
 
@@ -1281,83 +1533,61 @@ export function EscolaForm({
   ] as const
 
   const internetChecks = [
-    { name: 'internet_administrativo', label: 'Internet — uso administrativo' },
-    { name: 'internet_alunos', label: 'Internet — uso dos alunos' },
-    { name: 'internet_administrativo_alunos', label: 'Internet — uso administrativo e alunos' },
-    { name: 'internet_comunidade', label: 'Internet — uso da comunidade' },
-    { name: 'internet_inexistente', label: 'Não possui internet' },
-  ]
-
-  const profFields = [
-    { name: 'prof_agronomos', label: 'Agrônomos' },
-    { name: 'prof_pedagogos', label: 'Pedagogos' },
-    { name: 'prof_psicologos', label: 'Psicólogos' },
-    { name: 'prof_assistentes_sociais', label: 'Assistentes sociais' },
-    { name: 'prof_fonoaudiologos', label: 'Fonoaudiólogos' },
-    { name: 'prof_nutricionistas', label: 'Nutricionistas' },
-    { name: 'prof_psicopedagogos', label: 'Psicopedagogos' },
-    { name: 'prof_bombeiros', label: 'Bombeiros / brigadistas' },
-    { name: 'prof_medicos', label: 'Médicos' },
-    { name: 'prof_enfermeiros', label: 'Enfermeiros' },
-    { name: 'prof_tecnicos_enfermagem', label: 'Técnicos de enfermagem' },
-    { name: 'prof_dentistas', label: 'Dentistas' },
-    { name: 'prof_tecnicos_saude_bucal', label: 'Técnicos de saúde bucal' },
-    { name: 'prof_auxiliares_saude_bucal', label: 'Auxiliares de saúde bucal' },
-    { name: 'prof_agentes_saude', label: 'Agentes comunitários de saúde' },
-    { name: 'prof_monitores', label: 'Monitores' },
-    { name: 'prof_assistentes_alfabetizacao', label: 'Assistentes de alfabetização' },
-    { name: 'prof_tradutor_libras', label: 'Tradutores/intérpretes de Libras' },
-    { name: 'prof_revisor_braille', label: 'Revisores Braille' },
+    { name: 'internet_administrativo', label: 'Para uso administrativo' },
+    { name: 'internet_ensino', label: 'Para uso no processo de ensino e aprendizagem' },
+    { name: 'internet_alunos', label: 'Para uso dos aluno(a)s' },
+    { name: 'internet_comunidade', label: 'Para uso da comunidade' },
+    { name: 'internet_inexistente', label: 'Não possui acesso à internet' },
   ]
 
   const matChecks = [
     { name: 'mat_acervo_multimidia', label: 'Acervo multimídia' },
-    { name: 'mat_brinquedos', label: 'Brinquedos para educação infantil' },
+    { name: 'mat_brinquedos_infantil', label: 'Brinquedos para educação infantil' },
+    { name: 'mat_cientificos', label: 'Conjunto de materiais científicos' },
+    { name: 'mat_amplificacao_som', label: 'Equipamento para amplificação e difusão de som/áudio' },
+    { name: 'mat_audiovisuais', label: 'Equipamentos audiovisuais para produção estudantil' },
+    { name: 'mat_horta', label: 'Equipamentos e instrumentos para atividades em área de horta, plantio e/ou produção agrícola' },
+    { name: 'mat_instrumentos_musicais', label: 'Instrumentos musicais para conjunto, banda/fanfarra e/ou aulas de música' },
     { name: 'mat_jogos_educativos', label: 'Jogos educativos' },
-    { name: 'mat_livros_didaticos', label: 'Livros didáticos' },
-    { name: 'mat_livros_literatura', label: 'Livros de literatura' },
-    { name: 'mat_mapas', label: 'Mapas' },
-    { name: 'mat_materiais_cientificos', label: 'Materiais científicos' },
-    { name: 'mat_materiais_esportivos', label: 'Materiais esportivos' },
-    { name: 'mat_materiais_artisticos', label: 'Materiais artísticos' },
-    { name: 'mat_materiais_educacao_etnica', label: 'Materiais para educação étnico-racial' },
-    { name: 'mat_materiais_indigenas', label: 'Materiais para educação indígena' },
-    { name: 'mat_materiais_quilombolas', label: 'Materiais para educação quilombola' },
-    { name: 'mat_materiais_campo', label: 'Materiais para educação do campo' },
-    { name: 'mat_instrumentos_musicais', label: 'Instrumentos musicais' },
-    { name: 'mat_fantasias', label: 'Fantasias' },
-    { name: 'mat_acervo_braille', label: 'Acervo em Braille' },
-    { name: 'mat_acervo_libras', label: 'Acervo em Libras' },
-    { name: 'mat_acervo_audio', label: 'Acervo em áudio' },
-    { name: 'mat_acervo_digital', label: 'Acervo digital' },
-    { name: 'mat_nenhum', label: 'Nenhum' },
+    { name: 'mat_kits_robotica', label: 'Kits de robótica' },
+    { name: 'mat_atividades_culturais', label: 'Materiais para atividades culturais e artísticas' },
+    { name: 'mat_educacao_emocional', label: 'Materiais para a educação emocional e mediação de conflitos' },
+    { name: 'mat_educacao_profissional', label: 'Materiais para educação profissional' },
+    { name: 'mat_pratica_desportiva', label: 'Materiais para prática desportiva e recreação' },
+    { name: 'mat_bilingue_surdos', label: 'Materiais pedagógicos para a educação bilíngue de surdos' },
+    { name: 'mat_educacao_indigena', label: 'Materiais pedagógicos para a educação escolar indígena' },
+    { name: 'mat_etnico_raciais', label: 'Materiais pedagógicos para a educação das relações étnicos raciais' },
+    { name: 'mat_educacao_campo', label: 'Materiais pedagógicos para a educação do campo' },
+    { name: 'mat_educacao_quilombola', label: 'Materiais pedagógicos para a educação escolar quilombola' },
+    { name: 'mat_educacao_especial', label: 'Materiais pedagógicos para a educação especial' },
+    { name: 'mat_nenhum', label: 'Nenhum dos instrumentos listados' },
   ]
 
   const cotaChecks = [
-    { name: 'cota_ppi', label: 'Pretos, pardos e indígenas (PPI)' },
-    { name: 'cota_renda', label: 'Renda' },
-    { name: 'cota_publica', label: 'Estudantes de escola pública' },
-    { name: 'cota_deficiencia', label: 'Pessoas com deficiência' },
-    { name: 'cota_outros', label: 'Outros' },
-    { name: 'cota_nenhum', label: 'Nenhum' },
+    { name: 'cota_ppi', label: 'Autodeclarado preto, pardo ou indígena (PPI)' },
+    { name: 'cota_renda', label: 'Condição de renda' },
+    { name: 'cota_escola_publica', label: 'Oriundo de escola pública' },
+    { name: 'cota_pcd', label: 'Pessoa com deficiência (PCD)' },
+    { name: 'cota_outros', label: 'Outros grupos que não os listados' },
+    { name: 'cota_nenhum', label: 'Sem reservas de vagas para sistema de cotas (ampla concorrência)' },
   ]
 
   const orgChecks = [
-    { name: 'org_associacao_pais', label: 'Associação de pais' },
-    { name: 'org_gremio_estudantil', label: 'Grêmio estudantil' },
+    { name: 'org_associacao_pais', label: 'Associação de Pais' },
+    { name: 'org_associacao_mestres', label: 'Associação de pais e mestres' },
     { name: 'org_conselho_escolar', label: 'Conselho escolar' },
-    { name: 'org_colegiado_escolar', label: 'Colegiado escolar' },
-    { name: 'org_grafica_estudantil', label: 'Grêmio estudantil' },
-    { name: 'org_nenhum', label: 'Nenhum' },
+    { name: 'org_gremio', label: 'Grêmio estudantil' },
+    { name: 'org_outros', label: 'Outros' },
+    { name: 'org_nenhum', label: 'Não há órgãos colegiados em funcionamento' },
   ]
 
   const ambChecks = [
-    { name: 'amb_conteudo', label: 'Inserido nos conteúdos das disciplinas' },
-    { name: 'amb_projetos', label: 'Projetos' },
-    { name: 'amb_comunidade', label: 'Ações junto à comunidade' },
-    { name: 'amb_transversal', label: 'Tema transversal' },
-    { name: 'amb_agenda21', label: 'Agenda 21' },
-    { name: 'amb_nenhum', label: 'Nenhuma' },
+    { name: 'amb_conteudo', label: 'Como conteúdo dos componentes/campos de experiências presentes no currículo' },
+    { name: 'amb_componente', label: 'Como um componente curricular especial, específico, flexível ou eletivo' },
+    { name: 'amb_eixo', label: 'Como um eixo estruturante do currículo' },
+    { name: 'amb_eventos', label: 'Em eventos' },
+    { name: 'amb_transversal', label: 'Em projetos transversais ou interdisciplinares' },
+    { name: 'amb_nenhum', label: 'Nenhuma das opções listadas' },
   ]
 
   return (
@@ -2202,7 +2432,7 @@ export function EscolaForm({
                     <h4 className="text-sm font-semibold text-foreground mb-3">
                       Quantidade de Equipamentos
                     </h4>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                       {qtdEquipChecks.map((c, i) => (
                         <QtdEquipField
                           key={c.name}
@@ -2223,43 +2453,61 @@ export function EscolaForm({
                     <h4 className="text-sm font-semibold text-foreground mb-3">
                       Acesso à Internet
                     </h4>
-                    <div className="flex flex-col gap-2">
+                    <div className="flex flex-wrap gap-2">
                       {internetChecks.map((c) => (
-                        <CheckboxField
+                        <PillCheckboxField
                           key={c.name}
                           control={control}
                           name={c.name}
                           label={c.label}
+                          disabled={c.name === 'internet_inexistente'
+                            ? internetDemais.some((v) => v === '1')
+                            : internetInexistente === '1'}
                         />
                       ))}
                     </div>
                   </div>
 
                   {mostraInternetEquipAlunos && (
-                    <SelectField
-                      control={control}
-                      name="internet_equip_alunos"
-                      label="Equipamentos com internet para alunos"
-                      options={internetEquipOptions}
-                    />
+                    <div className="border border-border rounded-lg p-4 bg-muted/30">
+                      <h4 className="text-sm font-semibold text-foreground mb-3">
+                        Equipamentos que os alunos usam para acessar a internet da escola
+                      </h4>
+                      <PillRadioField
+                        control={control}
+                        name="internet_equip_alunos"
+                        options={internetEquipOptionsFiltradas}
+                        className="whitespace-normal"
+                      />
+                    </div>
                   )}
 
                   {mostraBandaLarga && (
-                    <CheckboxField
-                      control={control}
-                      name="internet_banda_larga"
-                      label="Internet banda larga"
-                    />
+                    <div className="border border-border rounded-lg p-4 bg-muted/30">
+                      <h4 className="text-sm font-semibold text-foreground mb-3">
+                        Internet banda larga
+                      </h4>
+                      <div className="flex flex-wrap gap-2">
+                        <PillCheckboxField
+                          control={control}
+                          name="internet_banda_larga"
+                          label="Internet banda larga"
+                        />
+                      </div>
+                    </div>
                   )}
 
-                  <Separator />
-
-                  <SelectField
-                    control={control}
-                    name="rede_local"
-                    label="Rede Local de Comunicação"
-                    options={redeLocalOptions}
-                  />
+                  <div className="border border-border rounded-lg p-4 bg-muted/30">
+                    <h4 className="text-sm font-semibold text-foreground mb-3">
+                      Rede local de interligação de computadores
+                    </h4>
+                    <PillRadioField
+                      control={control}
+                      name="rede_local"
+                      options={redeLocalOptions}
+                      className="whitespace-normal"
+                    />
+                  </div>
                 </CardContent>
               </Card>
             </TabsContent>
@@ -2273,27 +2521,64 @@ export function EscolaForm({
                 <CardContent className="flex flex-col gap-6">
                   {/* Profissionais */}
                   <div className="border border-border rounded-lg p-4 bg-muted/30">
-                    <h4 className="text-sm font-semibold text-foreground mb-3">
-                      Profissionais por Função (quantidade)
+                    <h4 className="text-sm font-semibold text-foreground mb-1">
+                      Profissionais por Função
                     </h4>
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                      {profFields.map((p) => (
-                        <InputField
-                          key={p.name}
-                          control={control}
-                          name={p.name}
-                          label={p.label}
-                          type="number"
-                          digitsOnly
-                        />
-                      ))}
-                    </div>
+                    <p className="text-[13px] text-muted-foreground mb-4">
+                      Quantidades calculadas automaticamente a partir dos vínculos profissionais ativos (Usuários).
+                    </p>
+
+                    {carregandoProfs ? (
+                      <div className="space-y-3">
+                        <div className="h-10 bg-muted rounded-lg animate-pulse" />
+                        <div className="h-10 bg-muted rounded-lg animate-pulse" />
+                        <div className="h-10 bg-muted rounded-lg animate-pulse" />
+                      </div>
+                    ) : (
+                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                        {PROFISSOES_CENSO.map((p) => {
+                          const total = contagensProf[p.codigo] || 0
+                          return (
+                            <div
+                              key={p.field}
+                              className="border border-border rounded-lg bg-card p-4 flex flex-col justify-between min-h-[150px]"
+                            >
+                              <p className="text-[13px] font-medium text-foreground leading-snug">
+                                {p.label}
+                              </p>
+                              <div className="mt-3 flex items-end justify-between gap-2">
+                                <span className="text-[36px] font-bold leading-none tabular-nums text-primary">
+                                  {total}
+                                </span>
+                                <Button
+                                  type="button"
+                                  variant="outline"
+                                  size="sm"
+                                  className="h-9"
+                                  disabled={total === 0}
+                                  onClick={() => setModalFuncao({ codigo: p.codigo, label: p.label })}
+                                >
+                                  Ver profissionais
+                                </Button>
+                              </div>
+                            </div>
+                          )
+                        })}
+                      </div>
+                    )}
+
                     <div className="mt-4">
-                      <CheckboxField
-                        control={control}
-                        name="prof_nenhum"
-                        label="Nenhum profissional nas funções listadas"
-                      />
+                      {form.watch('prof_nenhum') === '1' ? (
+                        <span className="inline-flex items-center gap-2 text-[13px] text-muted-foreground">
+                          <span className="h-2 w-2 rounded-full bg-warning inline-block" />
+                          Não há funcionários para as funções listadas
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center gap-2 text-[13px] text-muted-foreground">
+                          <span className="h-2 w-2 rounded-full bg-success inline-block" />
+                          Há funcionários para as funções listadas
+                        </span>
+                      )}
                     </div>
                   </div>
 
@@ -2304,19 +2589,77 @@ export function EscolaForm({
                     <h4 className="text-sm font-semibold text-foreground mb-3">
                       Materiais Pedagógicos
                     </h4>
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2">
                       {matChecks.map((c) => (
-                        <CheckboxField
+                        <PillCheckboxField
                           key={c.name}
                           control={control}
                           name={c.name}
                           label={c.label}
+                          className="w-full h-full justify-center text-center whitespace-normal"
                         />
                       ))}
                     </div>
                   </div>
                 </CardContent>
               </Card>
+
+              <Dialog open={!!modalFuncao} onOpenChange={(open) => { if (!open) setModalFuncao(null) }}>
+                <DialogContent className="max-w-2xl max-h-[80vh] flex flex-col p-0 gap-0">
+                  <DialogHeader className="shrink-0 px-6 pt-6 pb-4 border-b border-border">
+                    <DialogTitle>Profissionais — {modalFuncao?.label}</DialogTitle>
+                    <DialogDescription>
+                      {contagensProf[modalFuncao?.codigo || ''] || 0} profissional(is) com esta função e vínculo ativo.
+                    </DialogDescription>
+                  </DialogHeader>
+                  <div className="flex-1 overflow-y-auto px-6 py-4">
+                    {modalFuncao && (() => {
+                      const lista = profsCenso.filter((p) => p.tipo_censo === modalFuncao.codigo)
+                      if (lista.length === 0) {
+                        return (
+                          <EmptyState
+                            icon={Users}
+                            title="Nenhum profissional"
+                            description="Não há profissionais com esta função e vínculo ativo."
+                          />
+                        )
+                      }
+                      return (
+                        <ul className="space-y-2">
+                          {lista.map((p) => (
+                            <li
+                              key={p.id}
+                              className="border border-border rounded-lg bg-muted/20 p-3 flex flex-wrap items-center justify-between gap-3"
+                            >
+                              <div className="min-w-0">
+                                <p className="text-[15px] font-semibold text-foreground truncate">
+                                  {p.nome_completo}
+                                </p>
+                                <p className="text-[13px] text-muted-foreground mt-1 tabular-nums">
+                                  CPF: {formatCpf(p.cpf)} · Nascimento: {formatDataNascimento(p.data_nascimento)}
+                                </p>
+                              </div>
+                              <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                className="h-9 shrink-0"
+                                onClick={() => {
+                                  sessionStorage.setItem('usuarios_search', p.nome_completo.split(' ')[0])
+                                  router.push('/gestao-usuarios/usuarios')
+                                }}
+                              >
+                                <Eye className="mr-1.5 h-4 w-4" />
+                                Ver cadastro
+                              </Button>
+                            </li>
+                          ))}
+                        </ul>
+                      )
+                    })()}
+                  </div>
+                </DialogContent>
+              </Dialog>
             </TabsContent>
 
             {/* ══════ Tab 9: Gestão Escolar ══════ */}
@@ -2326,7 +2669,7 @@ export function EscolaForm({
                   <CardTitle>Gestão Escolar (Registro 10)</CardTitle>
                 </CardHeader>
                 <CardContent className="flex flex-col gap-6">
-                  <CheckboxField
+                  <PillCheckboxField
                     control={control}
                     name="alimentacao_escolar"
                     label="Alimentação escolar para os alunos"
@@ -2336,12 +2679,14 @@ export function EscolaForm({
 
                   {/* Língua de ensino */}
                   <div className="border border-border rounded-lg p-4 bg-muted/30">
-                    <SelectField
-                      control={control}
-                      name="lingua_ensino"
-                      label="Língua de Ensino"
-                      options={linguaOptions}
-                    />
+                    <div className="max-w-md">
+                      <SelectField
+                        control={control}
+                        name="lingua_ensino"
+                        label="Língua em que o ensino é ministrado"
+                        options={linguaOptions}
+                      />
+                    </div>
                     {mostraLinguaIndigena && (
                       <div className="mt-3 grid grid-cols-1 md:grid-cols-3 gap-4">
                         <InputField
@@ -2373,24 +2718,26 @@ export function EscolaForm({
 
                   {/* Exame de seleção + cotas */}
                   <div className="border border-border rounded-lg p-4 bg-muted/30">
-                    <CheckboxField
+                    <PillCheckboxField
                       control={control}
                       name="exame_selecao"
-                      label="Realiza exame de seleção para ingresso"
+                      label="A escola faz exame de seleção para ingresso de seus alunos"
                     />
                     {mostraCotas && (
-                      <div className="ml-6 mt-3 flex flex-col gap-2 border-l-2 border-border pl-4">
-                        <p className="text-xs text-muted-foreground mb-1">
+                      <div className="mt-3">
+                        <p className="text-[13px] text-muted-foreground mb-2">
                           Reserva de vagas por sistema de cotas:
                         </p>
-                        {cotaChecks.map((c) => (
-                          <CheckboxField
-                            key={c.name}
-                            control={control}
-                            name={c.name}
-                            label={c.label}
-                          />
-                        ))}
+                        <div className="flex flex-wrap gap-2">
+                          {cotaChecks.map((c) => (
+                            <PillCheckboxField
+                              key={c.name}
+                              control={control}
+                              name={c.name}
+                              label={c.label}
+                            />
+                          ))}
+                        </div>
                       </div>
                     )}
                   </div>
@@ -2398,18 +2745,18 @@ export function EscolaForm({
                   <Separator />
 
                   {/* Site, compartilha espaços, usa entorno */}
-                  <div className="flex flex-col gap-2">
-                    <CheckboxField
+                  <div className="flex flex-wrap gap-2">
+                    <PillCheckboxField
                       control={control}
                       name="site_blog"
                       label="Possui site / blog / página na internet"
                     />
-                    <CheckboxField
+                    <PillCheckboxField
                       control={control}
                       name="compartilha_espacos"
                       label="Compartilha espaços com a comunidade"
                     />
-                    <CheckboxField
+                    <PillCheckboxField
                       control={control}
                       name="usa_entorno"
                       label="Usa espaços do entorno para atividades escolares"
@@ -2423,9 +2770,9 @@ export function EscolaForm({
                     <h4 className="text-sm font-semibold text-foreground mb-3">
                       Órgãos Colegiados
                     </h4>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                    <div className="flex flex-wrap gap-2">
                       {orgChecks.map((c) => (
-                        <CheckboxField
+                        <PillCheckboxField
                           key={c.name}
                           control={control}
                           name={c.name}
@@ -2435,35 +2782,39 @@ export function EscolaForm({
                     </div>
                   </div>
 
-                  <SelectField
-                    control={control}
-                    name="ppp_atualizado"
-                    label="Projeto Político-Pedagógico (PPP)"
-                    options={pppOptions}
-                  />
+                  <div className="max-w-md">
+                    <SelectField
+                      control={control}
+                      name="ppp_atualizado"
+                      label="Projeto Político-Pedagógico (PPP)"
+                      options={pppOptions}
+                    />
+                  </div>
 
                   <Separator />
 
                   {/* Educação ambiental */}
                   <div className="border border-border rounded-lg p-4 bg-muted/30">
-                    <CheckboxField
+                    <PillCheckboxField
                       control={control}
                       name="educacao_ambiental"
-                      label="Educação ambiental"
+                      label="A escola desenvolve ações na área de educação ambiental"
                     />
                     {mostraEducacaoAmbiental && (
-                      <div className="ml-6 mt-3 flex flex-col gap-2 border-l-2 border-border pl-4">
-                        <p className="text-xs text-muted-foreground mb-1">
+                      <div className="mt-3">
+                        <p className="text-[13px] text-muted-foreground mb-2">
                           Formas de educação ambiental:
                         </p>
-                        {ambChecks.map((c) => (
-                          <CheckboxField
-                            key={c.name}
-                            control={control}
-                            name={c.name}
-                            label={c.label}
-                          />
-                        ))}
+                        <div className="flex flex-wrap gap-2">
+                          {ambChecks.map((c) => (
+                            <PillCheckboxField
+                              key={c.name}
+                              control={control}
+                              name={c.name}
+                              label={c.label}
+                            />
+                          ))}
+                        </div>
                       </div>
                     )}
                   </div>

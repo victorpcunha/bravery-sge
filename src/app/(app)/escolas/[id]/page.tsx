@@ -185,6 +185,7 @@ export default function UnidadeEscolarPage() {
         isSubmitting={isSubmitting}
         readOnly={!podeEditar}
         title=""
+        schoolId={id}
         onCancel={() => router.push('/escolas')}
         submitLabel="Salvar Alterações"
       />

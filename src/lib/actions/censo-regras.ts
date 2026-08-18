@@ -1139,6 +1139,12 @@ export async function validarRegistro10(schoolId: string): Promise<ErroValidacao
   validarNenhum('Materiais pedagógicos', 'mat_nenhum', MATERIAIS.filter((c) => c !== 'mat_nenhum'), 159)
   validarNenhum('Órgãos colegiados', 'org_nenhum', ['org_associacao_pais', 'org_associacao_mestres', 'org_conselho_escolar', 'org_gremio', 'org_outros'], 179)
 
+  // Cotas (170) — exclusivo com as demais modalidades de cota
+  validarNenhum('Sistema de cotas', 'cota_nenhum', ['cota_ppi', 'cota_renda', 'cota_escola_publica', 'cota_pcd', 'cota_outros'], 170)
+
+  // Educação ambiental (187) — exclusivo com as demais formas
+  validarNenhum('Formas de educação ambiental', 'amb_nenhum', ['amb_conteudo', 'amb_componente', 'amb_eixo', 'amb_eventos', 'amb_transversal'], 187)
+
   // -----------------------------------------------------------------------
   // 3. CONDICIONAIS
   // -----------------------------------------------------------------------
@@ -1340,6 +1346,17 @@ export async function validarRegistro10(schoolId: string): Promise<ErroValidacao
       criarErro(
         '10', 'internet_equip_alunos', 116, 'VALOR_INVALIDO',
         'internet_equip_alunos deve ser 1, 2 ou 3.',
+        schoolId, nomeEscola, schoolId, iea, 'infraestrutura', 'internet_equip_alunos',
+      ),
+    )
+  }
+
+  // internet_equip_alunos: não pode ser 1 ou 3 quando desktop/portáteis/tablets forem nulos
+  if ((iea === '1' || iea === '3') && n('qtd_desktop_alunos') < 1 && n('qtd_portateis_alunos') < 1 && n('qtd_tablets_alunos') < 1) {
+    erros.push(
+      criarErro(
+        '10', 'internet_equip_alunos', 116, 'EQUIP_SEM_QUANTIDADE',
+        'internet_equip_alunos não pode ser 1 ou 3 quando não houver quantidade informada de computadores de mesa, portáteis ou tablets para alunos.',
         schoolId, nomeEscola, schoolId, iea, 'infraestrutura', 'internet_equip_alunos',
       ),
     )

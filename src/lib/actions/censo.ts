@@ -456,7 +456,7 @@ function buildRegistro10(school: any): string {
     s('qtd_portateis_alunos'),
     s('qtd_tablets_alunos'),
 
-    // Internet (108-115)
+    // Internet (111-118)
     b('internet_administrativo'),
     b('internet_ensino'),
     b('internet_alunos'),
