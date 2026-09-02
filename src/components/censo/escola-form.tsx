@@ -50,7 +50,7 @@ import {
 import { EmptyState } from '@/components/ui/empty-state'
 import { PROFISSOES_CENSO } from '@/data/funcoes-censo'
 import { getProfissionaisCenso, type ProfissionalCenso } from '@/lib/actions/censo-profissionais'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { MUNICIPIOS_CEARA } from '@/data/censo/municipios-ceara'
 import { ORGAOS_REGIONAIS_CEARA } from '@/data/censo/orgaos-regionais-ceara'
 
@@ -937,6 +937,9 @@ export function EscolaForm({
   })
 
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const [activeTab, setActiveTab] = useState<string>('identificacao')
+  const [campoDestaque, setCampoDestaque] = useState<string | null>(null)
   const [contagensProf, setContagensProf] = useState<Record<string, number>>({})
   const [profsCenso, setProfsCenso] = useState<ProfissionalCenso[]>([])
   const [carregandoProfs, setCarregandoProfs] = useState(false)
@@ -971,6 +974,34 @@ export function EscolaForm({
       ativo = false
     }
   }, [schoolId, readOnly, form])
+
+  useEffect(() => {
+    const TAB_VALIDAS = [
+      'identificacao', 'endereco', 'administrativo', 'local-saneamento',
+      'dependencias', 'acessibilidade', 'equipamentos', 'profissionais', 'gestao',
+    ]
+    const tabFromUrl = searchParams.get('tab')
+    if (tabFromUrl && TAB_VALIDAS.includes(tabFromUrl)) setActiveTab(tabFromUrl)
+    const fieldFromUrl = searchParams.get('field')
+    if (fieldFromUrl) setCampoDestaque(fieldFromUrl)
+  }, [searchParams])
+
+  useEffect(() => {
+    if (!campoDestaque || !defaultValues) return
+    const timer = setTimeout(() => {
+      const el = document.querySelector(`[data-field="${campoDestaque}"]`)
+      if (!el) return
+      el.scrollIntoView({ behavior: 'smooth', block: 'center' })
+      el.classList.add('ring-2', 'ring-primary', 'rounded-md')
+      const limpar = () => {
+        el.classList.remove('ring-2', 'ring-primary', 'rounded-md')
+        el.removeEventListener('animationend', limpar)
+      }
+      setTimeout(limpar, 4000)
+      el.addEventListener('animationend', limpar)
+    }, 350)
+    return () => clearTimeout(timer)
+  }, [campoDestaque, defaultValues, activeTab])
 
   const situacaoFuncionamento = useWatch({ control, name: 'situacao_funcionamento' })
   const dependenciaAdministrativa = useWatch({ control, name: 'dependencia_administrativa' })
@@ -1601,7 +1632,7 @@ export function EscolaForm({
           onSubmit={handleSubmit(submitHandler)}
           className="flex flex-col gap-6"
         >
-          <Tabs defaultValue="identificacao" className="w-full">
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
             <TabsList className="flex h-auto min-h-[54px] w-full flex-nowrap items-stretch justify-start gap-1 overflow-x-auto overflow-y-hidden rounded-lg bg-muted/60 px-1 pt-1 pb-[10px] [&_[data-slot='tabs-trigger']]:min-w-max">
               <TabsTrigger
                 value="identificacao"

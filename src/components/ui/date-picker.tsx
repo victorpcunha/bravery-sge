@@ -13,6 +13,7 @@ interface DatePickerProps {
   onChange?: (value: string) => void
   placeholder?: string
   minDate?: string
+  maxDate?: string
   className?: string
   label?: string
   disabled?: boolean
@@ -21,6 +22,12 @@ interface DatePickerProps {
 
 const MONTHS = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"]
 const DAYS_WEEK = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"]
+
+function parseISOLocal(iso: string): Date {
+  const parts = iso.split('-')
+  if (parts.length !== 3) return new Date(iso)
+  return new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, parseInt(parts[2], 10), 12, 0, 0)
+}
 
 const sizeStyles = {
   sm: {
@@ -48,6 +55,7 @@ export function DatePicker({
   onChange,
   placeholder = "dd/mm/aaaa",
   minDate,
+  maxDate,
   className,
   label,
   disabled = false,
@@ -104,10 +112,13 @@ export function DatePicker({
         const parsed = new Date(year, month, day, 12, 0, 0)
         
         if (isValid(parsed)) {
+          const formatted = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`
+          if (maxDate && formatted > maxDate) {
+            return
+          }
           setDate(parsed)
           setCurrentMonth(parsed)
           // Format as ISO string with local date
-          const formatted = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`
           onChange?.(formatted)
         }
       } catch {
@@ -166,8 +177,16 @@ export function DatePicker({
         new Date().getMonth() === currentMonth.getMonth() &&
         new Date().getFullYear() === currentMonth.getFullYear()
       
-      const minDateObj = minDate ? new Date(minDate) : null
-      const isDisabled = minDateObj ? new Date(currentMonth.getFullYear(), currentMonth.getMonth(), day) < minDateObj : false
+      const parseISOLocal = (iso: string): Date => {
+        const parts = iso.split('-')
+        if (parts.length !== 3) return new Date(iso)
+        return new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, parseInt(parts[2], 10), 12, 0, 0)
+      }
+      const minDateObj = minDate ? parseISOLocal(minDate) : null
+      const maxDateObj = maxDate ? parseISOLocal(maxDate) : null
+      const diaLocal = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), day, 12, 0, 0)
+      const isDisabled = (minDateObj ? diaLocal < minDateObj : false)
+        || (maxDateObj ? diaLocal > maxDateObj : false)
       
     return (
       <button

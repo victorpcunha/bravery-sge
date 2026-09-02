@@ -52,6 +52,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setSession(session)
       setUser(session?.user ?? null)
       setLoading(false)
+    }).catch(() => {
+      setLoading(false)
     })
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
@@ -71,17 +73,27 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       return
     }
 
-    getUserAuthInfo(user.id, user.email || '').then((info) => {
-      setIsSuperAdmin(info.isSuperAdmin)
-      setAllSchools(info.allSchools)
-      if (info.isSuperAdmin) {
-        setSchoolId(null)
-      } else if (info.schoolIds.length > 0) {
-        setSchoolId(info.schoolIds[0])
-      }
-    }).catch((err) => {
-      console.error('[AuthProvider] getUserAuthInfo failed:', err)
-    })
+    let tentativa = 0
+    const carregarInfo = () => {
+      getUserAuthInfo(user.id, user.email || '').then((info) => {
+        setIsSuperAdmin(info.isSuperAdmin)
+        setAllSchools(info.allSchools)
+        if (info.isSuperAdmin) {
+          setSchoolId(null)
+        } else if (info.schoolIds.length > 0) {
+          setSchoolId(info.schoolIds[0])
+        }
+      }).catch((err) => {
+        // Fetch de server action pode falhar transitoriamente durante HMR/recompile do dev server
+        if (tentativa === 0) {
+          tentativa++
+          setTimeout(carregarInfo, 800)
+        } else {
+          console.error('[AuthProvider] getUserAuthInfo failed:', err)
+        }
+      })
+    }
+    carregarInfo()
 
     ;(async () => {
       const supabase = getSupabaseClient()
