@@ -13,6 +13,7 @@ import { ETAPAS_ENSINO } from '@/data/censo/etapas-ensino'
 import { AREAS_CONHECIMENTO } from '@/data/censo/areas-conhecimento'
 import { COMPATIBILIDADE_MEDIACAO_TURMA_ETAPA } from '@/data/censo/tipo-turma-mediacao'
 import { MUNICIPIOS_CEARA } from '@/data/censo/municipios-ceara'
+import { getCampoAmigavel, getDescricaoValor, getAbaEscola, gerarMensagemAmigavel } from '@/data/censo/rotulos-campos'
 
 const supabase = getSupabaseAdmin()
 
@@ -3377,7 +3378,9 @@ function getCorrectionUrl(
     case '00':
     case '10': {
       // Both map to school edit page, differentiated by tab
-      const tab = secao || ''
+      // Use field→aba mapping (school form) when available, fallback to secao
+      const aba = getAbaEscola(campo || '')
+      const tab = aba?.tab || secao || ''
       let url = `/escolas/${schoolId}`
       if (tab) params.set('tab', tab)
       if (campo) params.set('field', campo)
@@ -3386,35 +3389,36 @@ function getCorrectionUrl(
     }
 
     case '20': {
-      // Turma edit page (specific turma)
-      return `/gestao-turmas/turmas/${entidadeId}`
+      // Turma edit via modal on the listing page
+      let url = `/gestao-turmas/turmas`
+      if (entidadeId) params.set('edit', entidadeId)
+      if (params.size > 0) url += `?${params.toString()}`
+      return url
     }
 
     case '30': {
-      // Person edit page with optional tab
-      let url = `/gestao-usuarios/usuarios/${entidadeId}`
+      // Person edit via modal on the listing page
+      let url = `/gestao-usuarios/usuarios`
+      if (entidadeId) params.set('edit', entidadeId)
       if (secao) params.set('tab', secao)
       if (params.size > 0) url += `?${params.toString()}`
       return url
     }
 
     case '40': {
-      // School gestores tab
-      return `/escolas/${schoolId}?tab=gestores`
+      // School gestores — school form opens in its default tab
+      return `/escolas/${schoolId}`
     }
 
     case '50': {
-      // Quadro de Aulas filtered by turma
-      let url = `/gestao-turmas/quadro-aulas/`
-      if (entidadeId) params.set('turma', entidadeId)
-      if (params.size > 0) url += `?${params.toString()}`
-      return url
+      // Quadro de Aulas listing (vinculo profissional × turma)
+      return `/gestao-turmas/quadro-aulas`
     }
 
     case '60': {
-      // Matrículas filtered by turma
-      let url = `/gestao-academica/matriculas/`
-      if (entidadeId) params.set('turma', entidadeId)
+      // Matrícula edit via cadastro page
+      let url = `/gestao-academica/matriculas/cadastro`
+      if (entidadeId) params.set('id', entidadeId)
       if (params.size > 0) url += `?${params.toString()}`
       return url
     }
@@ -3441,13 +3445,16 @@ function criarErro(
   secao?: string,
   campo_destino?: string,
 ): ErroValidacao {
+  const alvo = campo_destino || campo_inep
   return {
     registro,
     campo_inep,
+    campo_amigavel: getCampoAmigavel(alvo),
     numero_campo,
     regra,
-    mensagem,
+    mensagem: gerarMensagemAmigavel(alvo, mensagem),
     valor_atual: valor_atual ?? null,
+    valor_atual_descricao: getDescricaoValor(alvo, valor_atual),
     entidade_id,
     entidade_nome,
     url_correcao: getCorrectionUrl(
@@ -3456,7 +3463,7 @@ function criarErro(
       entidade_id,
       entidade_nome,
       secao,
-      campo_destino,
+      alvo,
     ),
     secao: secao ?? null,
     campo_destino: campo_destino ?? null,

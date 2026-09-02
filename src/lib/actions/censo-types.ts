@@ -1,10 +1,12 @@
 export interface ErroValidacao {
   registro: string           // "00" a "60"
   campo_inep: string         // Official INEP field name
+  campo_amigavel?: string    // Friendly field name for display
   numero_campo: number       // Field number in INEP structure
   regra: string              // Rule description (INEP text)
   mensagem: string           // Formatted error message
   valor_atual: string | null // Current value causing error
+  valor_atual_descricao?: string | null // Human-readable description of current value (e.g., code -> label)
   entidade_id: string        // Entity ID for redirect
   entidade_nome: string      // Entity name for display
   url_correcao: string       // Correction URL with params

@@ -26,7 +26,7 @@ export function ValidacaoAba({ titulo, registro, erros }: Props) {
         <Badge variant="destructive" className="text-xs">{erros.length}</Badge>
         <span className="text-sm text-muted-foreground">inconsistências encontradas</span>
       </div>
-      <div className="border border-border rounded-lg divide-y divide-border overflow-hidden">
+      <div className="min-w-0 border border-border rounded-lg divide-y divide-border overflow-hidden">
         {erros.map((erro, i) => (
           <ValidacaoErroItem key={`${registro}-${i}`} erro={erro} />
         ))}

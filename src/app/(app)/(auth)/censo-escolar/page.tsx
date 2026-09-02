@@ -2,28 +2,34 @@
 
 import { useState, useEffect } from 'react'
 import { useAuth } from '@/components/providers/auth-provider'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent } from '@/components/ui/card'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { ValidacaoResumo } from '@/components/censo/validacao-resumo'
 import { ValidacaoAba } from '@/components/censo/validacao-aba'
+import { ModernTabs, type ModernTabItem } from '@/components/ui/modern-tabs'
 import { ResultadoValidacao, ResultadoExportacao } from '@/lib/actions/censo-types'
 import { validarCenso, exportarCenso } from '@/lib/actions/censo'
 import { getAnosLetivosAtivos } from '@/lib/actions/quadro-aulas'
 import { toast } from 'sonner'
-import { FileDown, Loader2, Search } from 'lucide-react'
+import { FileDown, Loader2, Search, Construction } from 'lucide-react'
 import { PageContainer } from '@/components/layout/page-container'
 import { PageHeader } from '@/components/layout/page-header'
+import { EmptyState } from '@/components/ui/empty-state'
+
+const MAIN_TABS: ModernTabItem[] = [
+  { value: 'matricula-inicial', label: 'Matrícula Inicial' },
+  { value: 'situacao-final', label: 'Situação Final' },
+]
 
 const REGISTRO_TABS = [
-  { key: 'registro00', label: 'Registro 00 — Dados da Escola' },
-  { key: 'registro10', label: 'Registro 10 — Infraestrutura' },
-  { key: 'registro20', label: 'Registro 20 — Turmas' },
-  { key: 'registro30', label: 'Registro 30 — Pessoas' },
-  { key: 'registro40', label: 'Registro 40 — Gestores' },
-  { key: 'registro50', label: 'Registro 50 — Profissionais × Turma' },
-  { key: 'registro60', label: 'Registro 60 — Matrículas' },
+  { key: 'registro00', value: 'registro00', label: 'Registro 00 — Dados da Escola' },
+  { key: 'registro10', value: 'registro10', label: 'Registro 10 — Infraestrutura' },
+  { key: 'registro20', value: 'registro20', label: 'Registro 20 — Turmas' },
+  { key: 'registro30', value: 'registro30', label: 'Registro 30 — Pessoas' },
+  { key: 'registro40', value: 'registro40', label: 'Registro 40 — Gestores' },
+  { key: 'registro50', value: 'registro50', label: 'Registro 50 — Profissionais × Turma' },
+  { key: 'registro60', value: 'registro60', label: 'Registro 60 — Matrículas' },
 ]
 
 export default function CensoEscolarPage() {
@@ -34,7 +40,6 @@ export default function CensoEscolarPage() {
   const [validando, setValidando] = useState(false)
   const [exportando, setExportando] = useState(false)
   const [resultado, setResultado] = useState<ResultadoValidacao | null>(null)
-  const [tab, setTab] = useState('registro00')
   const [exportResult, setExportResult] = useState<ResultadoExportacao | null>(null)
 
   const effectiveSchoolId = schoolId || selectedSchoolId
@@ -97,20 +102,18 @@ export default function CensoEscolarPage() {
     }
   }
 
-  return (
-    <PageContainer>
-      <PageHeader
-        title="Censo Escolar — Matrícula Inicial 2026"
-        description="Valide os dados da escola contra as regras do INEP/MEC e exporte o arquivo para o EducaCenso."
-      />
-
+  const renderMatriculaInicial = () => (
+    <>
       <Card className="mb-6">
         <CardContent className="flex flex-wrap items-end gap-4 pt-6">
           {!schoolId && allSchools.length > 0 && (
-            <div className="w-56">
-              <Select value={selectedSchoolId || ''} onValueChange={(v) => { setSelectedSchoolId(v); setResultado(null); setExportResult(null) }}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Escola" />
+            <div className="w-72">
+              <Select
+                value={selectedSchoolId || ''}
+                onValueChange={(v) => { setSelectedSchoolId(v); setResultado(null); setExportResult(null) }}
+              >
+                <SelectTrigger className="max-w-[280px]">
+                  <SelectValue placeholder="Escola" className="truncate" />
                 </SelectTrigger>
                 <SelectContent>
                   {allSchools.map((s) => (
@@ -121,9 +124,12 @@ export default function CensoEscolarPage() {
             </div>
           )}
           <div className="w-56">
-            <Select value={anoLetivoId} onValueChange={(v) => { setAnoLetivoId(v); setResultado(null); setExportResult(null) }}>
+            <Select
+              value={anoLetivoId}
+              onValueChange={(v) => { setAnoLetivoId(v); setResultado(null); setExportResult(null) }}
+            >
               <SelectTrigger>
-                <SelectValue placeholder="Ano letivo" />
+                <SelectValue placeholder="Selecione o ano letivo" />
               </SelectTrigger>
               <SelectContent>
                 {anosLetivos.map((a) => (
@@ -153,34 +159,25 @@ export default function CensoEscolarPage() {
         <div className="space-y-6">
           <ValidacaoResumo resultado={resultado} />
 
-          <Tabs value={tab} onValueChange={setTab}>
-            <TabsList className="flex-wrap h-auto gap-1">
-              {REGISTRO_TABS.map((t) => {
-                const erros = resultado.erros_por_registro[t.key as keyof typeof resultado.erros_por_registro]
-                const count = erros?.length ?? 0
-                return (
-                  <TabsTrigger key={t.key} value={t.key} className="text-xs gap-1">
-                    {t.label}
-                    {count > 0 && (
-                      <span className="inline-flex items-center justify-center size-4 rounded-full bg-destructive text-destructive-foreground text-[10px] font-medium">
-                        {count}
-                      </span>
-                    )}
-                  </TabsTrigger>
-                )
-              })}
-            </TabsList>
-
+          <ModernTabs
+            tabs={REGISTRO_TABS.map(t => ({
+              value: t.value,
+              label: t.label,
+              badge: resultado.erros_por_registro[t.key as keyof typeof resultado.erros_por_registro]?.length ?? 0
+            }))}
+            scroll={true}
+            fullWidth
+            urlSync={false}
+          >
             {REGISTRO_TABS.map((t) => (
-              <TabsContent key={t.key} value={t.key} className="mt-3">
-                <ValidacaoAba
-                  titulo={t.label}
-                  registro={t.key}
-                  erros={resultado.erros_por_registro[t.key as keyof typeof resultado.erros_por_registro] ?? []}
-                />
-              </TabsContent>
+              <ValidacaoAba
+                key={t.value}
+                titulo={t.label}
+                registro={t.value}
+                erros={resultado.erros_por_registro[t.key as keyof typeof resultado.erros_por_registro] ?? []}
+              />
             ))}
-          </Tabs>
+          </ModernTabs>
         </div>
       )}
 
@@ -193,6 +190,35 @@ export default function CensoEscolarPage() {
           </CardContent>
         </Card>
       )}
+    </>
+  )
+
+  const renderSituacaoFinal = () => (
+    <div className="py-12">
+      <EmptyState
+        icon={Construction}
+        title="Situação Final — Em desenvolvimento"
+        description="Esta funcionalidade corresponderá à segunda etapa do Censo Escolar (validação de frequência, rendimento e movimento do aluno no fim do ano letivo). Será implementada em uma fase posterior."
+      />
+    </div>
+  )
+
+  return (
+    <PageContainer>
+      <PageHeader
+        title="Censo Escolar 2026"
+        description="Valide os dados da escola contra as regras do INEP/MEC e exporte o arquivo para o EducaCenso."
+      />
+
+      <ModernTabs
+        tabs={MAIN_TABS}
+        defaultValue="matricula-inicial"
+        urlSync={false}
+        className="mt-4"
+      >
+        {renderMatriculaInicial()}
+        {renderSituacaoFinal()}
+      </ModernTabs>
     </PageContainer>
   )
 }

@@ -24,6 +24,7 @@ import { areasPosGraduacao } from '@/data/areas-pos-graduacao'
 import { Plus, Trash2, X } from 'lucide-react'
 import { toast } from 'sonner'
 import { useAuth } from '@/components/providers/auth-provider'
+import { usePermissoes } from '@/hooks/use-permissoes'
 import { createPerson, updatePerson, Person, getVinculosResponsavel, vincularResponsavel, desvincularResponsavel, buscarAlunos, criarAuthUser, salvarSaudeEstudante } from '@/lib/actions/people'
 import { getVinculosProfissionais, createVinculoProfissional, updateVinculoProfissional, deleteVinculoProfissional, type VinculoProfissionalWithFuncao } from '@/lib/actions/vinculos-profissionais'
 import { getFuncoes, type FuncaoProfissional } from '@/lib/actions/funcoes-profissionais'
@@ -178,6 +179,9 @@ const defaultForm: FormData = {
   whatsapp: '',
   telefone_secundario: '',
   email_responsavel: '',
+  ativo: true,
+  data_inativacao: '',
+  motivo_inativacao: '',
   // Deficiência
   deficiencia: false,
   cegueira: false, baixa_visao: false, visao_monocular: false,
@@ -238,6 +242,7 @@ const defaultForm: FormData = {
 
 export function PessoaForm({ schoolId: propSchoolId, person, onSaved, onCancel }: Props) {
   const { isSuperAdmin, allSchools } = useAuth()
+  const { pessoaId } = usePermissoes(propSchoolId || null)
   const [selectedSchoolId, setSelectedSchoolId] = useState<string>(allSchools[0]?.id || '')
   const schoolId = (!propSchoolId && isSuperAdmin) ? selectedSchoolId : propSchoolId
   const [form, setForm] = useState<FormData>({ ...defaultForm })
@@ -466,6 +471,11 @@ export function PessoaForm({ schoolId: propSchoolId, person, onSaved, onCancel }
       if (form.senha !== form.confirmacao_senha) { toast.error('Senhas não conferem'); return }
     }
 
+    if (form.ativo === false && !form.motivo_inativacao) {
+      toast.error('Selecione o motivo de inativação')
+      return
+    }
+
     if (!schoolId) { toast.error('Escola não selecionada'); return }
 
     // Vínculos Profissionais
@@ -505,6 +515,10 @@ export function PessoaForm({ schoolId: propSchoolId, person, onSaved, onCancel }
 
       const healthMedicamentos = payload.medicamentos
       delete payload.medicamentos
+
+      // Situação é tratada por atualizarSituacaoPessoa (automações + auditoria)
+      delete payload.data_inativacao
+      delete payload.motivo_inativacao
 
       let personId: string | undefined
 
@@ -563,6 +577,20 @@ export function PessoaForm({ schoolId: propSchoolId, person, onSaved, onCancel }
             data_inicio_afastamento: v.data_inicio_afastamento,
             data_termino_afastamento: v.data_termino_afastamento,
             data_termino: v.data_termino,
+          })
+        }
+      }
+
+      // Aplicar situação (ativa/inativa) com automações e auditoria
+      if (personId) {
+        const situacaoMudou = person ? person.ativo !== (form.ativo === true) : false
+        if (form.ativo === false || situacaoMudou) {
+          const { atualizarSituacaoPessoa } = await import('@/lib/actions/people')
+          await atualizarSituacaoPessoa(personId, {
+            ativo: form.ativo === true,
+            dataInativacao: form.ativo === false ? new Date().toISOString().slice(0, 10) : null,
+            motivo: form.ativo === false ? (form.motivo_inativacao || null) : null,
+            pessoaResponsavelId: pessoaId,
           })
         }
       }
@@ -1104,6 +1132,60 @@ export function PessoaForm({ schoolId: propSchoolId, person, onSaved, onCancel }
               {!form.cpf && <p role="alert" className="text-[13px] text-destructive">Obrigatório quando não informado CPF.</p>}
             </div>
           )}
+
+          {/* ===== CARD SITUAÇÃO ===== */}
+          <FormCard title="Situação" description="Controle o status de acesso do usuário no sistema.">
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label>Status</Label>
+                <div className="flex flex-wrap gap-2">
+                  <ClickablePill
+                    label="Ativo"
+                    active={form.ativo === true}
+                    onClick={() => set('ativo', true)}
+                  />
+                  <ClickablePill
+                    label="Inativo"
+                    active={form.ativo === false}
+                    onClick={() => set('ativo', false)}
+                  />
+                </div>
+              </div>
+
+              {form.ativo === false && (
+                <>
+                  <div className="space-y-2">
+                    <Label>Data da Inativação</Label>
+                    <Input
+                      value={form.data_inativacao || new Date().toISOString().slice(0, 10)}
+                      disabled
+                      className="bg-muted text-muted-foreground cursor-not-allowed"
+                    />
+                    <p className="text-[13px] text-muted-foreground">Preenchida automaticamente com a data de hoje.</p>
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Motivo de Inativação *</Label>
+                    <Select value={form.motivo_inativacao} onValueChange={(v) => set('motivo_inativacao', v)}>
+                      <SelectTrigger aria-required="true"><SelectValue placeholder="Selecione o motivo" /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="falecimento">Falecimento</SelectItem>
+                        <SelectItem value="solicitacao_pessoa">Solicitação da pessoa</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </>
+              )}
+
+              <div className="flex items-start gap-2 rounded-lg border border-border bg-muted/40 px-3 py-2">
+                <span className="text-[13px] text-muted-foreground">
+                  Ao salvar com status <strong className="text-foreground">Inativo</strong>, o acesso ao sistema é bloqueado automaticamente.
+                  {form.ativo === false && form.motivo_inativacao === 'falecimento' && form.perfil?.includes('aluno') && (
+                    <span className="text-muted-foreground"> Quando o motivo for <strong className="text-foreground">Falecimento</strong> e a pessoa for <strong className="text-foreground">Aluno</strong>, a situação da matrícula é alterada para <strong className="text-foreground">Óbito</strong>.</span>
+                  )}
+                </span>
+              </div>
+            </div>
+          </FormCard>
         </TabsContent>
 
         {/* ===== ABA ACESSIBILIDADE / SAEB ===== */}

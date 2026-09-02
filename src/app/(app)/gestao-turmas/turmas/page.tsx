@@ -104,6 +104,14 @@ export default function TurmasPage() {
     setDialogOpen(true)
   }
 
+  useEffect(() => {
+    const editFromUrl = new URLSearchParams(window.location.search).get('edit')
+    if (editFromUrl) {
+      setEditId(editFromUrl)
+      setDialogOpen(true)
+    }
+  }, [])
+
   const handleSaved = () => {
     setDialogOpen(false)
     setEditId(null)

@@ -151,6 +151,8 @@ export type Person = {
   sem_formacao: boolean | null
   recebeu_formacao: boolean | null
   perfil_id: string | null
+  data_inativacao: string | null
+  motivo_inativacao: 'falecimento' | 'solicitacao_pessoa' | null
   created_at: string
   updated_at: string
 }
@@ -282,20 +284,151 @@ export async function deletePerson(id: string) {
 }
 
 export async function inativarPessoa(id: string) {
-  const { error } = await supabase
-    .from('people')
-    .update({ ativo: false })
-    .eq('id', id)
-
-  if (error) throw error
+  const { data: pessoa } = await supabase.from('people').select('*').eq('id', id).single()
+  if (!pessoa) throw new Error('Pessoa não encontrada')
+  await atualizarSituacaoPessoa(id, {
+    ativo: false,
+    dataInativacao: new Date().toISOString().slice(0, 10),
+    motivo: null,
+    pessoaResponsavelId: null,
+  })
 }
 
 export async function reativarPessoa(id: string) {
-  const { error } = await supabase
-    .from('people')
-    .update({ ativo: true })
-    .eq('id', id)
+  await atualizarSituacaoPessoa(id, {
+    ativo: true,
+    dataInativacao: null,
+    motivo: null,
+    pessoaResponsavelId: null,
+  })
+}
 
+export async function atualizarSituacaoPessoa(
+  personId: string,
+  params: {
+    ativo: boolean
+    dataInativacao?: string | null
+    motivo: 'falecimento' | 'solicitacao_pessoa' | null
+    pessoaResponsavelId?: string | null
+  },
+) {
+  const { data: pessoaAtual, error: errPessoa } = await supabase
+    .from('people')
+    .select('*')
+    .eq('id', personId)
+    .single()
+
+  if (errPessoa || !pessoaAtual) throw new Error('Pessoa não encontrada')
+
+  if (!params.ativo && !params.motivo) {
+    throw new Error('Selecione o motivo de inativação')
+  }
+
+  const dataInativacao = params.ativo ? null : (params.dataInativacao || new Date().toISOString().slice(0, 10))
+  const motivo = params.ativo ? null : params.motivo
+
+  // Atualiza a situação na tabela people
+  const { error: errUpdate } = await supabase
+    .from('people')
+    .update({
+      ativo: params.ativo,
+      data_inativacao: dataInativacao,
+      motivo_inativacao: motivo,
+    })
+    .eq('id', personId)
+
+  if (errUpdate) throw errUpdate
+
+  // Bloqueio / liberação de acesso (Supabase Auth)
+  await atualizarAcessoAuth(personId, params.ativo)
+
+  // Automação: Óbito em matrículas do aluno (apenas motivo falecimento)
+  if (!params.ativo && params.motivo === 'falecimento' && pessoaAtual.perfil?.includes('aluno')) {
+    await registrarObitoMatriculas(personId, params.pessoaResponsavelId || null, dataInativacao!)
+  }
+
+  // Auditoria
+  await registrarAuditoriaSituacao({
+    school_id: pessoaAtual.school_id,
+    entidade_id: personId,
+    pessoa_id: params.pessoaResponsavelId || null,
+    dados_anteriores: {
+      ativo: pessoaAtual.ativo,
+      data_inativacao: pessoaAtual.data_inativacao ?? null,
+      motivo_inativacao: pessoaAtual.motivo_inativacao ?? null,
+    },
+    dados_novos: {
+      ativo: params.ativo,
+      data_inativacao: dataInativacao,
+      motivo_inativacao: motivo,
+    },
+  })
+
+  return { ativo: params.ativo, data_inativacao: dataInativacao, motivo_inativacao: motivo }
+}
+
+async function atualizarAcessoAuth(personId: string, ativo: boolean) {
+  try {
+    const { data: authUser, error: errRpc } = await supabase.rpc('fn_buscar_auth_user_por_pessoa', {
+      p_person_id: personId,
+    })
+
+    if (errRpc || !authUser || authUser.length === 0) return
+
+    const primeiroAuthUser = authUser[0] as { user_id: string }
+    const authUserId = primeiroAuthUser.user_id
+    if (ativo) {
+      await supabase.auth.admin.updateUserById(authUserId, { ban_duration: 'none' })
+    } else {
+      await supabase.auth.admin.updateUserById(authUserId, { ban_duration: '100000000h' })
+    }
+  } catch {
+    // Sem auth user vinculado ou erro transitório — não bloqueia o fluxo principal
+  }
+}
+
+async function registrarObitoMatriculas(personId: string, profissionalId: string | null, dataObito: string) {
+  const { data: matriculas } = await supabase
+    .from('academico_matriculas')
+    .select('id')
+    .eq('aluno_id', personId)
+    .eq('ativo', true)
+
+  if (!matriculas || matriculas.length === 0) return
+
+  for (const m of matriculas) {
+    await supabase
+      .from('academico_matriculas')
+      .update({ situacao: 'Óbito', data_saida: dataObito })
+      .eq('id', m.id)
+
+    await supabase.from('academico_matriculas_movimentacoes').insert({
+      matricula_id: m.id,
+      tipo: 'Obito',
+      data_movimentacao: dataObito,
+      profissional_id: profissionalId,
+      observacoes: 'Inativação por falecimento registrada no cadastro do usuário',
+      dados_complementares: {},
+    })
+  }
+}
+
+async function registrarAuditoriaSituacao(data: {
+  school_id: string
+  entidade_id: string
+  pessoa_id: string | null
+  dados_anteriores: Record<string, unknown>
+  dados_novos: Record<string, unknown>
+}) {
+  const { error } = await supabase.from('perfis_auditoria').insert({
+    school_id: data.school_id,
+    entidade: 'pessoa',
+    entidade_id: data.entidade_id,
+    acao: 'editar',
+    dados_anteriores: data.dados_anteriores,
+    dados_novos: data.dados_novos,
+    pessoa_id: data.pessoa_id,
+  })
   if (error) throw error
 }
 

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback, useMemo } from 'react'
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/components/providers/auth-provider'
 import { Button } from '@/components/ui/button'
@@ -9,7 +9,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Pagination } from '@/components/ui/pagination'
 import { Plus, Pencil, Trash2, ToggleLeft, UserCheck, Users } from 'lucide-react'
-import { getPeople, deletePerson, inativarPessoa, reativarPessoa, type Person } from '@/lib/actions/people'
+import { getPeople, getPerson, deletePerson, inativarPessoa, reativarPessoa, type Person } from '@/lib/actions/people'
 import { PessoaForm } from './PessoaForm'
 import { toast } from 'sonner'
 import { PageContainer } from '@/components/layout/page-container'
@@ -67,6 +67,7 @@ export default function UsuariosPage() {
   const [deleteTarget, setDeleteTarget] = useState<Person | null>(null)
   const [selectedSchoolId, setSelectedSchoolId] = useState<string | null>(null)
   const [currentPage, setCurrentPage] = useState(1)
+  const editUrlProcessed = useRef(false)
 
   useEffect(() => {
     const stored = sessionStorage.getItem('usuarios_search')
@@ -164,6 +165,28 @@ export default function UsuariosPage() {
     setEditPerson(null)
     setModalOpen(true)
   }
+
+  useEffect(() => {
+    if (editUrlProcessed.current) return
+    const editFromUrl = new URLSearchParams(window.location.search).get('edit')
+    if (!editFromUrl) return
+    const pessoa = pessoas.find((p) => p.id === editFromUrl)
+    if (pessoa) {
+      editUrlProcessed.current = true
+      setEditPerson(pessoa)
+      setModalOpen(true)
+    } else if (pessoas.length > 0) {
+      getPerson(editFromUrl, isSuperAdmin ? null : schoolId)
+        .then((p) => {
+          if (p) {
+            editUrlProcessed.current = true
+            setEditPerson(p)
+            setModalOpen(true)
+          }
+        })
+        .catch(() => {})
+    }
+  }, [pessoas])
 
   const handleSaved = () => {
     setModalOpen(false)
