@@ -21,11 +21,13 @@ import { cursosSuperiores } from '@/data/cursos-superiores'
 import { iesList } from '@/data/ies'
 import { areasConhecimento } from '@/data/areas-conhecimento'
 import { areasPosGraduacao } from '@/data/areas-pos-graduacao'
-import { Plus, Trash2, X } from 'lucide-react'
+import { Plus, Trash2, X, AlertCircle, GraduationCap } from 'lucide-react'
 import { toast } from 'sonner'
+import Link from 'next/link'
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog'
 import { useAuth } from '@/components/providers/auth-provider'
 import { usePermissoes } from '@/hooks/use-permissoes'
-import { createPerson, updatePerson, Person, getVinculosResponsavel, vincularResponsavel, desvincularResponsavel, buscarAlunos, criarAuthUser, salvarSaudeEstudante } from '@/lib/actions/people'
+import { createPerson, updatePerson, Person, getVinculosResponsavel, vincularResponsavel, desvincularResponsavel, buscarAlunos, criarAuthUser, salvarSaudeEstudante, type MatriculaAtivaInfo } from '@/lib/actions/people'
 import { getVinculosProfissionais, createVinculoProfissional, updateVinculoProfissional, deleteVinculoProfissional, type VinculoProfissionalWithFuncao } from '@/lib/actions/vinculos-profissionais'
 import { getFuncoes, type FuncaoProfissional } from '@/lib/actions/funcoes-profissionais'
 import { listarPerfis, type Perfil } from '@/lib/actions/perfis'
@@ -250,6 +252,8 @@ export function PessoaForm({ schoolId: propSchoolId, person, onSaved, onCancel }
   const [activeTab, setActiveTab] = useState('identificacao')
   const [alunosSearch, setAlunosSearch] = useState('')
   const [alunosOptions, setAlunosOptions] = useState<{ id: string; nome_completo: string }[]>([])
+  const [matriculaAtivaOpen, setMatriculaAtivaOpen] = useState(false)
+  const [matriculasAtivas, setMatriculasAtivas] = useState<MatriculaAtivaInfo[]>([])
   const [cursoCount, setCursoCount] = useState(1)
   const [posCount, setPosCount] = useState(1)
   const [vinculosProfissionais, setVinculosProfissionais] = useState<VinculoProfissionalWithFuncao[]>([])
@@ -478,6 +482,23 @@ export function PessoaForm({ schoolId: propSchoolId, person, onSaved, onCancel }
 
     if (!schoolId) { toast.error('Escola não selecionada'); return }
 
+    // Bloqueia inativação por solicitação da pessoa quando o aluno possui
+    // matrícula ativa no ano letivo atual — orienta a fazer a movimentação antes
+    if (person && form.ativo === false && form.motivo_inativacao === 'solicitacao_pessoa' && form.perfil?.includes('aluno')) {
+      try {
+        const { pessoaPossuiMatriculaAtiva } = await import('@/lib/actions/people')
+        const res = await pessoaPossuiMatriculaAtiva(person.id, schoolId)
+        if (res.possui) {
+          setMatriculasAtivas(res.matriculas)
+          setMatriculaAtivaOpen(true)
+          return
+        }
+      } catch {
+        toast.error('Não foi possível validar a matrícula do aluno. Tente novamente.')
+        return
+      }
+    }
+
     // Vínculos Profissionais
     if (isProfissionalOuGestor && vinculosProfissionais.length > 0) {
       for (let i = 0; i < vinculosProfissionais.length; i++) {
@@ -523,7 +544,7 @@ export function PessoaForm({ schoolId: propSchoolId, person, onSaved, onCancel }
       let personId: string | undefined
 
       if (person) {
-        await updatePerson(person.id, payload)
+        await updatePerson(person.id, payload, pessoaId)
         personId = person.id
         // Salvar vínculos profissionais (edição)
         for (const v of vinculosProfissionais) {
@@ -538,7 +559,7 @@ export function PessoaForm({ schoolId: propSchoolId, person, onSaved, onCancel }
               data_inicio_afastamento: v.data_inicio_afastamento,
               data_termino_afastamento: v.data_termino_afastamento,
               data_termino: v.data_termino,
-            })
+            }, pessoaId)
           } else {
             await createVinculoProfissional({
               person_id: person.id,
@@ -552,15 +573,15 @@ export function PessoaForm({ schoolId: propSchoolId, person, onSaved, onCancel }
               data_inicio_afastamento: v.data_inicio_afastamento,
               data_termino_afastamento: v.data_termino_afastamento,
               data_termino: v.data_termino,
-            })
+            }, pessoaId)
           }
         }
       } else {
-        const created = await createPerson(payload)
+        const created = await createPerson(payload, pessoaId)
         personId = created.id
         for (const v of form.vinculos) {
           if (v._new && created) {
-            await vincularResponsavel(created.id, v.aluno_id, v)
+            await vincularResponsavel(created.id, v.aluno_id, v, pessoaId)
           }
         }
         // Salvar vínculos profissionais (criação)
@@ -577,7 +598,7 @@ export function PessoaForm({ schoolId: propSchoolId, person, onSaved, onCancel }
             data_inicio_afastamento: v.data_inicio_afastamento,
             data_termino_afastamento: v.data_termino_afastamento,
             data_termino: v.data_termino,
-          })
+          }, pessoaId)
         }
       }
 
@@ -601,14 +622,14 @@ export function PessoaForm({ schoolId: propSchoolId, person, onSaved, onCancel }
           password: form.senha,
           personId,
           schoolId,
-        })
+        }, pessoaId)
       }
 
       // Salvar informações de saúde
       if (personId && healthMedicamentos) {
         await salvarSaudeEstudante(personId, schoolId, {
           medicamentos: healthMedicamentos,
-        })
+        }, pessoaId)
       }
 
       toast.success(person ? 'Usuário atualizado!' : 'Usuário criado!')
@@ -1181,6 +1202,9 @@ export function PessoaForm({ schoolId: propSchoolId, person, onSaved, onCancel }
                   Ao salvar com status <strong className="text-foreground">Inativo</strong>, o acesso ao sistema é bloqueado automaticamente.
                   {form.ativo === false && form.motivo_inativacao === 'falecimento' && form.perfil?.includes('aluno') && (
                     <span className="text-muted-foreground"> Quando o motivo for <strong className="text-foreground">Falecimento</strong> e a pessoa for <strong className="text-foreground">Aluno</strong>, a situação da matrícula é alterada para <strong className="text-foreground">Óbito</strong>.</span>
+                  )}
+                  {form.ativo === false && form.motivo_inativacao === 'solicitacao_pessoa' && form.perfil?.includes('aluno') && (
+                    <span className="text-muted-foreground"> Se o aluno possuir <strong className="text-foreground">matrícula ativa</strong> no ano letivo atual, a inativação será <strong className="text-foreground">bloqueada</strong> até que seja realizada uma movimentação na matrícula.</span>
                   )}
                 </span>
               </div>
@@ -1812,6 +1836,46 @@ export function PessoaForm({ schoolId: propSchoolId, person, onSaved, onCancel }
           {saving ? 'Salvando...' : person ? 'Atualizar' : 'Criar'}
         </Button>
       </div>
+
+      <Dialog open={matriculaAtivaOpen} onOpenChange={setMatriculaAtivaOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <AlertCircle className="h-5 w-5 text-warning" />
+              Matrícula ativa encontrada
+            </DialogTitle>
+            <DialogDescription>
+              Não é possível inativar este usuário enquanto houver matrícula ativa no ano letivo atual.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3 text-[15px] text-foreground">
+            <p>
+              O aluno possui matrícula com situação <strong>Ativo</strong> no ano letivo atual. Antes de realizar a
+              inativação, faça uma movimentação na matrícula para alterar a situação (por exemplo:{' '}
+              <strong>Transferência, Remanejamento ou Desistência</strong>).
+            </p>
+            {matriculasAtivas.length > 0 && (
+              <ul className="rounded-lg border border-border bg-muted/40 px-3 py-2 space-y-1">
+                {matriculasAtivas.map(m => (
+                  <li key={m.id} className="text-[14px] text-muted-foreground flex items-center justify-between gap-2">
+                    <span>Ano letivo: <strong className="text-foreground">{m.anoLetivo}</strong></span>
+                    <span>Turma: <strong className="text-foreground">{m.turma || '—'}</strong></span>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+          <div className="flex justify-end gap-2 pt-2">
+            <Button variant="outline" onClick={() => setMatriculaAtivaOpen(false)}>Entendi</Button>
+            <Button asChild onClick={() => setMatriculaAtivaOpen(false)}>
+              <Link href="/gestao-academica/matriculas">
+                <GraduationCap className="mr-2 h-4 w-4" />
+                Ir para Matrículas
+              </Link>
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

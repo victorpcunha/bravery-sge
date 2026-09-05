@@ -1,6 +1,8 @@
 'use server'
 
 import { getSupabaseAdmin } from '@/lib/auth'
+import { registrarAuditoriaAgregada } from '@/lib/auditoria'
+import { garantirTurmaAberta } from './garantir-turma-aberta'
 
 const supabase = getSupabaseAdmin()
 
@@ -101,6 +103,7 @@ export async function salvarAvaliacaoIndicador(
   observacao: string | null,
   pessoaId: string | null
 ) {
+  await garantirTurmaAberta(turmaId)
   if (pessoaId) {
     const { validarPermissaoServer } = await import('./perfis')
     await validarPermissaoServer(pessoaId, 'gestao-pedagogica.diario-classe.indicadores', 'editar')
@@ -146,6 +149,23 @@ export async function salvarAvaliacaoIndicador(
     if (error) throw error
     updatedAt = data?.updated_at ?? null
   }
+
+  const { data: turma } = await supabase.from('turmas').select('school_id, nome').eq('id', turmaId).maybeSingle()
+  await registrarAuditoriaAgregada({
+    school_id: turma?.school_id || null,
+    pessoa_id: pessoaId || null,
+    modulo: 'Diário de Classe — Avaliações por Indicadores',
+    entidade: 'academico_avaliacoes_indicadores',
+    entidade_id: turmaId,
+    registro_nome: turma?.nome || null,
+    resumo: {
+      turma: turma?.nome || null,
+      turma_id: turmaId,
+      disciplina: null,
+      periodo: `Período ${periodo}`,
+      quantidade: 1,
+    },
+  })
 
   return { success: true, updated_at: updatedAt }
 }

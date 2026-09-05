@@ -114,7 +114,7 @@ interface SubetapasData {
 }
 
 export function TabEtapas({ schoolId }: TabEtapasProps) {
-  const { isSuperAdmin, allSchools } = useAuth()
+  const { isSuperAdmin, allSchools, pessoaId } = useAuth()
   const { pode, loaded: permLoaded } = usePermissoes(schoolId)
 
   const [selectedSchoolId, setSelectedSchoolId] = useState<string | null>(null)
@@ -191,7 +191,7 @@ export function TabEtapas({ schoolId }: TabEtapasProps) {
     try {
       const etapaInfo = gruposEtapas.flatMap(g => g.etapas).find(e => e.codigo === codigo)
       if (!etapaInfo) return
-      await upsertEtapaEnsino(effectiveSchoolId!, anoLetivoId, codigo, etapaInfo.nome, etapaInfo.tipo, novoEstado)
+      await upsertEtapaEnsino(effectiveSchoolId!, anoLetivoId, codigo, etapaInfo.nome, etapaInfo.tipo, novoEstado, pessoaId)
       setEtapasAtivas(prev => ({ ...prev, [codigo]: novoEstado }))
       toast.success(novoEstado ? 'Etapa ativada' : 'Etapa desativada')
     } catch (error) {
@@ -219,7 +219,7 @@ export function TabEtapas({ schoolId }: TabEtapasProps) {
 
     try {
       if (editingSubetapa) {
-        await atualizarSubetapa(editingSubetapa.id, novaSubetapaNome.trim())
+        await atualizarSubetapa(editingSubetapa.id, novaSubetapaNome.trim(), pessoaId)
         setSubetapas(prev => ({
           ...prev,
           [editingSubetapa.etapaCodigo]: prev[editingSubetapa.etapaCodigo].map(s =>
@@ -237,8 +237,8 @@ export function TabEtapas({ schoolId }: TabEtapasProps) {
       if (!etapaSelecionada || !anoLetivoId) return
       const etapaInfo = gruposEtapas.flatMap(g => g.etapas).find(e => e.codigo === etapaSelecionada)
       if (!etapaInfo) return
-      const etapaId = await upsertEtapaEnsino(effectiveSchoolId!, anoLetivoId, etapaSelecionada, etapaInfo.nome, etapaInfo.tipo, false)
-      const newSubetapa = await criarSubetapa(etapaId, novaSubetapaNome.trim())
+      const etapaId = await upsertEtapaEnsino(effectiveSchoolId!, anoLetivoId, etapaSelecionada, etapaInfo.nome, etapaInfo.tipo, false, pessoaId)
+      const newSubetapa = await criarSubetapa(etapaId, novaSubetapaNome.trim(), pessoaId)
       setSubetapas(prev => ({
         ...prev,
         [etapaSelecionada]: [...(prev[etapaSelecionada] || []), { id: newSubetapa.id, nome: newSubetapa.nome }]
@@ -260,7 +260,7 @@ export function TabEtapas({ schoolId }: TabEtapasProps) {
 
   async function removeSubetapa(etapaCodigo: number, subetapaId: string) {
     try {
-      await removerSubetapa(subetapaId)
+      await removerSubetapa(subetapaId, pessoaId)
       setSubetapas(prev => ({ ...prev, [etapaCodigo]: prev[etapaCodigo].filter(s => s.id !== subetapaId) }))
       toast.success('Subetapa removida')
     } catch (error) {

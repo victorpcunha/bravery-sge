@@ -1,6 +1,7 @@
 'use server'
 
 import { getSupabaseAdmin } from '@/lib/auth'
+import { registrarAuditoria } from '@/lib/auditoria'
 
 const supabase = getSupabaseAdmin()
 
@@ -36,7 +37,7 @@ export async function getVinculosProfissionais(personId: string) {
   return data as VinculoProfissionalWithFuncao[]
 }
 
-export async function createVinculoProfissional(vinculo: Partial<VinculoProfissional>) {
+export async function createVinculoProfissional(vinculo: Partial<VinculoProfissional>, pessoaId?: string | null) {
   const { data, error } = await supabase
     .from('vinculos_profissionais')
     .insert(vinculo)
@@ -44,10 +45,33 @@ export async function createVinculoProfissional(vinculo: Partial<VinculoProfissi
     .single()
 
   if (error) throw error
+
+  const { data: pessoa } = await supabase
+    .from('people')
+    .select('nome_completo')
+    .eq('id', data.person_id)
+    .maybeSingle()
+
+  await registrarAuditoria({
+    school_id: data.school_id,
+    pessoa_id: pessoaId || null,
+    modulo: 'Vínculos Profissionais',
+    entidade: 'vinculos_profissionais',
+    entidade_id: data.id,
+    registro_nome: pessoa?.nome_completo || null,
+    acao: 'criar',
+    dados_novos: data,
+  })
   return data as VinculoProfissionalWithFuncao
 }
 
-export async function updateVinculoProfissional(id: string, vinculo: Partial<VinculoProfissional>) {
+export async function updateVinculoProfissional(id: string, vinculo: Partial<VinculoProfissional>, pessoaId?: string | null) {
+  const { data: anterior } = await supabase
+    .from('vinculos_profissionais')
+    .select('*')
+    .eq('id', id)
+    .maybeSingle()
+
   const { data, error } = await supabase
     .from('vinculos_profissionais')
     .update(vinculo)
@@ -56,14 +80,57 @@ export async function updateVinculoProfissional(id: string, vinculo: Partial<Vin
     .single()
 
   if (error) throw error
+
+  const { data: pessoa } = await supabase
+    .from('people')
+    .select('nome_completo')
+    .eq('id', data.person_id)
+    .maybeSingle()
+
+  await registrarAuditoria({
+    school_id: data.school_id,
+    pessoa_id: pessoaId || null,
+    modulo: 'Vínculos Profissionais',
+    entidade: 'vinculos_profissionais',
+    entidade_id: id,
+    registro_nome: pessoa?.nome_completo || null,
+    acao: 'editar',
+    dados_anteriores: anterior,
+    dados_novos: data,
+  })
   return data as VinculoProfissionalWithFuncao
 }
 
-export async function deleteVinculoProfissional(id: string) {
+export async function deleteVinculoProfissional(id: string, pessoaId?: string | null) {
+  const { data: anterior } = await supabase
+    .from('vinculos_profissionais')
+    .select('*')
+    .eq('id', id)
+    .maybeSingle()
+
   const { error } = await supabase
     .from('vinculos_profissionais')
     .delete()
     .eq('id', id)
 
   if (error) throw error
+
+  if (anterior) {
+    const { data: pessoa } = await supabase
+      .from('people')
+      .select('nome_completo')
+      .eq('id', anterior.person_id)
+      .maybeSingle()
+
+    await registrarAuditoria({
+      school_id: anterior.school_id,
+      pessoa_id: pessoaId || null,
+      modulo: 'Vínculos Profissionais',
+      entidade: 'vinculos_profissionais',
+      entidade_id: id,
+      registro_nome: pessoa?.nome_completo || null,
+      acao: 'excluir',
+      dados_anteriores: anterior,
+    })
+  }
 }

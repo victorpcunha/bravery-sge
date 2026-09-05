@@ -1,7 +1,8 @@
 'use client'
 
 import { useState, useEffect, useMemo, useCallback } from 'react'
-import { useParams, useRouter } from 'next/navigation'
+import { useRouter } from 'next/navigation'
+import { useTabParams } from '@/lib/tab-params'
 import { useAuth } from '@/components/providers/auth-provider'
 import { usePermissoes } from '@/hooks/use-permissoes'
 import { getAlunosDaTurmaComPeriodo, getDisciplinasDiario, gerarNumeroChamada, getMetodoAvaliacaoDaTurma, getTurmaDiarioInfo, getFrequenciasAlunosTurma, type AlunoMatriculado, type TurmaDiarioInfo } from '@/lib/actions/diario-classe'
@@ -23,8 +24,10 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Skeleton } from '@/components/ui/skeleton'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 import { cn } from '@/lib/utils'
-import { Search, Users, BookOpen, GraduationCap, Hash, Calendar, ClipboardCheck, FileText, BarChart3, Calculator, Info } from 'lucide-react'
+import { Search, Users, BookOpen, GraduationCap, Hash, Calendar, ClipboardCheck, FileText, BarChart3, Calculator, Info, Lock, LockOpen } from 'lucide-react'
 import { toast } from 'sonner'
+import { StatusBadge } from '@/components/feedback/status-badge'
+import { labelSituacaoMatricula, variantSituacaoMatricula } from '@/lib/situacoes-matricula'
 
 const turnoBadgeStyles: Record<string, string> = {
   Matutino: 'bg-primary/10 text-primary border-primary/20',
@@ -34,7 +37,7 @@ const turnoBadgeStyles: Record<string, string> = {
 }
 
 export default function TurmaDiarioPage() {
-  const params = useParams()
+  const params = useTabParams()
   const router = useRouter()
   const turmaId = params.turmaId as string
   const { user, schoolId } = useAuth()
@@ -45,6 +48,8 @@ export default function TurmaDiarioPage() {
   const [loading, setLoading] = useState(true)
   const [gerando, setGerando] = useState(false)
   const [confirmChamadaOpen, setConfirmChamadaOpen] = useState(false)
+  const [confirmDesfazerOpen, setConfirmDesfazerOpen] = useState(false)
+  const [desfazendo, setDesfazendo] = useState(false)
   const [abaAtiva, setAbaAtiva] = useState('alunos')
   const [alunosSearch, setAlunosSearch] = useState('')
   const [alunosPage, setAlunosPage] = useState(1)
@@ -101,6 +106,23 @@ export default function TurmaDiarioPage() {
     }
   }
 
+  const handleDesfazerFechamento = async () => {
+    setDesfazendo(true)
+    try {
+      const { desfazerFechamento } = await import('@/lib/actions/fechamento-turma')
+      const res = await desfazerFechamento(turmaId, pessoaId)
+      toast.success(`Fechamento desfeito. ${res.total} aluno(s) retornaram para "Em andamento".`)
+      setConfirmDesfazerOpen(false)
+      const info = await getTurmaDiarioInfo(turmaId, pessoaId).catch(() => null)
+      setTurmaInfo(info)
+      setAlunos(await carregarAlunosComFrequencia(metodo?.criterio_frequencia))
+    } catch (e: any) {
+      toast.error(e?.message || 'Erro ao desfazer fechamento')
+    } finally {
+      setDesfazendo(false)
+    }
+  }
+
   const tiposAtivos = metodo?.tipos_avaliacao || {}
   const criterioFrequencia = metodo?.criterio_frequencia
   const isTipoAtivo = (tipo: string) => {
@@ -115,6 +137,11 @@ export default function TurmaDiarioPage() {
   const temNota = isTipoAtivo('numerico')
   const quantidadePeriodosNumerico = metodo?.quantidade_periodos_numerico || 4
   const frecuenciaMinima = Number(metodo?.frecuencia_minima) || 75
+
+  const turmaFechada = turmaInfo?.fechada === true
+  const readOnly = turmaFechada
+  const podeFechar = pode.editar('gestao-pedagogica.fechamento.fechar')
+  const podeDesfazer = pode.editar('gestao-pedagogica.fechamento.desfazer')
 
   const alunosFiltrados = useMemo(() => {
     if (!alunosSearch.trim()) return alunos.filter(a => !a.data_saida)
@@ -146,17 +173,6 @@ export default function TurmaDiarioPage() {
     return d.toLocaleDateString('pt-BR')
   }
 
-  const situacaoBadgeMap: Record<string, { label: string; variant: 'success' | 'warning' | 'destructive' | 'muted' | 'info' | 'primary' }> = {
-    Ativo: { label: 'Ativo', variant: 'success' },
-    Transferido: { label: 'Transferido', variant: 'warning' },
-    Desistente: { label: 'Desistente', variant: 'destructive' },
-    Óbito: { label: 'Óbito', variant: 'destructive' },
-    Reclassificado: { label: 'Reclassificado', variant: 'info' },
-    Aprovado: { label: 'Aprovado', variant: 'success' },
-    Reprovado: { label: 'Reprovado', variant: 'destructive' },
-    Remanejado: { label: 'Remanejado', variant: 'warning' },
-  }
-
   return (
     <PageContainer>
       {loading ? (
@@ -174,7 +190,7 @@ export default function TurmaDiarioPage() {
             icon={GraduationCap}
             actions={
               <div className="flex flex-col gap-2 sm:flex-row">
-                <Button variant="outline" size="sm" onClick={() => setConfirmChamadaOpen(true)} disabled={gerando}>
+                <Button variant="outline" size="sm" onClick={() => setConfirmChamadaOpen(true)} disabled={gerando || turmaFechada}>
                   <Hash className="h-4 w-4 mr-1.5" />
                   {gerando ? 'Gerando...' : 'Gerar Chamada'}
                 </Button>
@@ -222,6 +238,37 @@ export default function TurmaDiarioPage() {
                 <Badge variant="secondary" className="text-[12px] font-medium">
                   {turmaInfo?.etapa_nome}
                 </Badge>
+              </div>
+
+              <div className="flex items-center justify-between gap-3 flex-wrap">
+                <div className="flex items-center gap-2 flex-wrap">
+                  {metodo?.nome && (
+                    <Badge variant="outline" className="text-[12px] font-medium text-muted-foreground">
+                      Método: {metodo.nome}
+                    </Badge>
+                  )}
+                  {turmaFechada && (
+                    <Badge variant="outline" className="text-[12px] font-semibold bg-muted text-muted-foreground border-border">
+                      <Lock className="h-3 w-3 mr-1" />
+                      Fechada em {turmaInfo?.data_fechamento ? formatarData(turmaInfo.data_fechamento) : ''}
+                    </Badge>
+                  )}
+                </div>
+
+                <div className="flex items-center gap-2">
+                  {!turmaFechada && podeFechar && (
+                    <Button size="sm" onClick={() => router.push(`/gestao-pedagogica/diario-classe/${turmaId}/fechamento`)}>
+                      <ClipboardCheck className="h-4 w-4 mr-1.5" />
+                      Fechar Turma
+                    </Button>
+                  )}
+                  {turmaFechada && podeDesfazer && (
+                    <Button size="sm" variant="outline" className="text-destructive hover:text-destructive" onClick={() => setConfirmDesfazerOpen(true)}>
+                      <LockOpen className="h-4 w-4 mr-1.5" />
+                      Desfazer Fechamento
+                    </Button>
+                  )}
+                </div>
               </div>
 
               {disciplinas.length > 0 && (
@@ -356,7 +403,6 @@ export default function TurmaDiarioPage() {
                         ) : (
                           alunosPaginados.map((aluno, idx) => {
                             const inicio = (alunosPage - 1) * ITENS_POR_PAGINA
-                            const situacao = situacaoBadgeMap[aluno.situacao || ''] || { label: aluno.situacao || '—', variant: 'muted' as const }
                             const freqVal = aluno.frequencia ?? null
                             const freqCor = freqVal !== null ? (freqVal >= frecuenciaMinima ? 'bg-success' : 'bg-destructive') : 'bg-muted'
 
@@ -394,20 +440,9 @@ export default function TurmaDiarioPage() {
                                   </div>
                                 </TableCell>
                                 <TableCell className="align-top pt-4">
-                                  <span className={cn(
-                                    'inline-flex items-center rounded-full px-2.5 py-0.5 text-[11px] font-semibold border',
-                                    aluno.situacao === 'Ativo' && 'bg-success/10 text-success border-success/20',
-                                    aluno.situacao === 'Transferido' && 'bg-warning/10 text-warning border-warning/20',
-                                    aluno.situacao === 'Desistente' && 'bg-destructive/10 text-destructive border-destructive/20',
-                                    aluno.situacao === 'Óbito' && 'bg-destructive/10 text-destructive border-destructive/20',
-                                    aluno.situacao === 'Reclassificado' && 'bg-accent/10 text-accent border-accent/20',
-                                    aluno.situacao === 'Aprovado' && 'bg-success/10 text-success border-success/20',
-                                    aluno.situacao === 'Reprovado' && 'bg-destructive/10 text-destructive border-destructive/20',
-                                    aluno.situacao === 'Remanejado' && 'bg-warning/10 text-warning border-warning/20',
-                                    !aluno.situacao && 'bg-muted text-muted-foreground border-border'
-                                  )}>
-                                    {situacao.label}
-                                  </span>
+                                  <StatusBadge status={variantSituacaoMatricula(aluno.situacao)}>
+                                    {labelSituacaoMatricula(aluno.situacao)}
+                                  </StatusBadge>
                                 </TableCell>
                               </TableRow>
                             )
@@ -453,9 +488,9 @@ export default function TurmaDiarioPage() {
                 variant="flush"
               >
                 {criterioFrequencia === 'por_aula' ? (
-                  <FrequenciaPorAula turmaId={turmaId} alunos={alunos} disciplinas={disciplinas} />
+                  <FrequenciaPorAula turmaId={turmaId} alunos={alunos} disciplinas={disciplinas} readOnly={readOnly} />
                 ) : (
-                  <FrequenciaPorDia turmaId={turmaId} alunos={alunos} disciplinas={disciplinas} />
+                  <FrequenciaPorDia turmaId={turmaId} alunos={alunos} disciplinas={disciplinas} readOnly={readOnly} />
                 )}
               </PageSection>
             </TabsContent>
@@ -467,6 +502,7 @@ export default function TurmaDiarioPage() {
                   disciplinas={disciplinas}
                   quantidadePeriodosParecer={quantidadePeriodosParecer}
                   registroGeral={registroGeralParecer}
+                  readOnly={readOnly}
                 />
               </PageSection>
             </TabsContent>
@@ -477,6 +513,7 @@ export default function TurmaDiarioPage() {
                   alunos={alunos}
                   disciplinas={disciplinas}
                   quantidadePeriodosNivel={quantidadePeriodosNivel}
+                  readOnly={readOnly}
                 />
               </PageSection>
             </TabsContent>
@@ -488,12 +525,13 @@ export default function TurmaDiarioPage() {
                   disciplinas={disciplinas}
                   quantidadePeriodosNumerico={quantidadePeriodosNumerico}
                   metodoId={metodo?.id}
+                  readOnly={readOnly}
                 />
               </PageSection>
             </TabsContent>
             <TabsContent value="plano-aula">
               <PageSection title="Plano de Aula" variant="flush">
-                <PlanoAulaDiario turmaId={turmaId} disciplinas={disciplinas} pessoaId={pessoaId} />
+                <PlanoAulaDiario turmaId={turmaId} disciplinas={disciplinas} pessoaId={pessoaId} readOnly={readOnly} />
               </PageSection>
             </TabsContent>
           </Tabs>
@@ -510,6 +548,18 @@ export default function TurmaDiarioPage() {
         variant="warning"
         loading={gerando}
         onConfirm={handleGerarChamada}
+      />
+
+      <ConfirmDialog
+        open={confirmDesfazerOpen}
+        onOpenChange={v => { if (!v) setConfirmDesfazerOpen(false) }}
+        title="Desfazer Fechamento da Turma?"
+        description="A turma será reaberta, permitindo novamente registrar frequências e corrigir notas. As situações finais aplicadas no fechamento serão revertidas para 'Em andamento'. Esta ação fica registrada na auditoria, identificando o profissional responsável."
+        confirmLabel="Desfazer Fechamento"
+        cancelLabel="Cancelar"
+        variant="destructive"
+        loading={desfazendo}
+        onConfirm={handleDesfazerFechamento}
       />
     </PageContainer>
   )

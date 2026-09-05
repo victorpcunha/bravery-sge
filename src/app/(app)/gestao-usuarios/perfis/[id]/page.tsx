@@ -1,7 +1,8 @@
 'use client'
 
-import { useState, useEffect, use } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
+import { useTabParams } from '@/lib/tab-params'
 import { useAuth } from '@/components/providers/auth-provider'
 import { ChevronLeft, Shield } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -21,12 +22,8 @@ import { PerfilForm } from '@/components/perfis/perfil-form'
 import { usePermissoes } from '@/hooks/use-permissoes'
 import { toast } from 'sonner'
 
-type PageProps = {
-  params: Promise<{ id: string }>
-}
-
-export default function PerfilCadastroPage({ params }: PageProps) {
-  const { id } = use(params)
+export default function PerfilCadastroPage() {
+  const { id } = useTabParams()
   const isNew = id === 'novo'
 
   const { user, loading: authLoading, schoolId } = useAuth()

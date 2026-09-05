@@ -1,7 +1,8 @@
 'use client'
 
-import { useRouter, useParams } from 'next/navigation'
+import { useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
+import { useTabParams } from '@/lib/tab-params'
 import { Trash2, ShieldAlert, Eye, ArrowLeft, School as SchoolIcon } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { EscolaForm } from '@/components/censo/escola-form'
@@ -17,7 +18,7 @@ import { usePermissoes } from '@/hooks/use-permissoes'
 
 export default function UnidadeEscolarPage() {
   const router = useRouter()
-  const params = useParams()
+  const params = useTabParams()
   const id = params.id as string
 
   const { user, loading: authLoading, schoolId, isSuperAdmin } = useAuth()

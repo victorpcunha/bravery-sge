@@ -17,25 +17,15 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/ui/table'
 import { toast } from 'sonner'
 import { Plus, Pencil, BookOpen, Ban } from 'lucide-react'
-import { supabase } from '@/lib/supabase'
-
-interface Disciplina {
-  id: string
-  school_id: string
-  nome: string
-  nome_abreviado: string | null
-  sigla: string | null
-  area_codigo: number | null
-  componente: string
-  tipo_ensino: string
-  codigo_inep: number | null
-  diretriz_curricular: string | null
-  carga_horaria_padrao: number | null
-  ativo: boolean
-  is_padrao_mec: boolean
-  created_at: string
-  updated_at: string
-}
+import {
+  listarDisciplinas,
+  getAreasConhecimento,
+  criarDisciplina,
+  atualizarDisciplina,
+  toggleDisciplinaAtiva,
+  excluirDisciplina,
+  type Disciplina,
+} from '@/lib/actions/disciplinas'
 
 interface AreaConhecimento {
   id: number
@@ -43,7 +33,7 @@ interface AreaConhecimento {
 }
 
 export default function DisciplinasPage() {
-  const { user, schoolId, isSuperAdmin, allSchools, loading: authLoading } = useAuth()
+  const { user, schoolId, isSuperAdmin, allSchools, loading: authLoading, pessoaId } = useAuth()
   const router = useRouter()
 
   const [loadingPage, setLoadingPage] = useState(true)
@@ -74,11 +64,11 @@ export default function DisciplinasPage() {
     try {
       const effectiveId = selectedSchoolId || schoolId
       const [disciplinasRes, areasRes] = await Promise.all([
-        supabase.from('academico_disciplinas').select('*').eq('school_id', effectiveId).order('nome'),
-        supabase.from('academico_areas').select('*').order('nome'),
+        listarDisciplinas(effectiveId),
+        getAreasConhecimento(),
       ])
-      if (disciplinasRes.data) setDisciplinas(disciplinasRes.data)
-      if (areasRes.data) setAreas(areasRes.data)
+      if (disciplinasRes) setDisciplinas(disciplinasRes)
+      if (areasRes) setAreas(areasRes)
     } catch (error) {
       console.error('Erro ao carregar dados:', error)
       toast.error('Erro ao carregar dados')
@@ -125,14 +115,10 @@ export default function DisciplinasPage() {
       }
 
       if (editando) {
-        const { error } = await supabase.from('academico_disciplinas').update({
-          ...payload, school_id: undefined, updated_at: new Date().toISOString(),
-        }).eq('id', editando.id)
-        if (error) throw error
+        await atualizarDisciplina(editando.id, payload as any, pessoaId)
         toast.success('Disciplina atualizada')
       } else {
-        const { error } = await supabase.from('academico_disciplinas').insert(payload)
-        if (error) throw error
+        await criarDisciplina(payload as any, pessoaId)
         toast.success('Disciplina criada')
       }
       setShowModal(false)
@@ -146,9 +132,7 @@ export default function DisciplinasPage() {
 
   async function handleInativar(disciplina: Disciplina) {
     try {
-      const { error } = await supabase.from('academico_disciplinas')
-        .update({ ativo: false, updated_at: new Date().toISOString() }).eq('id', disciplina.id)
-      if (error) throw error
+      await toggleDisciplinaAtiva(disciplina.id, false, pessoaId)
       toast.success('Disciplina inativada')
       loadData()
     } catch { toast.error('Erro ao inativar disciplina') }
@@ -156,9 +140,7 @@ export default function DisciplinasPage() {
 
   async function handleAtivar(disciplina: Disciplina) {
     try {
-      const { error } = await supabase.from('academico_disciplinas')
-        .update({ ativo: true, updated_at: new Date().toISOString() }).eq('id', disciplina.id)
-      if (error) throw error
+      await toggleDisciplinaAtiva(disciplina.id, true, pessoaId)
       toast.success('Disciplina ativada')
       loadData()
     } catch { toast.error('Erro ao ativar disciplina') }
@@ -167,8 +149,7 @@ export default function DisciplinasPage() {
   async function handleDelete() {
     if (!deleteTarget) return
     try {
-      const { error } = await supabase.from('academico_disciplinas').delete().eq('id', deleteTarget.id)
-      if (error) throw error
+      await excluirDisciplina(deleteTarget.id, pessoaId)
       toast.success('Disciplina excluída')
       setDeleteTarget(null)
       setShowModal(false)

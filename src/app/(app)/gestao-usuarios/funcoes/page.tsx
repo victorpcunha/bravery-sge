@@ -21,7 +21,7 @@ import { ConfirmDialog } from '@/components/feedback/confirm-dialog'
 import { EmptyState } from '@/components/ui/empty-state'
 
 export default function FuncoesPage() {
-  const { user, loading: authLoading, schoolId } = useAuth()
+  const { user, loading: authLoading, schoolId, pessoaId } = useAuth()
   const router = useRouter()
   const [funcoes, setFuncoes] = useState<FuncaoProfissional[]>([])
   const [loading, setLoading] = useState(true)
@@ -36,7 +36,7 @@ export default function FuncoesPage() {
   }, [user, authLoading, router])
 
   useEffect(() => {
-    inicializarFuncoesPadrao(schoolId).catch(() => { /* já existem */ })
+    inicializarFuncoesPadrao(schoolId, pessoaId).catch(() => { /* já existem */ })
   }, [schoolId])
 
   useEffect(() => {
@@ -73,10 +73,10 @@ export default function FuncoesPage() {
     if (!formNome.trim()) { toast.error('Nome é obrigatório'); return }
     try {
       if (editItem) {
-        await updateFuncao(editItem.id, { nome: formNome.trim(), tipo_censo: formTipoCenso || null })
+        await updateFuncao(editItem.id, { nome: formNome.trim(), tipo_censo: formTipoCenso || null }, pessoaId)
         toast.success('Função atualizada!')
       } else {
-        await createFuncao({ nome: formNome.trim(), tipo_censo: formTipoCenso || null, school_id: schoolId! })
+        await createFuncao({ nome: formNome.trim(), tipo_censo: formTipoCenso || null, school_id: schoolId! }, pessoaId)
         toast.success('Função criada!')
       }
       setModalOpen(false)
@@ -89,7 +89,7 @@ export default function FuncoesPage() {
   const handleDelete = async () => {
     if (!deleteId) return
     try {
-      await deleteFuncao(deleteId)
+      await deleteFuncao(deleteId, pessoaId)
       toast.success('Função excluída')
       loadFuncoes()
     } catch {

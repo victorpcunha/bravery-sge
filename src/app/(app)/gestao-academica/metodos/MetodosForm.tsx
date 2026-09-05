@@ -11,6 +11,7 @@ import { Separator } from '@/components/ui/separator'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 import { Plus, Trash2, Info } from 'lucide-react'
 import { getMetodoCompleto, saveMetodo, type MetodoConceito, type MetodoNivel } from '@/lib/actions/metodos'
+import { useAuth } from '@/components/providers/auth-provider'
 import { toast } from 'sonner'
 
 const COLORS_BG = ['#1D3557', '#457B9D', '#E63946', '#2BAE66', '#E8A838', '#8B5CF6', '#EC4899', '#6366F1']
@@ -201,6 +202,7 @@ interface Props {
 }
 
 export function MetodosForm({ schoolId, editId, onSaved, onCancel }: Props) {
+  const { pessoaId } = useAuth()
   const [form, setForm] = useState<FormData>({ ...defaultForm, pesos_periodos: [...defaultForm.pesos_periodos] })
   const [saving, setSaving] = useState(false)
   const [loadingEdit, setLoadingEdit] = useState(false)
@@ -354,7 +356,7 @@ export function MetodosForm({ schoolId, editId, onSaved, onCancel }: Props) {
         niveis: form.tipos_avaliacao.nivel ? form.niveis : [],
       }
 
-      await saveMetodo(schoolId, payload)
+      await saveMetodo(schoolId, payload, pessoaId)
       toast.success(form.id ? 'Método atualizado com sucesso' : 'Método criado com sucesso')
       onSaved()
     } catch (err: unknown) {

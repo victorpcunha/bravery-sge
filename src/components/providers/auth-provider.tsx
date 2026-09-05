@@ -16,6 +16,7 @@ type AuthContextType = {
   allSchools: { id: string; nome_escola: string }[]
   nomeCompleto: string
   iniciais: string
+  pessoaId: string | null
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
@@ -44,6 +45,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [allSchools, setAllSchools] = useState<{ id: string; nome_escola: string }[]>([])
   const [nomeCompleto, setNomeCompleto] = useState('')
   const [iniciais, setIniciais] = useState('')
+  const [pessoaId, setPessoaId] = useState<string | null>(null)
 
   useEffect(() => {
     const supabase = getSupabaseClient()
@@ -70,6 +72,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setSchoolId(null)
       setIsSuperAdmin(false)
       setAllSchools([])
+      setPessoaId(null)
       return
     }
 
@@ -98,11 +101,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     ;(async () => {
       const supabase = getSupabaseClient()
       try {
-        const { data } = await supabase.from('people').select('nome_completo').eq('email', user.email?.toLowerCase().trim()).maybeSingle()
-        const nome = data?.nome_completo || formatarNome(user)
+        const email = user.email?.toLowerCase().trim()
+        const { data } = await supabase
+          .from('people')
+          .select('id, nome_completo, is_super_admin')
+          .eq('email', email)
+          .order('is_super_admin', { ascending: false })
+          .limit(1)
+        const pessoa = Array.isArray(data) ? data[0] : (data as unknown as Record<string, unknown>[] | null)?.[0]
+        setPessoaId(pessoa?.id || null)
+        const nome = pessoa?.nome_completo || formatarNome(user)
         setNomeCompleto(nome)
         setIniciais(getInitials(nome))
       } catch {
+        setPessoaId(null)
         const nome = formatarNome(user)
         setNomeCompleto(nome)
         setIniciais(getInitials(nome))
@@ -141,7 +153,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <AuthContext.Provider value={{ user, session, loading, signIn, signOut, schoolId, isSuperAdmin, allSchools, nomeCompleto, iniciais }}>
+    <AuthContext.Provider value={{ user, session, loading, signIn, signOut, schoolId, isSuperAdmin, allSchools, nomeCompleto, iniciais, pessoaId }}>
       {children}
     </AuthContext.Provider>
   )

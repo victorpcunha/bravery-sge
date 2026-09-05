@@ -1,6 +1,7 @@
 'use server'
 
 import { getSupabaseAdmin } from '@/lib/auth'
+import { registrarAuditoria } from '@/lib/auditoria'
 
 const supabase = getSupabaseAdmin()
 
@@ -140,12 +141,28 @@ export async function createSchool(school: Partial<School>, pessoaId?: string | 
     .single()
 
   if (error) throw error
+
+  await registrarAuditoria({
+    school_id: data.id,
+    pessoa_id: pessoaId || null,
+    modulo: 'Unidade Escolar',
+    entidade: 'schools',
+    entidade_id: data.id,
+    acao: 'criar',
+    dados_novos: data,
+  })
   return data as School
 }
 
 export async function updateSchool(id: string, school: Partial<School>, pessoaId?: string | null) {
   const { validarPermissaoEstrita } = await import('./perfis')
   await validarPermissaoEstrita(pessoaId || '', 'escolas', 'editar')
+
+  const { data: anterior } = await supabase
+    .from('schools')
+    .select('*')
+    .eq('id', id)
+    .maybeSingle()
 
   const { data, error } = await supabase
     .from('schools')
@@ -155,6 +172,17 @@ export async function updateSchool(id: string, school: Partial<School>, pessoaId
     .single()
 
   if (error) throw error
+
+  await registrarAuditoria({
+    school_id: id,
+    pessoa_id: pessoaId || null,
+    modulo: 'Unidade Escolar',
+    entidade: 'schools',
+    entidade_id: id,
+    acao: 'editar',
+    dados_anteriores: anterior,
+    dados_novos: data,
+  })
   return data as School
 }
 
@@ -162,12 +190,30 @@ export async function deleteSchool(id: string, pessoaId?: string | null) {
   const { validarPermissaoEstrita } = await import('./perfis')
   await validarPermissaoEstrita(pessoaId || '', 'escolas', 'excluir')
 
+  const { data: anterior } = await supabase
+    .from('schools')
+    .select('*')
+    .eq('id', id)
+    .maybeSingle()
+
   const { error } = await supabase
     .from('schools')
     .delete()
     .eq('id', id)
 
   if (error) throw error
+
+  if (anterior) {
+    await registrarAuditoria({
+      school_id: id,
+      pessoa_id: pessoaId || null,
+      modulo: 'Unidade Escolar',
+      entidade: 'schools',
+      entidade_id: id,
+      acao: 'excluir',
+      dados_anteriores: anterior,
+    })
+  }
 }
 
 export async function getDashboardData(schoolId: string | null) {

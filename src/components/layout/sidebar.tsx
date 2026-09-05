@@ -18,6 +18,7 @@ import {
   PanelLeft,
   PanelRight,
   FileText,
+  ScrollText,
 } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import {
@@ -161,6 +162,12 @@ const modules: Module[] = [
     icon: FileText,
     recurso: 'censo-escolar',
   },
+  {
+    title: 'Auditoria',
+    href: '/auditoria',
+    icon: ScrollText,
+    recurso: null,
+  },
 ]
 
 export function AppSidebar() {
@@ -216,6 +223,9 @@ export function AppSidebar() {
   }
 
   const visibleModules = modules.map(module => {
+    if (module.title === 'Auditoria' && permLoaded && !isSuperAdmin) {
+      return null
+    }
     if (module.title === 'Escolas' && permLoaded && !pode.visualizar('escolas')) {
       return null
     }

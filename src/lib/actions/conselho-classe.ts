@@ -1,8 +1,44 @@
 'use server'
 
 import { getSupabaseAdmin } from '@/lib/auth'
+import { registrarAuditoriaAgregada } from '@/lib/auditoria'
 
 const supabase = getSupabaseAdmin()
+
+async function registrarConselhoAgg(
+  pessoaId: string | null,
+  turmaId: string,
+  matrizDisciplinaId: string | null,
+  periodo: number,
+  quantidade: number,
+  entidade: string
+) {
+  const { data: turma } = await supabase.from('turmas').select('school_id, nome').eq('id', turmaId).maybeSingle()
+  let disciplinaNome: string | null = null
+  if (matrizDisciplinaId) {
+    const { data } = await supabase
+      .from('academico_matriz_disciplinas')
+      .select('academico_disciplinas(nome)')
+      .eq('id', matrizDisciplinaId)
+      .maybeSingle()
+    disciplinaNome = (data as any)?.academico_disciplinas?.nome || null
+  }
+  await registrarAuditoriaAgregada({
+    school_id: turma?.school_id || null,
+    pessoa_id: pessoaId || null,
+    modulo: 'Conselho de Classe',
+    entidade,
+    entidade_id: turmaId,
+    registro_nome: turma?.nome || null,
+    resumo: {
+      turma: turma?.nome || null,
+      turma_id: turmaId,
+      disciplina: disciplinaNome,
+      periodo: `Período ${periodo}`,
+      quantidade,
+    },
+  })
+}
 
 export type DisciplinaDesempenho = {
   disciplina_id: string
@@ -395,6 +431,8 @@ export async function salvarNotaConselho(
       if (error) return { success: false as const, error: error.message }
     }
 
+    await registrarConselhoAgg(pessoaId, turmaId, matrizDisciplinaId, periodo, 1, 'conselho_classe_resultados')
+
     return { success: true as const }
   } catch (e: any) {
     return { success: false as const, error: e?.message || 'Erro interno ao salvar' }
@@ -413,6 +451,12 @@ export async function alternarAprovacaoConselho(
       await validarPermissaoServer(pessoaId, 'gestao-pedagogica.conselho-classe', 'editar')
     }
 
+    const { data: matricula } = await supabase
+      .from('academico_matriculas')
+      .select('turma_id')
+      .eq('id', matriculaId)
+      .maybeSingle()
+
     const { error } = await supabase
       .from('academico_matriculas')
       .update({
@@ -422,6 +466,25 @@ export async function alternarAprovacaoConselho(
       .eq('school_id', schoolId)
 
     if (error) return { success: false as const, error: error.message }
+
+    if (matricula?.turma_id) {
+      const { data: turma } = await supabase.from('turmas').select('school_id, nome').eq('id', matricula.turma_id).maybeSingle()
+      await registrarAuditoriaAgregada({
+        school_id: turma?.school_id || schoolId,
+        pessoa_id: pessoaId || null,
+        modulo: 'Conselho de Classe',
+        entidade: 'academico_matriculas',
+        entidade_id: matricula.turma_id,
+        registro_nome: turma?.nome || null,
+        resumo: {
+          turma: turma?.nome || null,
+          turma_id: matricula.turma_id,
+          disciplina: null,
+          periodo: null,
+          quantidade: 1,
+        },
+      })
+    }
 
     return { success: true as const }
   } catch (e: any) {

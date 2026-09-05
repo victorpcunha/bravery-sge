@@ -1,6 +1,7 @@
 'use server'
 
 import { getSupabaseAdmin } from '@/lib/auth'
+import { registrarAuditoria } from '@/lib/auditoria'
 import type { HistoricoManualRecord } from './painel-pessoa'
 
 const supabase = getSupabaseAdmin()
@@ -80,6 +81,23 @@ export async function adicionarHistoricoManual(
 
     if (discError) throw discError
   }
+
+  const { data: pessoa } = await supabase
+    .from('people')
+    .select('nome_completo')
+    .eq('id', data.person_id)
+    .maybeSingle()
+
+  await registrarAuditoria({
+    school_id: data.school_id,
+    pessoa_id: pessoaId || null,
+    modulo: 'Histórico Escolar',
+    entidade: 'historico_manual',
+    entidade_id: registro.id,
+    registro_nome: pessoa?.nome_completo || null,
+    acao: 'criar',
+    dados_novos: registro,
+  })
 
   return registro
 }
@@ -168,12 +186,37 @@ export async function removerHistoricoManual(
     await validarPermissaoServer(pessoaId, RESOURCE, 'excluir')
   }
 
+  const { data: anterior } = await supabase
+    .from('historico_manual')
+    .select('*')
+    .eq('id', id)
+    .maybeSingle()
+
   const { error } = await supabase
     .from('historico_manual')
     .delete()
     .eq('id', id)
 
   if (error) throw error
+
+  if (anterior) {
+    const { data: pessoa } = await supabase
+      .from('people')
+      .select('nome_completo')
+      .eq('id', anterior.person_id)
+      .maybeSingle()
+
+    await registrarAuditoria({
+      school_id: anterior.school_id,
+      pessoa_id: pessoaId || null,
+      modulo: 'Histórico Escolar',
+      entidade: 'historico_manual',
+      entidade_id: id,
+      registro_nome: pessoa?.nome_completo || null,
+      acao: 'excluir',
+      dados_anteriores: anterior,
+    })
+  }
 }
 
 export async function getConfigEscola(

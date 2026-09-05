@@ -1,6 +1,8 @@
 'use server'
 
 import { getSupabaseAdmin } from '@/lib/auth'
+import { registrarAuditoria } from '@/lib/auditoria'
+import { garantirTurmaAberta } from './garantir-turma-aberta'
 
 const supabase = getSupabaseAdmin()
 
@@ -9,6 +11,42 @@ async function validarPermWrite(recurso: string, acao: 'criar' | 'editar' | 'exc
     const { validarPermissaoServer } = await import('./perfis')
     await validarPermissaoServer(pessoaId, recurso, acao)
   }
+}
+
+const MODULO_TURMAS = 'Turmas'
+
+async function registrarTurma(
+  acao: 'criar' | 'editar' | 'excluir',
+  entidade: string,
+  entidade_id: string,
+  pessoaId: string | null | undefined,
+  school_id: string | null | undefined,
+  registro_nome?: string | null,
+  dados_anteriores?: Record<string, unknown> | null,
+  dados_novos?: Record<string, unknown> | null
+) {
+  await registrarAuditoria({
+    school_id,
+    pessoa_id: pessoaId || null,
+    modulo: MODULO_TURMAS,
+    entidade,
+    entidade_id,
+    registro_nome: registro_nome || null,
+    acao,
+    dados_anteriores: dados_anteriores || null,
+    dados_novos: dados_novos || null,
+  })
+}
+
+async function nomeTurma(turmaId: string): Promise<string | null> {
+  const { data } = await supabase.from('turmas').select('nome').eq('id', turmaId).maybeSingle()
+  return data?.nome || null
+}
+
+async function nomePessoa(personId: string | null | undefined): Promise<string | null> {
+  if (!personId) return null
+  const { data } = await supabase.from('people').select('nome_completo').eq('id', personId).maybeSingle()
+  return data?.nome_completo || null
 }
 
 export type Turma = {
@@ -203,6 +241,8 @@ export async function createTurma(data: {
     if (errM) throw errM
   }
 
+  await registrarTurma('criar', 'turmas', turma.id, pessoaId, turma.school_id, turma.nome, null, turma)
+
   return turma
 }
 
@@ -235,7 +275,14 @@ export async function updateTurma(id: string, data: {
   eixo_qualificacao?: string | null
 }, pessoaId?: string | null) {
   await validarPermWrite('gestao-turmas.turmas', 'editar', pessoaId)
+  await garantirTurmaAberta(id)
   const { disciplinas, multietapa_etapas, multietapa_subetapas_ids, ...updateData } = data
+
+  const { data: anterior } = await supabase
+    .from('turmas')
+    .select('*')
+    .eq('id', id)
+    .maybeSingle()
 
   if (updateData.turnos) {
     updateData.turnos = JSON.parse(JSON.stringify(updateData.turnos)) as any
@@ -268,10 +315,26 @@ export async function updateTurma(id: string, data: {
       if (errM) throw errM
     }
   }
+
+  const { data: final } = await supabase
+    .from('turmas')
+    .select('*')
+    .eq('id', id)
+    .maybeSingle()
+
+  await registrarTurma('editar', 'turmas', id, pessoaId, final?.school_id || anterior?.school_id, final?.nome || anterior?.nome, anterior, final)
 }
 
 export async function deleteTurma(id: string, pessoaId?: string | null) {
   await validarPermWrite('gestao-turmas.turmas', 'excluir', pessoaId)
+  await garantirTurmaAberta(id)
+
+  const { data: anterior } = await supabase
+    .from('turmas')
+    .select('*')
+    .eq('id', id)
+    .maybeSingle()
+
   await Promise.all([
     supabase.from('turmas_disciplinas').delete().eq('turma_id', id),
     supabase.from('turmas_profissionais').delete().eq('turma_id', id),
@@ -279,12 +342,32 @@ export async function deleteTurma(id: string, pessoaId?: string | null) {
   ])
   const { error } = await supabase.from('turmas').delete().eq('id', id)
   if (error) throw error
+
+  if (anterior) {
+    await registrarTurma('excluir', 'turmas', id, pessoaId, anterior.school_id, anterior.nome, anterior, null)
+  }
 }
 
 export async function toggleTurmaAtiva(id: string, ativo: boolean, pessoaId?: string | null) {
   await validarPermWrite('gestao-turmas.turmas', 'editar', pessoaId)
+  await garantirTurmaAberta(id)
+
+  const { data: anterior } = await supabase
+    .from('turmas')
+    .select('*')
+    .eq('id', id)
+    .maybeSingle()
+
   const { error } = await supabase.from('turmas').update({ ativo }).eq('id', id)
   if (error) throw error
+
+  const { data: final } = await supabase
+    .from('turmas')
+    .select('*')
+    .eq('id', id)
+    .maybeSingle()
+
+  await registrarTurma('editar', 'turmas', id, pessoaId, final?.school_id || anterior?.school_id, final?.nome || anterior?.nome, anterior, final)
 }
 
 export async function addProfissionalTurma(data: {
@@ -295,18 +378,23 @@ export async function addProfissionalTurma(data: {
   disciplinas_ids?: string[]
 }, pessoaId?: string | null) {
   await validarPermWrite('gestao-turmas.turmas', 'editar', pessoaId)
-  const { error } = await supabase.from('turmas_profissionais').insert({
+  const { data: criado, error } = await supabase.from('turmas_profissionais').insert({
     turma_id: data.turma_id,
     person_id: data.person_id,
     vinculo_profissional_id: data.vinculo_profissional_id || null,
     data_inicio: data.data_inicio,
     disciplinas_ids: data.disciplinas_ids || [],
-  })
+  }).select().single()
   if (error) throw error
 
   if (data.disciplinas_ids?.length) {
     await sincronizarProfessorQuadro(data.turma_id, data.person_id, data.disciplinas_ids)
   }
+
+  const turmaNome = await nomeTurma(data.turma_id)
+  const pessoaNome = await nomePessoa(data.person_id)
+  const { data: turmaRows } = await supabase.from('turmas').select('school_id').eq('id', data.turma_id).maybeSingle()
+  await registrarTurma('criar', 'turmas_profissionais', criado.id, pessoaId, turmaRows?.school_id, pessoaNome || turmaNome, null, criado)
 }
 
 async function sincronizarProfessorQuadro(turmaId: string, professorId: string, disciplinasIds: string[]) {
@@ -336,17 +424,17 @@ export async function updateProfissionalTurma(id: string, data: {
 }, pessoaId?: string | null) {
   await validarPermWrite('gestao-turmas.turmas', 'editar', pessoaId)
 
-  const { data: vinculoAtual } = await supabase
+  const { data: anterior } = await supabase
     .from('turmas_profissionais')
-    .select('turma_id, person_id, disciplinas_ids')
+    .select('*')
     .eq('id', id)
     .maybeSingle()
 
   const { error } = await supabase.from('turmas_profissionais').update(data).eq('id', id)
   if (error) throw error
 
-  if (data.disciplinas_ids && vinculoAtual) {
-    const idsAntigos = (vinculoAtual.disciplinas_ids || []) as string[]
+  if (anterior && data.disciplinas_ids) {
+    const idsAntigos = (anterior.disciplinas_ids || []) as string[]
     const idsNovos = data.disciplinas_ids
     const idsRemover = idsAntigos.filter(d => !idsNovos.includes(d))
     const idsAdicionar = idsNovos.filter(d => !idsAntigos.includes(d))
@@ -354,7 +442,7 @@ export async function updateProfissionalTurma(id: string, data: {
     const { data: quadro } = await supabase
       .from('quadro_aulas')
       .select('id')
-      .eq('turma_id', vinculoAtual.turma_id)
+      .eq('turma_id', anterior.turma_id)
       .eq('ativo', true)
       .maybeSingle()
 
@@ -370,13 +458,24 @@ export async function updateProfissionalTurma(id: string, data: {
       if (idsAdicionar.length > 0) {
         await supabase
           .from('quadro_aulas_horarios')
-          .update({ professor_id: vinculoAtual.person_id })
+          .update({ professor_id: anterior.person_id })
           .eq('quadro_aula_id', quadro.id)
           .in('disciplina_id', idsAdicionar)
           .eq('ativo', true)
       }
     }
   }
+
+  const finalVinculo = await supabase
+    .from('turmas_profissionais')
+    .select('*')
+    .eq('id', id)
+    .maybeSingle()
+
+  const pessoaNome = await nomePessoa(anterior?.person_id)
+  const turmaNome = anterior?.turma_id ? await nomeTurma(anterior.turma_id) : null
+  const { data: turmaRows } = await supabase.from('turmas').select('school_id').eq('id', anterior?.turma_id).maybeSingle()
+  await registrarTurma('editar', 'turmas_profissionais', id, pessoaId, turmaRows?.school_id, pessoaNome || turmaNome, anterior, finalVinculo.data)
 }
 
 export async function removeProfissionalTurma(id: string, pessoaId?: string | null) {
@@ -384,29 +483,36 @@ export async function removeProfissionalTurma(id: string, pessoaId?: string | nu
 
   const { data: vinculo } = await supabase
     .from('turmas_profissionais')
-    .select('turma_id, disciplinas_ids')
+    .select('*')
     .eq('id', id)
     .maybeSingle()
 
   const { error } = await supabase.from('turmas_profissionais').delete().eq('id', id)
   if (error) throw error
 
-  if (vinculo?.disciplinas_ids?.length) {
-    const { data: quadro } = await supabase
-      .from('quadro_aulas')
-      .select('id')
-      .eq('turma_id', vinculo.turma_id)
-      .eq('ativo', true)
-      .maybeSingle()
-
-    if (quadro) {
-      await supabase
-        .from('quadro_aulas_horarios')
-        .update({ professor_id: null })
-        .eq('quadro_aula_id', quadro.id)
-        .in('disciplina_id', vinculo.disciplinas_ids)
+  if (vinculo) {
+    if (vinculo.disciplinas_ids?.length) {
+      const { data: quadro } = await supabase
+        .from('quadro_aulas')
+        .select('id')
+        .eq('turma_id', vinculo.turma_id)
         .eq('ativo', true)
+        .maybeSingle()
+
+      if (quadro) {
+        await supabase
+          .from('quadro_aulas_horarios')
+          .update({ professor_id: null })
+          .eq('quadro_aula_id', quadro.id)
+          .in('disciplina_id', vinculo.disciplinas_ids)
+          .eq('ativo', true)
+      }
     }
+
+    const pessoaNome = await nomePessoa(vinculo.person_id)
+    const turmaNome = vinculo.turma_id ? await nomeTurma(vinculo.turma_id) : null
+    const { data: turmaRows } = await supabase.from('turmas').select('school_id').eq('id', vinculo.turma_id).maybeSingle()
+    await registrarTurma('excluir', 'turmas_profissionais', id, pessoaId, turmaRows?.school_id, pessoaNome || turmaNome, vinculo, null)
   }
 }
 

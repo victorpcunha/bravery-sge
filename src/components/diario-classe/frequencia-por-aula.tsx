@@ -33,6 +33,7 @@ type Props = {
   turmaId: string
   alunos: AlunoMatriculado[]
   disciplinas: DisciplinaItem[]
+  readOnly?: boolean
 }
 
 const STATUS_LIST: { value: FrequenciaAula['status']; label: string; icon: React.ReactNode; classes: string }[] = [
@@ -41,7 +42,7 @@ const STATUS_LIST: { value: FrequenciaAula['status']; label: string; icon: React
   { value: 'FJ', label: 'Justificado', icon: <AlertTriangle className="h-3.5 w-3.5" />, classes: 'bg-warning text-white hover:bg-warning/90' },
 ]
 
-export default function FrequenciaPorAula({ turmaId, alunos, disciplinas }: Props) {
+export default function FrequenciaPorAula({ turmaId, alunos, disciplinas, readOnly = false }: Props) {
   const hoje = new Date()
   const hojeStr = `${hoje.getFullYear()}-${String(hoje.getMonth() + 1).padStart(2, '0')}-${String(hoje.getDate()).padStart(2, '0')}`
   const [ano, setAno] = useState(hoje.getFullYear())
@@ -148,6 +149,7 @@ export default function FrequenciaPorAula({ turmaId, alunos, disciplinas }: Prop
   }
 
   const handleMarcarTodos = async (horarioId: string, dataAula: string, status: FrequenciaAula['status'] | null) => {
+    if (readOnly) return
     const alunosValidos = alunos.filter(aluno => {
       if (aluno.data_matricula && dataAula < aluno.data_matricula) return false
       if (aluno.data_saida && dataAula > aluno.data_saida) return false
@@ -450,7 +452,7 @@ export default function FrequenciaPorAula({ turmaId, alunos, disciplinas }: Prop
                         const isBeforeMatricula = aluno.data_matricula ? aula.data < aluno.data_matricula : false
                         const isAfterSaida = aluno.data_saida ? aula.data > aluno.data_saida : false
                         const isOutsidePeriod = isBeforeMatricula || isAfterSaida
-                        const disabled = isSaving || isFuture || isOutsidePeriod
+                        const disabled = readOnly || isSaving || isFuture || isOutsidePeriod
                         const popoverKey = `${key}_popover`
 
                         let tooltip = ''

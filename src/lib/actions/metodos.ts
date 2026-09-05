@@ -1,6 +1,7 @@
 'use server'
 
 import { getSupabaseAdmin } from '@/lib/auth'
+import { registrarAuditoria } from '@/lib/auditoria'
 
 const supabase = getSupabaseAdmin()
 
@@ -191,14 +192,21 @@ export type SaveMetodoPayload = {
   niveis: Partial<MetodoNivel>[]
 }
 
-export async function saveMetodo(schoolId: string | null, payload: SaveMetodoPayload) {
+export async function saveMetodo(schoolId: string | null, payload: SaveMetodoPayload, pessoaId?: string | null) {
   const { id: _, ...principalData } = payload.principal
   const isUpdate = !!payload.principal.id
 
   let metodoId: string
+  let anterior: Record<string, unknown> | null = null
 
   if (isUpdate) {
     metodoId = payload.principal.id!
+    const { data: anteriorRows } = await supabase
+      .from('academico_metodos_avaliacao')
+      .select('*')
+      .eq('id', metodoId)
+      .maybeSingle()
+    anterior = anteriorRows || null
     const { error } = await supabase
       .from('academico_metodos_avaliacao')
       .update(principalData)
@@ -277,14 +285,51 @@ export async function saveMetodo(schoolId: string | null, payload: SaveMetodoPay
     await supabase.from('academico_metodos_niveis').delete().eq('metodo_id', metodoId)
   }
 
+  const { data: final } = await supabase
+    .from('academico_metodos_avaliacao')
+    .select('*')
+    .eq('id', metodoId)
+    .maybeSingle()
+
+  await registrarAuditoria({
+    school_id: schoolId || final?.school_id || null,
+    pessoa_id: pessoaId || null,
+    modulo: 'Métodos de Avaliação',
+    entidade: 'academico_metodos_avaliacao',
+    entidade_id: metodoId,
+    registro_nome: final?.nome || (principalData as any).nome || null,
+    acao: isUpdate ? 'editar' : 'criar',
+    dados_anteriores: anterior,
+    dados_novos: final,
+  })
+
   return metodoId
 }
 
-export async function deleteMetodo(id: string) {
+export async function deleteMetodo(id: string, pessoaId?: string | null) {
+  const { data: anterior } = await supabase
+    .from('academico_metodos_avaliacao')
+    .select('*')
+    .eq('id', id)
+    .maybeSingle()
+
   const { error } = await supabase
     .from('academico_metodos_avaliacao')
     .delete()
     .eq('id', id)
 
   if (error) throw error
+
+  if (anterior) {
+    await registrarAuditoria({
+      school_id: anterior.school_id,
+      pessoa_id: pessoaId || null,
+      modulo: 'Métodos de Avaliação',
+      entidade: 'academico_metodos_avaliacao',
+      entidade_id: id,
+      registro_nome: anterior.nome,
+      acao: 'excluir',
+      dados_anteriores: anterior,
+    })
+  }
 }

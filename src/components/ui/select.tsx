@@ -4,6 +4,7 @@ import * as React from "react"
 import { Select as SelectPrimitive } from "radix-ui"
 
 import { cn } from "@/lib/utils"
+import { useTabPortalContainer } from "@/lib/tab-portal-context"
 import { ChevronDownIcon, CheckIcon, ChevronUpIcon } from "lucide-react"
 
 function Select({
@@ -71,8 +72,9 @@ function SelectContent({
   align = "start",
   ...props
 }: React.ComponentProps<typeof SelectPrimitive.Content>) {
+  const tabContainer = useTabPortalContainer()
   return (
-    <SelectPrimitive.Portal>
+    <SelectPrimitive.Portal container={tabContainer ?? undefined}>
       <SelectPrimitive.Content
         data-slot="select-content"
         data-align-trigger={position === "item-aligned"}

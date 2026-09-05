@@ -53,7 +53,7 @@ function formatCpf(cpf: string | null) {
 }
 
 export default function UsuariosPage() {
-  const { user, loading: authLoading, schoolId, isSuperAdmin, allSchools } = useAuth()
+  const { user, loading: authLoading, schoolId, isSuperAdmin, allSchools, pessoaId } = useAuth()
   const router = useRouter()
   const [pessoas, setPessoas] = useState<Person[]>([])
   const [loading, setLoading] = useState(true)
@@ -119,7 +119,7 @@ export default function UsuariosPage() {
     if (!deleteTarget) return
     setDeleting(deleteTarget.id)
     try {
-      await deletePerson(deleteTarget.id)
+      await deletePerson(deleteTarget.id, pessoaId)
       toast.success('Usuário excluído permanentemente')
       setDeleteTarget(null)
       loadPessoas()
@@ -133,7 +133,7 @@ export default function UsuariosPage() {
   const handleInativar = async (id: string) => {
     setInativando(id)
     try {
-      await inativarPessoa(id)
+      await inativarPessoa(id, pessoaId)
       toast.success('Usuário inativado')
       loadPessoas()
     } catch {
@@ -146,7 +146,7 @@ export default function UsuariosPage() {
   const handleReativar = async (id: string) => {
     setInativando(id)
     try {
-      await reativarPessoa(id)
+      await reativarPessoa(id, pessoaId)
       toast.success('Usuário reativado')
       loadPessoas()
     } catch {

@@ -23,6 +23,7 @@ type Props = {
   turmaId: string
   alunos: AlunoMatriculado[]
   disciplinas?: any[]
+  readOnly?: boolean
 }
 
 const STATUS_LIST: { value: FrequenciaDia['status']; label: string; icon: React.ReactNode; classes: string }[] = [
@@ -31,7 +32,7 @@ const STATUS_LIST: { value: FrequenciaDia['status']; label: string; icon: React.
   { value: 'FJ', label: 'Justificado', icon: <AlertTriangle className="h-3.5 w-3.5" />, classes: 'bg-warning text-white hover:bg-warning/90' },
 ]
 
-export default function FrequenciaPorDia({ turmaId, alunos, disciplinas }: Props) {
+export default function FrequenciaPorDia({ turmaId, alunos, disciplinas, readOnly = false }: Props) {
   const { user, schoolId } = useAuth()
   const hoje = new Date()
   const hojeStr = `${hoje.getFullYear()}-${String(hoje.getMonth() + 1).padStart(2, '0')}-${String(hoje.getDate()).padStart(2, '0')}`
@@ -92,6 +93,7 @@ export default function FrequenciaPorDia({ turmaId, alunos, disciplinas }: Props
   }, [turmaId, pessoaId])
 
   const handleRegistrar = async (alunoId: string, dia: number, status: FrequenciaDia['status'] | null) => {
+    if (readOnly) return
     const key = `${alunoId}_${dia}`
     const savingKey = `${key}_${status}`
     setSalvando(prev => new Set(prev).add(savingKey))
@@ -119,6 +121,7 @@ export default function FrequenciaPorDia({ turmaId, alunos, disciplinas }: Props
   }
 
   const handleMarcarTodosDia = async (dia: number, status: FrequenciaDia['status'] | null) => {
+    if (readOnly) return
     const diaStr = `${ano}-${String(mes).padStart(2, '0')}-${String(dia).padStart(2, '0')}`
     const alunosValidos = alunos.filter(al => {
       if (al.data_matricula && diaStr < al.data_matricula) return false
@@ -335,7 +338,7 @@ export default function FrequenciaPorDia({ turmaId, alunos, disciplinas }: Props
                       const isBeforeMatricula = aluno.data_matricula ? diaStr < aluno.data_matricula : false
                       const isAfterSaida = aluno.data_saida ? diaStr > aluno.data_saida : false
                       const isOutsidePeriod = isBeforeMatricula || isAfterSaida
-                      const disabled = isSaving || isFuture || isOutsidePeriod
+                      const disabled = readOnly || isSaving || isFuture || isOutsidePeriod
                       const popoverKey = `${key}_popover`
 
                       return (

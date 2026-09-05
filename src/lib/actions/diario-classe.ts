@@ -1,8 +1,45 @@
 'use server'
 
 import { getSupabaseAdmin } from '@/lib/auth'
+import { registrarAuditoriaAgregada } from '@/lib/auditoria'
+import { verificarTurmaFechada } from './fechamento-turma'
 
 const supabase = getSupabaseAdmin()
+
+async function contextoTurmaAuditoria(turmaId: string): Promise<{ school_id?: string; nome?: string }> {
+  const { data } = await supabase.from('turmas').select('school_id, nome').eq('id', turmaId).maybeSingle()
+  return data || {}
+}
+
+async function registrarFrequenciaAgg(
+  pessoaId: string | null,
+  entidade: string,
+  turmaId: string,
+  resumo: { turma?: string | null; turma_id: string; disciplina?: string | null; periodo?: string | null; quantidade: number },
+  disciplinaId?: string | null
+) {
+  const ctx = await contextoTurmaAuditoria(turmaId)
+  let disciplinaNome: string | null = null
+  if (disciplinaId) {
+    const { data } = await supabase.from('academico_disciplinas').select('nome').eq('id', disciplinaId).maybeSingle()
+    disciplinaNome = data?.nome || null
+  }
+  await registrarAuditoriaAgregada({
+    school_id: ctx.school_id,
+    pessoa_id: pessoaId || null,
+    modulo: 'Diário de Classe — Frequência',
+    entidade,
+    entidade_id: turmaId,
+    registro_nome: ctx.nome || null,
+    resumo: {
+      turma: ctx.nome || resumo.turma || null,
+      turma_id: turmaId,
+      disciplina: disciplinaId ? disciplinaNome : resumo.disciplina || null,
+      periodo: resumo.periodo || null,
+      quantidade: resumo.quantidade,
+    },
+  })
+}
 
 export type TurmaDiario = {
   id: string
@@ -155,6 +192,8 @@ export type TurmaDiarioInfo = {
   capacidade_alunos: number
   total_alunos: number
   quadro_aula_id: string | null
+  fechada: boolean
+  data_fechamento: string | null
 }
 
 export async function getTurmaDiarioInfo(turmaId: string, pessoaId?: string | null): Promise<TurmaDiarioInfo | null> {
@@ -162,7 +201,7 @@ export async function getTurmaDiarioInfo(turmaId: string, pessoaId?: string | nu
 
   const { data: turma, error } = await supabase
     .from('turmas')
-    .select('id, nome, capacidade_alunos, ano_letivo_id, etapa_ensino_id, turnos')
+    .select('id, nome, capacidade_alunos, ano_letivo_id, etapa_ensino_id, turnos, fechada, data_fechamento')
     .eq('id', turmaId)
     .maybeSingle()
 
@@ -189,6 +228,8 @@ export async function getTurmaDiarioInfo(turmaId: string, pessoaId?: string | nu
     capacidade_alunos: turma.capacidade_alunos || 0,
     total_alunos: results[2].count || 0,
     quadro_aula_id: results[3].data?.id || null,
+    fechada: turma.fechada === true,
+    data_fechamento: turma.data_fechamento || null,
   }
 }
 
@@ -258,6 +299,10 @@ export async function getAlunosDaTurmaComPeriodo(turmaId: string, pessoaId?: str
 export async function gerarNumeroChamada(turmaId: string, pessoaId?: string | null) {
   await validarPermWrite('gestao-pedagogica.diario-classe', pessoaId)
 
+  if (await verificarTurmaFechada(turmaId)) {
+    throw new Error('A turma está fechada. Não é possível gerar a numeração de chamada.')
+  }
+
   const { data: matriculas, error } = await supabase
     .from('academico_matriculas')
     .select('id, aluno_id')
@@ -290,6 +335,17 @@ export async function gerarNumeroChamada(turmaId: string, pessoaId?: string | nu
       .eq('id', ordenados[i].matriculaId)
     if (errUpdate) throw errUpdate
   }
+
+  const ctx = await contextoTurmaAuditoria(turmaId)
+  await registrarAuditoriaAgregada({
+    school_id: ctx.school_id,
+    pessoa_id: pessoaId || null,
+    modulo: 'Alunos Matriculados',
+    entidade: 'academico_matriculas',
+    entidade_id: turmaId,
+    registro_nome: ctx.nome || null,
+    resumo: { turma: ctx.nome || null, turma_id: turmaId, quantidade: ordenados.length },
+  })
 
   return ordenados.length
 }
@@ -400,6 +456,10 @@ export async function registrarFrequenciaDia(
     await validarPermissaoServer(pessoaId, 'gestao-pedagogica.diario-classe.frequencia', 'editar')
   }
 
+  if (await verificarTurmaFechada(turmaId)) {
+    return { success: false, error: 'A turma está fechada. Não é possível registrar frequência.' }
+  }
+
   if (status) {
     const { data: existing } = await supabase
       .from('academico_frequencias_dia')
@@ -439,6 +499,12 @@ export async function registrarFrequenciaDia(
       .eq('aluno_id', alunoId)
       .eq('dia_letivo', diaLetivo)
   }
+
+  await registrarFrequenciaAgg(pessoaId, 'academico_frequencias_dia', turmaId, {
+    turma_id: turmaId,
+    periodo: diaLetivo,
+    quantidade: 1,
+  })
 
   return { success: true }
 }
@@ -662,6 +728,10 @@ export async function registrarFrequenciaAula(
       await validarPermissaoServer(pessoaId, 'gestao-pedagogica.diario-classe.frequencia', 'editar')
     }
 
+    if (await verificarTurmaFechada(turmaId)) {
+      return { success: false, error: 'A turma está fechada. Não é possível registrar frequência.' }
+    }
+
     const { data: horario } = await supabase
       .from('quadro_aulas_horarios')
       .select('disciplina_id')
@@ -714,6 +784,12 @@ export async function registrarFrequenciaAula(
         .eq('data_aula', dataAula)
       if (error) return { success: false, error: error.message }
     }
+
+    await registrarFrequenciaAgg(pessoaId, 'academico_frequencias_aula', turmaId, {
+      turma_id: turmaId,
+      periodo: dataAula,
+      quantidade: 1,
+    }, disciplinaId)
 
     return { success: true }
   } catch (e: any) {

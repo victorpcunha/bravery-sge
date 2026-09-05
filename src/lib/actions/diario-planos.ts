@@ -1,7 +1,9 @@
 'use server'
 
 import { getSupabaseAdmin } from '@/lib/auth'
+import { registrarAuditoria } from '@/lib/auditoria'
 import { type PlanoAula } from './plano-ensino'
+import { garantirTurmaAberta, verificarTurmaFechadaPublica } from './garantir-turma-aberta'
 
 const RESOURCE = 'gestao-pedagogica.diario-classe.planos'
 const supabase = getSupabaseAdmin()
@@ -163,6 +165,7 @@ export async function aplicarPlanoAula(
   pessoaId?: string | null
 ) {
   await validarPermWrite(pessoaId)
+  await garantirTurmaAberta(turmaId)
 
   const hoje = new Date()
   const hojeStr = `${hoje.getFullYear()}-${String(hoje.getMonth() + 1).padStart(2, '0')}-${String(hoje.getDate()).padStart(2, '0')}`
@@ -187,6 +190,24 @@ export async function aplicarPlanoAula(
     }
     throw error
   }
+
+  const { data: registro } = await supabase
+    .from('academico_diario_planos_aplicados')
+    .select('*')
+    .match({ turma_id: turmaId, matriz_disciplina_id: matrizDisciplinaId, data_aula: dataAula, plano_aula_id: planoAulaId, horario_id: horarioId || null })
+    .maybeSingle()
+
+  const { data: turma } = await supabase.from('turmas').select('nome, school_id').eq('id', turmaId).maybeSingle()
+  await registrarAuditoria({
+    school_id: turma?.school_id || null,
+    pessoa_id: pessoaId || null,
+    modulo: 'Plano de Ensino',
+    entidade: 'academico_diario_planos_aplicados',
+    entidade_id: registro?.id || null,
+    registro_nome: turma?.nome || null,
+    acao: 'criar',
+    dados_novos: registro || { turma_id: turmaId, matriz_disciplina_id: matrizDisciplinaId, data_aula: dataAula, plano_aula_id: planoAulaId, horario_id: horarioId || null },
+  })
 }
 
 export async function removerPlanoAulaAplicado(
@@ -195,12 +216,42 @@ export async function removerPlanoAulaAplicado(
 ) {
   await validarPermWrite(pessoaId)
 
+  const { data: plano } = await supabase
+    .from('academico_diario_planos_aplicados')
+    .select('turma_id')
+    .eq('id', id)
+    .maybeSingle()
+
+  if (plano?.turma_id && await verificarTurmaFechadaPublica(plano.turma_id)) {
+    throw new Error('A turma está fechada. Não é possível realizar alterações.')
+  }
+
+  const { data: anterior } = await supabase
+    .from('academico_diario_planos_aplicados')
+    .select('*')
+    .eq('id', id)
+    .maybeSingle()
+
   const { error } = await supabase
     .from('academico_diario_planos_aplicados')
     .delete()
     .eq('id', id)
 
   if (error) throw error
+
+  if (anterior) {
+    const { data: turma } = await supabase.from('turmas').select('nome, school_id').eq('id', anterior.turma_id).maybeSingle()
+    await registrarAuditoria({
+      school_id: turma?.school_id || null,
+      pessoa_id: pessoaId || null,
+      modulo: 'Plano de Ensino',
+      entidade: 'academico_diario_planos_aplicados',
+      entidade_id: id,
+      registro_nome: turma?.nome || null,
+      acao: 'excluir',
+      dados_anteriores: anterior,
+    })
+  }
 }
 
 export async function listarDiasComPlanoAplicado(

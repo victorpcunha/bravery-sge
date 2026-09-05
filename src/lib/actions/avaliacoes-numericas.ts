@@ -1,8 +1,38 @@
 'use server'
 
 import { getSupabaseAdmin } from '@/lib/auth'
+import { registrarAuditoriaAgregada } from '@/lib/auditoria'
+import { garantirTurmaAberta } from './garantir-turma-aberta'
 
 const supabase = getSupabaseAdmin()
+
+async function registrarNotasAgg(
+  pessoaId: string | null,
+  turmaId: string,
+  disciplinaId: string,
+  periodo: number | null,
+  quantidade: number,
+  modulo: string,
+  entidade: string
+) {
+  const { data: turma } = await supabase.from('turmas').select('school_id, nome').eq('id', turmaId).maybeSingle()
+  const { data: disciplina } = await supabase.from('academico_disciplinas').select('nome').eq('id', disciplinaId).maybeSingle()
+  await registrarAuditoriaAgregada({
+    school_id: turma?.school_id || null,
+    pessoa_id: pessoaId || null,
+    modulo,
+    entidade,
+    entidade_id: turmaId,
+    registro_nome: turma?.nome || null,
+    resumo: {
+      turma: turma?.nome || null,
+      turma_id: turmaId,
+      disciplina: disciplina?.nome || null,
+      periodo: periodo !== null ? `Período ${periodo}` : null,
+      quantidade,
+    },
+  })
+}
 
 async function validarPermRead(recurso: string, pessoaId?: string | null) {
   if (pessoaId) {
@@ -239,6 +269,7 @@ export async function salvarNota(
   pessoaId: string | null
 ) {
   try {
+    await garantirTurmaAberta(turmaId)
     if (pessoaId) {
       const { validarPermissaoServer } = await import('./perfis')
       await validarPermissaoServer(pessoaId, 'gestao-pedagogica.diario-classe.avaliacoes', 'editar')
@@ -264,6 +295,7 @@ export async function salvarNota(
       const conselhoRemovido = valorMudou
         ? await limparConselhoDeClasse(disciplinaId, alunoId, periodo, pessoaId)
         : false
+      await registrarNotasAgg(pessoaId, turmaId, disciplinaId, periodo, 1, 'Diário de Classe — Notas', 'academico_notas')
       return { success: true, id: data?.id || notaId, conselho_removido: conselhoRemovido }
     } else {
       const { data, error } = await supabase
@@ -284,6 +316,7 @@ export async function salvarNota(
         .maybeSingle()
       if (error) return { success: false, error: error.message }
       const conselhoRemovido = await limparConselhoDeClasse(disciplinaId, alunoId, periodo, pessoaId)
+      await registrarNotasAgg(pessoaId, turmaId, disciplinaId, periodo, 1, 'Diário de Classe — Notas', 'academico_notas')
       return { success: true, id: data?.id, conselho_removido: conselhoRemovido }
     }
   } catch (e: unknown) {
@@ -318,6 +351,7 @@ export async function salvarRecuperacao(
   pessoaId: string | null
 ) {
   try {
+    await garantirTurmaAberta(turmaId)
     if (pessoaId) {
       const { validarPermissaoServer } = await import('./perfis')
       await validarPermissaoServer(pessoaId, 'gestao-pedagogica.diario-classe.avaliacoes', 'editar')
@@ -334,6 +368,7 @@ export async function salvarRecuperacao(
       const conselhoRemovido = periodo !== null
         ? await limparConselhoDeClasse(disciplinaId, alunoId, periodo, pessoaId)
         : false
+      await registrarNotasAgg(pessoaId, turmaId, disciplinaId, periodo, 1, 'Diário de Classe — Notas', 'academico_recuperacoes')
       return { success: true, id: data?.id || recId, conselho_removido: conselhoRemovido }
     } else {
       const { data, error } = await supabase
@@ -356,6 +391,7 @@ export async function salvarRecuperacao(
       const conselhoRemovido = periodo !== null
         ? await limparConselhoDeClasse(disciplinaId, alunoId, periodo, pessoaId)
         : false
+      await registrarNotasAgg(pessoaId, turmaId, disciplinaId, periodo, 1, 'Diário de Classe — Notas', 'academico_recuperacoes')
       return { success: true, id: data?.id, conselho_removido: conselhoRemovido }
     }
   } catch (e: unknown) {
@@ -396,6 +432,7 @@ export async function limparNotasAluno(
   pessoaId: string | null
 ) {
   try {
+    await garantirTurmaAberta(turmaId)
     if (pessoaId) {
       const { validarPermissaoServer } = await import('./perfis')
       await validarPermissaoServer(pessoaId, 'gestao-pedagogica.diario-classe.avaliacoes', 'editar')
@@ -411,6 +448,7 @@ export async function limparNotasAluno(
 
     if (error) return { success: false, error: error.message }
     const conselhoRemovido = await limparConselhoDeClasse(disciplinaId, alunoId, periodo, pessoaId)
+    await registrarNotasAgg(pessoaId, turmaId, disciplinaId, periodo, 1, 'Diário de Classe — Notas', 'academico_notas')
     return { success: true, conselho_removido: conselhoRemovido }
   } catch (e: unknown) {
     return { success: false, error: mensagemErro(e) || 'Erro interno ao limpar notas' }

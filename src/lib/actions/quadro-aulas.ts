@@ -1,6 +1,8 @@
 'use server'
 
 import { getSupabaseAdmin } from '@/lib/auth'
+import { registrarAuditoria } from '@/lib/auditoria'
+import { garantirTurmaAberta } from './garantir-turma-aberta'
 
 const supabase = getSupabaseAdmin()
 
@@ -106,6 +108,44 @@ async function validarPermWrite(recurso: string, acao: 'criar' | 'editar' | 'exc
   }
 }
 
+async function dadosQuadroAula(quadroAulaId: string): Promise<{ nome?: string; school_id?: string }> {
+  const { data } = await supabase
+    .from('quadro_aulas')
+    .select('id, school_id, turma_id')
+    .eq('id', quadroAulaId)
+    .maybeSingle()
+
+  if (!data) return {}
+  const { data: turma } = await supabase
+    .from('turmas')
+    .select('nome')
+    .eq('id', data.turma_id)
+    .maybeSingle()
+  return { nome: turma?.nome || null, school_id: data.school_id }
+}
+
+async function registrarQuadro(
+  acao: 'criar' | 'editar' | 'excluir',
+  entidade_id: string,
+  pessoaId: string | null | undefined,
+  school_id: string | null | undefined,
+  registro_nome?: string | null,
+  dados_anteriores?: Record<string, unknown> | null,
+  dados_novos?: Record<string, unknown> | null
+) {
+  await registrarAuditoria({
+    school_id,
+    pessoa_id: pessoaId || null,
+    modulo: 'Quadro de Aulas',
+    entidade: 'quadro_aulas',
+    entidade_id,
+    registro_nome: registro_nome || null,
+    acao,
+    dados_anteriores: dados_anteriores || null,
+    dados_novos: dados_novos || null,
+  })
+}
+
 // ------- CRUD -------
 
 export async function createQuadroAula(data: {
@@ -120,6 +160,7 @@ export async function createQuadroAula(data: {
   horarios?: HorarioRow[]
 }, pessoaId?: string | null) {
   await validarPermWrite('gestao-turmas.quadro-aulas', 'criar', pessoaId)
+  await garantirTurmaAberta(data.turma_id)
   const { horarios, ...quadroData } = data
 
   const { data: quadro, error } = await supabase
@@ -147,6 +188,9 @@ export async function createQuadroAula(data: {
     if (errH) throw errH
   }
 
+  const { data: turma } = await supabase.from('turmas').select('nome').eq('id', quadro.turma_id).maybeSingle()
+  await registrarQuadro('criar', quadro.id, pessoaId, quadro.school_id, turma?.nome || null, null, quadro)
+
   return quadro
 }
 
@@ -160,6 +204,20 @@ export async function updateQuadroAula(id: string, data: {
   horarios?: HorarioRow[]
 }, pessoaId?: string | null) {
   await validarPermWrite('gestao-turmas.quadro-aulas', 'editar', pessoaId)
+
+  const { data: anterior } = await supabase
+    .from('quadro_aulas')
+    .select('*')
+    .eq('id', id)
+    .maybeSingle()
+
+  const { data: quadro } = await supabase
+    .from('quadro_aulas')
+    .select('turma_id, school_id')
+    .eq('id', id)
+    .maybeSingle()
+  if (quadro?.turma_id) await garantirTurmaAberta(quadro.turma_id)
+
   const { horarios, ...updateData } = data
 
   if (Object.keys(updateData).length > 0) {
@@ -183,18 +241,57 @@ export async function updateQuadroAula(id: string, data: {
       if (errH) throw errH
     }
   }
+
+  const { data: final } = await supabase
+    .from('quadro_aulas')
+    .select('*')
+    .eq('id', id)
+    .maybeSingle()
+
+  const info = await dadosQuadroAula(id)
+  await registrarQuadro('editar', id, pessoaId, info.school_id || anterior?.school_id, info.nome || anterior?.nome, anterior, final)
 }
 
 export async function deleteQuadroAula(id: string, pessoaId?: string | null) {
   await validarPermWrite('gestao-turmas.quadro-aulas', 'excluir', pessoaId)
+
+  const { data: anterior } = await supabase
+    .from('quadro_aulas')
+    .select('*')
+    .eq('id', id)
+    .maybeSingle()
+
   const { error } = await supabase.from('quadro_aulas').delete().eq('id', id)
   if (error) throw error
+
+  if (anterior) {
+    const info = await dadosQuadroAula(id)
+    await registrarQuadro('excluir', id, pessoaId, info.school_id || anterior.school_id, info.nome || anterior.nome, anterior, null)
+  }
 }
 
 export async function toggleQuadroAulaAtivo(id: string, ativo: boolean, pessoaId?: string | null) {
   await validarPermWrite('gestao-turmas.quadro-aulas', 'editar', pessoaId)
+
+  const { data: anterior } = await supabase
+    .from('quadro_aulas')
+    .select('*')
+    .eq('id', id)
+    .maybeSingle()
+
   const { error } = await supabase.from('quadro_aulas').update({ ativo }).eq('id', id)
   if (error) throw error
+
+  const { data: final } = await supabase
+    .from('quadro_aulas')
+    .select('*')
+    .eq('id', id)
+    .maybeSingle()
+
+  if (anterior) {
+    const info = await dadosQuadroAula(id)
+    await registrarQuadro('editar', id, pessoaId, info.school_id || anterior.school_id, info.nome || anterior.nome, anterior, final)
+  }
 }
 
 // ------- Geração da grade -------

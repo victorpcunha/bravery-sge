@@ -1,8 +1,55 @@
 'use server'
 
 import { getSupabaseAdmin } from '@/lib/auth'
+import { registrarAuditoria } from '@/lib/auditoria'
+import { garantirTurmaAberta } from './garantir-turma-aberta'
 
 const supabase = getSupabaseAdmin()
+
+async function dadosMatricula(matriculaId: string): Promise<{ aluno_nome?: string; school_id?: string }> {
+  const { data } = await supabase
+    .from('academico_matriculas')
+    .select('school_id, aluno_id, people(nome_completo)')
+    .eq('id', matriculaId)
+    .maybeSingle()
+
+  return {
+    aluno_nome: (data as any)?.people?.nome_completo || null,
+    school_id: (data as any)?.school_id || null,
+  }
+}
+
+async function registrarMatricula(
+  acao: 'criar' | 'editar' | 'excluir',
+  entidade: string,
+  entidade_id: string,
+  pessoaId: string | null | undefined,
+  school_id: string | null | undefined,
+  registro_nome?: string | null,
+  dados_anteriores?: Record<string, unknown> | null,
+  dados_novos?: Record<string, unknown> | null
+) {
+  await registrarAuditoria({
+    school_id,
+    pessoa_id: pessoaId || null,
+    modulo: 'Alunos Matriculados',
+    entidade,
+    entidade_id,
+    registro_nome: registro_nome || null,
+    acao,
+    dados_anteriores: dados_anteriores || null,
+    dados_novos: dados_novos || null,
+  })
+}
+
+async function garantirMatriculaTurmaAberta(matriculaId: string) {
+  const { data } = await supabase
+    .from('academico_matriculas')
+    .select('turma_id')
+    .eq('id', matriculaId)
+    .maybeSingle()
+  if (data?.turma_id) await garantirTurmaAberta(data.turma_id)
+}
 
 // ------- Tipos -------
 
@@ -112,7 +159,9 @@ export async function createMatricula(data: {
   observacoes?: string | null
   transporte_responsavel?: string
   transporte_veiculos?: any
-}) {
+}, pessoaId?: string | null) {
+  await garantirTurmaAberta(data.turma_id)
+
   const { data: matricula, error } = await supabase
     .from('academico_matriculas')
     .insert({
@@ -155,6 +204,12 @@ export async function createMatricula(data: {
     .single()
 
   if (error) throw error
+  const { data: aluno } = await supabase
+    .from('people')
+    .select('nome_completo')
+    .eq('id', data.aluno_id)
+    .maybeSingle()
+  await registrarMatricula('criar', 'academico_matriculas', matricula.id, pessoaId, matricula.school_id, aluno?.nome_completo || null, null, matricula)
   return matricula
 }
 
@@ -167,13 +222,30 @@ export async function updateMatricula(id: string, data: {
   observacoes?: string | null
   transporte_responsavel?: string
   transporte_veiculos?: any
-}) {
+}, pessoaId?: string | null) {
+  await garantirMatriculaTurmaAberta(id)
+
+  const { data: anterior } = await supabase
+    .from('academico_matriculas')
+    .select('*')
+    .eq('id', id)
+    .maybeSingle()
+
   const { error } = await supabase
     .from('academico_matriculas')
     .update(data)
     .eq('id', id)
 
   if (error) throw error
+
+  const { data: final } = await supabase
+    .from('academico_matriculas')
+    .select('*')
+    .eq('id', id)
+    .maybeSingle()
+
+  const info = await dadosMatricula(id)
+  await registrarMatricula('editar', 'academico_matriculas', id, pessoaId, info.school_id || anterior?.school_id, info.aluno_nome || null, anterior, final)
 }
 
 // ------- Movimentações -------
@@ -205,31 +277,92 @@ export async function salvarMovimentacoes(
 ) {
   const { validarPermissaoServer } = await import('./perfis')
   await validarPermissaoServer(pessoaId, 'gestao-academica.matriculas.movimentacoes', 'editar')
+  await garantirMatriculaTurmaAberta(matriculaId)
 
   const pendentes = movimentacoes.filter(m => !m.removido)
+
+  const infoMatricula = await dadosMatricula(matriculaId)
+  const moduloMov = 'Movimentações de Alunos'
+  const escolaId = infoMatricula.school_id || null
+  const alunoNome = infoMatricula.aluno_nome || null
 
   // Remover movimentações marcadas para exclusão
   const paraRemover = movimentacoes.filter(m => m.removido && m.id)
   for (const m of paraRemover) {
+    const { data: anterior } = await supabase
+      .from('academico_matriculas_movimentacoes')
+      .select('*')
+      .eq('id', m.id!)
+      .maybeSingle()
+
     await supabase.from('academico_matriculas_movimentacoes').update({ ativo: false }).eq('id', m.id!)
+
+    if (anterior) {
+      await registrarAuditoria({
+        school_id: escolaId,
+        pessoa_id: pessoaId || null,
+        modulo: moduloMov,
+        entidade: 'academico_matriculas_movimentacoes',
+        entidade_id: m.id!,
+        registro_nome: alunoNome,
+        acao: 'excluir',
+        dados_anteriores: anterior,
+      })
+    }
   }
 
   // Inserir ou atualizar movimentações
   for (const m of pendentes) {
     if (m.id) {
+      const { data: anterior } = await supabase
+        .from('academico_matriculas_movimentacoes')
+        .select('*')
+        .eq('id', m.id)
+        .maybeSingle()
+
       await supabase.from('academico_matriculas_movimentacoes').update({
         data_movimentacao: m.data_movimentacao,
         observacoes: m.observacoes,
         dados_complementares: m.dados_complementares || {},
       }).eq('id', m.id)
+
+      const { data: final } = await supabase
+        .from('academico_matriculas_movimentacoes')
+        .select('*')
+        .eq('id', m.id)
+        .maybeSingle()
+
+      await registrarAuditoria({
+        school_id: escolaId,
+        pessoa_id: pessoaId || null,
+        modulo: moduloMov,
+        entidade: 'academico_matriculas_movimentacoes',
+        entidade_id: m.id,
+        registro_nome: alunoNome,
+        acao: 'editar',
+        dados_anteriores: anterior,
+        dados_novos: final,
+      })
     } else {
-      await supabase.from('academico_matriculas_movimentacoes').insert({
+      const { data: criado, error } = await supabase.from('academico_matriculas_movimentacoes').insert({
         matricula_id: matriculaId,
         tipo: m.tipo,
         data_movimentacao: m.data_movimentacao,
         profissional_id: m.profissional_id,
         observacoes: m.observacoes,
         dados_complementares: m.dados_complementares || {},
+      }).select().single()
+      if (error) throw error
+
+      await registrarAuditoria({
+        school_id: escolaId,
+        pessoa_id: pessoaId || null,
+        modulo: moduloMov,
+        entidade: 'academico_matriculas_movimentacoes',
+        entidade_id: criado.id,
+        registro_nome: alunoNome,
+        acao: 'criar',
+        dados_novos: criado,
       })
     }
   }
@@ -277,7 +410,7 @@ export async function getDispensas(matriculaId: string) {
   return data as Dispensa[]
 }
 
-export async function adicionarDispensa(matriculaId: string, disciplinaId: string, motivo: string) {
+export async function adicionarDispensa(matriculaId: string, disciplinaId: string, motivo: string, pessoaId?: string | null) {
   const { data, error } = await supabase
     .from('academico_matriculas_dispensas')
     .insert({
@@ -289,16 +422,60 @@ export async function adicionarDispensa(matriculaId: string, disciplinaId: strin
     .single()
 
   if (error) throw error
+
+  const info = await dadosMatricula(matriculaId)
+  const { data: disciplina } = await supabase
+    .from('academico_disciplinas')
+    .select('nome')
+    .eq('id', disciplinaId)
+    .maybeSingle()
+
+  await registrarAuditoria({
+    school_id: info.school_id || null,
+    pessoa_id: pessoaId || null,
+    modulo: 'Alunos Matriculados',
+    entidade: 'academico_matriculas_dispensas',
+    entidade_id: data.id,
+    registro_nome: info.aluno_nome || null,
+    acao: 'criar',
+    dados_novos: { ...data, disciplina_nome: disciplina?.nome || null },
+  })
   return data
 }
 
-export async function removerDispensa(id: string) {
+export async function removerDispensa(id: string, pessoaId?: string | null) {
+  const { data: anterior } = await supabase
+    .from('academico_matriculas_dispensas')
+    .select('*')
+    .eq('id', id)
+    .maybeSingle()
+
   const { error } = await supabase
     .from('academico_matriculas_dispensas')
     .update({ ativo: false })
     .eq('id', id)
 
   if (error) throw error
+
+  if (anterior) {
+    const info = await dadosMatricula(anterior.matricula_id)
+    const { data: disciplina } = await supabase
+      .from('academico_disciplinas')
+      .select('nome')
+      .eq('id', anterior.disciplina_id)
+      .maybeSingle()
+
+    await registrarAuditoria({
+      school_id: info.school_id || null,
+      pessoa_id: pessoaId || null,
+      modulo: 'Alunos Matriculados',
+      entidade: 'academico_matriculas_dispensas',
+      entidade_id: id,
+      registro_nome: info.aluno_nome || null,
+      acao: 'excluir',
+      dados_anteriores: { ...anterior, disciplina_nome: disciplina?.nome || null },
+    })
+  }
 }
 
 // ------- Queries auxiliares -------

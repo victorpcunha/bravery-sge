@@ -12,10 +12,10 @@ import { ResultadoValidacao, ResultadoExportacao } from '@/lib/actions/censo-typ
 import { validarCenso, exportarCenso } from '@/lib/actions/censo'
 import { getAnosLetivosAtivos } from '@/lib/actions/quadro-aulas'
 import { toast } from 'sonner'
-import { FileDown, Loader2, Search, Construction } from 'lucide-react'
+import { FileDown, Loader2, Search } from 'lucide-react'
 import { PageContainer } from '@/components/layout/page-container'
 import { PageHeader } from '@/components/layout/page-header'
-import { EmptyState } from '@/components/ui/empty-state'
+import { SituacaoFinalPainel } from '@/components/censo/situacao-final-painel'
 
 const MAIN_TABS: ModernTabItem[] = [
   { value: 'matricula-inicial', label: 'Matrícula Inicial' },
@@ -194,13 +194,7 @@ export default function CensoEscolarPage() {
   )
 
   const renderSituacaoFinal = () => (
-    <div className="py-12">
-      <EmptyState
-        icon={Construction}
-        title="Situação Final — Em desenvolvimento"
-        description="Esta funcionalidade corresponderá à segunda etapa do Censo Escolar (validação de frequência, rendimento e movimento do aluno no fim do ano letivo). Será implementada em uma fase posterior."
-      />
-    </div>
+    <SituacaoFinalPainel />
   )
 
   return (

@@ -32,8 +32,8 @@ import {
   AnoLetivo,
   Calendario,
   EventoCalendario,
-  getDiasLetivosPorMes
 } from '@/lib/actions/calendarios'
+import { getDiasLetivosPorMes } from '@/lib/calendario-utils'
 
 const monthNames = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro']
 
@@ -82,7 +82,7 @@ interface TabCalendariosProps {
 }
 
 export function TabCalendarios({ schoolId }: TabCalendariosProps) {
-  const { isSuperAdmin, allSchools } = useAuth()
+  const { isSuperAdmin, allSchools, pessoaId } = useAuth()
   const { pode, loaded: permLoaded } = usePermissoes(schoolId)
 
   const [selectedSchoolId, setSelectedSchoolId] = useState<string | null>(null)
@@ -181,7 +181,7 @@ export function TabCalendarios({ schoolId }: TabCalendariosProps) {
         data_inicio: anoForm.data_inicio,
         data_termino: anoForm.data_termino,
         status: 'planejamento'
-      })
+      }, pessoaId)
       setAnosLetivos([novo, ...anosLetivos])
       setSelectedAno(novo)
       setCalendarios([])
@@ -202,7 +202,7 @@ export function TabCalendarios({ schoolId }: TabCalendariosProps) {
   async function confirmEncerrarAno() {
     if (!anoToEncerrar) return
     try {
-      const atualizado = await encerrarAnoLetivo(anoToEncerrar)
+      const atualizado = await encerrarAnoLetivo(anoToEncerrar, pessoaId)
       setAnosLetivos(anosLetivos.map(a => a.id === anoToEncerrar ? atualizado : a))
       if (selectedAno?.id === anoToEncerrar) setSelectedAno(atualizado)
       toast.success('Ano letivo encerrado!')
@@ -215,7 +215,7 @@ export function TabCalendarios({ schoolId }: TabCalendariosProps) {
 
   async function handleAtivarAno(id: string) {
     try {
-      const atualizado = await updateAnoLetivo(id, { status: 'ativo' })
+      const atualizado = await updateAnoLetivo(id, { status: 'ativo' }, pessoaId)
       setAnosLetivos(anosLetivos.map(a => a.id === id ? atualizado : a))
       if (selectedAno?.id === id) setSelectedAno(atualizado)
       toast.success('Ano letivo ativado!')
@@ -226,7 +226,7 @@ export function TabCalendarios({ schoolId }: TabCalendariosProps) {
 
   async function handleReativarAno(id: string) {
     try {
-      const atualizado = await updateAnoLetivo(id, { status: 'planejamento' })
+      const atualizado = await updateAnoLetivo(id, { status: 'planejamento' }, pessoaId)
       setAnosLetivos(anosLetivos.map(a => a.id === id ? atualizado : a))
       if (selectedAno?.id === id) setSelectedAno(atualizado)
       toast.success('Ano letivo reativado!')
@@ -261,7 +261,7 @@ export function TabCalendarios({ schoolId }: TabCalendariosProps) {
         data_inicio: calendarioForm.data_inicio,
         data_termino: calendarioForm.data_termino,
         etapas: calendarioForm.etapas
-      })
+      }, pessoaId)
       setCalendarios([...calendarios, novo])
       setSelectedCalendario(novo)
       setEventos([])
@@ -287,7 +287,7 @@ export function TabCalendarios({ schoolId }: TabCalendariosProps) {
         data_inicio: calendarioForm.data_inicio,
         data_termino: calendarioForm.data_termino,
         etapas: calendarioForm.etapas
-      })
+      }, pessoaId)
       setCalendarios(calendarios.map(c => c.id === calendarioEditId ? atualizado : c))
       if (selectedCalendario?.id === calendarioEditId) setSelectedCalendario(atualizado)
       const evts = await getEventos(calendarioEditId)
@@ -329,7 +329,7 @@ export function TabCalendarios({ schoolId }: TabCalendariosProps) {
     if (!calendarioParaExcluir) return
     try {
       if (selectedCalendario?.id === calendarioParaExcluir.id) { setSelectedCalendario(null); setEventos([]) }
-      await deleteCalendario(calendarioParaExcluir.id)
+      await deleteCalendario(calendarioParaExcluir.id, pessoaId)
       if (selectedAno) {
         const cals = await getCalendarios(selectedAno.id)
         setCalendarios(cals)
@@ -352,7 +352,7 @@ export function TabCalendarios({ schoolId }: TabCalendariosProps) {
     if (!anoParaExcluir) return
     try {
       if (selectedAno?.id === anoParaExcluir.id) { setSelectedAno(null); setCalendarios([]); setSelectedCalendario(null); setEventos([]) }
-      await deleteAnoLetivo(anoParaExcluir.id)
+      await deleteAnoLetivo(anoParaExcluir.id, pessoaId)
       const anos = await getAnosLetivos(effectiveSchoolId)
       setAnosLetivos(anos)
       setShowExcluirAnoDialog(false)
@@ -459,28 +459,28 @@ export function TabCalendarios({ schoolId }: TabCalendariosProps) {
         const inicio = eventoParaExcluir.data_inicio.split('T')[0]
         const termino = eventoParaExcluir.data_termino.split('T')[0]
         if (inicio === termino) {
-          await deleteEvento(eventoParaExcluir.id)
+          await deleteEvento(eventoParaExcluir.id, pessoaId)
         } else {
           const diaExcluir = diaEspecificoExclusao
           if (diaExcluir === inicio) {
             const novoInicio = new Date(diaExcluir); novoInicio.setDate(novoInicio.getDate() + 1)
-            await updateEvento(eventoParaExcluir.id, { data_inicio: novoInicio.toISOString().split('T')[0] })
+            await updateEvento(eventoParaExcluir.id, { data_inicio: novoInicio.toISOString().split('T')[0] }, pessoaId)
           } else if (diaExcluir === termino) {
             const novoTermino = new Date(diaExcluir); novoTermino.setDate(novoTermino.getDate() - 1)
-            await updateEvento(eventoParaExcluir.id, { data_termino: novoTermino.toISOString().split('T')[0] })
+            await updateEvento(eventoParaExcluir.id, { data_termino: novoTermino.toISOString().split('T')[0] }, pessoaId)
           } else {
             const novoTermino = new Date(diaExcluir); novoTermino.setDate(novoTermino.getDate() - 1)
-            await updateEvento(eventoParaExcluir.id, { data_termino: novoTermino.toISOString().split('T')[0] })
+            await updateEvento(eventoParaExcluir.id, { data_termino: novoTermino.toISOString().split('T')[0] }, pessoaId)
             const novoInicio = new Date(diaExcluir); novoInicio.setDate(novoInicio.getDate() + 1)
             await createEvento({
               calendario_id: eventoParaExcluir.calendario_id, descricao: eventoParaExcluir.descricao,
               tipo: eventoParaExcluir.tipo, data_inicio: novoInicio.toISOString().split('T')[0], data_termino: termino,
               etapas: eventoParaExcluir.etapas, recorrencia_tipo: eventoParaExcluir.recorrencia_tipo, recorrencia_dias: eventoParaExcluir.recorrencia_dias
-            })
+            }, pessoaId)
           }
         }
       } else {
-        await deleteEvento(eventoParaExcluir!.id)
+        await deleteEvento(eventoParaExcluir!.id, pessoaId)
       }
       const evts = await getEventos(selectedCalendario!.id)
       setEventos(evts)
@@ -500,7 +500,7 @@ export function TabCalendarios({ schoolId }: TabCalendariosProps) {
         calendario_id: selectedCalendario.id, descricao: 'Dia não letivo', tipo: 'nao_letivo',
         data_inicio: eventoForm.data_inicio, data_termino: eventoForm.data_termino,
         etapas: [], recorrencia_tipo: 'nao_repete', recorrencia_dias: []
-      })
+      }, pessoaId)
       const evts = await getEventos(selectedCalendario.id)
       setEventos(evts)
       setShowEventoModal(false)
@@ -524,7 +524,7 @@ export function TabCalendarios({ schoolId }: TabCalendariosProps) {
         calendario_id: selectedCalendario.id, descricao: eventoForm.descricao, tipo: eventoForm.tipo,
         data_inicio: eventoForm.data_inicio, data_termino: eventoForm.data_termino,
         etapas: [], recorrencia_tipo: eventoForm.recorrencia_tipo, recorrencia_dias: eventoForm.recorrencia_dias
-      })
+      }, pessoaId)
       const evts = await getEventos(selectedCalendario.id)
       setEventos(evts)
       setShowEventoModal(false)
@@ -552,7 +552,7 @@ export function TabCalendarios({ schoolId }: TabCalendariosProps) {
         data_termino: eventoForm.data_termino,
         recorrencia_tipo: eventoForm.recorrencia_tipo,
         recorrencia_dias: eventoForm.recorrencia_dias
-      })
+      }, pessoaId)
       if (selectedCalendario) {
         const evts = await getEventos(selectedCalendario.id)
         setEventos(evts)

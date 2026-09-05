@@ -1,6 +1,7 @@
 'use server'
 
 import { getSupabaseAdmin } from '@/lib/auth'
+import { registrarAuditoria as registrarAuditoriaFramework } from '@/lib/auditoria'
 
 const supabase = getSupabaseAdmin()
 
@@ -215,7 +216,28 @@ async function verificarCpfDuplicado(cpf: string | null, schoolId: string | null
   if (data && data.length > 0) throw new Error('Já existe uma pessoa com este CPF nesta escola')
 }
 
-export async function createPerson(person: Partial<Person>) {
+async function registrarAuditoriaPessoa(
+  acao: 'criar' | 'editar' | 'excluir',
+  entidade: string,
+  entidade_id: string,
+  pessoaId: string | null | undefined,
+  school_id: string | null | undefined,
+  dados_anteriores?: Record<string, unknown> | null,
+  dados_novos?: Record<string, unknown> | null
+) {
+  await registrarAuditoriaFramework({
+    school_id,
+    pessoa_id: pessoaId || null,
+    modulo: 'Usuários',
+    entidade,
+    entidade_id,
+    acao,
+    dados_anteriores: dados_anteriores || null,
+    dados_novos: dados_novos || null,
+  })
+}
+
+export async function createPerson(person: Partial<Person>, pessoaId?: string | null) {
   await verificarCpfDuplicado(person.cpf ?? null, person.school_id!)
 
   // Gerar código sequencial por escola
@@ -228,7 +250,7 @@ export async function createPerson(person: Partial<Person>) {
 
   const nextCode = (maxResult?.[0]?.codigo_pessoa as number ?? 0) + 1
 
-  const { data, error } = await supabase
+  let { data, error } = await supabase
     .from('people')
     .insert({ ...person, codigo_pessoa: nextCode })
     .select()
@@ -246,22 +268,31 @@ export async function createPerson(person: Partial<Person>) {
 
       const nextCode2 = (maxResult2?.[0]?.codigo_pessoa as number ?? 0) + 1
 
-      const { data: data2, error: error2 } = await supabase
+      const res2 = await supabase
         .from('people')
         .insert({ ...person, codigo_pessoa: nextCode2 })
         .select()
         .single()
 
-      if (error2) throw error2
-      return data2 as Person
+      if (res2.error) throw res2.error
+      data = res2.data
+    } else {
+      throw error
     }
-    throw error
   }
+
+  await registrarAuditoriaPessoa('criar', 'people', data.id, pessoaId, data.school_id, null, data)
   return data as Person
 }
 
-export async function updatePerson(id: string, person: Partial<Person>) {
+export async function updatePerson(id: string, person: Partial<Person>, pessoaId?: string | null) {
   await verificarCpfDuplicado(person.cpf ?? null, person.school_id!, id)
+
+  const { data: anterior } = await supabase
+    .from('people')
+    .select('*')
+    .eq('id', id)
+    .maybeSingle()
 
   const { data, error } = await supabase
     .from('people')
@@ -271,35 +302,47 @@ export async function updatePerson(id: string, person: Partial<Person>) {
     .single()
 
   if (error) throw error
+
+  await registrarAuditoriaPessoa('editar', 'people', id, pessoaId, data.school_id, anterior, data)
   return data as Person
 }
 
-export async function deletePerson(id: string) {
+export async function deletePerson(id: string, pessoaId?: string | null) {
+  const { data: anterior } = await supabase
+    .from('people')
+    .select('*')
+    .eq('id', id)
+    .maybeSingle()
+
   const { error } = await supabase
     .from('people')
     .delete()
     .eq('id', id)
 
   if (error) throw error
+
+  if (anterior) {
+    await registrarAuditoriaPessoa('excluir', 'people', id, pessoaId, anterior.school_id, anterior, null)
+  }
 }
 
-export async function inativarPessoa(id: string) {
+export async function inativarPessoa(id: string, pessoaResponsavelId?: string | null) {
   const { data: pessoa } = await supabase.from('people').select('*').eq('id', id).single()
   if (!pessoa) throw new Error('Pessoa não encontrada')
   await atualizarSituacaoPessoa(id, {
     ativo: false,
     dataInativacao: new Date().toISOString().slice(0, 10),
     motivo: null,
-    pessoaResponsavelId: null,
+    pessoaResponsavelId: pessoaResponsavelId || null,
   })
 }
 
-export async function reativarPessoa(id: string) {
+export async function reativarPessoa(id: string, pessoaResponsavelId?: string | null) {
   await atualizarSituacaoPessoa(id, {
     ativo: true,
     dataInativacao: null,
     motivo: null,
-    pessoaResponsavelId: null,
+    pessoaResponsavelId: pessoaResponsavelId || null,
   })
 }
 
@@ -322,6 +365,17 @@ export async function atualizarSituacaoPessoa(
 
   if (!params.ativo && !params.motivo) {
     throw new Error('Selecione o motivo de inativação')
+  }
+
+  // Bloqueia inativação por solicitação da pessoa quando o aluno possui
+  // matrícula ativa no ano letivo atual (a movimentação deve vir antes)
+  if (!params.ativo && params.motivo === 'solicitacao_pessoa' && pessoaAtual.perfil?.includes('aluno')) {
+    const matriculasAtivas = await buscarMatriculasAtivas(personId, pessoaAtual.school_id)
+    if (matriculasAtivas.length > 0) {
+      throw new Error(
+        'O aluno possui matrícula ativa no ano letivo atual. Antes de inativar, realize uma movimentação na matrícula para alterar a situação (ex.: Transferido).',
+      )
+    }
   }
 
   const dataInativacao = params.ativo ? null : (params.dataInativacao || new Date().toISOString().slice(0, 10))
@@ -347,6 +401,11 @@ export async function atualizarSituacaoPessoa(
     await registrarObitoMatriculas(personId, params.pessoaResponsavelId || null, dataInativacao!)
   }
 
+  // Reativação: reverte matrículas marcadas como Óbito pela automação de falecimento
+  if (params.ativo && pessoaAtual.perfil?.includes('aluno')) {
+    await restaurarMatriculasPorReativacao(personId)
+  }
+
   // Auditoria
   await registrarAuditoriaSituacao({
     school_id: pessoaAtual.school_id,
@@ -365,6 +424,48 @@ export async function atualizarSituacaoPessoa(
   })
 
   return { ativo: params.ativo, data_inativacao: dataInativacao, motivo_inativacao: motivo }
+}
+
+export type MatriculaAtivaInfo = {
+  id: string
+  anoLetivo: string
+  turma: string | null
+  dataMatricula: string
+}
+
+async function buscarMatriculasAtivas(pessoaId: string, schoolId?: string | null): Promise<MatriculaAtivaInfo[]> {
+  let query = supabase
+    .from('academico_matriculas')
+    .select(`
+      id,
+      data_matricula,
+      academico_anos_letivos(descricao),
+      turmas(nome)
+    `)
+    .eq('aluno_id', pessoaId)
+    .eq('ativo', true)
+    .eq('situacao', 'Ativo')
+    .eq('academico_anos_letivos.status', 'ativo')
+
+  if (schoolId) query = query.eq('school_id', schoolId)
+
+  const { data, error } = await query
+  if (error) throw error
+
+  return (data || []).map((m: any) => ({
+    id: m.id,
+    anoLetivo: m.academico_anos_letivos?.descricao || '',
+    turma: m.turmas?.nome || null,
+    dataMatricula: m.data_matricula,
+  }))
+}
+
+export async function pessoaPossuiMatriculaAtiva(
+  pessoaId: string,
+  schoolId?: string | null,
+): Promise<{ possui: boolean; matriculas: MatriculaAtivaInfo[] }> {
+  const matriculas = await buscarMatriculasAtivas(pessoaId, schoolId)
+  return { possui: matriculas.length > 0, matriculas }
 }
 
 async function atualizarAcessoAuth(personId: string, ativo: boolean) {
@@ -413,6 +514,32 @@ async function registrarObitoMatriculas(personId: string, profissionalId: string
   }
 }
 
+async function restaurarMatriculasPorReativacao(personId: string) {
+  const { data: matriculas } = await supabase
+    .from('academico_matriculas')
+    .select('id')
+    .eq('aluno_id', personId)
+    .eq('ativo', true)
+    .eq('situacao', 'Óbito')
+
+  if (!matriculas || matriculas.length === 0) return
+
+  const ids = matriculas.map((m) => m.id)
+
+  const { error: errMat } = await supabase
+    .from('academico_matriculas')
+    .update({ situacao: 'Ativo', data_saida: null })
+    .in('id', ids)
+
+  if (errMat) throw errMat
+
+  await supabase
+    .from('academico_matriculas_movimentacoes')
+    .update({ ativo: false })
+    .in('matricula_id', ids)
+    .eq('tipo', 'Obito')
+}
+
 async function registrarAuditoriaSituacao(data: {
   school_id: string
   entidade_id: string
@@ -420,16 +547,17 @@ async function registrarAuditoriaSituacao(data: {
   dados_anteriores: Record<string, unknown>
   dados_novos: Record<string, unknown>
 }) {
-  const { error } = await supabase.from('perfis_auditoria').insert({
+  await registrarAuditoriaFramework({
     school_id: data.school_id,
-    entidade: 'pessoa',
+    pessoa_id: data.pessoa_id,
+    modulo: 'Usuários',
+    entidade: 'people',
     entidade_id: data.entidade_id,
+    registro_nome: (data.dados_novos?.nome_completo as string) || (data.dados_anteriores?.nome_completo as string) || null,
     acao: 'editar',
     dados_anteriores: data.dados_anteriores,
     dados_novos: data.dados_novos,
-    pessoa_id: data.pessoa_id,
   })
-  if (error) throw error
 }
 
 // ============================================
@@ -449,8 +577,16 @@ export async function getVinculosResponsavel(responsavelId: string) {
 export async function vincularResponsavel(
   responsavelId: string,
   alunoId: string,
-  dados: Partial<ResponsavelAluno>
+  dados: Partial<ResponsavelAluno>,
+  pessoaId?: string | null
 ) {
+  const { data: anterior } = await supabase
+    .from('responsavel_alunos')
+    .select('*')
+    .eq('responsavel_id', responsavelId)
+    .eq('aluno_id', alunoId)
+    .maybeSingle()
+
   const { data, error } = await supabase
     .from('responsavel_alunos')
     .upsert({
@@ -466,10 +602,33 @@ export async function vincularResponsavel(
     .single()
 
   if (error) throw error
+
+  const { data: aluno } = await supabase
+    .from('people')
+    .select('nome_completo, school_id')
+    .eq('id', alunoId)
+    .maybeSingle()
+
+  await registrarAuditoriaPessoa(
+    anterior ? 'editar' : 'criar',
+    'responsavel_alunos',
+    data.id,
+    pessoaId,
+    aluno?.school_id,
+    anterior,
+    data,
+  )
   return data
 }
 
-export async function desvincularResponsavel(responsavelId: string, alunoId: string) {
+export async function desvincularResponsavel(responsavelId: string, alunoId: string, pessoaId?: string | null) {
+  const { data: anterior } = await supabase
+    .from('responsavel_alunos')
+    .select('*')
+    .eq('responsavel_id', responsavelId)
+    .eq('aluno_id', alunoId)
+    .maybeSingle()
+
   const { error } = await supabase
     .from('responsavel_alunos')
     .delete()
@@ -477,6 +636,16 @@ export async function desvincularResponsavel(responsavelId: string, alunoId: str
     .eq('aluno_id', alunoId)
 
   if (error) throw error
+
+  if (anterior) {
+    const { data: aluno } = await supabase
+      .from('people')
+      .select('school_id')
+      .eq('id', alunoId)
+      .maybeSingle()
+
+    await registrarAuditoriaPessoa('excluir', 'responsavel_alunos', anterior.id, pessoaId, aluno?.school_id, anterior, null)
+  }
 }
 
 // ============================================
@@ -556,7 +725,7 @@ export async function criarAuthUser(params: {
   password: string
   personId: string
   schoolId: string
-}) {
+}, pessoaId?: string | null) {
   const erroSenha = validarSenha(params.password)
   if (erroSenha) throw new Error(erroSenha)
 
@@ -578,17 +747,34 @@ export async function criarAuthUser(params: {
 
   if (linkError) throw linkError
 
+  const { data: pessoa } = await supabase
+    .from('people')
+    .select('nome_completo')
+    .eq('id', params.personId)
+    .maybeSingle()
+
+  await registrarAuditoriaPessoa(
+    'criar',
+    'user_schools',
+    userId,
+    pessoaId,
+    params.schoolId,
+    null,
+    { email: params.email, user_id: userId, school_id: params.schoolId, pessoa: pessoa?.nome_completo || null },
+  )
+
   return data.user
 }
 
 export async function salvarSaudeEstudante(
   personId: string,
   schoolId: string | null,
-  data: { medicamentos?: string | null }
+  data: { medicamentos?: string | null },
+  pessoaId?: string | null
 ) {
   let existingQuery = supabase
     .from('saude_estudantes')
-    .select('id')
+    .select('*')
     .eq('person_id', personId)
 
   if (schoolId) existingQuery = existingQuery.eq('school_id', schoolId)
@@ -604,15 +790,29 @@ export async function salvarSaudeEstudante(
       })
       .eq('id', existing.id)
     if (error) throw error
+
+    await registrarAuditoriaPessoa(
+      'editar',
+      'saude_estudantes',
+      existing.id,
+      pessoaId,
+      schoolId,
+      existing,
+      { ...existing, medicamentos: data.medicamentos || null },
+    )
   } else {
-    const { error } = await supabase
+    const { data: criado, error } = await supabase
       .from('saude_estudantes')
       .insert({
         person_id: personId,
         school_id: schoolId,
         medicamentos: data.medicamentos || null,
       })
+      .select()
+      .single()
     if (error) throw error
+
+    await registrarAuditoriaPessoa('criar', 'saude_estudantes', criado.id, pessoaId, schoolId, null, criado)
   }
 }
 

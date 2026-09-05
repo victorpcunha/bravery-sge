@@ -70,6 +70,7 @@ type Props = {
   turmaId: string
   disciplinas: DisciplinaItem[]
   pessoaId: string | null
+  readOnly?: boolean
 }
 
 function agruparPorData(lista: PlanoAplicado[]): Map<string, PlanoAplicado[]> {
@@ -101,7 +102,7 @@ function formatarPeriodos(periodos: number[] | undefined): string {
   return `${itens.join(', ')} e ${ultimo} Período`
 }
 
-export default function PlanoAulaDiario({ turmaId, disciplinas, pessoaId }: Props) {
+export default function PlanoAulaDiario({ turmaId, disciplinas, pessoaId, readOnly = false }: Props) {
   const hoje = new Date()
   const hojeStr = `${hoje.getFullYear()}-${String(hoje.getMonth() + 1).padStart(2, '0')}-${String(hoje.getDate()).padStart(2, '0')}`
 
@@ -161,7 +162,7 @@ export default function PlanoAulaDiario({ turmaId, disciplinas, pessoaId }: Prop
   }
 
   const handleAplicar = async (planoAulaId: string) => {
-    if (!drawerData) return
+    if (!drawerData || readOnly) return
     setAplicando(planoAulaId)
     try {
       await aplicarPlanoAula(turmaId, disciplinaId, drawerData, planoAulaId, null, pessoaId)
@@ -175,6 +176,7 @@ export default function PlanoAulaDiario({ turmaId, disciplinas, pessoaId }: Prop
   }
 
   const handleRemover = async (id: string) => {
+    if (readOnly) return
     setRemovendo(id)
     try {
       await removerPlanoAulaAplicado(id, pessoaId)

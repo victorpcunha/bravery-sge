@@ -1,5 +1,10 @@
-import { supabase } from '@/lib/supabase'
+'use server'
+
+import { getSupabaseAdmin } from '@/lib/auth'
+import { registrarAuditoria } from '@/lib/auditoria'
 import { getEtapasEnsino, getSubetapas, type EtapaEnsino, type Subetapa } from './etapas-ensino'
+
+const supabase = getSupabaseAdmin()
 
 export type MatrizCurricular = {
   id: string
@@ -73,6 +78,72 @@ export type Disciplina = {
   ativo: boolean
 }
 
+const MODULO = 'Matrizes Curriculares'
+
+async function registrar(
+  acao: 'criar' | 'editar' | 'excluir',
+  entidade: string,
+  entidade_id: string,
+  pessoaId: string | null | undefined,
+  school_id: string | null | undefined,
+  dados_anteriores?: Record<string, unknown> | null,
+  dados_novos?: Record<string, unknown> | null,
+  registro_nome?: string | null
+) {
+  await registrarAuditoria({
+    school_id,
+    pessoa_id: pessoaId || null,
+    modulo: MODULO,
+    entidade,
+    entidade_id,
+    registro_nome: registro_nome || null,
+    acao,
+    dados_anteriores: dados_anteriores || null,
+    dados_novos: dados_novos || null,
+  })
+}
+
+async function escolaDaMatriz(matrizId: string): Promise<string | null> {
+  const { data } = await supabase
+    .from('academico_matrizes_curriculares')
+    .select('school_id')
+    .eq('id', matrizId)
+    .maybeSingle()
+  return data?.school_id || null
+}
+
+async function escolaDoPeriodo(periodoId: string): Promise<string | null> {
+  const { data } = await supabase
+    .from('academico_matriz_periodos')
+    .select('matriz_id')
+    .eq('id', periodoId)
+    .maybeSingle()
+  if (!data?.matriz_id) return null
+  return escolaDaMatriz(data.matriz_id)
+}
+
+async function escolaDaDisciplinaMatriz(periodoId: string): Promise<string | null> {
+  return escolaDoPeriodo(periodoId)
+}
+
+async function nomeDisciplina(disciplinaId: string): Promise<string | null> {
+  const { data } = await supabase
+    .from('academico_disciplinas')
+    .select('nome')
+    .eq('id', disciplinaId)
+    .maybeSingle()
+  return data?.nome || null
+}
+
+async function nomeMatriz(matrizId: string): Promise<string | null> {
+  const { data } = await supabase
+    .from('academico_matrizes_curriculares')
+    .select('descricao')
+    .eq('id', matrizId)
+    .maybeSingle()
+  return data?.descricao || null
+}
+
 // ============================================
 // Matrizes Curriculares
 // ============================================
@@ -109,7 +180,7 @@ export async function getMatriz(id: string) {
   return data as MatrizCurricular
 }
 
-export async function createMatriz(matriz: Partial<MatrizCurricular>) {
+export async function createMatriz(matriz: Partial<MatrizCurricular>, pessoaId?: string | null) {
   const { data, error } = await supabase
     .from('academico_matrizes_curriculares')
     .insert(matriz)
@@ -117,10 +188,18 @@ export async function createMatriz(matriz: Partial<MatrizCurricular>) {
     .single()
 
   if (error) throw error
+
+  await registrar('criar', 'academico_matrizes_curriculares', data.id, pessoaId, data.school_id, null, data)
   return data as MatrizCurricular
 }
 
-export async function updateMatriz(id: string, matriz: Partial<MatrizCurricular>) {
+export async function updateMatriz(id: string, matriz: Partial<MatrizCurricular>, pessoaId?: string | null) {
+  const { data: anterior } = await supabase
+    .from('academico_matrizes_curriculares')
+    .select('*')
+    .eq('id', id)
+    .maybeSingle()
+
   const { data, error } = await supabase
     .from('academico_matrizes_curriculares')
     .update(matriz)
@@ -129,19 +208,35 @@ export async function updateMatriz(id: string, matriz: Partial<MatrizCurricular>
     .single()
 
   if (error) throw error
+
+  await registrar('editar', 'academico_matrizes_curriculares', id, pessoaId, data.school_id, anterior, data)
   return data as MatrizCurricular
 }
 
-export async function deleteMatriz(id: string) {
+export async function deleteMatriz(id: string, pessoaId?: string | null) {
+  const { data: anterior } = await supabase
+    .from('academico_matrizes_curriculares')
+    .select('*')
+    .eq('id', id)
+    .maybeSingle()
+
   const { error } = await supabase
     .from('academico_matrizes_curriculares')
     .delete()
     .eq('id', id)
 
   if (error) throw error
+
+  await registrar('excluir', 'academico_matrizes_curriculares', id, pessoaId, anterior?.school_id, anterior, null)
 }
 
-export async function toggleMatrizAtiva(id: string, ativa: boolean) {
+export async function toggleMatrizAtiva(id: string, ativa: boolean, pessoaId?: string | null) {
+  const { data: anterior } = await supabase
+    .from('academico_matrizes_curriculares')
+    .select('*')
+    .eq('id', id)
+    .maybeSingle()
+
   const { data, error } = await supabase
     .from('academico_matrizes_curriculares')
     .update({ ativa })
@@ -150,6 +245,8 @@ export async function toggleMatrizAtiva(id: string, ativa: boolean) {
     .single()
 
   if (error) throw error
+
+  await registrar('editar', 'academico_matrizes_curriculares', id, pessoaId, data.school_id, anterior, data)
   return data as MatrizCurricular
 }
 
@@ -208,7 +305,7 @@ export async function getPeriodos(matrizId: string) {
   return data as PeriodoMatriz[]
 }
 
-export async function createPeriodos(matrizId: string, quantidade: number, nomes: string[]) {
+export async function createPeriodos(matrizId: string, quantidade: number, nomes: string[], pessoaId?: string | null) {
   const periodos = Array.from({ length: quantidade }, (_, i) => ({
     matriz_id: matrizId,
     periodo_ordem: i + 1,
@@ -221,6 +318,19 @@ export async function createPeriodos(matrizId: string, quantidade: number, nomes
     .select()
 
   if (error) throw error
+
+  const schoolId = await escolaDaMatriz(matrizId)
+  const matrizNome = await nomeMatriz(matrizId)
+  await registrar(
+    'criar',
+    'academico_matriz_periodos',
+    matrizId,
+    pessoaId,
+    schoolId,
+    null,
+    { quantidade, periodos: periodos.map(p => p.periodo_nome) },
+    matrizNome
+  )
   return data as PeriodoMatriz[]
 }
 
@@ -239,7 +349,7 @@ export async function getDisciplinasPorPeriodo(periodoId: string) {
   return data as any[]
 }
 
-export async function createDisciplinaMatriz(disciplina: Partial<DisciplinaMatriz>) {
+export async function createDisciplinaMatriz(disciplina: Partial<DisciplinaMatriz>, pessoaId?: string | null) {
   const { data, error } = await supabase
     .from('academico_matriz_disciplinas')
     .insert(disciplina)
@@ -247,10 +357,20 @@ export async function createDisciplinaMatriz(disciplina: Partial<DisciplinaMatri
     .single()
 
   if (error) throw error
+
+  const schoolId = disciplina.periodo_id ? await escolaDaDisciplinaMatriz(disciplina.periodo_id) : null
+  const nome = data.disciplina_id ? await nomeDisciplina(data.disciplina_id) : null
+  await registrar('criar', 'academico_matriz_disciplinas', data.id, pessoaId, schoolId, null, data, nome)
   return data as DisciplinaMatriz
 }
 
-export async function deleteDisciplinaMatriz(id: string) {
+export async function deleteDisciplinaMatriz(id: string, pessoaId?: string | null) {
+  const { data: anterior } = await supabase
+    .from('academico_matriz_disciplinas')
+    .select('*')
+    .eq('id', id)
+    .maybeSingle()
+
   // Remove habilidades vinculadas
   await supabase.from('academico_matriz_habilidades_bncc').delete().eq('matriz_disciplina_id', id)
   await supabase.from('academico_matriz_habilidades_manuais').delete().eq('matriz_disciplina_id', id)
@@ -261,22 +381,53 @@ export async function deleteDisciplinaMatriz(id: string) {
     .eq('id', id)
 
   if (error) throw error
+
+  const schoolId = anterior?.periodo_id ? await escolaDaDisciplinaMatriz(anterior.periodo_id) : null
+  const nome = anterior?.disciplina_id ? await nomeDisciplina(anterior.disciplina_id) : null
+  await registrar('excluir', 'academico_matriz_disciplinas', id, pessoaId, schoolId, anterior, null, nome)
 }
 
-export async function updateDisciplinaMatriz(id: string, data: Partial<DisciplinaMatriz>) {
+export async function updateDisciplinaMatriz(id: string, data: Partial<DisciplinaMatriz>, pessoaId?: string | null) {
+  const { data: anterior } = await supabase
+    .from('academico_matriz_disciplinas')
+    .select('*')
+    .eq('id', id)
+    .maybeSingle()
+
   const { error } = await supabase
     .from('academico_matriz_disciplinas')
     .update(data)
     .eq('id', id)
 
   if (error) throw error
+
+  const schoolId = anterior?.periodo_id ? await escolaDaDisciplinaMatriz(anterior.periodo_id) : null
+  const nome = data.disciplina_id ? await nomeDisciplina(data.disciplina_id) : null
+  await registrar('editar', 'academico_matriz_disciplinas', id, pessoaId, schoolId, anterior, data, nome)
 }
 
 export async function substituirHabilidades(
   disciplinaId: string,
   bnccCodigos: string[],
-  manuais: { codigo: string; descricao: string }[]
+  manuais: { codigo: string; descricao: string }[],
+  pessoaId?: string | null
 ) {
+  const { data: anterior } = await supabase
+    .from('academico_matriz_disciplinas')
+    .select('*')
+    .eq('id', disciplinaId)
+    .maybeSingle()
+
+  const { data: habilidadesAnteriores } = await supabase
+    .from('academico_matriz_habilidades_bncc')
+    .select('habilidade_codigo')
+    .eq('matriz_disciplina_id', disciplinaId)
+
+  const { data: manuaisAnteriores } = await supabase
+    .from('academico_matriz_habilidades_manuais')
+    .select('codigo, descricao')
+    .eq('matriz_disciplina_id', disciplinaId)
+
   await Promise.all([
     supabase.from('academico_matriz_habilidades_bncc').delete().eq('matriz_disciplina_id', disciplinaId),
     supabase.from('academico_matriz_habilidades_manuais').delete().eq('matriz_disciplina_id', disciplinaId),
@@ -295,6 +446,25 @@ export async function substituirHabilidades(
 
     if (err2) throw err2
   }
+
+  const schoolId = anterior?.periodo_id ? await escolaDaDisciplinaMatriz(anterior.periodo_id) : null
+  const nome = anterior?.disciplina_id ? await nomeDisciplina(anterior.disciplina_id) : null
+  await registrar(
+    'editar',
+    'academico_matriz_disciplinas',
+    disciplinaId,
+    pessoaId,
+    schoolId,
+    {
+      habilidades_bncc: habilidadesAnteriores || [],
+      habilidades_manuais: manuaisAnteriores || [],
+    },
+    {
+      habilidades_bncc: bnccCodigos,
+      habilidades_manuais: manuais,
+    },
+    nome
+  )
 }
 
 // ============================================
@@ -311,7 +481,7 @@ export async function getHabilidadesBNCC(disciplinaId: string) {
   return data as any[]
 }
 
-export async function addHabilidadeBNCC(disciplinaId: string, habilidadeCodigo: string) {
+export async function addHabilidadeBNCC(disciplinaId: string, habilidadeCodigo: string, pessoaId?: string | null) {
   const { data, error } = await supabase
     .from('academico_matriz_habilidades_bncc')
     .insert({ matriz_disciplina_id: disciplinaId, habilidade_codigo: habilidadeCodigo })
@@ -319,16 +489,50 @@ export async function addHabilidadeBNCC(disciplinaId: string, habilidadeCodigo: 
     .single()
 
   if (error) throw error
+
+  const { data: md } = await supabase
+    .from('academico_matriz_disciplinas')
+    .select('periodo_id')
+    .eq('id', disciplinaId)
+    .maybeSingle()
+
+  const schoolId = md?.periodo_id ? await escolaDaDisciplinaMatriz(md.periodo_id) : null
+  const nome = await nomeDisciplina(disciplinaId)
+  await registrar('criar', 'academico_matriz_habilidades_bncc', data.id, pessoaId, schoolId, null, data, nome)
   return data
 }
 
-export async function removeHabilidadeBNCC(id: string) {
+export async function removeHabilidadeBNCC(id: string, pessoaId?: string | null) {
+  const { data: anterior } = await supabase
+    .from('academico_matriz_habilidades_bncc')
+    .select('*')
+    .eq('id', id)
+    .maybeSingle()
+
   const { error } = await supabase
     .from('academico_matriz_habilidades_bncc')
     .delete()
     .eq('id', id)
 
   if (error) throw error
+
+  const { data: md } = await supabase
+    .from('academico_matriz_disciplinas')
+    .select('periodo_id')
+    .eq('id', anterior?.matriz_disciplina_id)
+    .maybeSingle()
+
+  const schoolId = md?.periodo_id ? await escolaDaDisciplinaMatriz(md.periodo_id) : null
+  await registrar(
+    'excluir',
+    'academico_matriz_habilidades_bncc',
+    id,
+    pessoaId,
+    schoolId,
+    anterior,
+    null,
+    (anterior?.habilidade_codigo as string) || null
+  )
 }
 
 // ============================================
@@ -346,7 +550,7 @@ export async function getHabilidadesManuais(disciplinaId: string) {
   return data as any[]
 }
 
-export async function addHabilidadeManual(disciplinaId: string, codigo: string, descricao: string) {
+export async function addHabilidadeManual(disciplinaId: string, codigo: string, descricao: string, pessoaId?: string | null) {
   const { data, error } = await supabase
     .from('academico_matriz_habilidades_manuais')
     .insert({ matriz_disciplina_id: disciplinaId, codigo, descricao })
@@ -354,16 +558,49 @@ export async function addHabilidadeManual(disciplinaId: string, codigo: string, 
     .single()
 
   if (error) throw error
+
+  const { data: md } = await supabase
+    .from('academico_matriz_disciplinas')
+    .select('periodo_id')
+    .eq('id', disciplinaId)
+    .maybeSingle()
+
+  const schoolId = md?.periodo_id ? await escolaDaDisciplinaMatriz(md.periodo_id) : null
+  await registrar('criar', 'academico_matriz_habilidades_manuais', data.id, pessoaId, schoolId, null, data, codigo)
   return data
 }
 
-export async function removeHabilidadeManual(id: string) {
+export async function removeHabilidadeManual(id: string, pessoaId?: string | null) {
+  const { data: anterior } = await supabase
+    .from('academico_matriz_habilidades_manuais')
+    .select('*')
+    .eq('id', id)
+    .maybeSingle()
+
   const { error } = await supabase
     .from('academico_matriz_habilidades_manuais')
     .delete()
     .eq('id', id)
 
   if (error) throw error
+
+  const { data: md } = await supabase
+    .from('academico_matriz_disciplinas')
+    .select('periodo_id')
+    .eq('id', anterior?.matriz_disciplina_id)
+    .maybeSingle()
+
+  const schoolId = md?.periodo_id ? await escolaDaDisciplinaMatriz(md.periodo_id) : null
+  await registrar(
+    'excluir',
+    'academico_matriz_habilidades_manuais',
+    id,
+    pessoaId,
+    schoolId,
+    anterior,
+    null,
+    (anterior?.codigo as string) || null
+  )
 }
 
 // ============================================
@@ -371,9 +608,10 @@ export async function removeHabilidadeManual(id: string) {
 // ============================================
 
 export async function replicarDisciplinas(
-  matrizId: string, 
-  periodoOrigemId: string, 
-  periodoDestinoIds: string[]
+  matrizId: string,
+  periodoOrigemId: string,
+  periodoDestinoIds: string[],
+  pessoaId?: string | null
 ) {
   // Buscar disciplinas do período de origem
   const { data: disciplinasOrigem, error: errorBusca } = await supabase
@@ -445,6 +683,23 @@ export async function replicarDisciplinas(
       }
     }
   }
+
+  const schoolId = await escolaDaMatriz(matrizId)
+  const matrizNome = await nomeMatriz(matrizId)
+  await registrar(
+    'criar',
+    'academico_matriz_disciplinas',
+    matrizId,
+    pessoaId,
+    schoolId,
+    null,
+    {
+      origem_periodo_id: periodoOrigemId,
+      periodos_destino: periodoDestinoIds,
+      quantidade_disciplinas: disciplinasOrigem.length,
+    },
+    matrizNome
+  )
 
   return true
 }

@@ -1,8 +1,34 @@
 'use server'
 
 import { getSupabaseAdmin } from '@/lib/auth'
+import { registrarAuditoria } from '@/lib/auditoria'
 
 const supabase = getSupabaseAdmin()
+
+const MODULO_INDICADORES = 'Indicadores de Avaliação'
+
+async function registrarIndicador(
+  acao: 'criar' | 'editar' | 'excluir',
+  entidade: string,
+  entidade_id: string,
+  pessoaId: string | null | undefined,
+  school_id: string | null | undefined,
+  registro_nome?: string | null,
+  dados_anteriores?: Record<string, unknown> | null,
+  dados_novos?: Record<string, unknown> | null
+) {
+  await registrarAuditoria({
+    school_id,
+    pessoa_id: pessoaId || null,
+    modulo: MODULO_INDICADORES,
+    entidade,
+    entidade_id,
+    registro_nome: registro_nome || null,
+    acao,
+    dados_anteriores: dados_anteriores || null,
+    dados_novos: dados_novos || null,
+  })
+}
 
 // ------- Tipos -------
 
@@ -121,7 +147,7 @@ export async function createIndicador(data: {
   periodos_ids?: string[]
   origem?: string
   objetivo_bncc_id?: string | null
-}) {
+}, pessoaId?: string | null) {
   const { data: indicador, error } = await supabase
     .from('indicadores_avaliacao')
     .insert({
@@ -141,25 +167,41 @@ export async function createIndicador(data: {
     .single()
 
   if (error) throw error
+
+  await registrarIndicador('criar', 'indicadores_avaliacao', indicador.id, pessoaId, indicador.school_id, indicador.descricao, null, indicador)
   return indicador
 }
 
 export async function updateIndicador(id: string, data: {
   descricao?: string
   periodos_ids?: string[]
-}) {
+}, pessoaId?: string | null) {
+  const { data: anterior } = await supabase
+    .from('indicadores_avaliacao')
+    .select('*')
+    .eq('id', id)
+    .maybeSingle()
+
   const { error } = await supabase
     .from('indicadores_avaliacao')
     .update(data)
     .eq('id', id)
 
   if (error) throw error
+
+  const { data: final } = await supabase
+    .from('indicadores_avaliacao')
+    .select('*')
+    .eq('id', id)
+    .maybeSingle()
+
+  await registrarIndicador('editar', 'indicadores_avaliacao', id, pessoaId, final?.school_id || anterior?.school_id, final?.descricao || anterior?.descricao, anterior, final)
 }
 
-export async function deleteIndicador(id: string) {
+export async function deleteIndicador(id: string, pessoaId?: string | null) {
   const { data: ind, error: errCheck } = await supabase
     .from('indicadores_avaliacao')
-    .select('utilizado')
+    .select('*')
     .eq('id', id)
     .single()
 
@@ -172,6 +214,8 @@ export async function deleteIndicador(id: string) {
     .eq('id', id)
 
   if (error) throw error
+
+  await registrarIndicador('excluir', 'indicadores_avaliacao', id, pessoaId, ind.school_id, ind.descricao, ind, null)
 }
 
 // ------- CRUD Níveis do Indicador -------
@@ -192,7 +236,8 @@ export async function salvarNiveisIndicador(
   niveis: {
     metodo_nivel_ids: string[]
     personalizados: { descricao: string; sigla?: string }[]
-  }
+  },
+  pessoaId?: string | null
 ) {
   // Buscar levels atuais
   const { data: atuais } = await supabase
@@ -271,15 +316,46 @@ export async function salvarNiveisIndicador(
       if (error) throw error
     }
   }
+
+  const { data: nivelData } = await supabase
+    .from('indicadores_niveis')
+    .select('descricao, sigla, ordem, origem')
+    .eq('indicador_id', indicadorId)
+    .order('ordem')
+  const { data: indicadorInfo } = await supabase
+    .from('indicadores_avaliacao')
+    .select('school_id, descricao')
+    .eq('id', indicadorId)
+    .maybeSingle()
+  await registrarIndicador('editar', 'indicadores_niveis', indicadorId, pessoaId, indicadorInfo?.school_id, indicadorInfo?.descricao || null, { niveis: atuais || [] }, { niveis: nivelData || [] })
 }
 
-export async function deleteIndicadorNivel(id: string) {
+export async function deleteIndicadorNivel(id: string, pessoaId?: string | null) {
+  const { data: anterior } = await supabase
+    .from('indicadores_niveis')
+    .select('*')
+    .eq('id', id)
+    .maybeSingle()
+
   const { error } = await supabase
     .from('indicadores_niveis')
     .delete()
     .eq('id', id)
 
   if (error) throw error
+
+  if (anterior) {
+    let schoolId: string | null = null
+    if (anterior.indicador_id) {
+      const { data: info } = await supabase
+        .from('indicadores_avaliacao')
+        .select('school_id')
+        .eq('id', anterior.indicador_id)
+        .maybeSingle()
+      schoolId = info?.school_id || null
+    }
+    await registrarIndicador('excluir', 'indicadores_niveis', id, pessoaId, schoolId, anterior.descricao, anterior, null)
+  }
 }
 
 // ------- Importação da Matriz (apenas Infantil) -------
@@ -287,7 +363,8 @@ export async function deleteIndicadorNivel(id: string) {
 export async function importarIndicadoresDaMatriz(
   schoolId: string | null,
   anoLetivoId: string,
-  etapaEnsinoId: string
+  etapaEnsinoId: string,
+  pessoaId?: string | null
 ) {
   let countQuery = supabase
     .from('indicadores_avaliacao')
@@ -402,6 +479,17 @@ export async function importarIndicadoresDaMatriz(
       }
     }
   }
+
+  await registrarAuditoria({
+    school_id: schoolId,
+    pessoa_id: pessoaId || null,
+    modulo: MODULO_INDICADORES,
+    entidade: 'indicadores_avaliacao',
+    entidade_id: null,
+    registro_nome: 'Importação da Matriz (Educação Infantil)',
+    acao: 'criar',
+    dados_novos: { quantidade: indicadores.length, origem: 'matriz', ano_letivo_id: anoLetivoId, etapa_ensino_id: etapaEnsinoId },
+  })
 
   return { total: indicadores.length, origem: 'matriz' }
 }

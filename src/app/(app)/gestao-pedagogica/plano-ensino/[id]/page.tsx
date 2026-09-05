@@ -1,7 +1,8 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
-import { useParams, useRouter } from 'next/navigation'
+import { useRouter } from 'next/navigation'
+import { useTabParams } from '@/lib/tab-params'
 import { useAuth } from '@/components/providers/auth-provider'
 import { usePermissoes } from '@/hooks/use-permissoes'
 import {
@@ -74,7 +75,7 @@ function InfoChip({ icon: Icon, children }: { icon: any; children: React.ReactNo
 }
 
 export default function PlanoEnsinoDetailPage() {
-  const params = useParams()
+  const params = useTabParams()
   const router = useRouter()
   const planoId = params.id as string
   const { schoolId } = useAuth()

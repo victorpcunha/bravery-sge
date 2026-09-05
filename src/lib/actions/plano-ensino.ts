@@ -1,8 +1,50 @@
 'use server'
 
 import { getSupabaseAdmin } from '@/lib/auth'
+import { registrarAuditoria } from '@/lib/auditoria'
 
 const supabase = getSupabaseAdmin()
+
+const MODULO_PLANO = 'Plano de Ensino'
+
+async function registrarPlano(
+  acao: 'criar' | 'editar' | 'excluir',
+  entidade: string,
+  entidade_id: string,
+  pessoaId: string | null | undefined,
+  school_id: string | null | undefined,
+  registro_nome?: string | null,
+  dados_anteriores?: Record<string, unknown> | null,
+  dados_novos?: Record<string, unknown> | null
+) {
+  await registrarAuditoria({
+    school_id,
+    pessoa_id: pessoaId || null,
+    modulo: MODULO_PLANO,
+    entidade,
+    entidade_id,
+    registro_nome: registro_nome || null,
+    acao,
+    dados_anteriores: dados_anteriores || null,
+    dados_novos: dados_novos || null,
+  })
+}
+
+async function nomeTurmaPlano(turmaId: string): Promise<string | null> {
+  const { data } = await supabase.from('turmas').select('nome').eq('id', turmaId).maybeSingle()
+  return data?.nome || null
+}
+
+async function contextoPlanoAula(planoEnsinoId: string): Promise<{ school_id?: string; turma_id?: string; nome?: string | null }> {
+  const { data } = await supabase
+    .from('planos_ensino')
+    .select('school_id, turma_id')
+    .eq('id', planoEnsinoId)
+    .maybeSingle()
+  if (!data) return {}
+  const nomeTurma = await nomeTurmaPlano(data.turma_id)
+  return { school_id: data.school_id, turma_id: data.turma_id, nome: nomeTurma || null }
+}
 
 async function validarPermRead(recurso: string, pessoaId?: string | null) {
   if (pessoaId) {
@@ -469,11 +511,19 @@ export async function criarPlanoEnsino(
     if (discError) throw discError
   }
 
+  const nomeTurma = await nomeTurmaPlano(data.turma_id)
+  await registrarPlano('criar', 'planos_ensino', plano.id, pessoaId, data.school_id, nomeTurma || null, null, plano)
   return plano
 }
 
 export async function excluirPlanoEnsino(id: string, pessoaId?: string | null) {
   await validarPermWrite(RESOURCE, pessoaId)
+
+  const { data: anterior } = await supabase
+    .from('planos_ensino')
+    .select('*')
+    .eq('id', id)
+    .maybeSingle()
 
   const { error } = await supabase
     .from('planos_ensino')
@@ -481,6 +531,11 @@ export async function excluirPlanoEnsino(id: string, pessoaId?: string | null) {
     .eq('id', id)
 
   if (error) throw error
+
+  if (anterior) {
+    const nomeTurma = anterior.turma_id ? await nomeTurmaPlano(anterior.turma_id) : null
+    await registrarPlano('excluir', 'planos_ensino', id, pessoaId, anterior.school_id, nomeTurma || null, anterior, null)
+  }
 }
 
 // ─── FASE 3: Períodos ───
@@ -617,6 +672,9 @@ export async function criarPlanoAula(
     .single()
 
   if (error) throw error
+
+  const ctx = await contextoPlanoAula(data.plano_ensino_id)
+  await registrarPlano('criar', 'planos_aula', aula.id, pessoaId, ctx.school_id, ctx.nome || null, null, aula)
   return aula as PlanoAula
 }
 
@@ -638,6 +696,12 @@ export async function editarPlanoAula(
 ) {
   await validarPermWrite(RESOURCE, pessoaId)
 
+  const { data: anterior } = await supabase
+    .from('planos_aula')
+    .select('*')
+    .eq('id', id)
+    .maybeSingle()
+
   const updateData: any = { updated_by: pessoaId }
   if (data.periodos !== undefined) updateData.periodos = data.periodos
   if (data.tema !== undefined) updateData.tema = data.tema.trim()
@@ -656,10 +720,25 @@ export async function editarPlanoAula(
     .eq('id', id)
 
   if (error) throw error
+
+  const { data: final } = await supabase
+    .from('planos_aula')
+    .select('*')
+    .eq('id', id)
+    .maybeSingle()
+
+  const ctx = final?.plano_ensino_id ? await contextoPlanoAula(final.plano_ensino_id) : {}
+  await registrarPlano('editar', 'planos_aula', id, pessoaId, ctx.school_id, ctx.nome || null, anterior, final)
 }
 
 export async function excluirPlanoAula(id: string, pessoaId?: string | null) {
   await validarPermWrite(RESOURCE, pessoaId)
+
+  const { data: anterior } = await supabase
+    .from('planos_aula')
+    .select('*')
+    .eq('id', id)
+    .maybeSingle()
 
   const { error } = await supabase
     .from('planos_aula')
@@ -667,6 +746,11 @@ export async function excluirPlanoAula(id: string, pessoaId?: string | null) {
     .eq('id', id)
 
   if (error) throw error
+
+  if (anterior) {
+    const ctx = anterior.plano_ensino_id ? await contextoPlanoAula(anterior.plano_ensino_id) : {}
+    await registrarPlano('excluir', 'planos_aula', id, pessoaId, ctx.school_id, ctx.nome || null, anterior, null)
+  }
 }
 
 // ─── Helpers ───

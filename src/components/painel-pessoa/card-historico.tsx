@@ -41,6 +41,8 @@ const SITUACAO_BADGE: Record<string, 'success' | 'warning' | 'destructive' | 'in
   'Ativo': 'primary',
   'Aprovado': 'success',
   'Aprovado por conselho de classe': 'success',
+  'Aprovado concluinte': 'success',
+  'Sem movimentação': 'primary',
   'Reclassificado': 'success',
   'Remanejado': 'success',
   'Reprovado': 'destructive',

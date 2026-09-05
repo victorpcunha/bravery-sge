@@ -80,6 +80,7 @@ type Props = {
   disciplinas: DisciplinaItem[]
   quantidadePeriodosNumerico: number
   metodoId?: string | null
+  readOnly?: boolean
 }
 
 type StatusNota = 'completo' | 'parcial' | 'pendente'
@@ -185,10 +186,11 @@ export default function AvaliacoesNumericas({
   disciplinas,
   quantidadePeriodosNumerico,
   metodoId,
+  readOnly = false,
 }: Props) {
   const { schoolId } = useAuth()
   const { pessoaId, pode } = usePermissoes(schoolId || '')
-  const podeEditar = pode.editar('gestao-pedagogica.diario-classe.avaliacoes')
+  const podeEditar = readOnly ? false : pode.editar('gestao-pedagogica.diario-classe.avaliacoes')
 
   const [disciplinaId, setDisciplinaId] = useState('')
   const [periodoAtivo, setPeriodoAtivo] = useState(1)

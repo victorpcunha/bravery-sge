@@ -96,7 +96,7 @@ interface MatrizFormProps {
 }
 
 export function MatrizForm({ schoolId, matrizId, onSaved, onCancel }: MatrizFormProps) {
-  const { pode, loaded: permLoaded } = usePermissoes(schoolId)
+  const { pode, loaded: permLoaded, pessoaId } = usePermissoes(schoolId)
   const [form, setForm] = useState<FormData>(defaultForm)
   const [saving, setSaving] = useState(false)
   const [anosLetivos, setAnosLetivos] = useState<any[]>([])
@@ -243,12 +243,12 @@ export function MatrizForm({ schoolId, matrizId, onSaved, onCancel }: MatrizForm
         duracao_aula_integral: form.carga_integral_duracao,
       }
       if (matrizId) {
-        await updateMatriz(matrizId, payload as any)
+        await updateMatriz(matrizId, payload as any, pessoaId)
         toast.success('Matriz atualizada!')
       } else {
-        const nova = await createMatriz(payload as any) as any
+        const nova = await createMatriz(payload as any, pessoaId) as any
         const qtdPeriodos = form.tipo_turma.includes('Regular') ? 4 : form.tipo_turma.includes('Integral') ? 2 : 4
-        await createPeriodos(nova.id, qtdPeriodos, Array.from({ length: qtdPeriodos }, (_, i) => `${i + 1}º Período`))
+        await createPeriodos(nova.id, qtdPeriodos, Array.from({ length: qtdPeriodos }, (_, i) => `${i + 1}º Período`), pessoaId)
         toast.success('Matriz criada!')
       }
       onSaved()
@@ -339,14 +339,14 @@ export function MatrizForm({ schoolId, matrizId, onSaved, onCancel }: MatrizForm
       }
       let discId: string
       if (discEditId) {
-        await updateDisciplinaMatriz(discEditId, payload as any)
+        await updateDisciplinaMatriz(discEditId, payload as any, pessoaId)
         discId = discEditId
       } else {
-        const created = await createDisciplinaMatriz(payload as any) as any
+        const created = await createDisciplinaMatriz(payload as any, pessoaId) as any
         discId = created.id
       }
       const bnccArr = Array.from(selectedBncc)
-      await substituirHabilidades(discId, bnccArr, outrasHabilidades.map(h => ({ codigo: h.codigo, descricao: h.descricao })))
+      await substituirHabilidades(discId, bnccArr, outrasHabilidades.map(h => ({ codigo: h.codigo, descricao: h.descricao })), pessoaId)
       const discs = await getDisciplinasPorPeriodo(discPeriodoId)
       setDisciplinasPorPeriodo(prev => ({ ...prev, [discPeriodoId]: discs }))
       setShowDiscModal(false)
@@ -358,7 +358,7 @@ export function MatrizForm({ schoolId, matrizId, onSaved, onCancel }: MatrizForm
   async function handleDeleteDisc() {
     if (!deleteDiscTarget) return
     try {
-      await deleteDisciplinaMatriz(deleteDiscTarget.id)
+      await deleteDisciplinaMatriz(deleteDiscTarget.id, pessoaId)
       const discs = await getDisciplinasPorPeriodo(deleteDiscTarget.periodo_id)
       setDisciplinasPorPeriodo(prev => ({ ...prev, [deleteDiscTarget.periodo_id]: discs }))
       setDeleteDiscTarget(null)
@@ -371,7 +371,7 @@ export function MatrizForm({ schoolId, matrizId, onSaved, onCancel }: MatrizForm
     const destinoIds = periodos.filter(p => p.id !== replicarOrigemId).map(p => p.id)
     if (destinoIds.length === 0) { toast.error('Não há outros períodos para replicar'); return }
     try {
-      await replicarDisciplinas(matrizId!, replicarOrigemId, destinoIds)
+      await replicarDisciplinas(matrizId!, replicarOrigemId, destinoIds, pessoaId)
       const map: Record<string, any[]> = {}
       for (const pid of [replicarOrigemId, ...destinoIds]) {
         map[pid] = await getDisciplinasPorPeriodo(pid)

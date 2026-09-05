@@ -61,6 +61,7 @@ type Props = {
   disciplinas: DisciplinaItem[]
   quantidadePeriodosParecer: number
   registroGeral: boolean
+  readOnly?: boolean
 }
 
 type StatusParecer = 'preenchido' | 'vazio'
@@ -262,10 +263,11 @@ export default function ParecerDescritivo({
   disciplinas,
   quantidadePeriodosParecer,
   registroGeral,
+  readOnly = false,
 }: Props) {
   const { schoolId } = useAuth()
   const { pessoaId, pode } = usePermissoes(schoolId || '')
-  const podeEditar = pode.editar('gestao-pedagogica.diario-classe.parecer')
+  const podeEditar = readOnly ? false : pode.editar('gestao-pedagogica.diario-classe.parecer')
 
   const [disciplinaSelecionada, setDisciplinaSelecionada] = useState<string>('')
   const [periodoAtivo, setPeriodoAtivo] = useState(1)
@@ -354,7 +356,7 @@ export default function ParecerDescritivo({
     const periodo = periodoAtivo
     setSalvando(alunoId)
     try {
-      const res = await salvarParecer(schoolId, alunoId, periodo, texto, pessoaId, disciplinaId)
+      const res = await salvarParecer(schoolId, alunoId, periodo, texto, pessoaId, disciplinaId, turmaId)
       setPareceres(prev => {
         const idx = prev.findIndex(
           p =>

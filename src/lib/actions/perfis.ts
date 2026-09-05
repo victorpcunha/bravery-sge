@@ -1,6 +1,7 @@
 'use server'
 
 import { getSupabaseAdmin } from '@/lib/auth'
+import { registrarAuditoria as registrarAuditoriaFramework } from '@/lib/auditoria'
 
 const supabase = getSupabaseAdmin()
 
@@ -294,16 +295,17 @@ async function registrarAuditoria(data: {
   dados_novos?: any
   pessoa_id?: string | null
 }) {
-  const { error } = await supabase.from('perfis_auditoria').insert({
+  await registrarAuditoriaFramework({
     school_id: data.school_id,
+    pessoa_id: data.pessoa_id || null,
+    modulo: 'Perfis e Permissões',
     entidade: data.entidade,
     entidade_id: data.entidade_id,
+    registro_nome: data.dados_novos?.nome || data.dados_anteriores?.nome || null,
     acao: data.acao,
     dados_anteriores: data.dados_anteriores || null,
     dados_novos: data.dados_novos || null,
-    pessoa_id: data.pessoa_id || null,
   })
-  if (error) throw error
 }
 
 // ------- Validação -------

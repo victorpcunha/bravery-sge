@@ -263,16 +263,20 @@ export default function TurmasPage() {
                         {t.turnos?.map((tn: any) => tn.turno).join(', ') || '—'}
                       </TableCell>
                       <TableCell>
-                        <StatusBadge status={t.ativo ? 'success' : 'muted'}>
-                          {t.ativo ? 'Ativa' : 'Inativa'}
-                        </StatusBadge>
+                        {t.fechada ? (
+                          <StatusBadge status="warning">Fechada</StatusBadge>
+                        ) : (
+                          <StatusBadge status={t.ativo ? 'success' : 'muted'}>
+                            {t.ativo ? 'Ativa' : 'Inativa'}
+                          </StatusBadge>
+                        )}
                       </TableCell>
                       <TableCell>
                         <div className="flex items-center gap-0.5">
-                          <Button variant="ghost" size="icon-sm" onClick={() => handleOpenEdit(t.id)}>
+                          <Button variant="ghost" size="icon-sm" onClick={() => handleOpenEdit(t.id)} disabled={t.fechada} title={t.fechada ? 'Turma fechada — edição bloqueada' : 'Editar'}>
                             <Pencil className="h-4 w-4" />
                           </Button>
-                          <Button variant="ghost" size="icon-sm" onClick={() => setDeleteId(t.id)}>
+                          <Button variant="ghost" size="icon-sm" onClick={() => setDeleteId(t.id)} disabled={t.fechada} title={t.fechada ? 'Turma fechada — exclusão bloqueada' : 'Excluir'}>
                             <Trash2 className="h-4 w-4 text-destructive" />
                           </Button>
                         </div>

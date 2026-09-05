@@ -203,6 +203,17 @@ export default function MatriculaCadastroContent({ searchParams }: { searchParam
         veiculo_aqua_35: !!(m as any).veiculo_aqua_35, veiculo_aqua_mais: !!(m as any).veiculo_aqua_mais,
       })
 
+      // Garante que o aluno vinculado apareça no Select mesmo se estiver inativo
+      setAlunos(prev => {
+        if (!m.aluno_id || prev.some(a => a.id === m.aluno_id)) return prev
+        return [{
+          id: m.aluno_id,
+          nome_completo: m.aluno?.nome_completo || 'Aluno',
+          cpf: m.aluno?.cpf || null,
+          data_nascimento: null,
+        }, ...prev]
+      })
+
       const [movs, disps, etapas] = await Promise.all([
         getMovimentacoes(id),
         getDispensas(id),
@@ -281,7 +292,7 @@ export default function MatriculaCadastroContent({ searchParams }: { searchParam
       return
     }
     try {
-      const disp = await adicionarDispensa(editId, novaDispensaDisciplina, novaDispensaMotivo)
+      const disp = await adicionarDispensa(editId, novaDispensaDisciplina, novaDispensaMotivo, pessoaId)
       setDispensas(prev => [...prev, { ...disp, disciplina: { nome: disciplinasTurma.find(d => d.disciplina_id === novaDispensaDisciplina)?.nome || '' } }])
       setNovaDispensaDisciplina('')
       setNovaDispensaMotivo('')
@@ -297,7 +308,7 @@ export default function MatriculaCadastroContent({ searchParams }: { searchParam
       return
     }
     try {
-      await removerDispensa(id)
+      await removerDispensa(id, pessoaId)
       setDispensas(prev => prev.filter(d => d.id !== id))
       toast.success('Dispensa removida')
     } catch (e: any) {
@@ -496,7 +507,7 @@ export default function MatriculaCadastroContent({ searchParams }: { searchParam
           observacoes: form.observacoes || null,
           transporte_responsavel: form.transporte_responsavel,
           ...newFields,
-        })
+        }, pessoaId)
 
         // Salvar movimentações
         if (movimentacoes.length > 0) {
@@ -529,12 +540,12 @@ export default function MatriculaCadastroContent({ searchParams }: { searchParam
           observacoes: form.observacoes || null,
           transporte_responsavel: form.transporte_responsavel,
           ...newFields,
-        })
+        }, pessoaId)
 
         // Salvar dispensas (se houver)
         for (const d of dispensas) {
           if (d.id.startsWith('temp_')) {
-            await adicionarDispensa((nova as any).id, d.disciplina_id, d.motivo)
+            await adicionarDispensa((nova as any).id, d.disciplina_id, d.motivo, pessoaId)
           }
         }
 

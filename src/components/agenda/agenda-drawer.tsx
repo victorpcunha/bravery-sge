@@ -153,7 +153,7 @@ export function AgendaDrawer({ open, onOpenChange }: Props) {
         onOpenChange={setModalOpen}
         onSave={async (input) => {
           const result = await handleCriar(input)
-          if (result.data) handleSalvo()
+          if ('data' in result && result.data) handleSalvo()
           return result
         }}
       />

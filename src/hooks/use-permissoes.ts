@@ -13,7 +13,7 @@ type PermissoesState = {
 }
 
 export function usePermissoes(schoolId: string | null) {
-  const { user, isSuperAdmin } = useAuth()
+  const { user, isSuperAdmin, pessoaId: pessoaIdAuth } = useAuth()
   const [state, setState] = useState<PermissoesState>({
     loaded: false,
     pessoaId: null,
@@ -30,7 +30,7 @@ export function usePermissoes(schoolId: string | null) {
     }
 
     if (!schoolId && isSuperAdmin) {
-      setState({ loaded: true, pessoaId: null, permissoes: {}, error: null })
+      setState({ loaded: true, pessoaId: pessoaIdAuth || null, permissoes: {}, error: null })
       return
     }
 

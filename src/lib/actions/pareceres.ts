@@ -1,8 +1,10 @@
 'use server'
 
 import { getSupabaseAdmin } from '@/lib/auth'
+import { registrarAuditoriaAgregada } from '@/lib/auditoria'
 import sanitizeHtml from 'sanitize-html'
 import { isParecerVazio } from '@/lib/parecer-utils'
+import { garantirTurmaAberta } from './garantir-turma-aberta'
 
 const supabase = getSupabaseAdmin()
 
@@ -59,8 +61,13 @@ export async function salvarParecer(
   periodo: number,
   texto: string,
   pessoaId: string | null,
-  disciplinaId: string | null = null
+  disciplinaId: string | null = null,
+  turmaId?: string | null
 ) {
+  if (turmaId) {
+    await garantirTurmaAberta(turmaId)
+  }
+
   if (pessoaId) {
     const { validarPermissaoServer } = await import('./perfis')
     await validarPermissaoServer(pessoaId, 'gestao-pedagogica.diario-classe.parecer', 'editar')
@@ -111,6 +118,28 @@ export async function salvarParecer(
 
     if (error) throw error
     updatedAt = data?.updated_at || new Date().toISOString()
+  }
+
+  if (turmaId) {
+    const { data: turma } = await supabase.from('turmas').select('school_id, nome').eq('id', turmaId).maybeSingle()
+    const { data: disciplina } = disciplinaId
+      ? await supabase.from('academico_disciplinas').select('nome').eq('id', disciplinaId).maybeSingle()
+      : { data: null }
+    await registrarAuditoriaAgregada({
+      school_id: turma?.school_id || schoolId,
+      pessoa_id: pessoaId || null,
+      modulo: 'Diário de Classe — Parecer',
+      entidade: 'academico_pareceres_descritivos',
+      entidade_id: turmaId,
+      registro_nome: turma?.nome || null,
+      resumo: {
+        turma: turma?.nome || null,
+        turma_id: turmaId,
+        disciplina: disciplina?.nome || null,
+        periodo: `Período ${periodo}`,
+        quantidade: 1,
+      },
+    })
   }
 
   return { success: true, updated_at: updatedAt }

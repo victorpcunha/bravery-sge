@@ -30,7 +30,7 @@ const tipoLabels: Record<string, string> = {
 }
 
 export default function MetodosAvaliacaoPage() {
-  const { user, schoolId, isSuperAdmin, allSchools, loading: authLoading } = useAuth()
+  const { user, schoolId, isSuperAdmin, allSchools, loading: authLoading, pessoaId } = useAuth()
   const router = useRouter()
   const [metodos, setMetodos] = useState<MetodoAvaliacao[]>([])
   const [loading, setLoading] = useState(true)
@@ -69,7 +69,7 @@ export default function MetodosAvaliacaoPage() {
   const handleDelete = async () => {
     if (!deleteTarget) return
     try {
-      await deleteMetodo(deleteTarget)
+      await deleteMetodo(deleteTarget, pessoaId)
       toast.success('Método excluído')
       setDeleteTarget(null)
       loadMetodos()

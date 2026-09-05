@@ -46,7 +46,7 @@ interface TabMatrizesProps {
 }
 
 export function TabMatrizes({ schoolId }: TabMatrizesProps) {
-  const { isSuperAdmin, allSchools } = useAuth()
+  const { isSuperAdmin, allSchools, pessoaId } = useAuth()
   const { pode, loaded: permLoaded } = usePermissoes(schoolId)
 
   const [selectedSchoolId, setSelectedSchoolId] = useState<string | null>(null)
@@ -143,7 +143,7 @@ export function TabMatrizes({ schoolId }: TabMatrizesProps) {
   async function handleDelete() {
     if (!deleteTarget) return
     try {
-      await deleteMatriz(deleteTarget.id)
+      await deleteMatriz(deleteTarget.id, pessoaId)
       toast.success('Matriz excluída')
       setDeleteTarget(null)
       loadMatrizes()
@@ -154,7 +154,7 @@ export function TabMatrizes({ schoolId }: TabMatrizesProps) {
 
   async function handleToggleAtiva(id: string, ativa: boolean) {
     try {
-      await toggleMatrizAtiva(id, ativa)
+      await toggleMatrizAtiva(id, ativa, pessoaId)
       setMatrizes(prev => prev.map(m => m.id === id ? { ...m, ativa } : m))
       toast.success(ativa ? 'Matriz ativada' : 'Matriz inativada')
     } catch (e: any) {

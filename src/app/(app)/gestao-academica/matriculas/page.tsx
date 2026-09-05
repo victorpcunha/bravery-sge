@@ -18,6 +18,7 @@ import { StatusBadge } from '@/components/feedback/status-badge'
 import { Plus, DoorOpen, GraduationCap, Pencil } from 'lucide-react'
 import { getMatriculas } from '@/lib/actions/matriculas'
 import { getAnosLetivosAtivos } from '@/lib/actions/quadro-aulas'
+import { labelSituacaoMatricula, variantSituacaoMatricula, SITUACOES_MATRICULA } from '@/lib/situacoes-matricula'
 import { toast } from 'sonner'
 
 function formatDate(d: string) {
@@ -27,17 +28,11 @@ function formatDate(d: string) {
   return `${day}/${m}/${y}`
 }
 
-function mapSituacao(status: string): 'success' | 'warning' | 'destructive' | 'muted' | 'info' {
-  const lower = (status || '').toLowerCase()
-  if (lower.includes('ativo') || lower.includes('cursando')) return 'success'
-  if (lower.includes('aprovado') || lower.includes('concluído') || lower.includes('concluido')) return 'success'
-  if (lower.includes('transferido') || lower.includes('remanejado') || lower.includes('reclassificado')) return 'info'
-  if (lower.includes('desist') || lower.includes('abandono') || lower.includes('cancelado')) return 'destructive'
-  if (lower.includes('inativo')) return 'muted'
-  return 'info'
+function mapSituacao(status: string) {
+  return variantSituacaoMatricula(status)
 }
 
-const SITUACOES = ['Ativo', 'Transferido', 'Desistente', 'Concluído']
+const SITUACOES = Object.values(SITUACOES_MATRICULA)
 
 export default function AlunosMatriculadosPage() {
   const { user, schoolId, isSuperAdmin, allSchools, loading: authLoading } = useAuth()
@@ -80,7 +75,7 @@ export default function AlunosMatriculadosPage() {
   const filtered = matriculas.filter(m => {
     const nome = m.aluno?.nome_completo || m.pessoa?.nome_completo || ''
     if (search && !nome.toLowerCase().includes(search.toLowerCase())) return false
-    if (situacaoFilter !== '__all__' && (m.status || 'Ativo') !== situacaoFilter) return false
+    if (situacaoFilter !== '__all__' && labelSituacaoMatricula(m.situacao || 'Ativo') !== situacaoFilter) return false
     return true
   })
 
@@ -162,7 +157,7 @@ export default function AlunosMatriculadosPage() {
               </TableHeader>
               <TableBody>
                 {filtered.map(m => {
-                  const status = m.status || 'Ativo'
+                  const status = labelSituacaoMatricula(m.situacao || 'Ativo')
                   return (
                     <TableRow key={m.id}>
                       <TableCell>

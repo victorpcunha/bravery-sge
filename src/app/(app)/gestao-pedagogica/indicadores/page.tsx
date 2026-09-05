@@ -45,7 +45,7 @@ function formatNome(nome: string) {
 
 export default function IndicadoresPage() {
   const router = useRouter()
-  const { user, schoolId, isSuperAdmin, allSchools, loading: authLoading } = useAuth()
+  const { user, schoolId, isSuperAdmin, allSchools, loading: authLoading, pessoaId } = useAuth()
 
   // Filtros
   const [anosLetivos, setAnosLetivos] = useState<any[]>([])
@@ -238,7 +238,7 @@ export default function IndicadoresPage() {
   const removerNivelPersonalizado = (index: number) => {
     const nivel = formNiveisPersonalizados[index]
     if (nivel.id) {
-      deleteIndicadorNivel(nivel.id).catch(() => {})
+      deleteIndicadorNivel(nivel.id, pessoaId).catch(() => {})
     }
     setFormNiveisPersonalizados(prev => prev.filter((_, i) => i !== index))
   }
@@ -344,12 +344,12 @@ export default function IndicadoresPage() {
         await updateIndicador(editId, {
           descricao: formData.descricao,
           periodos_ids: formData.periodo_ids,
-        })
+        }, pessoaId)
         // Salvar niveis
         await salvarNiveisIndicador(editId, {
           metodo_nivel_ids: formNiveisMetodo,
           personalizados: formNiveisPersonalizados.filter(n => !n.id).map(n => ({ descricao: n.descricao, sigla: n.sigla || undefined })),
-        })
+        }, pessoaId)
         toast.success('Indicador atualizado')
       } else {
         const novo = await createIndicador({
@@ -362,14 +362,14 @@ export default function IndicadoresPage() {
           descricao: formData.descricao,
           periodos_ids: formData.periodo_ids,
           origem: 'manual',
-        })
+        }, pessoaId)
 
         // Salvar niveis do novo indicador
         const personalizados = formNiveisPersonalizados.map(n => ({ descricao: n.descricao, sigla: n.sigla || undefined }))
         await salvarNiveisIndicador((novo as any).id, {
           metodo_nivel_ids: formNiveisMetodo,
           personalizados,
-        })
+        }, pessoaId)
         toast.success('Indicador criado')
       }
       setDialogOpen(false)
@@ -392,7 +392,7 @@ export default function IndicadoresPage() {
   const confirmDelete = async () => {
     if (!deleteConfirmId) return
     try {
-      await deleteIndicador(deleteConfirmId)
+      await deleteIndicador(deleteConfirmId, pessoaId)
       toast.success('Indicador removido')
       setDeleteConfirmId(null)
       loadIndicadores()
@@ -558,7 +558,7 @@ export default function IndicadoresPage() {
                 onClick={async () => {
                   try {
                     setImportando(true)
-                    const result = await importarIndicadoresDaMatriz(effectiveSchoolId!, filtroAno, filtroEtapa)
+                    const result = await importarIndicadoresDaMatriz(effectiveSchoolId!, filtroAno, filtroEtapa, pessoaId)
                     toast.success(`${result.total} indicadores importados`)
                     loadIndicadores()
                   } catch (e: any) {

@@ -1,6 +1,7 @@
 'use server'
 
 import { getSupabaseAdmin } from '@/lib/auth'
+import { registrarAuditoria } from '@/lib/auditoria'
 
 const supabase = getSupabaseAdmin()
 
@@ -128,6 +129,17 @@ export async function criarCompromisso(
     return { error: 'Erro ao salvar compromisso' }
   }
 
+  await registrarAuditoria({
+    school_id: schoolId,
+    pessoa_id: pessoaId || null,
+    modulo: 'Agenda',
+    entidade: 'agenda_compromissos',
+    entidade_id: data.id,
+    registro_nome: data.titulo,
+    acao: 'criar',
+    dados_novos: data,
+  })
+
   return { data: data as Compromisso }
 }
 
@@ -135,6 +147,13 @@ export async function excluirCompromisso(id: string, pessoaId: string) {
   if (!id || !pessoaId) {
     return { error: 'Parâmetros inválidos' }
   }
+
+  const { data: anterior } = await supabase
+    .from('agenda_compromissos')
+    .select('*')
+    .eq('id', id)
+    .eq('pessoa_id', pessoaId)
+    .maybeSingle()
 
   const { error } = await supabase
     .from('agenda_compromissos')
@@ -145,6 +164,19 @@ export async function excluirCompromisso(id: string, pessoaId: string) {
   if (error) {
     console.error('Erro ao excluir compromisso:', error)
     return { error: 'Erro ao excluir compromisso' }
+  }
+
+  if (anterior) {
+    await registrarAuditoria({
+      school_id: anterior.school_id,
+      pessoa_id: pessoaId || null,
+      modulo: 'Agenda',
+      entidade: 'agenda_compromissos',
+      entidade_id: id,
+      registro_nome: anterior.titulo,
+      acao: 'excluir',
+      dados_anteriores: anterior,
+    })
   }
 
   return { success: true }

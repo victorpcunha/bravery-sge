@@ -42,6 +42,7 @@ type Props = {
   alunos: AlunoMatriculado[]
   disciplinas: DisciplinaItem[]
   quantidadePeriodosNivel: number
+  readOnly?: boolean
 }
 
 type StatusNivel = 'completo' | 'parcial' | 'pendente'
@@ -108,10 +109,11 @@ export default function AvaliacaoIndicadores({
   alunos,
   disciplinas,
   quantidadePeriodosNivel,
+  readOnly = false,
 }: Props) {
   const { schoolId } = useAuth()
   const { pessoaId, pode } = usePermissoes(schoolId || '')
-  const podeEditar = pode.editar('gestao-pedagogica.diario-classe.indicadores')
+  const podeEditar = readOnly ? false : pode.editar('gestao-pedagogica.diario-classe.indicadores')
 
   const [disciplinaId, setDisciplinaId] = useState<string>('')
   const [periodoAtivo, setPeriodoAtivo] = useState(1)

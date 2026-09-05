@@ -107,6 +107,26 @@ Sistema de Gestão Escolar completo: turmas, quadro de aulas, indicadores de ava
   - **Server actions**: `listarPlanosEnsino(schoolId, pessoaId, opts)` com filtros `{anoLetivoId, turmaId, matrizDisciplinaId, periodos}` + enriquecimento em batch (disciplinas c/ matriz id, professores, periodos, aulas_quadro+horas_quadro, ultima_atualizacao); nova `calcularAulasDoQuadro`
   - **Notas**: 0 migrations; 0 novas deps npm; 1 build verde (`npx next build`)
 
+- **Navegação por Abas Internas (spec 016)**:
+  - Spec + plan + tasks em `specs/016-abas-internas/`
+  - **Estrutura**: `(app)/layout` não renderiza mais `{children}` — monta `<TabProvider> <TabBar/> <TabWorkspace/>`; `src/components/tabs/{tab-provider,tab-bar,tab-workspace}.tsx` + `src/lib/{tab-routes,tab-params,tab-portal-context}.tsx`
+  - **Regras**: 1 aba por menu/módulo (máx. 6); re-clique foca (sem duplicar); sub-telas (detalhe/cadastro) **empilham** dentro da aba do módulo (keep-alive — listagem preserva filtros/scroll/paginação ao voltar); abrir/fechar/focar sincroniza a URL (pathname+query); F5/reabrir inicia só com o Dashboard; fechar última aba reabre o Dashboard; limite 6 → toast "Feche uma aba para abrir outra" sem navegar
+  - **Keep-alive**: panes `absolute inset-0` + entradas `overflow-y-auto` com `visibility:hidden` + `inert` quando inativas (estado e scroll preservados)
+  - **Modais por aba**: wrappers shadcn (Dialog, AlertDialog, Popover, DropdownMenu, Select, Tooltip, HoverCard, Sheet) montam portais **dentro da entrada** via `useTabPortalContainer()` → ficam ocultos junto com a aba; fora de aba (Topbar/Agenda) seguem em `document.body`
+  - **Params**: páginas dinâmicas (`escolas/[id]`, `diario-classe/[turmaId]`, `/fechamento`, `plano-ensino/[id]`, `perfis/[id]`) usam `useTabParams()`; `matriculas/cadastro` renderizado via `content.tsx` (client) + wrapper `useSearchParams`
+  - **Notas**: 0 migrations; 0 novas deps npm; `npx next build` verde (41 rotas) + `tsc --noEmit` limpo; scroll de página → scroll de container de entrada; `children` do layout permanece não utilizado; fix de narrowing TS pré-existente em `agenda-drawer.tsx`
+- **Auditoria (spec 017)**:
+  - Spec + plan + data-model + quickstart em `specs/017-auditoria/`
+  - **Captura automática**: toda criação/edição/exclusão é registrada em `auditoria`. Master-data → registro individual com diff campo a campo (`alteracoes`, valor anterior/novo); alto volume (Frequência, Notas, Parecer, Conselho, Fechamento) → 1 registro `resumo` por salvamento (`{turma, disciplina, periodo, quantidade}`)
+  - **Migration** `auditoria.sql`: tabela + índices + trigram `registro_nome` (busca livre) + backfill de `perfis_auditoria` (registros antigos migrados; tabela preservada como arquivo)
+  - **Framework** `src/lib/auditoria.ts`: `registrarAuditoria` (diff automático), `registrarAuditoriaAgregada`, `computarAlteracoes`, `nomearRegistro`; captura é **best-effort** (não bloqueia a operação)
+  - **Ator**: `pessoaId` adicionado ao `useAuth()` (inclusive Superadmin — antes `null` em `usePermissoes`); mutações ganharam parâmetro `pessoaId?: string|null` e call-sites atualizados
+  - **Conversões**: `calendarios.ts`, `matrizes.ts` e CRUD de **Disciplinas** migraram de client-Supabase para **server actions** com `getSupabaseAdmin()` + auditoria; utils puros de calendário em `src/lib/calendario-utils.ts`
+  - **Tela `/auditoria`** (exclusiva Superadmin, guard server-side `validarSuperAdmin`): card de filtros (busca em destaque por nome/identificação do registro + conteúdo JSONB, Escola "Todas"/específica, Usuário por escola, Módulo/Tela, Tipo de Ação, Data inicial/final), tabela Data/Hora · Usuário · Escola · Módulo · Registro · Ação (badge), linha expansível com diffs/conteúdo/resumo, paginação server-side 10/pág
+  - **Navegação**: item top-level "Auditoria" no sidebar (só Superadmin) + módulo de aba `auditoria` em `tab-routes.tsx`
+  - **Cobertura**: ~20 módulos instrumentados (Usuários, Turmas, Escolas, Matrículas/Movimentações, Quadro de Aulas, Indicadores, Disciplinas, Métodos, Matrizes, Calendários/Etapas, Funções, Plano de Ensino, Perfis, Vínculos, Agenda, Histórico + agregadas do Diário/Conselho/Fechamento)
+  - **Atenção**: `desfazerFechamento` lê o snapshot na tabela `auditoria` (não mais `perfis_auditoria`); `npx next build` verde (42 rotas) + `tsc --noEmit` limpo
+
 ## Known Issues
 - All server actions use `'use server'` + `getSupabaseAdmin()` (service_role, bypass RLS)
 - `academico_anos_letivos` usa coluna `status` (string), NÃO `ativo` (boolean)

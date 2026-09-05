@@ -4,6 +4,7 @@ import * as React from "react"
 import { HoverCard as HoverCardPrimitive } from "radix-ui"
 
 import { cn } from "@/lib/utils"
+import { useTabPortalContainer } from "@/lib/tab-portal-context"
 
 function HoverCard({
   ...props
@@ -25,8 +26,12 @@ function HoverCardContent({
   sideOffset = 4,
   ...props
 }: React.ComponentProps<typeof HoverCardPrimitive.Content>) {
+  const tabContainer = useTabPortalContainer()
   return (
-    <HoverCardPrimitive.Portal data-slot="hover-card-portal">
+    <HoverCardPrimitive.Portal
+      data-slot="hover-card-portal"
+      container={tabContainer ?? undefined}
+    >
       <HoverCardPrimitive.Content
         data-slot="hover-card-content"
         align={align}
