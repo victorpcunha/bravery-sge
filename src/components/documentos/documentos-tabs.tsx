@@ -5,6 +5,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
 import { EmptyState } from '@/components/ui/empty-state'
 import { FileText, BarChart3, ShieldAlert, FilePlus2, School } from 'lucide-react'
 import OficiaisTab from './oficiais-tab'
+import RelatoriosTab from './relatorios-tab'
 
 type Props = {
   schoolId: string | null
@@ -15,7 +16,7 @@ type Props = {
 }
 
 const TRIGGER_CLASS =
-  'h-10 min-h-[40px] flex-1 rounded-md px-4 text-[14px] font-semibold text-foreground/80 ' +
+  'h-10 min-h-[40px] flex-none whitespace-nowrap rounded-md px-4 text-[14px] font-semibold text-foreground/80 ' +
   'transition-colors hover:bg-accent/10 hover:text-accent-foreground ' +
   'data-active:bg-primary data-active:text-primary-foreground data-active:shadow-sm ' +
   'data-active:hover:bg-primary data-active:hover:text-primary-foreground ' +
@@ -36,7 +37,7 @@ export default function DocumentosTabs({
   return (
     <Tabs value={secao} onValueChange={v => setSecao(v as 'documentos' | 'relatorios')}>
       <div className="relative -mx-4 sm:mx-0 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-        <TabsList className="mx-4 mb-6 flex h-auto min-h-[48px] w-max gap-1 rounded-lg border border-border bg-card p-1 shadow-xs sm:mx-0 sm:w-full">
+        <TabsList className="mx-4 mb-6 flex h-auto min-h-[48px] w-max gap-1 rounded-lg border border-border bg-card p-1 shadow-xs">
           <TabsTrigger
             value="documentos"
             disabled={!podeOficiais && !podePreencher}
@@ -58,7 +59,7 @@ export default function DocumentosTabs({
           onValueChange={v => setSub(v as 'oficiais' | 'preencher')}
         >
           <div className="relative -mx-4 sm:mx-0 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-            <TabsList className="mx-4 mb-6 flex h-auto min-h-[44px] w-max gap-1 rounded-lg border border-border bg-muted/40 p-1 sm:mx-0 sm:w-full">
+            <TabsList className="mx-4 mb-6 flex h-auto min-h-[44px] w-max gap-1 rounded-lg border border-border bg-muted/40 p-1">
               <TabsTrigger value="oficiais" disabled={!podeOficiais} className={TRIGGER_CLASS}>
                 Documentos Oficiais
               </TabsTrigger>
@@ -109,11 +110,15 @@ export default function DocumentosTabs({
 
       <TabsContent value="relatorios" className="mt-0 focus-visible:outline-none">
         {podeRelatorios ? (
-          <EmptyState
-            icon={BarChart3}
-            title="Relatórios"
-            description="Consultas analíticas e operacionais com filtros, visualização em tela e exportação. Em breve."
-          />
+          schoolId ? (
+            <RelatoriosTab schoolId={schoolId} pessoaId={pessoaId} />
+          ) : (
+            <EmptyState
+              icon={School}
+              title="Selecione uma unidade escolar"
+              description="Selecione a unidade escolar no seletor acima para gerar os relatórios."
+            />
+          )
         ) : (
 <EmptyState
                 icon={ShieldAlert}

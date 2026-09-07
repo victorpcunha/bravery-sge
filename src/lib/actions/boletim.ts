@@ -2,6 +2,7 @@
 
 import { getSupabaseAdmin } from '@/lib/auth'
 import { validarPermissaoDocumentos, montarEscola, type IdentidadeEscola } from './documentos'
+import { montarMotivoBloqueio } from '@/lib/metodo-bloqueio'
 import { calcularDesempenhoAluno } from './avaliacoes-numericas'
 
 const supabase = getSupabaseAdmin()
@@ -53,7 +54,7 @@ export type DadosBoletim = {
 
 // ─── Helpers ───
 
-type MetodoBoletim = {
+export type MetodoBoletim = {
   metodoId: string | null
   nome: string | null
   tiposAvaliacao: Record<string, unknown> | null
@@ -62,7 +63,7 @@ type MetodoBoletim = {
   temNumerico: boolean
 }
 
-async function resolverMetodoBoletim(turmaId: string): Promise<MetodoBoletim> {
+export async function resolverMetodoBoletim(turmaId: string): Promise<MetodoBoletim> {
   const { data: turma } = await supabase
     .from('turmas')
     .select('school_id, ano_letivo_id, etapa_ensino_id')
@@ -107,17 +108,7 @@ async function resolverMetodoBoletim(turmaId: string): Promise<MetodoBoletim> {
   return { metodoId, nome, tiposAvaliacao, qtd, criterio, temNumerico }
 }
 
-function montarMotivoBloqueio(metodo: MetodoBoletim): string {
-  const t = metodo.tiposAvaliacao
-  const partes: string[] = []
-  if (t?.conceito === true || t?.conceito === 'true') partes.push('Conceito')
-  if (t?.parecer === true || t?.parecer === 'true') partes.push('Parecer Descritivo')
-  if (t?.nivel === true || t?.nivel === 'true') partes.push('Nível')
-  const texto = partes.length > 0 ? partes.join(' e ') : metodo.nome || 'outro método'
-  return `Esta turma utiliza avaliação por ${texto}; o Boletim Numérico não está disponível para este Método de Avaliação.`
-}
-
-async function listarPeriodosAvaliativos(
+export async function listarPeriodosAvaliativos(
   anoLetivoId: string,
   turmaId: string,
   limite: number

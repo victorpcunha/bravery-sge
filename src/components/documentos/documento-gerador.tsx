@@ -46,6 +46,12 @@ export type DocumentoConfig = {
     schoolId: string,
     pessoaId: string | null
   ) => Promise<{ periodos: PeriodoBoletim[]; bloqueado: boolean; motivo: string | null }>
+  semAnoLetivo?: boolean
+  buscarAlunos?: (
+    termo: string,
+    schoolId: string,
+    pessoaId: string | null
+  ) => Promise<AlunoResumidoDocumento[]>
   buscarDados: (
     alunoId: string,
     anoLetivoId: string,
@@ -235,7 +241,8 @@ export default function DocumentoGerador({
 
   useEffect(() => {
     const timer = setTimeout(async () => {
-      if (termo.trim().length < 3 || !anoLetivoId) {
+      const semAno = config.semAnoLetivo === true
+      if (termo.trim().length < 3 || (!anoLetivoId && !semAno)) {
         setResultados([])
         setErroBusca(null)
         return
@@ -243,7 +250,9 @@ export default function DocumentoGerador({
       setLoadingBusca(true)
       setErroBusca(null)
       try {
-        const data = await buscarAlunosPorAnoLetivo(termo, anoLetivoId, schoolId, pessoaId)
+        const data = config.buscarAlunos
+          ? await config.buscarAlunos(termo, schoolId, pessoaId)
+          : await buscarAlunosPorAnoLetivo(termo, anoLetivoId, schoolId, pessoaId)
         setResultados(data)
       } catch (err) {
         setResultados([])
@@ -254,10 +263,11 @@ export default function DocumentoGerador({
     }, 300)
 
     return () => clearTimeout(timer)
-  }, [termo, anoLetivoId, schoolId, pessoaId])
+  }, [termo, anoLetivoId, schoolId, pessoaId, config])
 
   useEffect(() => {
-    if (!buscandoAluno || !anoLetivoId) return
+    const semAno = config.semAnoLetivo === true
+    if (!buscandoAluno || (!anoLetivoId && !semAno)) return
     if (config.buscarPeriodos && periodo == null) return
 
     let cancelado = false
@@ -379,26 +389,32 @@ export default function DocumentoGerador({
     >
       <div
         className={`grid grid-cols-1 gap-4 mb-6 ${
-          config.buscarPeriodos ? 'md:grid-cols-2 lg:grid-cols-3' : 'md:grid-cols-2'
+          config.buscarPeriodos
+            ? 'md:grid-cols-2 lg:grid-cols-3'
+            : config.semAnoLetivo
+              ? 'md:grid-cols-1'
+              : 'md:grid-cols-2'
         }`}
       >
-        <div>
-          <Label className="mb-1.5 block text-[14px] font-medium text-foreground">
-            Ano Letivo <span className="text-destructive">*</span>
-          </Label>
-          <Select value={anoLetivoId} onValueChange={handleSelecionarAno}>
-            <SelectTrigger>
-              <SelectValue placeholder="Selecione o ano letivo" />
-            </SelectTrigger>
-            <SelectContent>
-              {anos.map(a => (
-                <SelectItem key={a.id} value={a.id}>
-                  {a.descricao}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
+        {!config.semAnoLetivo && (
+          <div>
+            <Label className="mb-1.5 block text-[14px] font-medium text-foreground">
+              Ano Letivo <span className="text-destructive">*</span>
+            </Label>
+            <Select value={anoLetivoId} onValueChange={handleSelecionarAno}>
+              <SelectTrigger>
+                <SelectValue placeholder="Selecione o ano letivo" />
+              </SelectTrigger>
+              <SelectContent>
+                {anos.map(a => (
+                  <SelectItem key={a.id} value={a.id}>
+                    {a.descricao}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        )}
 
         <div>
           <Label className="mb-1.5 block text-[14px] font-medium text-foreground">
@@ -411,7 +427,7 @@ export default function DocumentoGerador({
                 role="combobox"
                 aria-expanded={openBusca}
                 aria-label="Buscar aluno por nome ou CPF"
-                disabled={!anoLetivoId}
+                disabled={!anoLetivoId && !config.semAnoLetivo}
                 className="relative w-full h-9 justify-start rounded-md border-border bg-card pl-10 pr-3 text-[14px] font-normal shadow-xs hover:bg-card"
               >
                 <Search
@@ -437,7 +453,9 @@ export default function DocumentoGerador({
                   </>
                 ) : (
                   <span className="truncate text-muted-foreground">
-                    {anoLetivoId ? 'Buscar por nome ou CPF...' : 'Selecione o ano letivo primeiro'}
+                    {anoLetivoId || config.semAnoLetivo
+                      ? 'Buscar por nome ou CPF...'
+                      : 'Selecione o ano letivo primeiro'}
                   </span>
                 )}
               </Button>
@@ -475,7 +493,11 @@ export default function DocumentoGerador({
                       <EmptyState
                         icon={User}
                         title="Nenhum aluno encontrado"
-                        description="Não há alunos matriculados neste ano letivo para o termo informado."
+                        description={
+                          config.semAnoLetivo
+                            ? 'Não há alunos matriculados nesta unidade escolar para o termo informado.'
+                            : 'Não há alunos matriculados neste ano letivo para o termo informado.'
+                        }
                       />
                     </CommandEmpty>
                   ) : (
@@ -631,7 +653,7 @@ export default function DocumentoGerador({
         </>
       )}
 
-      {!loadingDados && !dados && anoLetivoId && !buscandoAluno && (
+      {!loadingDados && !dados && (anoLetivoId || config.semAnoLetivo) && !buscandoAluno && (
         <EmptyState
           icon={FileText}
           title="Selecione um aluno"

@@ -124,7 +124,7 @@ export async function listarHistoricoManual(
       unidade_escolar,
       situacao,
       observacoes,
-      academico_etapas_ensino!etapa_ensino_id(nome)
+      academico_etapas_ensino!etapa_ensino_id(etapa_nome)
     `)
     .eq('person_id', personId)
     .order('created_at', { ascending: false })
@@ -170,7 +170,7 @@ export async function listarHistoricoManual(
     estado: r.estado,
     municipio: r.municipio,
     unidade_escolar: r.unidade_escolar,
-    etapa_nome: (r.academico_etapas_ensino as unknown as { nome: string })?.nome || null,
+    etapa_nome: (r.academico_etapas_ensino as unknown as { etapa_nome: string })?.etapa_nome || null,
     situacao: r.situacao,
     observacoes: r.observacoes,
     disciplinas: discMap.get(r.id) || [],

@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { FilePlus2, FileText, GraduationCap, UserRound } from 'lucide-react'
+import { FilePlus2, FileText, GraduationCap, ScrollText, UserRound } from 'lucide-react'
 import {
   getDadosDeclaracaoMatricula,
   getDadosFichaIndividual,
@@ -9,6 +9,11 @@ import {
   type DadosFichaIndividual,
 } from '@/lib/actions/documentos'
 import { getDadosBoletim, getPeriodosBoletim, type DadosBoletim } from '@/lib/actions/boletim'
+import {
+  buscarAlunosComHistorico,
+  getDadosHistoricoEscolar,
+  type DadosHistoricoEscolar,
+} from '@/lib/actions/historico-escolar'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardFooter } from '@/components/ui/card'
 import { PageSection } from '@/components/layout/page-section'
@@ -74,6 +79,26 @@ const boletimConfig: DocumentoConfig = {
   altPreview: 'Boletim Escolar',
 }
 
+const historicoConfig: DocumentoConfig = {
+  id: 'historico',
+  titulo: 'Histórico Escolar',
+  descricao:
+    'Trajetória acadêmica do aluno nos anos letivos registrados no Bravery: disciplinas cursadas, notas finais numéricas e resultado final por ano, incluindo histórico anterior quando cadastrado.',
+  icone: ScrollText,
+  carregarPdf: async () => ({
+    Componente: (await import('./historico-escolar'))
+      .HistoricoEscolar as unknown as React.ComponentType<DocumentoPdfProps>,
+  }),
+  semAnoLetivo: true,
+  buscarAlunos: buscarAlunosComHistorico,
+  buscarDados: getDadosHistoricoEscolar,
+  nomeArquivo: dados =>
+    `historico-escolar-${(dados as DadosHistoricoEscolar).aluno.nome_completo
+      .replace(/\s+/g, '-')
+      .toLowerCase()}.pdf`,
+  altPreview: 'Histórico Escolar',
+}
+
 function Minicard({ config, onGerar }: { config: DocumentoConfig; onGerar: () => void }) {
   const Icone = config.icone
   return (
@@ -98,7 +123,7 @@ function Minicard({ config, onGerar }: { config: DocumentoConfig; onGerar: () =>
 }
 
 export default function OficiaisTab({ schoolId, pessoaId }: Props) {
-  const [documento, setDocumento] = useState<'declaracao' | 'ficha' | 'boletim' | null>(null)
+  const [documento, setDocumento] = useState<'declaracao' | 'ficha' | 'boletim' | 'historico' | null>(null)
 
   const config =
     documento === 'declaracao'
@@ -107,6 +132,8 @@ export default function OficiaisTab({ schoolId, pessoaId }: Props) {
       ? fichaConfig
       : documento === 'boletim'
       ? boletimConfig
+      : documento === 'historico'
+      ? historicoConfig
       : null
 
   if (config) {
@@ -125,10 +152,11 @@ export default function OficiaisTab({ schoolId, pessoaId }: Props) {
       title="Documentos Oficiais"
       description="Selecione um documento para gerar a partir dos dados cadastrados no Bravery."
     >
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         <Minicard config={declaracaoConfig} onGerar={() => setDocumento('declaracao')} />
         <Minicard config={fichaConfig} onGerar={() => setDocumento('ficha')} />
         <Minicard config={boletimConfig} onGerar={() => setDocumento('boletim')} />
+        <Minicard config={historicoConfig} onGerar={() => setDocumento('historico')} />
       </div>
     </PageSection>
   )
