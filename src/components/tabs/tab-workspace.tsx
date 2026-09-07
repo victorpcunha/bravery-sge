@@ -28,7 +28,7 @@ function EntryPane({ entry, active }: { entry: TabEntry; active: boolean }) {
       inert={!active}
     >
       <TabPortalContainerProvider containerRef={containerRef}>
-        <TabParamsProvider params={params}>
+        <TabParamsProvider params={params} active={active}>
           <Component />
         </TabParamsProvider>
       </TabPortalContainerProvider>
@@ -46,7 +46,8 @@ export function TabWorkspace() {
   const prevPathRef = useRef(pathname)
   const authHandledRef = useRef(false)
 
-  // Ao montar: sem sessão vai para o login; com sessão volta à tela inicial.
+  // Ao montar: sem sessão vai para o login. Com sessão, mantém a rota atual
+  // (a aba correspondente será aberta pelo efeito de sincronização abaixo).
   useEffect(() => {
     if (loading || authHandledRef.current) return
     if (!user) {
@@ -55,27 +56,30 @@ export function TabWorkspace() {
       return
     }
     authHandledRef.current = true
-    if (pathname !== '/') {
-      router.replace('/')
-    }
-  }, [user, loading, router, pathname])
+  }, [user, loading, router])
 
-  // Sincroniza a URL atual com o sistema de abas (ignora a montagem inicial).
+  // Sincroniza a URL atual com o sistema de abas.
+  // Na montagem (ou após um reload direto em uma rota), abre a aba da rota
+  // atual quando ela não for a inicial (Dashboard).
   useEffect(() => {
     if (!authHandledRef.current) return
+    const search = window.location.search || ''
     if (!didInit.current) {
       didInit.current = true
-      prevPathRef.current = window.location.pathname
+      prevPathRef.current = window.location.pathname + search
+      if (pathname !== '/') {
+        openOrFocus(pathname, search)
+      }
       return
     }
     const prev = prevPathRef.current
-    const result = openOrFocus(pathname, window.location.search || '')
+    const result = openOrFocus(pathname, search)
     if (result === 'blocked') {
       router.replace(prev)
       prevPathRef.current = prev
       return
     }
-    prevPathRef.current = window.location.pathname + window.location.search
+    prevPathRef.current = window.location.pathname + search
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pathname, router])
 

@@ -25,6 +25,13 @@ export type School = {
   categoria_escola_privada: string | null
   formato_organizacional: string
   localizacao: string
+  endereco?: string | null
+  numero?: string | null
+  complemento?: string | null
+  bairro?: string | null
+  municipio?: string | null
+  distrito?: string | null
+  cep?: string | null
   created_at: string
   updated_at: string
 }

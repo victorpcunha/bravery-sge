@@ -126,6 +126,116 @@ Sistema de Gestão Escolar completo: turmas, quadro de aulas, indicadores de ava
   - **Navegação**: item top-level "Auditoria" no sidebar (só Superadmin) + módulo de aba `auditoria` em `tab-routes.tsx`
   - **Cobertura**: ~20 módulos instrumentados (Usuários, Turmas, Escolas, Matrículas/Movimentações, Quadro de Aulas, Indicadores, Disciplinas, Métodos, Matrizes, Calendários/Etapas, Funções, Plano de Ensino, Perfis, Vínculos, Agenda, Histórico + agregadas do Diário/Conselho/Fechamento)
   - **Atenção**: `desfazerFechamento` lê o snapshot na tabela `auditoria` (não mais `perfis_auditoria`); `npx next build` verde (42 rotas) + `tsc --noEmit` limpo
+- **Configurações de Documentos (spec 018)**:
+  - Spec + plan + data-model + quickstart em `specs/018-config-documentos/`
+  - Card "Configurações de Documentos" na aba **Identificação** do cadastro da Unidade Escolar (`/escolas/[id]`), usado pelo futuro módulo de Documentos (cabeçalho/rodapé/identidade visual)
+  - **Fora do Censo**: dados em tabela nova `documentos_config` (1 por escola, `school_id UNIQUE`); `updateSchool` recebe só o payload do censo (grupo `documentos` é separado no submit) — nada é exportado no Registro 00/Situação Final
+  - **Replicados** (cópias independentes, editáveis só no card): nome da escola, CNPJ, logradouro, número, bairro, município (código IBGE), CEP, telefone, e-mail — seed automático via `seedDocumentosFromSchool` (`src/lib/documentos-config.ts`)
+  - **Adicionais**: logo (upload base64 TEXT ≤2 MB via `FileReader`), nome fantasia, site, mantenedora (texto livre), cabeçalho, rodapé, responsável pela assinatura + cargo
+  - Server actions `src/lib/actions/documentos-config.ts` (`getConfigDocumentos`/`salvarConfigDocumentos` com `validarPermissaoEstrita('escolas','editar')` + auditoria omitindo o logo dos snapshots)
+  - Form: schema zod com grupo `documentos` optional + helpers `TextareaField`/`LogoField`; card só na edição (`schoolId` presente); `readOnly` herdado do fieldset
+  - Notas: 1 migration; 0 novas deps npm; tipo `School` estendido com endereço/contato; `tsc` + `next build` verdes
+- **Módulo Documentos (spec 019)**:
+  - Spec + plan + data-model + quickstart em `specs/019-documentos/`
+  - **Fase 1 — Fundação + Declaração de Matrícula**: módulo `/documentos` com seções
+    **Documentos | Relatórios** e sub-abas **Documentos Oficiais | Preenchimento Manual**
+    (Relatórios e Preenchimento Manual são placeholders "Em breve")
+  - **Permissões granulares**: migration `patch_recursos_documentos.sql` — recursos
+    `documentos.oficiais`, `documentos.preencher`, `relatorios` (módulo `Documentos`); geração usa
+    permissão `visualizar` do recurso; sidebar oculta "Documentos" se o usuário não visualizar nenhum
+  - **Superadmin**: sem `schoolId` (contexto null por design) — página `/documentos` ganhou seletor
+    "Unidade Escolar" (via `allSchools`) visível só para superadmin, com auto-seleção quando há 1 escola;
+    mensagens de "Sem permissão" orientam a pedir o recurso ao gestor
+  - **PDF**: `@react-pdf/renderer` (única nova deps npm) + `pdfjs-dist` (render do preview);
+    `pdf(<Doc/>).toBlob()` no cliente; **preview como imagens** (canvas via `pdfjs-dist`, worker
+    embutido via `new URL('pdfjs-dist/build/pdf.worker.min.mjs', import.meta.url)`) — sem o visualizador
+    de PDF do navegador/barra de ferramentas; fonte Helvetica embutida; logo base64 em `<Image>`
+  - **Declaração de Matrícula** (`declaracao-matricula.tsx`): seleção **Ano Letivo** (`getAnosLetivos`)
+    + **Aluno** (busca por nome/CPF filtrada por `school_id`+`ano_letivo_id`, debounce 300ms) +
+    preview em PDF + botão "Baixar PDF"; identidade visual da escola via `documentos_config` com
+    fallback para `schools`; `cabecalho`/`rodape` sanitizados (`sanitize-html`) para texto puro
+  - **Papel timbrado**: cabeçalho/rodapé (`documentos_config`) renderizados como `<View fixed>` no
+    react-pdf com `conteudo { flexGrow: 1 }` — topo repetido em todas as páginas e rodapé **pregado na
+    base da folha**; sem conteúdo, a área não aparece
+  - **Divisão cabeçalho/rodapé**: o **cabeçalho** contém apenas Logo + Nome Fantasia + texto de
+    cabeçalho (alinhado à coluna do nome); **rodapé** contém endereço (logradouro, número, bairro,
+    município, CEP), contato (telefone, e-mail, site) e o texto de rodapé configurado
+  - **Nome da escola**: cabeçalho exibe apenas o **Nome Fantasia** em destaque (fallback p/ nome oficial);
+    sem nome oficial/CNPJ no rodapé (escola insere isso no texto se quiser)
+  - **Turno**: `turnos` da turma é JSONB de objetos `{turno,...}` — a action extrai `.turno` e retorna
+    `string[]` (corrige "turno [object Object]")
+  - **Title Case**: nomes de pessoas (aluno, filiação, assinatura) exibidos com `nomeTitulo`
+    (partículas da/de/do/e... em minúsculas)
+  - **Datas**: `parseDataLocal` constrói Date local a partir de `YYYY-MM-DD` (evita deslocamento de um
+    dia do UTC — ex.: nascimento 02/08 exibia 01/08); tabela de dados da matrícula removida
+  - **Assinatura editável por emissão**: campos "Nome do responsável"/"Cargo" na Pré-visualização,
+    pré-preenchidos com o padrão das Configurações, editáveis antes de gerar o PDF
+  - **Server actions** `src/lib/actions/documentos.ts`: `buscarAlunosPorAnoLetivo` (dedupe por aluno,
+    prefere matrícula ativa), `getDadosDeclaracaoMatricula` (matrícula + turma + etapa + ano)
+  - **Notas**: 1 migration (seed de recursos, sem tabelas novas); `tsc --noEmit` + `next build` verdes
+    (43 rotas); migrations aplicadas manualmente no SQL Editor (sem CLI Supabase)
+- **Ficha Individual do Aluno (spec 020)**:
+  - Spec + plan + data-model + quickstart em `specs/020-ficha-individual/`
+  - **Galeria de Documentos**: aba "Documentos Oficiais" virou **galeria de minicards** (ícone + nome +
+    descrição + botão "Gerar Documento"); ao clicar, um card com o título do documento renderiza o fluxo
+    de geração (Ano Letivo + Aluno + assinatura editável + pré-visualização + "Baixar PDF") com "Voltar"
+  - **Gerador genérico**: `src/components/documentos/documento-gerador.tsx` encapsula seleção/busca
+    (debounce 300ms), geração `pdf(...).toBlob()` (debounce 400ms), `rasterizarPdf`, download e
+    assinatura; parametrizado por `DocumentoConfig` (`carregarPdf`, `buscarDados`, `nomeArquivo`) —
+    escalável para novos documentos
+  - **Ficha**: `src/components/documentos/ficha-individual-aluno.tsx` (react-pdf) com layout por seções
+    (label/valor em grade compacta — vários campos por linha): 1. Identificação (nome, CPF, nascimento,
+    sexo, cor/raça, nacionalidade, naturalidade, INEP); 2. Filiação; 3. Endereço (CEP formatado
+    `00000-000`); 4. Condições de Saúde ("Possui Deficiência, TEA ou Altas Habilidades" e "Transtornos
+    que impactam a aprendizagem" com Sim/Não + listas, "Recursos de Acessibilidade"; TEA/AH junto das
+    deficiências; títulos em negrito; sem dados → "Não há informações de saúde cadastradas"); 5. Dados
+    de Matrícula (ano, data, etapa, turma, turno); papel timbrado e assinatura idênticos à Declaração;
+    rótulos via `VALOR_DESCRICOES` + `getMunicipioByCodigo`
+  - **Server action**: `getDadosFichaIndividual` em `documentos.ts` (people cadastral + flags de saúde +
+    join matrícula/turma/etapa/ano, ordenação `ativo desc`)
+  - **Helpers**: `src/lib/documentos-pdf.ts` extrai `parseDataLocal`, `dataNascimentoExtenso`,
+    `formatarCpf`, `nomeTitulo`, `enderecoCompleto` (refactor puro da Declaração) + novos `formatarCep`,
+    `formatarData`
+  - **Notas**: 0 migrations; 0 novas deps npm; `tsc --noEmit` + eslint + `next build` verdes (43 rotas)
+  - **Bug fix**: coluna de transcrição é `auxilio_transcricao` (correta). A migration
+    `patch_cleanup_duplicate_columns.sql` **removeu** o typo `auxiliary_transcricao` — a Ficha
+    selecionava a coluna removida e o `people` SELECT falhava ("Aluno ou matrícula não encontrados").
+    Corrigido em `documentos.ts`, `painel-pessoa.ts` (`getSaudeEstudante` — o card de Saúde do Painel
+    falhava silenciosamente), `card-saude.tsx`, `ficha-individual-aluno.tsx` e `censo-regras.ts`;
+    `getDadosFichaIndividual` agora propaga erros reais de query
+- **Boletim Escolar (spec 021)**:
+  - Spec + plan + data-model + quickstart em `specs/021-boletim-escolar/`
+  - Novo documento oficial **numérico** na galeria de Documentos Oficiais (minicard com `GraduationCap`);
+    turmas sem `tipos_avaliacao.numerico` são **bloqueadas** na emissão com mensagem explicativa
+    ("Esta turma utiliza avaliação por [Conceito/Parecer Descritivo]; o Boletim Numérico não está
+    disponível para este Método de Avaliação"); turma com vários métodos gera apenas a parte numérica
+  - **Períodos** = Períodos Avaliativos do calendário (`academico_calendario_eventos`
+    `tipo='periodo_avaliativo'`), ordenados por `data_inicio`; ordem 1-based = coluna `periodo` do
+    motor; label = `descricao` + faixa de datas; filtro por `etapas` quando preenchido; fallback
+    `quantidade_periodos_numerico` ("Período N", sem datas)
+  - **Server actions** `src/lib/actions/boletim.ts`: `getPeriodosBoletim(alunoId, anoLetivoId,
+    schoolId, pessoaId?)` → `{periodos, bloqueado, motivo}`; `getDadosBoletim(alunoId, anoLetivoId,
+    schoolId, pessoaId?, periodo?)` — notas por disciplina via **`calcularDesempenhoAluno`** (mesmas
+    regras do Diário/Fechamento); frequência do período filtrada pela faixa de datas do Período
+    Avaliativo ∩ janela ativa da matrícula (`por_aula` agrupada por `disciplina_id`; `por_dia` geral);
+    `FJ` = presença (%) + falta (total); Resultado Geral = Média do Período entre disciplinas (+
+    Freq. geral e faltas em `por_dia`); **sem** veredito de aprovação/reprovação
+  - **Gerador**: `documento-gerador.tsx` ganhou `buscarPeriodos?` opcional no `DocumentoConfig` +
+    5º param `periodo` em `buscarDados` (retrocompatível); Select "Período de Avaliação" só quando
+    aplicável; bloco de bloqueio via `EmptyState` `ShieldAlert`; grid `lg:grid-cols-3`
+  - **PDF** `src/components/documentos/boletim-escolar.tsx`: papel timbrado (padrão Ficha), seções
+    Identificação Acadêmica · Resultado por Disciplina (tabela condicional por_aula/por_dia com zebra)
+    · Resultado Geral do Período · Data de Emissão (data de geração, local) + assinatura editável
+  - **Reuso**: `validarPermissaoDocumentos`/`montarEscola`/`IdentidadeEscola` exportados de
+    `documentos.ts`
+  - **Notas**: 0 migrations; 0 novas deps npm; `tsc --noEmit` + eslint + `next build` verdes (43 rotas)
+  - **Bug fix (frequência)**: turma `por_aula` com quadro editado gerava horários duplicados (antigos
+    `ativo=false`) e os lançamentos antigos de frequência continuavam na tabela — o Boletim contava
+    cada aula em dobro (ex.: 6 faltas em vez de 5 em Português). `calcularFrequenciaBoletim` agora
+    conta apenas registros de `academico_frequencias_aula` cujo `horario_id` pertence aos horários
+    **ativos** do quadro ativo (mesma regra visível no Diário); **56 registros órfãos** (referenciando
+    horários inativos, todos com gêmeo ativo) foram removidos do banco — Diário/Painel/Fechamento
+    ficam consistentes
 
 ## Known Issues
 - All server actions use `'use server'` + `getSupabaseAdmin()` (service_role, bypass RLS)

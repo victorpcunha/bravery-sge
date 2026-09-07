@@ -70,6 +70,7 @@ import BnccCompetenciasPage from '@/app/(app)/bncc/competencias-habilidades/page
 import CensoEscolarPage from '@/app/(app)/(auth)/censo-escolar/page'
 import DocentesPage from '@/app/(app)/docentes/page'
 import AuditoriaPage from '@/app/(app)/auditoria/page'
+import DocumentosPage from '@/app/(app)/documentos/page'
 
 export const TAB_MODULES = {
   dashboard: 'dashboard',
@@ -100,6 +101,7 @@ export const TAB_MODULES = {
   'censo-escolar': 'censo-escolar',
   docentes: 'docentes',
   auditoria: 'auditoria',
+  documentos: 'documentos',
 } as const
 
 export type TabModuleId = (typeof TAB_MODULES)[keyof typeof TAB_MODULES]
@@ -141,6 +143,7 @@ export const MODULES: Record<TabModuleId, ModuleMeta> = {
   [TAB_MODULES['censo-escolar']]: { title: 'Censo Escolar', icon: FileText },
   [TAB_MODULES.docentes]: { title: 'Docentes', icon: Briefcase },
   [TAB_MODULES.auditoria]: { title: 'Auditoria', icon: ScrollText },
+  [TAB_MODULES.documentos]: { title: 'Documentos', icon: FileText },
 }
 
 export type TabRoute = {
@@ -284,6 +287,9 @@ const ROUTES: TabRoute[] = [
 
   // Auditoria (exclusiva Superadmin)
   { module: TAB_MODULES.auditoria, match: exact('/auditoria'), Component: AuditoriaPage },
+
+  // Documentos
+  { module: TAB_MODULES.documentos, match: exact('/documentos'), Component: DocumentosPage },
 ]
 
 export function resolveTabRoute(pathname: string): ResolvedTabRoute | null {

@@ -163,6 +163,12 @@ const modules: Module[] = [
     recurso: 'censo-escolar',
   },
   {
+    title: 'Documentos',
+    href: '/documentos',
+    icon: FileText,
+    recurso: null,
+  },
+  {
     title: 'Auditoria',
     href: '/auditoria',
     icon: ScrollText,
@@ -227,6 +233,15 @@ export function AppSidebar() {
       return null
     }
     if (module.title === 'Escolas' && permLoaded && !pode.visualizar('escolas')) {
+      return null
+    }
+    if (
+      module.title === 'Documentos' &&
+      permLoaded &&
+      !isSuperAdmin &&
+      !isSetup &&
+      !['documentos.oficiais', 'documentos.preencher', 'relatorios'].some(cod => pode.visualizar(cod))
+    ) {
       return null
     }
     if (!module.submenu) {

@@ -5,19 +5,26 @@ import { useParams } from 'next/navigation'
 
 export type TabParams = Record<string, string>
 
-const TabParamsContext = createContext<TabParams>({})
+type TabContextValue = {
+  params: TabParams
+  active: boolean
+}
+
+const TabContext = createContext<TabContextValue>({ params: {}, active: true })
 
 export function TabParamsProvider({
   params,
+  active = true,
   children,
 }: {
   params: TabParams
+  active?: boolean
   children: React.ReactNode
 }) {
   return (
-    <TabParamsContext.Provider value={params}>
+    <TabContext.Provider value={{ params, active }}>
       {children}
-    </TabParamsContext.Provider>
+    </TabContext.Provider>
   )
 }
 
@@ -26,8 +33,17 @@ export function TabParamsProvider({
  * TabWorkspace). Fora das abas, cai de volta no `useParams()` do Next.
  */
 export function useTabParams(): TabParams {
-  const ctx = useContext(TabParamsContext)
+  const ctx = useContext(TabContext)
   const own = useParams() as TabParams
-  if (Object.keys(ctx).length > 0) return ctx
+  if (Object.keys(ctx.params).length > 0) return ctx.params
   return own || {}
+}
+
+/**
+ * Indica se a entrada (painel) da aba está ativa/visível. Fora do sistema de
+ * abas, é sempre `true`. Permite que páginas com keep-alive refaçam buscas
+ * quando voltam a ficar visíveis (ex.: voltar do cadastro para a listagem).
+ */
+export function useTabActive(): boolean {
+  return useContext(TabContext).active
 }

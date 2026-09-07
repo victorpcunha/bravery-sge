@@ -1,10 +1,10 @@
 'use client'
 
-import { useForm, useWatch } from 'react-hook-form'
+import { useForm, useWatch, type FieldErrors } from 'react-hook-form'
 import { useEffect, useState } from 'react'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { Loader2, Plus, Trash2, Users, Eye } from 'lucide-react'
+import { Loader2, Plus, Trash2, Users, Eye, X, ImagePlus } from 'lucide-react'
 
 import {
   Form,
@@ -15,6 +15,7 @@ import {
   FormMessage,
 } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
+import { Textarea } from '@/components/ui/textarea'
 import { Button } from '@/components/ui/button'
 import {
   Select,
@@ -51,6 +52,7 @@ import { EmptyState } from '@/components/ui/empty-state'
 import { PROFISSOES_CENSO } from '@/data/funcoes-censo'
 import { getProfissionaisCenso, type ProfissionalCenso } from '@/lib/actions/censo-profissionais'
 import { useRouter, useSearchParams } from 'next/navigation'
+import { toast } from 'sonner'
 import { MUNICIPIOS_CEARA } from '@/data/censo/municipios-ceara'
 import { ORGAOS_REGIONAIS_CEARA } from '@/data/censo/orgaos-regionais-ceara'
 
@@ -74,6 +76,51 @@ function formatDataNascimento(data: string | null | undefined) {
   return `${dd}/${mm}/${date.getFullYear()}`
 }
 
+/**
+ * Converte os valores vindos do banco para o formato esperado pelo form:
+ * - `null`/`undefined` → `''`
+ * - `boolean` → `'1'`/`'0'` (as colunas de checkbox são BOOLEAN no banco)
+ * - `number` → `String(n)` (as colunas `qtd_*`/`prof_*` são INTEGER)
+ * O schema e a UI trabalham exclusivamente com strings ('1'/'0', '20', etc.);
+ * sem essa conversão o zod falha com "expected string, received number/boolean".
+ */
+function normalizarValores<T>(valores: T): T {
+  if (valores === null || valores === undefined) return '' as T
+  if (typeof valores === 'boolean') return (valores ? '1' : '0') as T
+  if (typeof valores === 'number') return String(valores) as T
+  if (Array.isArray(valores)) {
+    return valores.map((v) => normalizarValores(v)) as T
+  }
+  if (typeof valores === 'object') {
+    const out: Record<string, unknown> = {}
+    for (const [k, v] of Object.entries(valores as Record<string, unknown>)) {
+      out[k] = normalizarValores(v)
+    }
+    return out as T
+  }
+  return valores
+}
+
+/**
+ * Converte recursivamente `''` em `null` antes de enviar ao banco.
+ * O banco possui colunas numéricas/booleanas que rejeitam `''` (erro 22P02);
+ * `null` é aceito por qualquer tipo e representa "vazio" de forma segura.
+ */
+function vazioParaNull<T>(valores: T): T {
+  if (valores === '') return null as T
+  if (Array.isArray(valores)) {
+    return valores.map((v) => vazioParaNull(v)) as T
+  }
+  if (typeof valores === 'object' && valores !== null) {
+    const out: Record<string, unknown> = {}
+    for (const [k, v] of Object.entries(valores as Record<string, unknown>)) {
+      out[k] = vazioParaNull(v)
+    }
+    return out as T
+  }
+  return valores
+}
+
 const digitString = (len: number, msg: string) =>
   z
     .string()
@@ -82,6 +129,93 @@ const digitString = (len: number, msg: string) =>
     .refine((v) => !v || v.length === len, {
       message: `Deve ter exatamente ${len} dígitos`,
     })
+
+/**
+ * Mapeia um campo do formulário para a aba em que ele é renderizado.
+ * Usado para os badges de erro por aba e para a navegação automática no submit.
+ */
+const CAMPO_PARA_ABA: Record<string, string> = {
+  nome_escola: 'identificacao',
+  codigo_inep: 'identificacao',
+  situacao_funcionamento: 'identificacao',
+  email: 'identificacao',
+  formato_organizacional: 'identificacao',
+  ddd: 'identificacao',
+  telefone_1: 'identificacao',
+  telefone_2: 'identificacao',
+
+  cep: 'endereco',
+  municipio: 'endereco',
+  distrito: 'endereco',
+  bairro: 'endereco',
+  endereco: 'endereco',
+  numero: 'endereco',
+  complemento: 'endereco',
+  localizacao: 'endereco',
+  localizacao_diferenciada: 'endereco',
+  codigo_orgao_regional: 'endereco',
+
+  dependencia_administrativa: 'administrativo',
+  categoria_escola_privada: 'administrativo',
+  cnpj: 'administrativo',
+  cnpj_mantenedora: 'administrativo',
+  regulamentacao: 'administrativo',
+  esfera_regulamentacao: 'administrativo',
+  unidade_vinculada: 'administrativo',
+  codigo_escola_sede: 'administrativo',
+  codigo_ies: 'administrativo',
+
+  qtd_salas_dentro: 'acessibilidade',
+  qtd_salas_fora: 'acessibilidade',
+  qtd_salas_climatizadas: 'acessibilidade',
+  qtd_salas_acessiveis: 'acessibilidade',
+  qtd_salas_leitura: 'acessibilidade',
+
+  rede_local: 'equipamentos',
+  internet_equip_alunos: 'equipamentos',
+  internet_banda_larga: 'equipamentos',
+
+  lingua_ensino: 'gestao',
+  ppp_atualizado: 'gestao',
+  alimentacao_escolar: 'gestao',
+  exame_selecao: 'gestao',
+  site_blog: 'gestao',
+  compartilha_espacos: 'gestao',
+  usa_entorno: 'gestao',
+  educacao_ambiental: 'gestao',
+}
+
+function tabDoCampo(campo: string): string {
+  if (campo.startsWith('documentos.')) return 'identificacao'
+  if (campo.startsWith('orgao_') || campo.startsWith('mant_') || campo.startsWith('contr_') || campo.startsWith('parceria_')) return 'administrativo'
+  if (campo.startsWith('compartilha_codigo') || campo.startsWith('local_') || campo.startsWith('agua_') || campo.startsWith('energia_') || campo.startsWith('esgoto_') || campo.startsWith('lixo_')) return 'local-saneamento'
+  if (campo.startsWith('dep_')) return 'dependencias'
+  if (campo.startsWith('acess_') || campo.startsWith('qtd_salas')) return 'acessibilidade'
+  if (campo.startsWith('eq_') || campo.startsWith('internet_') || campo.startsWith('qtd_')) return 'equipamentos'
+  if (campo.startsWith('prof_') || campo.startsWith('mat_')) return 'profissionais'
+  if (campo.startsWith('cota_') || campo.startsWith('org_') || campo.startsWith('amb_') || campo.startsWith('codigo_lingua_')) return 'gestao'
+  return CAMPO_PARA_ABA[campo] || 'identificacao'
+}
+
+/**
+ * Extrai os nomes dos campos com erro (folhas) do objeto de erros do RHF,
+ * incluindo campos aninhados como `documentos.email_doc`.
+ */
+function coletarCamposComErro(errors: Record<string, any>): string[] {
+  const campos: string[] = []
+  const walk = (obj: Record<string, any>, prefix: string) => {
+    for (const [k, v] of Object.entries(obj || {})) {
+      if (!v) continue
+      if (typeof v === 'object' && 'message' in v) {
+        campos.push(prefix ? `${prefix}.${k}` : k)
+      } else if (typeof v === 'object') {
+        walk(v, prefix ? `${prefix}.${k}` : k)
+      }
+    }
+  }
+  walk(errors, '')
+  return campos
+}
 
 const phoneRegex = /^\d{8,9}$/
 
@@ -106,6 +240,27 @@ function isValidCNPJ(cnpj: string): boolean {
 }
 
 const escolaFormSchema = z.object({
+  // Configurações de Documentos (uso interno; não vão ao Censo)
+  documentos: z.object({
+    nome_escola_doc: z.string().optional(),
+    cnpj_doc: z.string().optional(),
+    logradouro_doc: z.string().optional(),
+    numero_doc: z.string().optional(),
+    bairro_doc: z.string().optional(),
+    municipio_doc: z.string().optional(),
+    cep_doc: z.string().optional(),
+    telefone_doc: z.string().optional(),
+    email_doc: z.string().optional(),
+    nome_fantasia: z.string().optional(),
+    site: z.string().optional(),
+    mantenedora: z.string().optional(),
+    cabecalho: z.string().optional(),
+    rodape: z.string().optional(),
+    responsavel_nome: z.string().optional(),
+    responsavel_cargo: z.string().optional(),
+    logo: z.string().optional(),
+  }).optional(),
+
   // Tab 1: Identificação
   nome_escola: z.string().min(1, 'Nome da escola é obrigatório'),
   codigo_inep: digitString(8, 'Apenas dígitos'),
@@ -904,6 +1059,118 @@ function InputField({
   )
 }
 
+function TextareaField({
+  control,
+  name,
+  label,
+  placeholder,
+  rows,
+  disabled,
+}: {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  control: any
+  name: string
+  label: string
+  placeholder?: string
+  rows?: number
+  disabled?: boolean
+}) {
+  return (
+    <FormField
+      control={control}
+      name={name}
+      render={({ field }) => (
+        <FormItem>
+          <FormLabel>{label}</FormLabel>
+          <FormControl>
+            <Textarea
+              placeholder={placeholder}
+              rows={rows || 3}
+              disabled={disabled}
+              {...field}
+              value={field.value || ''}
+            />
+          </FormControl>
+          <FormMessage />
+        </FormItem>
+      )}
+    />
+  )
+}
+
+const LOGO_MAX_BYTES = 2 * 1024 * 1024
+
+function LogoField({
+  control,
+  name,
+  label,
+  disabled,
+}: {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  control: any
+  name: string
+  label: string
+  disabled?: boolean
+}) {
+  const lerArquivo = (file: File | undefined, onChange: (v: string) => void) => {
+    if (!file) return
+    if (file.size > LOGO_MAX_BYTES) return
+    const reader = new FileReader()
+    reader.onload = () => onChange(typeof reader.result === 'string' ? reader.result : '')
+    reader.readAsDataURL(file)
+  }
+
+  return (
+    <FormField
+      control={control}
+      name={name}
+      render={({ field }) => (
+        <FormItem>
+          <FormLabel>{label}</FormLabel>
+          <FormControl>
+            <div className="space-y-2">
+              {field.value ? (
+                <div className="flex items-start gap-3">
+                  <div className="h-16 w-32 rounded-lg border border-border bg-muted/40 flex items-center justify-center overflow-hidden">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={field.value} alt="Logo da instituição" className="max-h-full max-w-full object-contain" />
+                  </div>
+                  {!disabled && (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="icon-sm"
+                      title="Remover logo"
+                      onClick={() => field.onChange('')}
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
+                  )}
+                </div>
+              ) : (
+                <label
+                  className={`flex items-center justify-center gap-2 rounded-lg border border-dashed border-border px-4 py-6 text-[13px] text-muted-foreground cursor-pointer hover:border-primary/40 hover:bg-muted/30 ${disabled ? 'pointer-events-none opacity-60' : ''}`}
+                >
+                  <ImagePlus className="h-4 w-4" />
+                  Selecione a imagem do logo (PNG/JPEG, até 2 MB)
+                  <input
+                    type="file"
+                    accept="image/png,image/jpeg,image/webp"
+                    className="hidden"
+                    disabled={disabled}
+                    onChange={(e) => lerArquivo(e.target.files?.[0], field.onChange)}
+                  />
+                </label>
+              )}
+            </div>
+          </FormControl>
+          <FormMessage />
+        </FormItem>
+      )}
+    />
+  )
+}
+
 // ───────────────────── Component ─────────────────────
 
 export function EscolaForm({
@@ -918,7 +1185,7 @@ export function EscolaForm({
 }: EscolaFormProps) {
   const form = useForm<EscolaFormValues>({
     resolver: zodResolver(escolaFormSchema),
-    defaultValues: (defaultValues || {}) as EscolaFormValues,
+    defaultValues: normalizarValores((defaultValues || {}) as Record<string, unknown>) as EscolaFormValues,
   })
 
   const { control, handleSubmit } = form
@@ -987,7 +1254,7 @@ export function EscolaForm({
   }, [searchParams])
 
   useEffect(() => {
-    if (!campoDestaque || !defaultValues) return
+    if (!campoDestaque) return
     const timer = setTimeout(() => {
       const el = document.querySelector(`[data-field="${campoDestaque}"]`)
       if (!el) return
@@ -1001,7 +1268,7 @@ export function EscolaForm({
       el.addEventListener('animationend', limpar)
     }, 350)
     return () => clearTimeout(timer)
-  }, [campoDestaque, defaultValues, activeTab])
+  }, [campoDestaque, activeTab])
 
   const situacaoFuncionamento = useWatch({ control, name: 'situacao_funcionamento' })
   const dependenciaAdministrativa = useWatch({ control, name: 'dependencia_administrativa' })
@@ -1088,6 +1355,9 @@ export function EscolaForm({
   const mantSemFinsLucrativos = useWatch({ control, name: 'mant_sem_fins_lucrativos' })
   const municipioWatch = useWatch({ control, name: 'municipio' })
   const distritoWatch = useWatch({ control, name: 'distrito' })
+  const municipioDocWatch = useWatch({ control, name: 'documentos.municipio_doc' })
+  const municipioDocSelecionado = MUNICIPIOS_CEARA.find(m => m.codigo === municipioDocWatch)
+  const municipioDocNome = municipioDocSelecionado ? `${municipioDocSelecionado.nome} / ${municipioDocSelecionado.uf}` : ''
 
   const municipiosOptions = MUNICIPIOS_CEARA.map(m => ({
     value: m.codigo,
@@ -1130,8 +1400,37 @@ export function EscolaForm({
     const totalGeral = Object.values(contagensProf).reduce((a, b) => a + b, 0)
     form.setValue('prof_nenhum', totalGeral === 0 ? '1' : '0')
     const novosDados = form.getValues()
-    return onSubmit(novosDados as unknown as Record<string, unknown>)
+    return onSubmit(vazioParaNull(novosDados) as unknown as Record<string, unknown>)
   }
+
+  const camposComErro = coletarCamposComErro(form.formState.errors as Record<string, any>)
+  const errosPorAba: Record<string, number> = {}
+  for (const c of camposComErro) {
+    const aba = tabDoCampo(c)
+    errosPorAba[aba] = (errosPorAba[aba] || 0) + 1
+  }
+
+  const handleSubmitOnInvalid = (errors: FieldErrors<EscolaFormValues>) => {
+    const campos = coletarCamposComErro(errors as Record<string, any>)
+    const primeiro = campos[0]
+    if (!primeiro) return
+    const aba = tabDoCampo(primeiro)
+    setActiveTab(aba)
+    setCampoDestaque(primeiro)
+    const total = campos.length
+    toast.error(
+      total === 1
+        ? 'Existe um campo pendente. Corrija o campo destacado para salvar.'
+        : `Existem ${total} campos pendentes. Verifique as abas com alerta e corrija os campos destacados.`,
+    )
+  }
+
+  const renderBadgeErros = (aba: string) =>
+    errosPorAba[aba] ? (
+      <span className="ml-1 inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-destructive px-1.5 text-[11px] font-semibold leading-none text-white tabular-nums">
+        {errosPorAba[aba]}
+      </span>
+    ) : null
 
   // ──────── Common Select Options ────────
 
@@ -1629,70 +1928,87 @@ export function EscolaForm({
 
       <Form {...form}>
         <form
-          onSubmit={handleSubmit(submitHandler)}
+          onSubmit={handleSubmit(submitHandler, handleSubmitOnInvalid)}
           className="flex flex-col gap-6"
         >
-          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+          <Tabs
+            value={activeTab}
+            onValueChange={(tab) => {
+              setActiveTab(tab)
+              const primeiroNaAba = camposComErro.find((c) => tabDoCampo(c) === tab)
+              if (primeiroNaAba) setCampoDestaque(primeiroNaAba)
+            }}
+            className="w-full"
+          >
             <TabsList className="flex h-auto min-h-[54px] w-full flex-nowrap items-stretch justify-start gap-1 overflow-x-auto overflow-y-hidden rounded-lg bg-muted/60 px-1 pt-1 pb-[10px] [&_[data-slot='tabs-trigger']]:min-w-max">
               <TabsTrigger
                 value="identificacao"
                 className="h-10 min-h-[40px] rounded-md px-3 text-[14px] font-semibold text-foreground/80 transition-colors hover:bg-accent/10 hover:text-accent-foreground data-active:bg-primary data-active:text-primary-foreground data-active:shadow-sm data-active:hover:bg-primary data-active:hover:text-primary-foreground sm:px-4"
               >
                 Identificação
+                {renderBadgeErros('identificacao')}
               </TabsTrigger>
                 <TabsTrigger
                   value="endereco"
                   className="h-10 min-h-[40px] rounded-md px-3 text-[14px] font-semibold text-foreground/80 transition-colors hover:bg-accent/10 hover:text-accent-foreground data-active:bg-primary data-active:text-primary-foreground data-active:shadow-sm data-active:hover:bg-primary data-active:hover:text-primary-foreground sm:px-4"
                 >
                   Endereço
+                  {renderBadgeErros('endereco')}
                 </TabsTrigger>
                 <TabsTrigger
                   value="administrativo"
                   className="h-10 min-h-[40px] rounded-md px-3 text-[14px] font-semibold text-foreground/80 transition-colors hover:bg-accent/10 hover:text-accent-foreground data-active:bg-primary data-active:text-primary-foreground data-active:shadow-sm data-active:hover:bg-primary data-active:hover:text-primary-foreground sm:px-4"
                 >
                   Administrativo
+                  {renderBadgeErros('administrativo')}
                 </TabsTrigger>
                 <TabsTrigger
                   value="local-saneamento"
                   className="h-10 min-h-[40px] rounded-md px-3 text-[14px] font-semibold text-foreground/80 transition-colors hover:bg-accent/10 hover:text-accent-foreground data-active:bg-primary data-active:text-primary-foreground data-active:shadow-sm data-active:hover:bg-primary data-active:hover:text-primary-foreground sm:px-4"
                 >
                   Local e Saneamento
+                  {renderBadgeErros('local-saneamento')}
                 </TabsTrigger>
                 <TabsTrigger
                   value="dependencias"
                   className="h-10 min-h-[40px] rounded-md px-3 text-[14px] font-semibold text-foreground/80 transition-colors hover:bg-accent/10 hover:text-accent-foreground data-active:bg-primary data-active:text-primary-foreground data-active:shadow-sm data-active:hover:bg-primary data-active:hover:text-primary-foreground sm:px-4"
                 >
                   Dependências Físicas
+                  {renderBadgeErros('dependencias')}
                 </TabsTrigger>
                 <TabsTrigger
                   value="acessibilidade"
                   className="h-10 min-h-[40px] rounded-md px-3 text-[14px] font-semibold text-foreground/80 transition-colors hover:bg-accent/10 hover:text-accent-foreground data-active:bg-primary data-active:text-primary-foreground data-active:shadow-sm data-active:hover:bg-primary data-active:hover:text-primary-foreground sm:px-4"
                 >
                   Acessibilidade e Salas
+                  {renderBadgeErros('acessibilidade')}
                 </TabsTrigger>
                 <TabsTrigger
                   value="equipamentos"
                   className="h-10 min-h-[40px] rounded-md px-3 text-[14px] font-semibold text-foreground/80 transition-colors hover:bg-accent/10 hover:text-accent-foreground data-active:bg-primary data-active:text-primary-foreground data-active:shadow-sm data-active:hover:bg-primary data-active:hover:text-primary-foreground sm:px-4"
                 >
                   Equipamentos e Internet
+                  {renderBadgeErros('equipamentos')}
                 </TabsTrigger>
                 <TabsTrigger
                   value="profissionais"
                   className="h-10 min-h-[40px] rounded-md px-3 text-[14px] font-semibold text-foreground/80 transition-colors hover:bg-accent/10 hover:text-accent-foreground data-active:bg-primary data-active:text-primary-foreground data-active:shadow-sm data-active:hover:bg-primary data-active:hover:text-primary-foreground sm:px-4"
                 >
                   Profissionais e Materiais
+                  {renderBadgeErros('profissionais')}
                 </TabsTrigger>
                 <TabsTrigger
                   value="gestao"
                   className="h-10 min-h-[40px] rounded-md px-3 text-[14px] font-semibold text-foreground/80 transition-colors hover:bg-accent/10 hover:text-accent-foreground data-active:bg-primary data-active:text-primary-foreground data-active:shadow-sm data-active:hover:bg-primary data-active:hover:text-primary-foreground sm:px-4"
                 >
                   Gestão Escolar
+                  {renderBadgeErros('gestao')}
                 </TabsTrigger>
               </TabsList>
               <fieldset disabled={readOnly} className="contents">
 
             {/* ══════ Tab 1: Identificação ══════ */}
-            <TabsContent value="identificacao">
+            <TabsContent value="identificacao" className="flex flex-col gap-6">
               <Card>
                 <CardHeader>
                   <CardTitle>Identificação da Escola (Registro 00)</CardTitle>
@@ -1775,6 +2091,184 @@ export function EscolaForm({
                   </div>
                 </CardContent>
               </Card>
+
+              {/* ══════ Configurações de Documentos (uso interno) ══════ */}
+              {schoolId && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-[16px] font-semibold">Configurações de Documentos</CardTitle>
+                    <p className="text-[13px] text-muted-foreground">
+                      Dados usados pelo módulo de Documentos para compor o cabeçalho, rodapé e identidade
+                      visual dos documentos e relatórios da escola. Estes campos são do sistema e
+                      <strong className="text-foreground"> não são exportados no Censo Escolar</strong>.
+                    </p>
+                  </CardHeader>
+                  <CardContent className="flex flex-col gap-6">
+                    <div className="border border-border rounded-lg p-4 bg-muted/30">
+                      <h4 className="text-sm font-semibold text-foreground mb-3">Dados replicados do cadastro</h4>
+                      <p className="text-[12px] text-muted-foreground mb-4">
+                        Cópias independentes, preenchidas automaticamente a partir do cadastro oficial.
+                        Alterá-las aqui não modifica o cadastro da Unidade Escolar nem o Censo.
+                      </p>
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div className="md:col-span-2">
+                          <InputField
+                            control={control}
+                            name="documentos.nome_escola_doc"
+                            label="Nome da Escola"
+                            placeholder="Nome completo da escola"
+                          />
+                        </div>
+                        <InputField
+                          control={control}
+                          name="documentos.cnpj_doc"
+                          label="CNPJ"
+                          placeholder="14 dígitos"
+                          maxLength={14}
+                          digitsOnly
+                        />
+                        <div className="md:col-span-2">
+                          <InputField
+                            control={control}
+                            name="documentos.logradouro_doc"
+                            label="Logradouro"
+                            placeholder="Endereço da escola"
+                          />
+                        </div>
+                        <InputField
+                          control={control}
+                          name="documentos.numero_doc"
+                          label="Número"
+                          placeholder="Nº"
+                        />
+                        <InputField
+                          control={control}
+                          name="documentos.bairro_doc"
+                          label="Bairro"
+                          placeholder="Bairro"
+                        />
+                        <FormField
+                          control={control}
+                          name="documentos.municipio_doc"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Município</FormLabel>
+                              <FormControl>
+                                <Combobox
+                                  options={municipiosOptions}
+                                  value={field.value || ''}
+                                  onChange={field.onChange}
+                                  placeholder="Selecione o município"
+                                  searchPlaceholder="Buscar município..."
+                                  emptyMessage="Nenhum município encontrado."
+                                  disabled={readOnly}
+                                  maxOptions={200}
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        <div className="md:col-span-1">
+                          <InputField
+                            control={control}
+                            name="documentos.cep_doc"
+                            label="CEP"
+                            placeholder="8 dígitos"
+                            maxLength={8}
+                            digitsOnly
+                          />
+                        </div>
+                        <InputField
+                          control={control}
+                          name="documentos.telefone_doc"
+                          label="Telefone"
+                          placeholder="(99) 99999-9999 · (99) 99999-9999"
+                          maxLength={60}
+                        />
+                        <div className="md:col-span-2">
+                          <InputField
+                            control={control}
+                            name="documentos.email_doc"
+                            label="E-mail"
+                            placeholder="contato@escola.edu.br"
+                          />
+                        </div>
+                      </div>
+                      {municipioDocNome && (
+                        <p className="text-[12px] text-muted-foreground mt-2">
+                          Município selecionado: <span className="font-medium text-foreground">{municipioDocNome}</span>
+                        </p>
+                      )}
+                    </div>
+
+                    <div className="border border-border rounded-lg p-4 bg-muted/30">
+                      <h4 className="text-sm font-semibold text-foreground mb-3">Identidade visual</h4>
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div className="md:col-span-3">
+                          <LogoField control={control} name="documentos.logo" label="Logo da instituição" disabled={readOnly} />
+                        </div>
+                        <InputField
+                          control={control}
+                          name="documentos.nome_fantasia"
+                          label="Nome fantasia"
+                          placeholder="Se aplicável"
+                        />
+                        <InputField
+                          control={control}
+                          name="documentos.site"
+                          label="Site"
+                          placeholder="https://..."
+                        />
+                        <div className="md:col-span-3">
+                          <TextareaField
+                            control={control}
+                            name="documentos.mantenedora"
+                            label="Dados da mantenedora"
+                            placeholder="Se aplicável"
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="border border-border rounded-lg p-4 bg-muted/30">
+                      <h4 className="text-sm font-semibold text-foreground mb-3">Cabeçalho e rodapé</h4>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <TextareaField
+                          control={control}
+                          name="documentos.cabecalho"
+                          label="Informações que aparecem no cabeçalho"
+                          placeholder="Textos e informações exibidos no cabeçalho dos documentos"
+                        />
+                        <TextareaField
+                          control={control}
+                          name="documentos.rodape"
+                          label="Configurações de rodapé"
+                          placeholder="Textos e configurações exibidos no rodapé dos documentos"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="border border-border rounded-lg p-4 bg-muted/30">
+                      <h4 className="text-sm font-semibold text-foreground mb-3">Assinatura</h4>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <InputField
+                          control={control}
+                          name="documentos.responsavel_nome"
+                          label="Responsável pela assinatura"
+                          placeholder="Nome do responsável"
+                        />
+                        <InputField
+                          control={control}
+                          name="documentos.responsavel_cargo"
+                          label="Cargo/Função do responsável"
+                          placeholder="Ex.: Diretor(a)"
+                        />
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
             </TabsContent>
 
             {/* ══════ Tab 2: Endereço ══════ */}

@@ -77,7 +77,7 @@ export type SaudeEstudante = {
   tdah: boolean | null
   tpac: boolean | null
   auxilio_ledor: boolean | null
-  auxiliary_transcricao: boolean | null
+  auxilio_transcricao: boolean | null
   guia_interprete: boolean | null
   tradutor_libras: boolean | null
   leitura_labial: boolean | null
@@ -391,7 +391,7 @@ export async function getSaudeEstudante(
         deficiencia_fisica, deficiencia_intelectual, deficiencia_multipla,
         tea, altas_habilidades, transtorno_aprendizagem,
         discalculia, disgrafia, dislalia, dislexia, tdah, tpac,
-        auxilio_ledor, auxiliary_transcricao, guia_interprete,
+        auxilio_ledor, auxilio_transcricao, guia_interprete,
         tradutor_libras, leitura_labial, prova_ampliada,
         prova_superampliada, cd_audio, prova_libras,
         prova_video_libras, material_braille, prova_braille,

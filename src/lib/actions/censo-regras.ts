@@ -1912,7 +1912,7 @@ export async function validarRegistro30(schoolId: string): Promise<ErroValidacao
 
   // RECURSO campo → people column mapping
   const RECURSO_CAMPO_COL: Record<number, string> = {
-    36: 'auxilio_ledor', 37: 'auxiliary_transcricao', 38: 'guia_interprete',
+    36: 'auxilio_ledor', 37: 'auxilio_transcricao', 38: 'guia_interprete',
     39: 'tradutor_libras', 40: 'leitura_labial', 41: 'prova_ampliada',
     42: 'prova_superampliada', 43: 'cd_audio', 44: 'prova_libras',
     45: 'prova_video_libras', 46: 'material_braille', 48: 'tempo_adicional',

@@ -18,6 +18,7 @@ import { StatusBadge } from '@/components/feedback/status-badge'
 import { Plus, DoorOpen, GraduationCap, Pencil } from 'lucide-react'
 import { getMatriculas } from '@/lib/actions/matriculas'
 import { getAnosLetivosAtivos } from '@/lib/actions/quadro-aulas'
+import { useTabActive } from '@/lib/tab-params'
 import { labelSituacaoMatricula, variantSituacaoMatricula, SITUACOES_MATRICULA } from '@/lib/situacoes-matricula'
 import { toast } from 'sonner'
 
@@ -44,6 +45,7 @@ export default function AlunosMatriculadosPage() {
   const [situacaoFilter, setSituacaoFilter] = useState('__all__')
   const [anoLetivoFiltro, setAnoLetivoFiltro] = useState('')
   const [anosLetivos, setAnosLetivos] = useState<any[]>([])
+  const tabActive = useTabActive()
 
   useEffect(() => { if (!authLoading && !user) router.push('/login') }, [user, authLoading, router])
 
@@ -70,7 +72,9 @@ export default function AlunosMatriculadosPage() {
     finally { setLoading(false) }
   }, [effectiveSchoolId, anoLetivoFiltro])
 
-  useEffect(() => { loadMatriculas() }, [loadMatriculas])
+  useEffect(() => {
+    if (tabActive) loadMatriculas()
+  }, [tabActive, loadMatriculas])
 
   const filtered = matriculas.filter(m => {
     const nome = m.aluno?.nome_completo || m.pessoa?.nome_completo || ''

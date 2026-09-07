@@ -214,6 +214,7 @@ export async function createMatricula(data: {
 }
 
 export async function updateMatricula(id: string, data: {
+  data_matricula?: string
   turma_id?: string
   etapa_ensino_id?: string
   subetapa_id?: string | null

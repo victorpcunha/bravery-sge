@@ -36,7 +36,7 @@ const TRANSTORNOS: Record<string, string> = {
 
 const RECURSOS_SAEB: Record<string, string> = {
   auxilio_ledor: 'Auxílio Ledor',
-  auxiliary_transcricao: 'Auxílio Transcrição',
+  auxilio_transcricao: 'Auxílio Transcrição',
   guia_interprete: 'Guia Intérprete',
   tradutor_libras: 'Tradutor de Libras',
   leitura_labial: 'Leitura Labial',

@@ -499,6 +499,7 @@ export default function MatriculaCadastroContent({ searchParams }: { searchParam
 
       if (isEditing && editId) {
         await updateMatricula(editId, {
+          data_matricula: form.data_matricula,
           turma_id: form.turma_id,
           etapa_ensino_id: form.etapa_ensino_id,
           subetapa_id: form.subetapa_id || null,

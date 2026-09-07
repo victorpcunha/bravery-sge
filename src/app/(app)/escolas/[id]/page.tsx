@@ -7,6 +7,8 @@ import { Trash2, ShieldAlert, Eye, ArrowLeft, School as SchoolIcon } from 'lucid
 import { Button } from '@/components/ui/button'
 import { EscolaForm } from '@/components/censo/escola-form'
 import { getSchool, updateSchool, deleteSchool, type School } from '@/lib/actions/schools'
+import { getConfigDocumentos, salvarConfigDocumentos, type ConfigDocumentos } from '@/lib/actions/documentos-config'
+import { seedDocumentosFromSchool, type ConfigDocumentosForm } from '@/lib/documentos-config'
 import { toast } from 'sonner'
 import { PageContainer } from '@/components/layout/page-container'
 import { PageHeader } from '@/components/layout/page-header'
@@ -15,6 +17,47 @@ import { Card } from '@/components/ui/card'
 import { ConfirmDialog } from '@/components/feedback/confirm-dialog'
 import { useAuth } from '@/components/providers/auth-provider'
 import { usePermissoes } from '@/hooks/use-permissoes'
+
+function toFormConfig(config: ConfigDocumentos): ConfigDocumentosForm {
+  return {
+    nome_escola_doc: config.nome_escola_doc || '',
+    cnpj_doc: config.cnpj_doc || '',
+    logradouro_doc: config.logradouro_doc || '',
+    numero_doc: config.numero_doc || '',
+    bairro_doc: config.bairro_doc || '',
+    municipio_doc: config.municipio_doc || '',
+    cep_doc: config.cep_doc || '',
+    telefone_doc: config.telefone_doc || '',
+    email_doc: config.email_doc || '',
+    nome_fantasia: config.nome_fantasia || '',
+    site: config.site || '',
+    mantenedora: config.mantenedora || '',
+    cabecalho: config.cabecalho || '',
+    rodape: config.rodape || '',
+    responsavel_nome: config.responsavel_nome || '',
+    responsavel_cargo: config.responsavel_cargo || '',
+    logo: config.logo || '',
+  }
+}
+
+/**
+ * Combina o cadastro da escola com a config salva.
+ * Os campos replicados ("Dados replicados do cadastro") são sempre re-semeados
+ * a partir do cadastro oficial quando ainda não há valor salvo — assim o CNPJ,
+ * endereço, telefones, etc. aparecem preenchidos mesmo quando a primeira
+ * configuração foi criada antes de a escola ter esses dados. Valores salvos
+ * (editados no card) prevalecem sobre o seed.
+ */
+function combinarConfigDocumentos(school: School, config: ConfigDocumentos | null): ConfigDocumentosForm {
+  const seed = seedDocumentosFromSchool(school)
+  if (!config) return seed
+  const salvo = toFormConfig(config)
+  const merged: ConfigDocumentosForm = { ...seed }
+  for (const [chave, valor] of Object.entries(salvo)) {
+    if (valor) merged[chave as keyof ConfigDocumentosForm] = valor
+  }
+  return merged
+}
 
 export default function UnidadeEscolarPage() {
   const router = useRouter()
@@ -44,10 +87,10 @@ export default function UnidadeEscolarPage() {
   useEffect(() => {
     if (!permLoaded || !podeVisualizar) return
 
-    getSchool(id, pessoaId || undefined)
-      .then((s) => {
+    Promise.all([getSchool(id, pessoaId || undefined), getConfigDocumentos(id)])
+      .then(([s, config]) => {
         setSchool(s)
-        setDefaultValues(s as any)
+        setDefaultValues({ ...(s as any), documentos: combinarConfigDocumentos(s, config) } as any)
         setLoading(false)
       })
       .catch(() => {
@@ -60,7 +103,11 @@ export default function UnidadeEscolarPage() {
     if (!podeEditar) return
     setIsSubmitting(true)
     try {
-      await updateSchool(id, data, pessoaId || undefined)
+      const { documentos, ...censo } = data
+      await updateSchool(id, censo, pessoaId || undefined)
+      if (documentos) {
+        await salvarConfigDocumentos(id, documentos as ConfigDocumentosForm, pessoaId || undefined)
+      }
       toast.success('Unidade Escolar atualizada com sucesso!')
     } catch (err: any) {
       toast.error(err?.message || 'Erro ao atualizar Unidade Escolar')

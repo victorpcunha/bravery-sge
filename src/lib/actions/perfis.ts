@@ -366,11 +366,12 @@ export async function validarPermissao(
 ) {
   const { data: pessoa } = await supabase
     .from('people')
-    .select('school_id, perfil_id')
+    .select('school_id, perfil_id, is_super_admin')
     .eq('id', pessoaId)
     .maybeSingle()
 
   if (!pessoa) return true
+  if (pessoa.is_super_admin) return true
   if (!pessoa.perfil_id) return true
 
   const { data: perfil } = await supabase
@@ -425,11 +426,20 @@ export async function validarPermissaoEstrita(
 
   const { data: pessoa } = await supabase
     .from('people')
-    .select('perfil_id')
+    .select('perfil_id, is_super_admin')
     .eq('id', pessoaId)
     .maybeSingle()
 
-  if (!pessoa?.perfil_id) {
+  if (!pessoa) {
+    return
+  }
+
+  // Superadmin tem acesso irrestrito (equivale ao `pode` do cliente)
+  if (pessoa.is_super_admin) {
+    return
+  }
+
+  if (!pessoa.perfil_id) {
     throw new Error('Acesso negado: permissão insuficiente')
   }
 
