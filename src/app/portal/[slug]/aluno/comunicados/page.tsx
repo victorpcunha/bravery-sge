@@ -6,7 +6,8 @@ import { PageContainer } from '@/components/layout/page-container'
 import { PageHeader } from '@/components/layout/page-header'
 import { EmptyState } from '@/components/ui/empty-state'
 import { Button } from '@/components/ui/button'
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import { StatusBadge } from '@/components/feedback/status-badge'
+import { ComunicadoModal } from '@/components/portal/comunicado-modal'
 import { usePortal } from '@/components/portal/portal-provider'
 import { getComunicadosPortal, marcarComunicadoLido, type ComunicadoResumo } from '@/lib/actions/portal'
 
@@ -71,11 +72,17 @@ export default function PortalComunicadosPage() {
         <ul className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {lista.map(c => (
             <li key={c.id} className="rounded-xl border border-border bg-card shadow-xs p-4 flex flex-col gap-2">
-              <p className="text-[16px] font-semibold text-foreground flex items-center gap-2">
-                {!c.lido && <span className="h-2 w-2 rounded-full bg-primary shrink-0" aria-label="Não lido" />}
-                <span className="truncate">{c.titulo}</span>
-              </p>
+              <div className="flex items-center justify-between gap-2">
+                <p className="text-[16px] font-semibold text-primary flex items-center gap-2 min-w-0">
+                  <Megaphone className="h-4 w-4 text-primary shrink-0" />
+                  <span className="truncate">{c.titulo}</span>
+                </p>
+                <StatusBadge status={c.lido ? 'muted' : 'primary'}>
+                  {c.lido ? 'Lido' : 'Não lido'}
+                </StatusBadge>
+              </div>
               <p className="text-[13px] text-muted-foreground tabular-nums">{formatarData(c.data)}</p>
+              <p className="text-[14px] text-muted-foreground line-clamp-2">{c.descricao}</p>
               <div className="mt-auto pt-2">
                 <Button variant="outline" size="sm" onClick={() => abrir(c)}>
                   Ver Comunicado
@@ -86,17 +93,7 @@ export default function PortalComunicadosPage() {
         </ul>
       )}
 
-      <Dialog open={!!aberto} onOpenChange={v => !v && setAberto(null)}>
-        <DialogContent className="max-w-lg">
-          <DialogHeader>
-            <DialogTitle className="text-[20px]">{aberto?.titulo}</DialogTitle>
-            <p className="text-[13px] text-muted-foreground tabular-nums">
-              {aberto ? formatarData(aberto.data) : ''}
-            </p>
-          </DialogHeader>
-          <p className="text-[15px] leading-relaxed text-foreground whitespace-pre-line">{aberto?.descricao}</p>
-        </DialogContent>
-      </Dialog>
+      <ComunicadoModal comunicado={aberto} open={!!aberto} onOpenChange={v => !v && setAberto(null)} />
     </PageContainer>
   )
 }

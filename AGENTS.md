@@ -236,6 +236,25 @@ Sistema de Gestão Escolar completo: turmas, quadro de aulas, indicadores de ava
     **ativos** do quadro ativo (mesma regra visível no Diário); **56 registros órfãos** (referenciando
     horários inativos, todos com gêmeo ativo) foram removidos do banco — Diário/Painel/Fechamento
     ficam consistentes
+- **Comunicados do Portal (spec 025)**:
+  - Spec + plan + data-model + contracts + quickstart + tasks em `specs/025-comunicados-portal/`
+  - **Gestão interna** (origem dos comunicados do Portal): listagem `/comunicados` (filtros Ano
+    ativo + Data envio/final via Calendar `captionLayout="dropdown"` + Etapa/Turma, minicards com
+    envio/fim, título, descrição 100 chars, estado Vigente/Agendado/Expirado, Editar/Excluir,
+    paginação 10/pág) + criação `/comunicados/novo` (ano travado, etapas em pills, turmas
+    dependentes pré-marcadas) + edição `/comunicados/[id]` (Voltar + Excluir com ConfirmDialog)
+  - **Período de visualização**: Calendar `mode="range"` + 2 `Input type="time"` (sem time-picker
+    dedicado no repo — padrão agenda/TurmaForm); janela `visivel_de/ate` filtra o Portal, fora dela
+    some do Portal mas permanece na gestão
+  - **Dados**: estende `comunicados` (spec 023) via `patch_comunicados_periodo_visibilidade.sql`
+    (`ano_letivo_id`, `visivel_de/ate`, backfill `visivel_de=data_comunicado`, NULL = ilimitado p/
+    legados);     `escopo` JSONB ganha `etapa_ids[]` (snapshot do cadastro; Portal decide por
+    `turma_ids`); recurso `portal.comunicados` (módulo `Gestão Acadêmica`) via `patch_recursos_portal.sql`;
+    item `Comunicados` no submenu Gestão Acadêmica do sidebar (rota `/comunicados`, sem colidir com
+    `/portal/[slug]`); auditoria módulo `Portal — Comunicados`
+  - Server actions `src/lib/actions/comunicados.ts` (CRUD + validação server-side + snapshot
+    multietapa-aware); `portal.ts` filtra janela em `listarComunicadosPortal`/`marcarComunicadoLido`
+  - Notas: 2 migrations (aplicar via SQL Editor); 0 novas deps npm; `tsc` + `next build` verdes (46 rotas)
 
 ## Known Issues
 - All server actions use `'use server'` + `getSupabaseAdmin()` (service_role, bypass RLS)
@@ -414,9 +433,9 @@ Use SEMPRE os tokens Tailwind v4 derivados das CSS variables do `globals.css`:
 <!-- END:project-summary -->
 
 <!-- SPECKIT START -->
-Current plan: specs/024-portal-por-escola/plan.md
-Feature: Portal por Escola
-Spec: specs/024-portal-por-escola/spec.md
-Data model: specs/024-portal-por-escola/data-model.md
-Quickstart: specs/024-portal-por-escola/quickstart.md
+Current plan: specs/025-comunicados-portal/plan.md
+Feature: Comunicados do Portal
+Spec: specs/025-comunicados-portal/spec.md
+Data model: specs/025-comunicados-portal/data-model.md
+Quickstart: specs/025-comunicados-portal/quickstart.md
 <!-- SPECKIT END -->

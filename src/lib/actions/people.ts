@@ -167,7 +167,6 @@ export type ResponsavelAluno = {
   principal: boolean
   autorizado_retirar: boolean
   autorizado_boleto: boolean
-  receber_comunicados: boolean
   created_at: string
   updated_at: string
 }
@@ -598,7 +597,6 @@ export async function vincularResponsavel(
       principal: dados.principal || false,
       autorizado_retirar: dados.autorizado_retirar ?? true,
       autorizado_boleto: dados.autorizado_boleto ?? true,
-      receber_comunicados: dados.receber_comunicados ?? true,
     })
     .select()
     .single()

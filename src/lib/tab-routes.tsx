@@ -30,6 +30,7 @@ import {
   Sparkles,
   Briefcase,
   ScrollText,
+  Megaphone,
 } from 'lucide-react'
 import type { TabParams } from '@/lib/tab-params'
 
@@ -71,6 +72,9 @@ import CensoEscolarPage from '@/app/(app)/(auth)/censo-escolar/page'
 import DocentesPage from '@/app/(app)/docentes/page'
 import AuditoriaPage from '@/app/(app)/auditoria/page'
 import DocumentosPage from '@/app/(app)/documentos/page'
+import ComunicadosPage from '@/app/(app)/comunicados/page'
+import ComunicadoNovoPage from '@/app/(app)/comunicados/novo/page'
+import ComunicadoEditarPage from '@/app/(app)/comunicados/[id]/page'
 
 export const TAB_MODULES = {
   dashboard: 'dashboard',
@@ -102,6 +106,7 @@ export const TAB_MODULES = {
   docentes: 'docentes',
   auditoria: 'auditoria',
   documentos: 'documentos',
+  comunicados: 'comunicados',
 } as const
 
 export type TabModuleId = (typeof TAB_MODULES)[keyof typeof TAB_MODULES]
@@ -144,6 +149,7 @@ export const MODULES: Record<TabModuleId, ModuleMeta> = {
   [TAB_MODULES.docentes]: { title: 'Docentes', icon: Briefcase },
   [TAB_MODULES.auditoria]: { title: 'Auditoria', icon: ScrollText },
   [TAB_MODULES.documentos]: { title: 'Documentos', icon: FileText },
+  [TAB_MODULES.comunicados]: { title: 'Comunicados', icon: Megaphone },
 }
 
 export type TabRoute = {
@@ -290,6 +296,18 @@ const ROUTES: TabRoute[] = [
 
   // Documentos
   { module: TAB_MODULES.documentos, match: exact('/documentos'), Component: DocumentosPage },
+
+  // Portal — Comunicados (estáticas antes da dinâmica)
+  { module: TAB_MODULES.comunicados, match: exact('/comunicados'), Component: ComunicadosPage },
+  { module: TAB_MODULES.comunicados, match: exact('/comunicados/novo'), Component: ComunicadoNovoPage },
+  {
+    module: TAB_MODULES.comunicados,
+    match: (p) => {
+      const m = p.match(/^\/comunicados\/([^/]+)$/)
+      return m ? { id: m[1] } : undefined
+    },
+    Component: ComunicadoEditarPage,
+  },
 ]
 
 export function resolveTabRoute(pathname: string): ResolvedTabRoute | null {

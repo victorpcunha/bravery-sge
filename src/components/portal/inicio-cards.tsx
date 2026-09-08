@@ -1,15 +1,20 @@
 'use client'
 
+import { useState } from 'react'
 import { Bell, Megaphone, Star } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { PageSection } from '@/components/layout/page-section'
 import { StatusBadge } from '@/components/feedback/status-badge'
 import { EmptyState } from '@/components/ui/empty-state'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import type { InicioPortal, MediasInicio } from '@/lib/actions/portal'
+import { ComunicadoModal } from '@/components/portal/comunicado-modal'
+import { marcarComunicadoLido, type ComunicadoResumo, type InicioPortal, type MediasInicio } from '@/lib/actions/portal'
 
 type Props = {
   dados: InicioPortal
+  responsavelId: string
+  alunoId: string
+  schoolId?: string
   periodoCard: string
   onPeriodoCardChange: (ordem: string) => void
   cardMedias: MediasInicio | null
@@ -23,10 +28,25 @@ function formatarData(iso: string) {
   return d && m && a ? `${d}/${m}/${a}` : iso
 }
 
-export function InicioCards({ dados, periodoCard, onPeriodoCardChange, cardMedias, onVerComunicados, onVerBoletim, onVerOcorrencias }: Props) {
+export function InicioCards({ dados, responsavelId, alunoId, schoolId, periodoCard, onPeriodoCardChange, cardMedias, onVerComunicados, onVerBoletim, onVerOcorrencias }: Props) {
   // Card com filtro próprio, independente do KPI de Média geral
   const medias = cardMedias?.mediasDisciplina ?? dados.mediasDisciplina
+  const [aberto, setAberto] = useState<ComunicadoResumo | null>(null)
+  const [lidosExtras, setLidosExtras] = useState<Set<string>>(new Set())
+
+  async function abrir(c: ComunicadoResumo) {
+    setAberto(c)
+    if (!c.lido && !lidosExtras.has(c.id)) {
+      try {
+        await marcarComunicadoLido(responsavelId, alunoId, c.id, schoolId)
+        setLidosExtras(prev => new Set(prev).add(c.id))
+      } catch { /* mantém sinalização; best-effort */ }
+    }
+  }
+
+  const lido = (c: ComunicadoResumo) => c.lido || lidosExtras.has(c.id)
   return (
+    <>
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
       <PageSection
         title="Comunicados Recentes"
@@ -39,14 +59,21 @@ export function InicioCards({ dados, periodoCard, onPeriodoCardChange, cardMedia
             {dados.comunicadosRecentes.map(c => (
               <li key={c.id} className="rounded-lg border border-border p-3">
                 <div className="flex items-center justify-between gap-2">
-                  <p className="text-[14px] font-semibold text-foreground truncate flex items-center gap-1.5">
-                    {!c.lido && <span className="h-2 w-2 rounded-full bg-primary shrink-0" aria-label="Não lido" />}
-                    <Megaphone className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+                  <p className="text-[14px] font-semibold text-primary truncate flex items-center gap-1.5">
+                    <Megaphone className="h-4 w-4 text-primary shrink-0" />
                     <span className="truncate">{c.titulo}</span>
                   </p>
                   <span className="text-[13px] text-muted-foreground tabular-nums shrink-0">{formatarData(c.data)}</span>
                 </div>
                 <p className="text-[14px] text-muted-foreground mt-1 line-clamp-2">{c.descricao}</p>
+                <div className="flex items-center justify-between gap-2 mt-2">
+                  <StatusBadge status={lido(c) ? 'muted' : 'primary'}>
+                    {lido(c) ? 'Lido' : 'Não lido'}
+                  </StatusBadge>
+                  <Button variant="outline" size="sm" onClick={() => abrir(c)}>
+                    Ver comunicado
+                  </Button>
+                </div>
               </li>
             ))}
           </ul>
@@ -118,5 +145,7 @@ export function InicioCards({ dados, periodoCard, onPeriodoCardChange, cardMedia
         )}
       </PageSection>
     </div>
+    <ComunicadoModal comunicado={aberto} open={!!aberto} onOpenChange={v => !v && setAberto(null)} />
+    </>
   )
 }

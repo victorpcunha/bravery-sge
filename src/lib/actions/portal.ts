@@ -362,32 +362,26 @@ async function listarComunicadosPortal(
   alunoId: string,
   limite: number
 ): Promise<ComunicadoResumo[]> {
-  // Só recebe comunicados se o vínculo atual optou por recebê-los
-  const { data: vincAtual } = await supabase
-    .from('responsavel_alunos')
-    .select('receber_comunicados')
-    .eq('responsavel_id', responsavelId)
-    .eq('aluno_id', alunoId)
-    .maybeSingle()
-
-  if ((vincAtual as { receber_comunicados?: boolean } | null)?.receber_comunicados === false) {
-    return []
-  }
-
   const { data: comunicados } = await supabase
     .from('comunicados')
-    .select('id, titulo, descricao, data_comunicado, escopo')
+    .select('id, titulo, descricao, data_comunicado, escopo, visivel_de, visivel_ate')
     .eq('school_id', ctx.schoolId)
     .order('data_comunicado', { ascending: false })
     .limit(100)
 
+  const agora = Date.now()
   const noEscopo = ((comunicados || []) as unknown as Array<{
     id: string
     titulo: string
     descricao: string
     data_comunicado: string
     escopo: { tipo?: string; turma_ids?: string[] } | null
+    visivel_de: string | null
+    visivel_ate: string | null
   }>).filter(c => {
+    // Fora da janela de visualização (NULL = sem limite) não é exibido
+    if (c.visivel_de && new Date(c.visivel_de).getTime() > agora) return false
+    if (c.visivel_ate && new Date(c.visivel_ate).getTime() < agora) return false
     const esc = c.escopo || { tipo: 'geral' }
     if (esc.tipo === 'turmas') {
       return Array.isArray(esc.turma_ids) && esc.turma_ids.includes(ctx.turmaId)
@@ -888,7 +882,7 @@ export async function marcarComunicadoLido(
 
   const { data: comunicado } = await supabase
     .from('comunicados')
-    .select('id, escopo')
+    .select('id, escopo, visivel_de, visivel_ate')
     .eq('id', comunicadoId)
     .eq('school_id', ctx.schoolId)
     .maybeSingle()
@@ -896,8 +890,18 @@ export async function marcarComunicadoLido(
   const c = comunicado as unknown as {
     id: string
     escopo: { tipo?: string; turma_ids?: string[] } | null
+    visivel_de: string | null
+    visivel_ate: string | null
   } | null
   if (!c) throw new Error('Acesso negado')
+
+  const agora = Date.now()
+  if (c.visivel_de && new Date(c.visivel_de).getTime() > agora) {
+    throw new Error('Este comunicado não está mais disponível')
+  }
+  if (c.visivel_ate && new Date(c.visivel_ate).getTime() < agora) {
+    throw new Error('Este comunicado não está mais disponível')
+  }
 
   const esc = c.escopo || { tipo: 'geral' }
   const visivel = esc.tipo !== 'turmas' || (Array.isArray(esc.turma_ids) && esc.turma_ids.includes(ctx.turmaId))

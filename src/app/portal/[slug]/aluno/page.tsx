@@ -65,7 +65,7 @@ export default function PortalInicioPage() {
       .catch(() => setCardMedias(null))
   }, [respId, alunoId, schoolId])
 
-  if (!aluno) return null
+  if (!aluno || !sessao) return null
 
   if (loading && !dados) {
     return (
@@ -140,6 +140,9 @@ export default function PortalInicioPage() {
 
       <InicioCards
         dados={dados}
+        responsavelId={sessao.responsavel.id}
+        alunoId={aluno.alunoId}
+        schoolId={escola?.schoolId}
         periodoCard={periodoCard}
         onPeriodoCardChange={trocarPeriodoCard}
         cardMedias={cardMedias}

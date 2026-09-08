@@ -348,7 +348,7 @@ export function PessoaForm({ schoolId: propSchoolId, person, onSaved, onCancel }
     if (!aluno) return
     setForm(prev => ({
       ...prev,
-      vinculos: [...prev.vinculos, { aluno_id: alunoId, aluno_nome: aluno.nome_completo, tipo_vinculo: '3', principal: false, autorizado_retirar: true, autorizado_boleto: true, receber_comunicados: true, _new: true }],
+      vinculos: [...prev.vinculos, { aluno_id: alunoId, aluno_nome: aluno.nome_completo, tipo_vinculo: '3', principal: false, autorizado_retirar: true, autorizado_boleto: true, _new: true }],
     }))
     setAlunosSearch('')
     setAlunosOptions([])
@@ -584,8 +584,7 @@ export function PessoaForm({ schoolId: propSchoolId, person, onSaved, onCancel }
           (a.tipo_vinculo || '3') === (b.tipo_vinculo || '3') &&
           (a.principal || false) === (b.principal || false) &&
           (a.autorizado_retirar ?? true) === (b.autorizado_retirar ?? true) &&
-          (a.autorizado_boleto ?? true) === (b.autorizado_boleto ?? true) &&
-          (a.receber_comunicados ?? true) === (b.receber_comunicados ?? true)
+          (a.autorizado_boleto ?? true) === (b.autorizado_boleto ?? true)
         for (const v of form.vinculos) {
           if (!v.aluno_id) continue
           if (v._new) {
@@ -1917,19 +1916,6 @@ export function PessoaForm({ schoolId: propSchoolId, person, onSaved, onCancel }
                               </TooltipTrigger>
                               <TooltipContent className="max-w-56">
                                 <p>Autorizado a retirar o aluno da escola</p>
-                              </TooltipContent>
-                            </Tooltip>
-                          </TooltipProvider>
-                          <TooltipProvider delayDuration={300}>
-                            <Tooltip>
-                              <TooltipTrigger asChild>
-                                <div className="flex items-center gap-1 text-[13px] cursor-pointer" onClick={() => updateVinculo(idx, 'receber_comunicados', !v.receber_comunicados)}>
-                                  <Checkbox checked={v.receber_comunicados} className="size-3 pointer-events-none" />
-                                  Comunicados
-                                </div>
-                              </TooltipTrigger>
-                              <TooltipContent className="max-w-56">
-                                <p>Recebe comunicados escolares sobre o aluno</p>
                               </TooltipContent>
                             </Tooltip>
                           </TooltipProvider>
