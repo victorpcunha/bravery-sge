@@ -414,9 +414,9 @@ Use SEMPRE os tokens Tailwind v4 derivados das CSS variables do `globals.css`:
 <!-- END:project-summary -->
 
 <!-- SPECKIT START -->
-Current plan: specs/004-historico-escolar/plan.md
-Feature: Histórico Escolar — Painel do Aluno
-Spec: specs/004-historico-escolar/spec.md
-Data model: specs/004-historico-escolar/data-model.md
-Quickstart: specs/004-historico-escolar/quickstart.md
+Current plan: specs/024-portal-por-escola/plan.md
+Feature: Portal por Escola
+Spec: specs/024-portal-por-escola/spec.md
+Data model: specs/024-portal-por-escola/data-model.md
+Quickstart: specs/024-portal-por-escola/quickstart.md
 <!-- SPECKIT END -->

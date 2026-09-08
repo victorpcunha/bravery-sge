@@ -177,9 +177,11 @@ async function buscarPeriodoBoletim(
 type FrequenciaResultado = {
   frequencia_percentual: number | null
   total_faltas: number | null
+  total_aulas: number
+  presencas: number
 }
 
-async function calcularFrequenciaBoletim(
+export async function calcularFrequenciaBoletim(
   turmaId: string,
   alunoId: string,
   criterio: 'por_dia' | 'por_aula',
@@ -193,6 +195,11 @@ async function calcularFrequenciaBoletim(
 }> {
   const tabela = criterio === 'por_aula' ? 'academico_frequencias_aula' : 'academico_frequencias_dia'
   const dataCol = criterio === 'por_aula' ? 'data_aula' : 'dia_letivo'
+  // Só as colunas usadas no cálculo (evita tráfego de linhas completas)
+  const colunas: string =
+    criterio === 'por_aula'
+      ? 'status, horario_id, disciplina_id, data_aula'
+      : 'status, dia_letivo'
 
   let horariosAtivos = new Set<string>()
   if (criterio === 'por_aula') {
@@ -214,7 +221,7 @@ async function calcularFrequenciaBoletim(
 
   let query = supabase
     .from(tabela)
-    .select('*')
+    .select(colunas)
     .eq('turma_id', turmaId)
     .eq('aluno_id', alunoId)
 
@@ -223,12 +230,17 @@ async function calcularFrequenciaBoletim(
   if (dataInicioPeriodo) query = query.gte(dataCol, dataInicioPeriodo)
   if (dataTerminoPeriodo) query = query.lte(dataCol, dataTerminoPeriodo)
 
-  const { data: registros } = await query
+  const { data: registrosRaw } = await query
+  const registros = ((registrosRaw || []) as unknown) as Array<{
+    status: string | null
+    horario_id?: string | null
+    disciplina_id?: string | null
+  }>
 
   const porDisciplina = new Map<string, { presencas: number; faltas: number; total: number }>()
   const geral = { presencas: 0, faltas: 0, total: 0 }
 
-  for (const r of registros || []) {
+  for (const r of registros) {
     if (!r.status) continue
     if (criterio === 'por_aula' && !horariosAtivos.has(r.horario_id as string)) continue
     const chave = criterio === 'por_aula' ? (r.disciplina_id || '') : ''
@@ -242,6 +254,8 @@ async function calcularFrequenciaBoletim(
   const montar = (g: { presencas: number; faltas: number; total: number }): FrequenciaResultado => ({
     frequencia_percentual: g.total > 0 ? Math.round((g.presencas / g.total) * 100) : null,
     total_faltas: g.total > 0 ? g.faltas : null,
+    total_aulas: g.total,
+    presencas: g.presencas,
   })
 
   const resultadoPorDisciplina = new Map<string, FrequenciaResultado>()

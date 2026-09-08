@@ -489,40 +489,19 @@ function mensagemErro(e: unknown): string {
   return e instanceof Error ? e.message : 'Erro interno'
 }
 
-export async function calcularDesempenhoAluno(
-  turmaId: string,
-  alunoId: string,
-  disciplinaId: string,
+type ConselhoDbRow = { periodo: number; nota_conselho: number | null }
+
+// Matemática pura das médias por período (pesos, somatória, recuperações,
+// conselho). Extração literal do engine abaixo: mesma regra para 1 disciplina
+// (calcularDesempenhoAluno) ou lote (calcularMediasPeriodoTurma).
+function computarMediasPeriodo(
+  notasData: NotaDbRow[],
+  recuperacoesData: RecuperacaoDbRow[],
+  conselhoData: ConselhoDbRow[],
+  config: ConfigNumericaCompleta,
   quantidadePeriodos: number
-): Promise<DesempenhoAluno> {
-  const metodoId = await getMetodoIdDaTurma(turmaId)
-
-  const config = metodoId
-    ? await getConfigNumerica(metodoId, quantidadePeriodos)
-    : configNumericaPadrao(quantidadePeriodos)
-
+): { medias: (number | null)[]; conselho: (number | null)[] } {
   const periodos = Array.from({ length: quantidadePeriodos }, (_, i) => i + 1)
-
-  const [notasData, recuperacoesData, conselhoData] = await Promise.all([
-    supabase
-      .from('academico_notas')
-      .select('periodo, valor, descricao')
-      .eq('aluno_id', alunoId)
-      .eq('disciplina_id', disciplinaId)
-      .then(r => (r.data || []) as NotaDbRow[]),
-    supabase
-      .from('academico_recuperacoes')
-      .select('periodo, tipo, descricao, valor')
-      .eq('aluno_id', alunoId)
-      .eq('disciplina_id', disciplinaId)
-      .then(r => (r.data || []) as RecuperacaoDbRow[]),
-    supabase
-      .from('conselho_classe_resultados')
-      .select('periodo, nota_conselho')
-      .eq('aluno_id', alunoId)
-      .eq('matriz_disciplina_id', disciplinaId)
-      .then(r => (r.data || []) as { periodo: number; nota_conselho: number | null }[]),
-  ])
 
   const pesoMap = new Map<string, number>()
   for (const av of config.avaliacoes_list) {
@@ -604,6 +583,50 @@ export async function calcularDesempenhoAluno(
     }
   }
   const conselhoPeriodos = periodos.map(p => conselhoPorPeriodo.get(p) ?? null)
+
+  return { medias: mediasPeriodo, conselho: conselhoPeriodos }
+}
+
+export async function calcularDesempenhoAluno(
+  turmaId: string,
+  alunoId: string,
+  disciplinaId: string,
+  quantidadePeriodos: number
+): Promise<DesempenhoAluno> {
+  const metodoId = await getMetodoIdDaTurma(turmaId)
+
+  const config = metodoId
+    ? await getConfigNumerica(metodoId, quantidadePeriodos)
+    : configNumericaPadrao(quantidadePeriodos)
+
+  const [notasData, recuperacoesData, conselhoData] = await Promise.all([
+    supabase
+      .from('academico_notas')
+      .select('periodo, valor, descricao')
+      .eq('aluno_id', alunoId)
+      .eq('disciplina_id', disciplinaId)
+      .then(r => (r.data || []) as NotaDbRow[]),
+    supabase
+      .from('academico_recuperacoes')
+      .select('periodo, tipo, descricao, valor')
+      .eq('aluno_id', alunoId)
+      .eq('disciplina_id', disciplinaId)
+      .then(r => (r.data || []) as RecuperacaoDbRow[]),
+    supabase
+      .from('conselho_classe_resultados')
+      .select('periodo, nota_conselho')
+      .eq('aluno_id', alunoId)
+      .eq('matriz_disciplina_id', disciplinaId)
+      .then(r => (r.data || []) as { periodo: number; nota_conselho: number | null }[]),
+  ])
+
+  const { medias: mediasPeriodo, conselho: conselhoPeriodos } = computarMediasPeriodo(
+    notasData as NotaDbRow[],
+    recuperacoesData as RecuperacaoDbRow[],
+    conselhoData as ConselhoDbRow[],
+    config,
+    quantidadePeriodos
+  )
 
   // Calcular média anual
   let mediaAnual: number | null = null
@@ -690,6 +713,63 @@ export async function calcularDesempenhoAluno(
     media_final: mediaFinal,
     status,
   }
+}
+
+/**
+ * Lote: médias por período de N disciplinas com a MESMA regra do engine
+ * (1 config + 3 queries, em vez de ~7 queries por disciplina).
+ * Retorna mapa matriz_disciplina_id → medias_periodo[].
+ */
+export async function calcularMediasPeriodoTurma(
+  turmaId: string,
+  alunoId: string,
+  disciplinaIds: string[],
+  quantidadePeriodos: number,
+  metodoId?: string | null
+): Promise<Map<string, (number | null)[]>> {
+  const vazio = new Map<string, (number | null)[]>()
+  if (!disciplinaIds.length) return vazio
+
+  const mid = metodoId !== undefined ? metodoId : await getMetodoIdDaTurma(turmaId)
+  const config = mid
+    ? await getConfigNumerica(mid, quantidadePeriodos)
+    : configNumericaPadrao(quantidadePeriodos)
+
+  const [notas, recs, cons] = await Promise.all([
+    supabase
+      .from('academico_notas')
+      .select('disciplina_id, periodo, valor, descricao')
+      .eq('aluno_id', alunoId)
+      .in('disciplina_id', disciplinaIds)
+      .then(r => (r.data || []) as Array<NotaDbRow & { disciplina_id: string }>),
+    supabase
+      .from('academico_recuperacoes')
+      .select('disciplina_id, periodo, tipo, descricao, valor')
+      .eq('aluno_id', alunoId)
+      .in('disciplina_id', disciplinaIds)
+      .then(r => (r.data || []) as Array<RecuperacaoDbRow & { disciplina_id: string }>),
+    supabase
+      .from('conselho_classe_resultados')
+      .select('matriz_disciplina_id, periodo, nota_conselho')
+      .eq('aluno_id', alunoId)
+      .in('matriz_disciplina_id', disciplinaIds)
+      .then(r => (r.data || []) as Array<ConselhoDbRow & { matriz_disciplina_id: string }>),
+  ])
+
+  const resultado = new Map<string, (number | null)[]>()
+  for (const discId of disciplinaIds) {
+    const { medias } = computarMediasPeriodo(
+      notas.filter(n => n.disciplina_id === discId),
+      recs.filter(r => r.disciplina_id === discId),
+      cons
+        .filter(c => c.matriz_disciplina_id === discId)
+        .map(c => ({ periodo: c.periodo, nota_conselho: c.nota_conselho })),
+      config,
+      quantidadePeriodos
+    )
+    resultado.set(discId, medias)
+  }
+  return resultado
 }
 
 export async function recalcularTurma(

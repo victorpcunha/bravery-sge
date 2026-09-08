@@ -32,6 +32,8 @@ export type School = {
   municipio?: string | null
   distrito?: string | null
   cep?: string | null
+  portal_habilitado?: boolean | null
+  portal_slug?: string | null
   created_at: string
   updated_at: string
 }

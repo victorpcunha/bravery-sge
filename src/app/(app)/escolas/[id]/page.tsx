@@ -37,6 +37,8 @@ function toFormConfig(config: ConfigDocumentos): ConfigDocumentosForm {
     responsavel_nome: config.responsavel_nome || '',
     responsavel_cargo: config.responsavel_cargo || '',
     logo: config.logo || '',
+    portal_imagem_fundo: config.portal_imagem_fundo || '',
+    portal_texto_login: config.portal_texto_login || '',
   }
 }
 

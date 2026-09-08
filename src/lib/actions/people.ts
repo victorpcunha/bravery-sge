@@ -31,6 +31,7 @@ export type Person = {
   whatsapp: string | null
   telefone_secundario: string | null
   email_responsavel: string | null
+  portal_acesso_habilitado: boolean
   ativo: boolean
   // Deficiência / TEA / AH (17-28)
   deficiencia: boolean | null
@@ -476,12 +477,13 @@ async function atualizarAcessoAuth(personId: string, ativo: boolean) {
 
     if (errRpc || !authUser || authUser.length === 0) return
 
-    const primeiroAuthUser = authUser[0] as { user_id: string }
-    const authUserId = primeiroAuthUser.user_id
-    if (ativo) {
-      await supabase.auth.admin.updateUserById(authUserId, { ban_duration: 'none' })
-    } else {
-      await supabase.auth.admin.updateUserById(authUserId, { ban_duration: '100000000h' })
+    // Aplica a todas as credenciais vinculadas (sistema + portal — spec 022)
+    for (const item of authUser as { user_id: string }[]) {
+      if (ativo) {
+        await supabase.auth.admin.updateUserById(item.user_id, { ban_duration: 'none' })
+      } else {
+        await supabase.auth.admin.updateUserById(item.user_id, { ban_duration: '100000000h' })
+      }
     }
   } catch {
     // Sem auth user vinculado ou erro transitório — não bloqueia o fluxo principal
@@ -725,6 +727,7 @@ export async function criarAuthUser(params: {
   password: string
   personId: string
   schoolId: string
+  portalOnly?: boolean
 }, pessoaId?: string | null) {
   const erroSenha = validarSenha(params.password)
   if (erroSenha) throw new Error(erroSenha)
@@ -733,10 +736,18 @@ export async function criarAuthUser(params: {
     email: params.email,
     password: params.password,
     email_confirm: true,
-    user_metadata: { person_id: params.personId },
+    user_metadata: params.portalOnly
+      ? { person_id: params.personId, portal_only: true }
+      : { person_id: params.personId },
   })
 
-  if (error) throw error
+  if (error) {
+    const msg = (error.message || '').toLowerCase()
+    if (msg.includes('already been registered') || msg.includes('already registered') || msg.includes('duplicate') || msg.includes('already exists')) {
+      throw new Error('Este e-mail já está vinculado a outro usuário. Utilize outro e-mail.')
+    }
+    throw error
+  }
   if (!data.user) throw new Error('Erro ao criar usuário de autenticação')
 
   const userId = data.user.id
@@ -760,10 +771,251 @@ export async function criarAuthUser(params: {
     pessoaId,
     params.schoolId,
     null,
-    { email: params.email, user_id: userId, school_id: params.schoolId, pessoa: pessoa?.nome_completo || null },
+    { email: params.email, user_id: userId, school_id: params.schoolId, pessoa: pessoa?.nome_completo || null, portal: params.portalOnly === true },
   )
 
   return data.user
+}
+
+async function buscarAuthUserIdsPorPessoa(personId: string, somentePortal?: boolean): Promise<string[]> {
+  const { data: authUsers, error: errRpc } = await supabase.rpc('fn_buscar_auth_user_por_pessoa', {
+    p_person_id: personId,
+  })
+
+  if (errRpc || !authUsers || authUsers.length === 0) return []
+
+  const ids = (authUsers as { user_id: string }[]).map((u) => u.user_id)
+
+  if (somentePortal !== true) return ids
+
+  // Filtra apenas credenciais do portal (user_metadata.portal_only === true)
+  const filtrados: string[] = []
+  for (const id of ids) {
+    const { data: { user } } = await supabase.auth.admin.getUserById(id)
+    if (user?.user_metadata?.portal_only === true) filtrados.push(id)
+  }
+  return filtrados
+}
+
+// ============================================
+// Portal do Responsável - Acesso (spec 022)
+// ============================================
+
+export async function definirSenhaPortal(
+  personId: string,
+  schoolId: string | null,
+  novaSenha: string,
+  pessoaId?: string | null,
+) {
+  if (pessoaId) {
+    const { validarPermissaoServer } = await import('./perfis')
+    await validarPermissaoServer(pessoaId, 'gestao-usuarios.usuarios', 'editar')
+  }
+
+  const erroSenha = validarSenha(novaSenha)
+  if (erroSenha) throw new Error(erroSenha)
+
+  const { data: pessoa, error: errPessoa } = await supabase
+    .from('people')
+    .select('id, nome_completo, school_id')
+    .eq('id', personId)
+    .maybeSingle()
+
+  if (errPessoa) throw errPessoa
+  if (!pessoa) throw new Error('Responsável não encontrado')
+  if (schoolId && pessoa.school_id !== schoolId) throw new Error('Responsável fora do escopo da escola')
+
+  const authUserIds = await buscarAuthUserIdsPorPessoa(personId, true)
+  if (authUserIds.length === 0) throw new Error('Este responsável ainda não possui acesso ao portal. Habilite o acesso primeiro.')
+
+  for (const authUserId of authUserIds) {
+    const { error } = await supabase.auth.admin.updateUserById(authUserId, { password: novaSenha })
+    if (error) throw error
+  }
+
+  await registrarAuditoriaPessoa(
+    'editar',
+    'people',
+    personId,
+    pessoaId,
+    pessoa.school_id,
+    { senha_portal: 'inalterada' },
+    { senha_portal: 'redefinida' },
+  )
+}
+
+export async function atualizarEmailPortal(
+  personId: string,
+  novoEmail: string,
+  schoolId: string | null,
+  pessoaId?: string | null,
+) {
+  if (pessoaId) {
+    const { validarPermissaoServer } = await import('./perfis')
+    await validarPermissaoServer(pessoaId, 'gestao-usuarios.usuarios', 'editar')
+  }
+
+  const email = novoEmail.trim().toLowerCase()
+  if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    throw new Error('Informe um e-mail válido para o acesso ao portal')
+  }
+
+  const { data: pessoa, error: errPessoa } = await supabase
+    .from('people')
+    .select('id, nome_completo, email, school_id')
+    .eq('id', personId)
+    .maybeSingle()
+
+  if (errPessoa) throw errPessoa
+  if (!pessoa) throw new Error('Responsável não encontrado')
+  if (schoolId && pessoa.school_id !== schoolId) throw new Error('Responsável fora do escopo da escola')
+  if ((pessoa.email || '').trim().toLowerCase() === email) return
+
+  const authUserIds = await buscarAuthUserIdsPorPessoa(personId, true)
+  for (const authUserId of authUserIds) {
+    const { error } = await supabase.auth.admin.updateUserById(authUserId, { email })
+    if (error) {
+      const msg = (error.message || '').toLowerCase()
+      if (msg.includes('already been registered') || msg.includes('already registered') || msg.includes('duplicate') || msg.includes('already exists')) {
+        throw new Error('Este e-mail já está vinculado a outro usuário. Utilize outro e-mail.')
+      }
+      throw error
+    }
+  }
+
+  const { error: errPeople } = await supabase
+    .from('people')
+    .update({ email })
+    .eq('id', personId)
+
+  if (errPeople) throw errPeople
+
+  await registrarAuditoriaPessoa(
+    'editar',
+    'people',
+    personId,
+    pessoaId,
+    pessoa.school_id,
+    { email: pessoa.email },
+    { email },
+  )
+}
+
+export async function provisionarAcessoPortal(
+  personId: string,
+  schoolId: string | null,
+  senha: string | null,
+  pessoaId?: string | null,
+) {
+  if (pessoaId) {
+    const { validarPermissaoServer } = await import('./perfis')
+    await validarPermissaoServer(pessoaId, 'gestao-usuarios.usuarios', 'editar')
+  }
+
+  const { data: pessoa, error: errPessoa } = await supabase
+    .from('people')
+    .select('id, nome_completo, email, school_id, portal_acesso_habilitado')
+    .eq('id', personId)
+    .maybeSingle()
+
+  if (errPessoa) throw errPessoa
+  if (!pessoa) throw new Error('Responsável não encontrado')
+  if (schoolId && pessoa.school_id !== schoolId) throw new Error('Responsável fora do escopo da escola')
+
+  const email = (pessoa.email || '').trim()
+  if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    throw new Error('Informe o e-mail do responsável para habilitar o acesso ao portal')
+  }
+
+  const anterior = { portal_acesso_habilitado: pessoa.portal_acesso_habilitado ?? false }
+  const authUserIds = await buscarAuthUserIdsPorPessoa(personId, true)
+
+  if (authUserIds.length === 0) {
+    if (!senha) throw new Error('Informe a senha para habilitar o acesso ao portal')
+    await criarAuthUser(
+      { email, password: senha, personId, schoolId: pessoa.school_id, portalOnly: true },
+      pessoaId,
+    )
+  } else {
+    for (const authUserId of authUserIds) {
+      const { error } = await supabase.auth.admin.updateUserById(
+        authUserId,
+        senha ? { password: senha, ban_duration: 'none' } : { ban_duration: 'none' },
+      )
+      if (error) throw error
+    }
+  }
+
+  const { error: errFlag } = await supabase
+    .from('people')
+    .update({ portal_acesso_habilitado: true })
+    .eq('id', personId)
+
+  if (errFlag) throw errFlag
+
+  await registrarAuditoriaPessoa(
+    'editar',
+    'people',
+    personId,
+    pessoaId,
+    pessoa.school_id,
+    anterior,
+    { portal_acesso_habilitado: true },
+  )
+
+  return { portal_acesso_habilitado: true }
+}
+
+export async function alternarAcessoPortal(
+  personId: string,
+  habilitar: boolean,
+  schoolId: string | null,
+  pessoaId?: string | null,
+) {
+  if (pessoaId) {
+    const { validarPermissaoServer } = await import('./perfis')
+    await validarPermissaoServer(pessoaId, 'gestao-usuarios.usuarios', 'editar')
+  }
+
+  const { data: pessoa, error: errPessoa } = await supabase
+    .from('people')
+    .select('id, nome_completo, email, school_id, portal_acesso_habilitado')
+    .eq('id', personId)
+    .maybeSingle()
+
+  if (errPessoa) throw errPessoa
+  if (!pessoa) throw new Error('Responsável não encontrado')
+  if (schoolId && pessoa.school_id !== schoolId) throw new Error('Responsável fora do escopo da escola')
+
+  const anterior = { portal_acesso_habilitado: pessoa.portal_acesso_habilitado ?? false }
+
+  const { error: errFlag } = await supabase
+    .from('people')
+    .update({ portal_acesso_habilitado: habilitar })
+    .eq('id', personId)
+
+  if (errFlag) throw errFlag
+
+  const authUserIds = await buscarAuthUserIdsPorPessoa(personId, true)
+  for (const authUserId of authUserIds) {
+    const { error } = await supabase.auth.admin.updateUserById(
+      authUserId,
+      habilitar ? { ban_duration: 'none' } : { ban_duration: '100000000h' },
+    )
+    if (error) throw error
+  }
+
+  await registrarAuditoriaPessoa(
+    'editar',
+    'people',
+    personId,
+    pessoaId,
+    pessoa.school_id,
+    anterior,
+    { portal_acesso_habilitado: habilitar },
+  )
+
+  return { portal_acesso_habilitado: habilitar }
 }
 
 export async function salvarSaudeEstudante(

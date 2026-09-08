@@ -25,6 +25,8 @@ export type ConfigDocumentos = {
   responsavel_nome: string | null
   responsavel_cargo: string | null
   logo: string | null
+  portal_imagem_fundo: string | null
+  portal_texto_login: string | null
   created_at: string
   updated_at: string
 }
@@ -49,14 +51,17 @@ function sanitizarLogo(valor: unknown): string | null {
 }
 
 /**
- * Remove o logo (blob base64) dos snapshots de auditoria para evitar
+ * Remove blobs base64 dos snapshots de auditoria para evitar
  * inflar o JSONB da tabela de auditoria.
  */
-function semLogo(registro: Record<string, unknown> | null | undefined): Record<string, unknown> | null {
+function semMidia(registro: Record<string, unknown> | null | undefined): Record<string, unknown> | null {
   if (!registro) return null
   const copia: Record<string, unknown> = { ...registro }
   if (copia.logo) {
     copia.logo = 'data:image/* [imagem oculta na auditoria]'
+  }
+  if (copia.portal_imagem_fundo) {
+    copia.portal_imagem_fundo = 'data:image/* [imagem oculta na auditoria]'
   }
   return copia
 }
@@ -98,6 +103,8 @@ export async function salvarConfigDocumentos(
     responsavel_nome: limparTexto(data.responsavel_nome, 120),
     responsavel_cargo: limparTexto(data.responsavel_cargo, 120),
     logo: sanitizarLogo(data.logo),
+    portal_imagem_fundo: sanitizarLogo(data.portal_imagem_fundo),
+    portal_texto_login: limparTexto(data.portal_texto_login, 500),
   }
 
   const { data: anterior } = await supabase
@@ -128,7 +135,7 @@ export async function salvarConfigDocumentos(
     entidade: 'documentos_config',
     entidade_id: schoolId,
     acao: anterior ? 'editar' : 'criar',
-    dados_anteriores: semLogo(anterior || null),
-    dados_novos: payload,
+    dados_anteriores: semMidia(anterior || null),
+    dados_novos: semMidia(payload),
   })
 }

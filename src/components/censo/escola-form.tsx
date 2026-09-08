@@ -41,6 +41,9 @@ import {
 import { Separator } from '@/components/ui/separator'
 import { Combobox } from '@/components/ui/combobox'
 import { ClickablePill } from '@/components/ui/clickable-pill'
+import { PillToggleGroup } from '@/components/ui/pill-toggle'
+import { normalizarSlug, sugerirSlug } from '@/lib/portal-slug'
+import { validarSlugUnico } from '@/lib/actions/portal-escola'
 import {
   Dialog,
   DialogContent,
@@ -187,6 +190,7 @@ const CAMPO_PARA_ABA: Record<string, string> = {
 
 function tabDoCampo(campo: string): string {
   if (campo.startsWith('documentos.')) return 'identificacao'
+  if (campo.startsWith('portal_')) return 'identificacao'
   if (campo.startsWith('orgao_') || campo.startsWith('mant_') || campo.startsWith('contr_') || campo.startsWith('parceria_')) return 'administrativo'
   if (campo.startsWith('compartilha_codigo') || campo.startsWith('local_') || campo.startsWith('agua_') || campo.startsWith('energia_') || campo.startsWith('esgoto_') || campo.startsWith('lixo_')) return 'local-saneamento'
   if (campo.startsWith('dep_')) return 'dependencias'
@@ -259,7 +263,13 @@ const escolaFormSchema = z.object({
     responsavel_nome: z.string().optional(),
     responsavel_cargo: z.string().optional(),
     logo: z.string().optional(),
+    portal_imagem_fundo: z.string().optional(),
+    portal_texto_login: z.string().optional(),
   }).optional(),
+
+  // Portal do Responsável (uso interno; colunas de schools, fora do Censo)
+  portal_habilitado: z.string().optional(),
+  portal_slug: z.string().optional(),
 
   // Tab 1: Identificação
   nome_escola: z.string().min(1, 'Nome da escola é obrigatório'),
@@ -1356,6 +1366,11 @@ export function EscolaForm({
   const municipioWatch = useWatch({ control, name: 'municipio' })
   const distritoWatch = useWatch({ control, name: 'distrito' })
   const municipioDocWatch = useWatch({ control, name: 'documentos.municipio_doc' })
+  const portalHabilitadoWatch = useWatch({ control, name: 'portal_habilitado' })
+  const portalSlugWatch = useWatch({ control, name: 'portal_slug' })
+  const nomeEscolaWatch = useWatch({ control, name: 'nome_escola' })
+  const portalAtivo = portalHabilitadoWatch === '1'
+  const slugNormalizado = normalizarSlug(portalSlugWatch || '')
   const municipioDocSelecionado = MUNICIPIOS_CEARA.find(m => m.codigo === municipioDocWatch)
   const municipioDocNome = municipioDocSelecionado ? `${municipioDocSelecionado.nome} / ${municipioDocSelecionado.uf}` : ''
 
@@ -2266,6 +2281,122 @@ export function EscolaForm({
                         />
                       </div>
                     </div>
+                  </CardContent>
+                </Card>
+              )}
+
+              {/* ══════ Portal do Responsável (uso interno) ══════ */}
+              {schoolId && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-[16px] font-semibold">Portal do Responsável</CardTitle>
+                    <p className="text-[13px] text-muted-foreground">
+                      Habilita o portal de acesso dos responsáveis desta escola e define o link e a
+                      identidade do login. Estes campos são do sistema e
+                      <strong className="text-foreground"> não são exportados no Censo Escolar</strong>.
+                    </p>
+                  </CardHeader>
+                  <CardContent className="flex flex-col gap-4">
+                    <FormField
+                      control={control}
+                      name="portal_habilitado"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Habilitar Portal do Responsável</FormLabel>
+                          <FormControl>
+                            <PillToggleGroup
+                              options={[
+                                { value: '1', label: 'Sim' },
+                                { value: '0', label: 'Não' },
+                              ]}
+                              value={field.value || ''}
+                              onValueChange={field.onChange}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    {portalAtivo && (
+                      <>
+                        <FormField
+                          control={control}
+                          name="portal_slug"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Link do portal</FormLabel>
+                              <FormControl>
+                                <div className="flex gap-2">
+                                  <Input
+                                    placeholder="ex.: escola-bravery"
+                                    maxLength={60}
+                                    disabled={readOnly}
+                                    {...field}
+                                    value={field.value || ''}
+                                    onBlur={async e => {
+                                      const norm = normalizarSlug(e.target.value)
+                                      field.onChange(norm)
+                                      if (!norm) {
+                                        form.clearErrors('portal_slug')
+                                        return
+                                      }
+                                      const res = await validarSlugUnico(norm, schoolId || undefined)
+                                      if (!res.ok) {
+                                        form.setError('portal_slug', { message: res.erro })
+                                      } else {
+                                        form.clearErrors('portal_slug')
+                                      }
+                                    }}
+                                  />
+                                  <Button
+                                    type="button"
+                                    variant="outline"
+                                    disabled={readOnly}
+                                    onClick={() => {
+                                      form.setValue('portal_slug', sugerirSlug(nomeEscolaWatch || '', portalSlugWatch || ''))
+                                      form.clearErrors('portal_slug')
+                                    }}
+                                  >
+                                    Sugerir
+                                  </Button>
+                                </div>
+                              </FormControl>
+                              <FormMessage />
+                              {slugNormalizado ? (
+                                <p className="text-[13px] text-muted-foreground">
+                                  Link do portal: <span className="font-semibold text-foreground">/portal/{slugNormalizado}</span>
+                                </p>
+                              ) : (
+                                <p className="text-[13px] text-muted-foreground">
+                                  Use apenas letras minúsculas, números e hífens.
+                                </p>
+                              )}
+                              <p className="text-[13px] text-warning">
+                                Trocar o slug invalida o link divulgado anteriormente — será preciso repassar o novo link aos responsáveis.
+                              </p>
+                            </FormItem>
+                          )}
+                        />
+                        <Separator />
+                        <div>
+                          <h4 className="text-sm font-semibold text-foreground mb-1">Identidade do login</h4>
+                          <p className="text-[12px] text-muted-foreground mb-4">
+                            Nome e logo vêm das Configurações de Documentos. Abaixo, a imagem de fundo e o texto exibidos na tela de login do portal.
+                          </p>
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <LogoField control={control} name="documentos.portal_imagem_fundo" label="Imagem de fundo do login" disabled={readOnly} />
+                            <TextareaField
+                              control={control}
+                              name="documentos.portal_texto_login"
+                              label="Texto informativo do login"
+                              placeholder="Ex.: Bem-vindo ao portal da Escola Bravery. Acompanhe frequência, notas e avisos do seu filho."
+                              rows={4}
+                              disabled={readOnly}
+                            />
+                          </div>
+                        </div>
+                      </>
+                    )}
                   </CardContent>
                 </Card>
               )}

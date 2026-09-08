@@ -27,7 +27,7 @@ import Link from 'next/link'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog'
 import { useAuth } from '@/components/providers/auth-provider'
 import { usePermissoes } from '@/hooks/use-permissoes'
-import { createPerson, updatePerson, Person, getVinculosResponsavel, vincularResponsavel, desvincularResponsavel, buscarAlunos, criarAuthUser, salvarSaudeEstudante, type MatriculaAtivaInfo } from '@/lib/actions/people'
+import { createPerson, updatePerson, Person, getVinculosResponsavel, vincularResponsavel, desvincularResponsavel, buscarAlunos, criarAuthUser, definirSenhaPortal, provisionarAcessoPortal, alternarAcessoPortal, atualizarEmailPortal, salvarSaudeEstudante, type MatriculaAtivaInfo } from '@/lib/actions/people'
 import { getVinculosProfissionais, createVinculoProfissional, updateVinculoProfissional, deleteVinculoProfissional, type VinculoProfissionalWithFuncao } from '@/lib/actions/vinculos-profissionais'
 import { getFuncoes, type FuncaoProfissional } from '@/lib/actions/funcoes-profissionais'
 import { listarPerfis, type Perfil } from '@/lib/actions/perfis'
@@ -240,6 +240,10 @@ const defaultForm: FormData = {
   permitir_acesso: false,
   senha: '',
   confirmacao_senha: '',
+  // Acesso ao Portal do Responsável (spec 022)
+  portal_acesso_habilitado: false,
+  senha_portal: '',
+  confirmacao_senha_portal: '',
 }
 
 export function PessoaForm({ schoolId: propSchoolId, person, onSaved, onCancel }: Props) {
@@ -256,6 +260,7 @@ export function PessoaForm({ schoolId: propSchoolId, person, onSaved, onCancel }
   const [matriculasAtivas, setMatriculasAtivas] = useState<MatriculaAtivaInfo[]>([])
   const [cursoCount, setCursoCount] = useState(1)
   const [posCount, setPosCount] = useState(1)
+  const [vinculosIniciais, setVinculosIniciais] = useState<any[]>([])
   const [vinculosProfissionais, setVinculosProfissionais] = useState<VinculoProfissionalWithFuncao[]>([])
   const [funcoesOptions, setFuncoesOptions] = useState<FuncaoProfissional[]>([])
   const [perfisAcesso, setPerfisAcesso] = useState<Perfil[]>([])
@@ -303,6 +308,7 @@ export function PessoaForm({ schoolId: propSchoolId, person, onSaved, onCancel }
       if (person.perfil?.includes('responsavel')) {
         getVinculosResponsavel(person.id).then((vinculos: any[]) => {
           setForm(prev => ({ ...prev, vinculos: vinculos || [] }))
+          setVinculosIniciais(vinculos || [])
         }).catch(() => {})
       }
 
@@ -475,6 +481,22 @@ export function PessoaForm({ schoolId: propSchoolId, person, onSaved, onCancel }
       if (form.senha !== form.confirmacao_senha) { toast.error('Senhas não conferem'); return }
     }
 
+    // Acesso ao Portal do Responsável (spec 022)
+    const portalAtivoNoCadastro = (person as any)?.portal_acesso_habilitado === true
+    const exigeSenhaPortal = form.portal_acesso_habilitado && (!person || !portalAtivoNoCadastro)
+    if (form.portal_acesso_habilitado) {
+      if (!form.email?.trim()) { toast.error('Informe o e-mail do responsável para habilitar o acesso ao portal'); return }
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email.trim())) { toast.error('Informe um e-mail válido para o acesso ao portal'); return }
+      if (exigeSenhaPortal || form.senha_portal) {
+        if (!form.senha_portal || form.senha_portal.length < 10) { toast.error('Senha do portal deve ter no mínimo 10 caracteres'); return }
+        if (!/[A-Z]/.test(form.senha_portal)) { toast.error('Senha do portal deve conter pelo menos uma letra maiúscula'); return }
+        if (!/[a-z]/.test(form.senha_portal)) { toast.error('Senha do portal deve conter pelo menos uma letra minúscula'); return }
+        if (!/[0-9]/.test(form.senha_portal)) { toast.error('Senha do portal deve conter pelo menos um número'); return }
+        if (!/[^A-Za-z0-9]/.test(form.senha_portal)) { toast.error('Senha do portal deve conter pelo menos um caractere especial'); return }
+        if (form.senha_portal !== form.confirmacao_senha_portal) { toast.error('Senhas do portal não conferem'); return }
+      }
+    }
+
     if (form.ativo === false && !form.motivo_inativacao) {
       toast.error('Selecione o motivo de inativação')
       return
@@ -528,6 +550,10 @@ export function PessoaForm({ schoolId: propSchoolId, person, onSaved, onCancel }
       delete payload.permitir_acesso
       delete payload.senha
       delete payload.confirmacao_senha
+      delete payload.senha_portal
+      delete payload.confirmacao_senha_portal
+      // Flag do portal é escrita apenas por provisionarAcessoPortal/alternarAcessoPortal
+      delete payload.portal_acesso_habilitado
       delete payload.email_responsavel
       delete payload.perfis_acesso
       for (let i = 1; i <= 3; i++) {
@@ -544,8 +570,48 @@ export function PessoaForm({ schoolId: propSchoolId, person, onSaved, onCancel }
       let personId: string | undefined
 
       if (person) {
+        // Sincroniza o e-mail de login do portal antes do update
+        // (a action compara com o valor atual do banco)
+        const portalEnvolvido = portalAtivoNoCadastro || form.portal_acesso_habilitado === true
+        const emailTrocou = (person.email || '').trim().toLowerCase() !== (form.email || '').trim().toLowerCase()
+        if (portalEnvolvido && emailTrocou) {
+          await atualizarEmailPortal(person.id, (form.email || '').trim(), schoolId, pessoaId)
+        }
         await updatePerson(person.id, payload, pessoaId)
         personId = person.id
+        // Sincronizar vínculos com alunos na edição (spec 022 — antes só persistia na criação)
+        const mesmosVinculos = (a: any, b: any) =>
+          (a.tipo_vinculo || '3') === (b.tipo_vinculo || '3') &&
+          (a.principal || false) === (b.principal || false) &&
+          (a.autorizado_retirar ?? true) === (b.autorizado_retirar ?? true) &&
+          (a.autorizado_boleto ?? true) === (b.autorizado_boleto ?? true) &&
+          (a.receber_comunicados ?? true) === (b.receber_comunicados ?? true)
+        for (const v of form.vinculos) {
+          if (!v.aluno_id) continue
+          if (v._new) {
+            await vincularResponsavel(person.id, v.aluno_id, v, pessoaId)
+          } else {
+            const orig = vinculosIniciais.find((o: any) => o.aluno_id === v.aluno_id)
+            if (!orig || !mesmosVinculos(orig, v)) {
+              await vincularResponsavel(person.id, v.aluno_id, v, pessoaId)
+            }
+          }
+        }
+        for (const o of vinculosIniciais) {
+          if (!form.vinculos.some((v: any) => v.aluno_id === o.aluno_id)) {
+            await desvincularResponsavel(person.id, o.aluno_id, pessoaId)
+          }
+        }
+        setVinculosIniciais(form.vinculos.map((v: any) => ({ ...v, _new: undefined })))
+        // Acesso ao Portal do Responsável (spec 022)
+        const portalAgora = form.portal_acesso_habilitado === true
+        if (!portalAtivoNoCadastro && portalAgora) {
+          await provisionarAcessoPortal(person.id, schoolId, form.senha_portal || null, pessoaId)
+        } else if (portalAtivoNoCadastro && !portalAgora) {
+          await alternarAcessoPortal(person.id, false, schoolId, pessoaId)
+        } else if (portalAtivoNoCadastro && portalAgora && form.senha_portal) {
+          await definirSenhaPortal(person.id, schoolId, form.senha_portal, pessoaId)
+        }
         // Salvar vínculos profissionais (edição)
         for (const v of vinculosProfissionais) {
           if (v.id) {
@@ -583,6 +649,10 @@ export function PessoaForm({ schoolId: propSchoolId, person, onSaved, onCancel }
           if (v._new && created) {
             await vincularResponsavel(created.id, v.aluno_id, v, pessoaId)
           }
+        }
+        // Acesso ao Portal do Responsável (spec 022)
+        if (form.portal_acesso_habilitado === true && created) {
+          await provisionarAcessoPortal(created.id, schoolId, form.senha_portal || null, pessoaId)
         }
         // Salvar vínculos profissionais (criação)
         for (const v of vinculosProfissionais) {
@@ -1726,8 +1796,14 @@ export function PessoaForm({ schoolId: propSchoolId, person, onSaved, onCancel }
         {isResponsavel && (
           <TabsContent value="contato" className="space-y-5 ">
             <div className="space-y-2">
-              <Label>E-mail</Label>
-              <Input type="email" value={form.email} onChange={(e) => set('email', e.target.value)} placeholder="email@exemplo.com" />
+              <Label>E-mail{form.portal_acesso_habilitado && <span className="text-destructive"> *</span>}</Label>
+              <Input
+                type="email"
+                value={form.email}
+                onChange={(e) => set('email', e.target.value)}
+                placeholder="email@exemplo.com"
+                aria-required={form.portal_acesso_habilitado === true ? 'true' : undefined}
+              />
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-2">
@@ -1743,6 +1819,48 @@ export function PessoaForm({ schoolId: propSchoolId, person, onSaved, onCancel }
               <Label>WhatsApp</Label>
               <Input value={form.whatsapp} onChange={(e) => set('whatsapp', e.target.value)} placeholder="(00) 00000-0000" maxLength={11} />
             </div>
+
+            <FormCard title="Acesso ao Portal" description="Credencial para o responsável acessar o Portal do Responsável.">
+              <div className="space-y-3">
+                <div className="flex items-center gap-2">
+                  <Checkbox
+                    id="portal-acesso-habilitado"
+                    checked={form.portal_acesso_habilitado === true}
+                    onCheckedChange={(v) => set('portal_acesso_habilitado', v === true)}
+                  />
+                  <Label htmlFor="portal-acesso-habilitado" className="font-medium cursor-pointer">Habilitar Acesso ao Portal</Label>
+                </div>
+                <p className="text-[13px] text-muted-foreground ml-6">O responsável acessa o Portal com o e-mail do cadastro e a senha definida abaixo.</p>
+              </div>
+
+              {form.portal_acesso_habilitado === true && (
+                <div className="ml-6 space-y-4 mt-4">
+                  <p className="text-[15px] text-muted-foreground">O login do portal é o e-mail informado acima.</p>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label>{person ? 'Nova senha (em branco mantém a atual)' : 'Senha'}</Label>
+                      <Input
+                        type="password"
+                        value={form.senha_portal}
+                        onChange={(e) => set('senha_portal', e.target.value)}
+                        placeholder="Digite a senha"
+                        aria-required="true"
+                      />
+                      <p className="text-[13px] text-muted-foreground mt-1">Mínimo 10 caracteres: 1 maiúscula, 1 minúscula, 1 número e 1 caractere especial.</p>
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Confirmação de senha</Label>
+                      <Input
+                        type="password"
+                        value={form.confirmacao_senha_portal}
+                        onChange={(e) => set('confirmacao_senha_portal', e.target.value)}
+                        placeholder="Repita a senha"
+                      />
+                    </div>
+                  </div>
+                </div>
+              )}
+            </FormCard>
 
             <FormCard title="Vínculo com Alunos">
               <div className="space-y-2">

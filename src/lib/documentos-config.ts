@@ -18,6 +18,8 @@ export type ConfigDocumentosForm = {
   responsavel_nome: string
   responsavel_cargo: string
   logo: string
+  portal_imagem_fundo: string
+  portal_texto_login: string
 }
 
 export function configDocumentosVazia(): ConfigDocumentosForm {
@@ -39,6 +41,8 @@ export function configDocumentosVazia(): ConfigDocumentosForm {
     responsavel_nome: '',
     responsavel_cargo: '',
     logo: '',
+    portal_imagem_fundo: '',
+    portal_texto_login: '',
   }
 }
 
@@ -102,6 +106,8 @@ export function seedDocumentosFromSchool(school: {
     responsavel_nome: '',
     responsavel_cargo: '',
     logo: '',
+    portal_imagem_fundo: '',
+    portal_texto_login: '',
   }
 }
 
