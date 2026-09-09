@@ -9,7 +9,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { FormCard } from '@/components/layout/form-card'
 import { ClickablePill } from '@/components/ui/clickable-pill'
 import { PeriodoDatasField, HoraField } from '@/components/comunicados/periodo-visibilidade-field'
-import { Loader2, Save, X, Trash2 } from 'lucide-react'
+import { Loader2, Save, X, BrushCleaning } from 'lucide-react'
 import { toast } from 'sonner'
 
 export type ComunicadoFormValues = {
@@ -162,7 +162,7 @@ export function ComunicadoForm({ schoolId, anoLetivo, initial, saving, submitLab
               <div className="flex items-center gap-2">
                 <Button variant="outline" size="sm" onClick={() => setTurmaIds(turmas.map(t => t.id))}>Selecionar todas</Button>
                 <Button variant="destructive" size="sm" onClick={() => setTurmaIds([])}>
-                  <Trash2 className="mr-2 h-4 w-4" />
+                  <BrushCleaning className="mr-2 h-4 w-4" />
                   Limpar
                 </Button>
               </div>

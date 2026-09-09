@@ -305,10 +305,12 @@ export type OcorrenciaResumo = {
   natureza: 'positiva' | 'negativa'
   data: string
   descricao: string
+  lido: boolean
 }
 
 async function listarOcorrenciasPortal(
   ctx: PortalCtx,
+  responsavelId: string,
   alunoId: string,
   natureza: 'todas' | 'positiva' | 'negativa',
   limite: number
@@ -333,18 +335,31 @@ async function listarOcorrenciasPortal(
     .limit(limite)
   if (natureza !== 'todas') query = query.eq('tipo', natureza)
   const { data } = await query
-  return ((data || []) as unknown as Array<{
+  const lista = ((data || []) as unknown as Array<{
     id: string
     titulo: string
     tipo: 'positiva' | 'negativa'
     detalhes: string
     data_ocorrencia: string
-  }>).map(o => ({
+  }>)
+
+  const { data: leituras } = lista.length
+    ? await supabase
+        .from('ocorrencias_leituras')
+        .select('ocorrencia_id')
+        .eq('responsavel_id', responsavelId)
+        .in('ocorrencia_id', lista.map(o => o.id))
+    : { data: [] as Array<{ ocorrencia_id: string }> }
+
+  const lidos = new Set(((leituras || []) as Array<{ ocorrencia_id: string }>).map(l => l.ocorrencia_id))
+
+  return lista.map(o => ({
     id: o.id,
     titulo: o.titulo,
     natureza: o.tipo,
     data: o.data_ocorrencia,
     descricao: o.detalhes,
+    lido: lidos.has(o.id),
   }))
 }
 
@@ -503,7 +518,7 @@ export async function getInicioPortal(
 
   const [comunicadosRecentes, ocorrenciasRecentes] = await Promise.all([
     listarComunicadosPortal(ctx, responsavelId, alunoId, 3),
-    listarOcorrenciasPortal(ctx, alunoId, 'todas', 3),
+    listarOcorrenciasPortal(ctx, responsavelId, alunoId, 'todas', 3),
   ])
 
   const { count: totalOcorrencias } = await supabase
@@ -860,7 +875,40 @@ export async function getOcorrenciasPortal(
   schoolId?: string
 ): Promise<OcorrenciaResumo[]> {
   const ctx = await validarVinculoPortal(responsavelId, alunoId, schoolId)
-  return listarOcorrenciasPortal(ctx, alunoId, filtro, 100)
+  return listarOcorrenciasPortal(ctx, responsavelId, alunoId, filtro, 100)
+}
+
+export async function marcarOcorrenciaLida(
+  responsavelId: string,
+  alunoId: string,
+  ocorrenciaId: string,
+  schoolId?: string
+): Promise<{ ok: true }> {
+  const ctx = await validarVinculoPortal(responsavelId, alunoId, schoolId)
+
+  const { data: vinc } = await supabase
+    .from('ocorrencias_alunos')
+    .select('ocorrencia_id, ocorrencias!inner(school_id, apresentar_portal)')
+    .eq('ocorrencia_id', ocorrenciaId)
+    .eq('aluno_id', alunoId)
+    .maybeSingle()
+
+  const v = vinc as unknown as {
+    ocorrencia_id: string
+    ocorrencias: { school_id: string; apresentar_portal: boolean }
+  } | null
+  if (!v || v.ocorrencias.school_id !== ctx.schoolId || !v.ocorrencias.apresentar_portal) {
+    throw new Error('Acesso negado')
+  }
+
+  await supabase
+    .from('ocorrencias_leituras')
+    .upsert(
+      { ocorrencia_id: ocorrenciaId, responsavel_id: responsavelId },
+      { onConflict: 'ocorrencia_id,responsavel_id' }
+    )
+
+  return { ok: true }
 }
 
 export async function getComunicadosPortal(

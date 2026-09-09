@@ -5,29 +5,20 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import { useTabParams } from '@/lib/tab-params'
 import { useAuth } from '@/components/providers/auth-provider'
 import { usePermissoes } from '@/hooks/use-permissoes'
-import { getAnosLetivos } from '@/lib/actions/calendarios'
-import { getComunicado, atualizarComunicado, excluirComunicado, type ComunicadoDetalhe } from '@/lib/actions/comunicados'
+import { getOcorrencia, atualizarOcorrencia, excluirOcorrencia, resolverNomesPessoas, type OcorrenciaDetalhe } from '@/lib/actions/ocorrencias'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { PageContainer } from '@/components/layout/page-container'
 import { PageHeader } from '@/components/layout/page-header'
 import { EmptyState } from '@/components/ui/empty-state'
 import { ConfirmDialog } from '@/components/feedback/confirm-dialog'
-import { ComunicadoForm, type ComunicadoFormValues } from '@/components/comunicados/comunicado-form'
-import { combinarDataHora } from '@/components/comunicados/periodo-visibilidade-field'
-import { ArrowLeft, Megaphone, ShieldAlert, Trash2, AlertCircle, School } from 'lucide-react'
+import { OcorrenciaForm, type OcorrenciaFormValues, type OcorrenciaFormInitial } from '@/components/ocorrencias/ocorrencia-form'
+import { ArrowLeft, AlertTriangle, ShieldAlert, Trash2, AlertCircle, School } from 'lucide-react'
 import { toast } from 'sonner'
 
-const RECURSO = 'portal.comunicados'
+const RECURSO = 'gestao-academica.ocorrencias'
 
-function splitDataHora(iso: string | null): { data: string; hora: string } {
-  if (!iso) return { data: '', hora: '' }
-  const m = iso.match(/^(\d{4}-\d{2}-\d{2})[T ](\d{2}:\d{2})/)
-  if (!m) return { data: '', hora: '' }
-  return { data: m[1], hora: m[2] }
-}
-
-export default function ComunicadoEditarPage() {
+export default function OcorrenciaEditarPage() {
   return (
     <Suspense
       fallback={
@@ -38,12 +29,12 @@ export default function ComunicadoEditarPage() {
         </PageContainer>
       }
     >
-      <EditarComunicadoForm />
+      <EditarOcorrenciaForm />
     </Suspense>
   )
 }
 
-function EditarComunicadoForm() {
+function EditarOcorrenciaForm() {
   const router = useRouter()
   const params = useTabParams()
   const id = params.id as string
@@ -53,8 +44,7 @@ function EditarComunicadoForm() {
   const schoolId = isSuperAdmin ? escolaParam : authSchoolId
 
   const [pessoaId, setPessoaId] = useState<string | null>(null)
-  const [detalhe, setDetalhe] = useState<ComunicadoDetalhe | null>(null)
-  const [anoDescricao, setAnoDescricao] = useState('')
+  const [initial, setInitial] = useState<OcorrenciaFormInitial | null>(null)
   const [loading, setLoading] = useState(true)
   const [naoEncontrado, setNaoEncontrado] = useState(false)
   const [saving, setSaving] = useState(false)
@@ -68,43 +58,104 @@ function EditarComunicadoForm() {
   }, [pid])
 
   useEffect(() => {
-    if (!permLoaded || !schoolId || !id) return
+    if (!permLoaded) return
+    if (!id) {
+      setNaoEncontrado(true)
+      setLoading(false)
+      return
+    }
+    if (!schoolId) return
     if (!pode.visualizar(RECURSO)) {
       setLoading(false)
       return
     }
-    Promise.all([getComunicado(id, schoolId, pessoaId), getAnosLetivos(schoolId)])
-      .then(([d, anos]) => {
+    getOcorrencia(id, schoolId, pessoaId)
+      .then(async (d: OcorrenciaDetalhe | null) => {
         if (!d) {
           setNaoEncontrado(true)
           return
         }
-        setDetalhe(d)
-        setAnoDescricao(anos.find(a => a.id === d.anoLetivoId)?.descricao ?? '')
+        const nomes = await resolverNomesPessoas(schoolId, [...d.profissionalIds, ...d.alunoIds], pessoaId)
+        const porId = new Map(nomes.map(n => [n.id, n.nome]))
+        const profIds = new Set(d.profissionalIds)
+        const nomesProfissionais: Record<string, string> = {}
+        const nomesAlunos: Record<string, string> = {}
+        for (const [nid, nome] of porId) {
+          if (profIds.has(nid)) nomesProfissionais[nid] = nome
+          else nomesAlunos[nid] = nome
+        }
+        setInitial({
+          titulo: d.titulo,
+          tipo: d.tipo,
+          dataOcorrencia: d.dataOcorrencia,
+          detalhes: d.detalhes,
+          apresentarPortal: d.apresentarPortal,
+          profissionalIds: d.profissionalIds,
+          alunoIds: d.alunoIds,
+          nomesProfissionais,
+          nomesAlunos,
+        })
       })
       .catch(() => setNaoEncontrado(true))
       .finally(() => setLoading(false))
   }, [permLoaded, schoolId, id, pessoaId, pode])
 
-  const voltar = () => router.push('/comunicados')
+  const voltar = () => router.push('/ocorrencias')
   const podeEditar = pode.editar(RECURSO)
   const podeExcluir = pode.excluir(RECURSO)
+
+  const handleSave = async (values: OcorrenciaFormValues) => {
+    if (!schoolId || !values.tipo) return
+    setSaving(true)
+    try {
+      await atualizarOcorrencia(id, schoolId, {
+        titulo: values.titulo,
+        tipo: values.tipo,
+        dataOcorrencia: values.dataOcorrencia,
+        detalhes: values.detalhes,
+        apresentarPortal: values.apresentarPortal,
+        profissionalIds: values.profissionalIds,
+        alunoIds: values.alunoIds,
+      }, pessoaId)
+      toast.success('Ocorrência atualizada')
+      voltar()
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Erro ao atualizar ocorrência')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  const handleExcluir = async () => {
+    if (!schoolId) return
+    setDeleting(true)
+    try {
+      await excluirOcorrencia(id, schoolId, pessoaId)
+      toast.success('Ocorrência excluída')
+      voltar()
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Erro ao excluir ocorrência')
+    } finally {
+      setDeleting(false)
+      setDeleteOpen(false)
+    }
+  }
 
   if (isSuperAdmin && !escolaParam) {
     return (
       <PageContainer>
         <PageHeader
-          title="Editar Comunicado"
-          description="Altere os dados do comunicado"
-          icon={Megaphone}
+          title="Editar Ocorrência"
+          description="Altere os dados da ocorrência"
+          icon={AlertTriangle}
         />
         <Card className="shadow-sm">
           <EmptyState
             icon={School}
             title="Selecione uma escola"
-            description="Volte para a lista de comunicados, selecione uma escola e edite o comunicado por lá."
+            description="Volte para a lista de ocorrências, selecione uma escola e abra a ocorrência para editar."
             action={
-              <Button variant="outline" onClick={voltar}>
+              <Button onClick={voltar}>
                 <ArrowLeft className="h-4 w-4 mr-1.5" />
                 Voltar
               </Button>
@@ -115,54 +166,18 @@ function EditarComunicadoForm() {
     )
   }
 
-  const handleSave = async (values: ComunicadoFormValues) => {
-    if (!schoolId || !detalhe?.anoLetivoId) return
-    setSaving(true)
-    try {
-      await atualizarComunicado(id, schoolId, {
-        anoLetivoId: detalhe.anoLetivoId,
-        turmaIds: values.turmaIds,
-        titulo: values.titulo,
-        descricao: values.descricao,
-        visivelDe: combinarDataHora(values.dataInicio, values.horaInicio),
-        visivelAte: combinarDataHora(values.dataFim, values.horaFim),
-      }, pessoaId)
-      toast.success('Comunicado atualizado')
-      voltar()
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Erro ao atualizar comunicado')
-    } finally {
-      setSaving(false)
-    }
-  }
-
-  const handleExcluir = async () => {
-    if (!schoolId) return
-    setDeleting(true)
-    try {
-      await excluirComunicado(id, schoolId, pessoaId)
-      toast.success('Comunicado excluído')
-      voltar()
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Erro ao excluir comunicado')
-    } finally {
-      setDeleting(false)
-      setDeleteOpen(false)
-    }
-  }
-
   if (!loading && permLoaded && !pode.visualizar(RECURSO)) {
     return (
       <PageContainer>
         <PageHeader
-          title="Editar Comunicado"
-          description="Altere os dados do comunicado"
-          icon={Megaphone}
+          title="Editar Ocorrência"
+          description="Altere os dados da ocorrência"
+          icon={AlertTriangle}
         />
         <EmptyState
           icon={ShieldAlert}
           title="Sem permissão"
-          description="Você não tem permissão para visualizar este comunicado."
+          description="Você não tem permissão para visualizar esta ocorrência."
           action={
             <Button variant="outline" onClick={voltar}>
               <ArrowLeft className="h-4 w-4 mr-1.5" />
@@ -178,15 +193,15 @@ function EditarComunicadoForm() {
     return (
       <PageContainer>
         <PageHeader
-          title="Editar Comunicado"
-          description="Altere os dados do comunicado"
-          icon={Megaphone}
+          title="Editar Ocorrência"
+          description="Altere os dados da ocorrência"
+          icon={AlertTriangle}
         />
         <Card className="shadow-sm">
           <EmptyState
             icon={AlertCircle}
-            title="Comunicado não encontrado"
-            description="O comunicado pode ter sido excluído ou pertence a outra escola."
+            title="Ocorrência não encontrada"
+            description="A ocorrência pode ter sido excluída ou pertence a outra escola."
             action={
               <Button variant="outline" onClick={voltar}>
                 <ArrowLeft className="h-4 w-4 mr-1.5" />
@@ -199,18 +214,15 @@ function EditarComunicadoForm() {
     )
   }
 
-  const de = splitDataHora(detalhe?.visivelDe ?? null)
-  const ate = splitDataHora(detalhe?.visivelAte ?? null)
-
   return (
     <PageContainer>
       <PageHeader
-        title="Editar Comunicado"
-        description="Altere os dados do comunicado"
-        icon={Megaphone}
+        title="Editar Ocorrência"
+        description="Altere os dados da ocorrência"
+        icon={AlertTriangle}
         actions={
           <div className="flex items-center gap-2">
-            {podeExcluir && detalhe && (
+            {podeExcluir && initial && (
               <Button variant="destructive" size="sm" onClick={() => setDeleteOpen(true)}>
                 <Trash2 className="mr-2 h-4 w-4" />
                 Excluir
@@ -224,7 +236,7 @@ function EditarComunicadoForm() {
         }
       />
 
-      {loading || !detalhe || !schoolId ? (
+      {loading || !initial || !schoolId ? (
         <div className="flex items-center justify-center py-16">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
         </div>
@@ -232,7 +244,7 @@ function EditarComunicadoForm() {
         <EmptyState
           icon={ShieldAlert}
           title="Sem permissão para editar"
-          description="Você pode visualizar, mas não tem permissão para alterar este comunicado."
+          description="Você pode visualizar, mas não tem permissão para alterar esta ocorrência."
           action={
             <Button variant="outline" onClick={voltar}>
               <ArrowLeft className="h-4 w-4 mr-1.5" />
@@ -241,19 +253,11 @@ function EditarComunicadoForm() {
           }
         />
       ) : (
-        <ComunicadoForm
-          key={detalhe.id}
+        <OcorrenciaForm
+          key={id}
           schoolId={schoolId}
-          anoLetivo={{ id: detalhe.anoLetivoId ?? '', descricao: anoDescricao }}
-          initial={{
-            turmaIds: detalhe.turmaIds,
-            titulo: detalhe.titulo,
-            descricao: detalhe.descricao,
-            dataInicio: de.data,
-            dataFim: ate.data,
-            horaInicio: de.hora,
-            horaFim: ate.hora,
-          }}
+          pessoaId={pessoaId}
+          initial={initial}
           saving={saving}
           submitLabel="Atualizar"
           onCancel={voltar}
@@ -264,8 +268,8 @@ function EditarComunicadoForm() {
       <ConfirmDialog
         open={deleteOpen}
         onOpenChange={setDeleteOpen}
-        title="Excluir comunicado"
-        description="Deseja excluir este comunicado? Ele deixará de ser exibido no Portal dos Responsáveis. Esta ação não pode ser desfeita."
+        title="Excluir ocorrência"
+        description="Deseja excluir esta ocorrência? Esta ação não pode ser desfeita."
         confirmLabel="Excluir"
         variant="destructive"
         loading={deleting}

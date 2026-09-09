@@ -144,7 +144,10 @@ export default function ComunicadosPage() {
       toast.error('Sem permissão para editar comunicados')
       return
     }
-    router.push(`/comunicados/${id}`)
+    const params = new URLSearchParams()
+    if (isSuperAdmin && selectedSchoolId) params.set('escola', selectedSchoolId)
+    const qs = params.toString()
+    router.push(`/comunicados/${id}${qs ? `?${qs}` : ''}`)
   }
 
   const handleExcluir = async () => {

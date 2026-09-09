@@ -433,9 +433,9 @@ Use SEMPRE os tokens Tailwind v4 derivados das CSS variables do `globals.css`:
 <!-- END:project-summary -->
 
 <!-- SPECKIT START -->
-Current plan: specs/025-comunicados-portal/plan.md
-Feature: Comunicados do Portal
-Spec: specs/025-comunicados-portal/spec.md
-Data model: specs/025-comunicados-portal/data-model.md
-Quickstart: specs/025-comunicados-portal/quickstart.md
+Current plan: specs/026-ocorrencias-gestao-academica/plan.md
+Feature: Ocorrências da Gestão Acadêmica
+Spec: specs/026-ocorrencias-gestao-academica/spec.md
+Data model: specs/026-ocorrencias-gestao-academica/data-model.md
+Quickstart: specs/026-ocorrencias-gestao-academica/quickstart.md
 <!-- SPECKIT END -->

@@ -112,6 +112,7 @@ const modules: Module[] = [
       { title: 'Métodos de Avaliação', href: '/gestao-academica/metodos', recurso: 'gestao-academica.metodos' },
       { title: 'Alunos Matriculados', href: '/gestao-academica/matriculas', recurso: 'gestao-academica.matriculas' },
       { title: 'Comunicados', href: '/comunicados', recurso: 'portal.comunicados' },
+      { title: 'Ocorrências', href: '/ocorrencias', recurso: 'gestao-academica.ocorrencias' },
     ],
   },
   {

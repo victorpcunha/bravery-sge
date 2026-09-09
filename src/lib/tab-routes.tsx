@@ -31,6 +31,7 @@ import {
   Briefcase,
   ScrollText,
   Megaphone,
+  AlertTriangle,
 } from 'lucide-react'
 import type { TabParams } from '@/lib/tab-params'
 
@@ -75,6 +76,9 @@ import DocumentosPage from '@/app/(app)/documentos/page'
 import ComunicadosPage from '@/app/(app)/comunicados/page'
 import ComunicadoNovoPage from '@/app/(app)/comunicados/novo/page'
 import ComunicadoEditarPage from '@/app/(app)/comunicados/[id]/page'
+import OcorrenciasPage from '@/app/(app)/ocorrencias/page'
+import OcorrenciaNovaPage from '@/app/(app)/ocorrencias/novo/page'
+import OcorrenciaEditarPage from '@/app/(app)/ocorrencias/[id]/page'
 
 export const TAB_MODULES = {
   dashboard: 'dashboard',
@@ -107,6 +111,7 @@ export const TAB_MODULES = {
   auditoria: 'auditoria',
   documentos: 'documentos',
   comunicados: 'comunicados',
+  ocorrencias: 'ocorrencias',
 } as const
 
 export type TabModuleId = (typeof TAB_MODULES)[keyof typeof TAB_MODULES]
@@ -150,6 +155,7 @@ export const MODULES: Record<TabModuleId, ModuleMeta> = {
   [TAB_MODULES.auditoria]: { title: 'Auditoria', icon: ScrollText },
   [TAB_MODULES.documentos]: { title: 'Documentos', icon: FileText },
   [TAB_MODULES.comunicados]: { title: 'Comunicados', icon: Megaphone },
+  [TAB_MODULES.ocorrencias]: { title: 'Ocorrências', icon: AlertTriangle },
 }
 
 export type TabRoute = {
@@ -307,6 +313,18 @@ const ROUTES: TabRoute[] = [
       return m ? { id: m[1] } : undefined
     },
     Component: ComunicadoEditarPage,
+  },
+
+  // Gestão Acadêmica — Ocorrências (estáticas antes da dinâmica)
+  { module: TAB_MODULES.ocorrencias, match: exact('/ocorrencias'), Component: OcorrenciasPage },
+  { module: TAB_MODULES.ocorrencias, match: exact('/ocorrencias/novo'), Component: OcorrenciaNovaPage },
+  {
+    module: TAB_MODULES.ocorrencias,
+    match: (p) => {
+      const m = p.match(/^\/ocorrencias\/([^/]+)$/)
+      return m ? { id: m[1] } : undefined
+    },
+    Component: OcorrenciaEditarPage,
   },
 ]
 
