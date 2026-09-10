@@ -1,9 +1,14 @@
 const { createClient } = require('@supabase/supabase-js');
 
-const supabase = createClient(
-  process.env.SUPABASE_URL || 'https://wfxmmwmxmantgzydusnw.supabase.co',
-  process.env.SUPABASE_SERVICE_ROLE_KEY
-);
+const url = process.env.SUPABASE_URL;
+const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+if (!url || !serviceKey) {
+  console.error('Missing SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY env vars. Never hardcode keys in source.');
+  process.exit(1);
+}
+
+const supabase = createClient(url, serviceKey);
 
 // Dados para carregar - objetivos de aprendizagem (缩减 para exemplo)
 const objetivosInfantil = [
