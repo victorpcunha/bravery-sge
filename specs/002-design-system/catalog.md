@@ -326,34 +326,35 @@ Use `text-primary-foreground` (ou variante padrão do Button que já usa a cor c
 
 | Token | Valor | Uso |
 |-------|-------|-----|
-| `--primary` | `#1F88EB` | Marca, botão primário, logo, ring |
+| `--primary` | `#4682B4` | Marca, botão primário, logo, ring |
 | `--primary-foreground` | `#FFFFFF` | Texto sobre primary |
-| `--accent` | `#4FC3D7` | Foco de inputs, interação complementar (cianês) |
-| `--accent-foreground` | `#0A2540` | Texto sobre accent |
-| `--secondary` | `#1A6FC2` | Botão secundário, charts (deep blue) |
+| `--accent` | `#59A5E3` | Realces e seleção (azul claro da rampa) |
+| `--accent-foreground` | `#192E40` | Texto sobre accent |
+| `--secondary` | `#396991` | Botão secundário, charts (deep blue) |
 | `--secondary-foreground` | `#FFFFFF` | Texto sobre secondary |
-| `--background` | `#F6F8FA` | Fundo da página (slate-50) |
+| `--background` | `#EDF1F5` | Fundo da página (slate-50) |
 | `--card` | `#FFFFFF` | Fundo de card/superfície |
 | `--foreground` | `#1E293B` | Texto principal (slate-800) |
-| `--muted` | `#F1F5F9` | Fundo de seções/zonas (slate-100) |
-| `--muted-foreground` | `#64748B` | Texto secundário (slate-500) |
-| `--border` | `#E2E8F0` | Bordas padrão (slate-200) |
-| `--ring` | `#1F88EB` | Cor de foco (= primary) |
-| `--destructive` | `#DC2626` | Erro/destruição |
+| `--muted` | `#E4E9F0` | Fundo de seções/zonas (slate-100) |
+| `--muted-foreground` | `#52607A` | Texto secundário (slate-500) |
+| `--border` | `#D7DEE8` | Bordas padrão (slate-200) |
+| `--ring` | `#B8863B` | Cor de foco (= accent) |
+| `--destructive` | `#C4453A` | Erro/destruição |
 | `--success` | `#16A34A` | Sucesso |
-| `--warning` | `#D97706` | Atenção |
-| `--info` | `#1F88EB` | Informação (= primary) |
-| `--sidebar` | `#FAFBFC` | Fundo da sidebar (quase branco) |
-| `--sidebar-foreground` | `#1E293B` | Texto da sidebar |
-| `--sidebar-primary` | `#1F88EB` | Item ativo da sidebar |
-| `--sidebar-accent` | `#F1F5F9` | Hover da sidebar (muted) |
+| `--warning` | `#C2571C` | Atenção |
+| `--info` | `#396991` | Informação (= secondary) |
+| `--sidebar` | `#294C69` | Fundo da sidebar (steel profundo) |
+| `--sidebar-foreground` | `#FFFFFF` | Texto da sidebar |
+| `--sidebar-primary` | `#FFFFFF` | Item ativo da sidebar (pílula branca) |
+| `--sidebar-accent` | `rgba(255,255,255,0.12)` | Hover da sidebar (wash translúcido) |
 
 **Regras**:
-- `--primary` (`#1F88EB`) é a cor de marca — botão primário, logo, links, ring.
-- `--accent` (`#4FC3D7`) é a cor complementar — foco de inputs, seleção, destaque interativo.
-- `--secondary` (`#1A6FC2`) é a cor de apoio — botão secundário, charts.
-- `--info` acompanha `--primary` (blue).
-- `--ring` acompanha `--primary` (blue).
+- `--primary` (`#4682B4`) é a cor de marca — botão primário, logo, links.
+- `--accent` (`#59A5E3`) é a cor de realce — seleção, hovers e complementos claros.
+- `--ring` é dourado fixo (`#B8863B`), desacoplado do accent: o accent claro não atinge 3:1 como anel sobre branco.
+- `--secondary` (`#396991`) é a cor de apoio — botão secundário, charts.
+- `--info` acompanha `--secondary` (steel profundo).
+- `--ring` acompanha `--accent` (dourado).
 - Sidebar é **branca** em light mode, **slate-950** em dark mode.
 
 ### Tokens de Cor (Dark Mode)

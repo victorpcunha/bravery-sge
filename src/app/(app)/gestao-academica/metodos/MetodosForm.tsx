@@ -56,6 +56,7 @@ type FormData = {
   nome: string
   criterio_frequencia: string
   frecuencia_minima: number
+  faixa_atencao_pp: number
   tipos_avaliacao: { numerico: boolean; parecer: boolean; conceito: boolean; nivel: boolean }
   quantidade_periodos_numerico: number
   quantidade_periodos_parecer: number
@@ -105,6 +106,7 @@ const defaultForm: FormData = {
   nome: '',
   criterio_frequencia: 'por_dia',
   frecuencia_minima: 75,
+  faixa_atencao_pp: 5,
   tipos_avaliacao: { numerico: false, parecer: false, conceito: false, nivel: false },
   quantidade_periodos_numerico: 4,
   quantidade_periodos_parecer: 4,
@@ -225,6 +227,7 @@ export function MetodosForm({ schoolId, editId, onSaved, onCancel }: Props) {
           nome: p.nome || '',
           criterio_frequencia: p.criterio_frequencia || 'por_dia',
           frecuencia_minima: p.frecuencia_minima ?? 75,
+          faixa_atencao_pp: Number((p as unknown as Record<string, unknown>)?.faixa_atencao_pp ?? 5),
           tipos_avaliacao: {
             numerico: !!(p.tipos_avaliacao as Record<string, boolean>)?.numerico,
             parecer: !!(p.tipos_avaliacao as Record<string, boolean>)?.parecer,
@@ -301,6 +304,7 @@ export function MetodosForm({ schoolId, editId, onSaved, onCancel }: Props) {
           ativo: form.ativo,
           criterio_frequencia: form.criterio_frequencia,
           frecuencia_minima: form.frecuencia_minima,
+          faixa_atencao_pp: Math.min(50, Math.max(0, Number(form.faixa_atencao_pp) || 0)),
           tipos_avaliacao: form.tipos_avaliacao,
           quantidade_periodos_numerico: form.tipos_avaliacao.numerico ? form.quantidade_periodos_numerico : null,
           quantidade_periodos_parecer: form.tipos_avaliacao.parecer ? form.quantidade_periodos_parecer : null,
@@ -415,6 +419,12 @@ export function MetodosForm({ schoolId, editId, onSaved, onCancel }: Props) {
             <div className="space-y-2">
               <Label htmlFor="frecuencia">Frequência Mínima (%)</Label>
               <Input id="frecuencia" type="number" min={0} max={100} value={form.frecuencia_minima} onChange={(e) => set('frecuencia_minima', Number(e.target.value) || 0)} />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="faixa_atencao">Faixa de Atenção (pp)</Label>
+              <Input id="faixa_atencao" type="number" min={0} max={50} value={form.faixa_atencao_pp} onChange={(e) => set('faixa_atencao_pp', Number(e.target.value) || 0)} />
+              <p className="text-[13px] text-muted-foreground">Pontos percentuais acima do mínimo p/ o Painel de Rendimento.</p>
             </div>
 
             <div className="flex items-center gap-3 pt-6">

@@ -64,15 +64,21 @@ input[type="number"] {
 }
 
 :root {
-  /* Bravery SGE Design System v2 — Blue Primary */
-  --primary: #1F88EB;
+  /* Bravery SGE — v7: rampa tonal steel blue (light only; .dark intocado) */
+  --primary: #4682B4;
   --primary-foreground: #FFFFFF;
-  --secondary: #1A6FC2;
-  --secondary-foreground: #FFFFFF;
-  --accent: #4FC3D7;
-  --accent-foreground: #0A2540;
 
-  --background: #F6F8FA;
+  --secondary: #396991;
+  /* tom fundo da rampa — ações de apoio e fills com texto */
+  --secondary-foreground: #FFFFFF;
+
+  --accent: #59A5E3;
+  /* azul claro da rampa — realces e seleção */
+  --accent-foreground: #192E40;
+  /* navy da rampa — texto sobre accent (5.26:1) */
+
+  --background: #EDF1F5;
+  /* leve tom azulado — distingue do card branco */
   --foreground: #1E293B;
   --surface: #FFFFFF;
   --card: #FFFFFF;
@@ -80,27 +86,32 @@ input[type="number"] {
   --popover: #FFFFFF;
   --popover-foreground: #1E293B;
 
-  --muted: #F1F5F9;
-  --muted-foreground: #475569;
-  --border: #E2E8F0;
+  --muted: #E4E9F0;
+  --muted-foreground: #52607A;
+  --border: #D7DEE8;
   --input: #FFFFFF;
-  --ring: #1F88EB;
+  --ring: #B8863B;
+  /* foco permanece dourado de propósito: o accent claro não atinge 3:1 como anel sobre branco */
 
-  --destructive: #DC2626;
+  --destructive: #C4453A;
   --destructive-foreground: #FFFFFF;
+  --destructive-light: #FBEAE8;
   --calendar-letivo: #16A34A;
-  --calendar-recesso: #DC2626;
+  --calendar-recesso: #C4453A;
   --success: #16A34A;
+  /* volta a ser verde — sem risco de colisão agora */
   --success-light: #DAFBE1;
-  --warning: #D97706;
-  --warning-light: #FFF8C5;
-  --info: #1F88EB;
-  --info-light: #E0F2FE;
+  --warning: #C2571C;
+  /* mais vermelho-alaranjado, afastado do accent dourado */
+  --warning-light: #FBEFE2;
+  --info: #396991;
+  /* deep steel — texto informativo com contraste AA */
+  --info-light: #E4ECF3;
 
-  --chart-1: #1F88EB;
-  --chart-2: #4FC3D7;
-  --chart-3: #1A6FC2;
-  --chart-4: #1A6FC2;
+  --chart-1: #4682B4;
+  --chart-2: #B8863B;
+  --chart-3: #396991;
+  --chart-4: #294C69;
   --chart-5: #16A34A;
 
   --radius-sm: 6px;
@@ -111,20 +122,21 @@ input[type="number"] {
   --radius-2xl: 24px;
   --radius-full: 9999px;
 
-  --sidebar: #1F88EB;
+  /* Sidebar no tom profundo da rampa — hierarquia clara, texto branco */
+  --sidebar: #294C69;
   --sidebar-foreground: #FFFFFF;
   --sidebar-primary: #FFFFFF;
-  --sidebar-primary-foreground: #1F88EB;
+  --sidebar-primary-foreground: #294C69;
   --sidebar-accent: rgba(255, 255, 255, 0.12);
   --sidebar-accent-foreground: #FFFFFF;
   --sidebar-border: rgba(255, 255, 255, 0.2);
   --sidebar-ring: #FFFFFF;
 
-  --shadow-sm: 0 1px 3px rgba(13, 17, 23, 0.04), 0 1px 2px rgba(13, 17, 23, 0.06);
-  --shadow: 0 3px 8px rgba(13, 17, 23, 0.06), 0 1px 3px rgba(13, 17, 23, 0.08);
-  --shadow-md: 0 6px 16px rgba(13, 17, 23, 0.08), 0 3px 6px rgba(13, 17, 23, 0.04);
-  --shadow-lg: 0 12px 28px rgba(13, 17, 23, 0.12), 0 4px 10px rgba(13, 17, 23, 0.04);
-  --shadow-xl: 0 20px 40px rgba(13, 17, 23, 0.16), 0 8px 16px rgba(13, 17, 23, 0.06);
+  --shadow-sm: 0 1px 3px rgba(26, 53, 80, 0.06), 0 1px 2px rgba(26, 53, 80, 0.08);
+  --shadow: 0 3px 8px rgba(26, 53, 80, 0.08), 0 1px 3px rgba(26, 53, 80, 0.10);
+  --shadow-md: 0 6px 16px rgba(26, 53, 80, 0.10), 0 3px 6px rgba(26, 53, 80, 0.06);
+  --shadow-lg: 0 12px 28px rgba(26, 53, 80, 0.14), 0 4px 10px rgba(26, 53, 80, 0.06);
+  --shadow-xl: 0 20px 40px rgba(26, 53, 80, 0.18), 0 8px 16px rgba(26, 53, 80, 0.08);
 
   --transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
   --transition: 200ms cubic-bezier(0.4, 0, 0.2, 1);

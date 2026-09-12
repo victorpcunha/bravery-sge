@@ -60,6 +60,7 @@ import PlanoEnsinoPage from '@/app/(app)/gestao-pedagogica/plano-ensino/page'
 import CriarPlanoEnsinoPage from '@/app/(app)/gestao-pedagogica/plano-ensino/criar/page'
 import PlanoEnsinoDetalhePage from '@/app/(app)/gestao-pedagogica/plano-ensino/[id]/page'
 import ConselhoClassePage from '@/app/(app)/gestao-pedagogica/conselho-classe/page'
+import RendimentoPage from '@/app/(app)/gestao-pedagogica/rendimento/page'
 import BnccConsultaPage from '@/app/(app)/bncc/consulta/page'
 import BnccDireitosPage from '@/app/(app)/bncc/direitos-aprendizagem/page'
 import BnccCamposPage from '@/app/(app)/bncc/campos-experiencia/page'
@@ -97,6 +98,7 @@ export const TAB_MODULES = {
   'diario-classe': 'diario-classe',
   'plano-ensino': 'plano-ensino',
   'conselho-classe': 'conselho-classe',
+  rendimento: 'rendimento',
   'bncc-consulta': 'bncc-consulta',
   'bncc-direitos': 'bncc-direitos',
   'bncc-campos': 'bncc-campos',
@@ -141,6 +143,7 @@ export const MODULES: Record<TabModuleId, ModuleMeta> = {
   [TAB_MODULES['diario-classe']]: { title: 'Diário de Classe', icon: BookOpen },
   [TAB_MODULES['plano-ensino']]: { title: 'Plano de Ensino', icon: Calendar },
   [TAB_MODULES['conselho-classe']]: { title: 'Conselho de Classe', icon: Users },
+  [TAB_MODULES.rendimento]: { title: 'Rendimento Escolar', icon: BarChart3 },
   [TAB_MODULES['bncc-consulta']]: { title: 'Consulta da BNCC', icon: Search },
   [TAB_MODULES['bncc-direitos']]: { title: 'Direitos de Aprendizagem', icon: HeartHandshake },
   [TAB_MODULES['bncc-campos']]: { title: 'Campos de Experiência', icon: Puzzle },
@@ -268,6 +271,11 @@ const ROUTES: TabRoute[] = [
     module: TAB_MODULES['conselho-classe'],
     match: exact('/gestao-pedagogica/conselho-classe'),
     Component: ConselhoClassePage,
+  },
+  {
+    module: TAB_MODULES.rendimento,
+    match: exact('/gestao-pedagogica/rendimento'),
+    Component: RendimentoPage,
   },
 
   // BNCC

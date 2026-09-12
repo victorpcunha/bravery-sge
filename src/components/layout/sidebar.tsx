@@ -125,6 +125,7 @@ const modules: Module[] = [
       { title: 'Diário de Classe', href: '/gestao-pedagogica/diario-classe', recurso: 'gestao-pedagogica.diario-classe' },
       { title: 'Plano de Ensino', href: '/gestao-pedagogica/plano-ensino', recurso: 'gestao-pedagogica.plano-ensino' },
       { title: 'Conselho de Classe', href: '/gestao-pedagogica/conselho-classe', recurso: 'gestao-pedagogica.conselho-classe' },
+      { title: 'Rendimento Escolar', href: '/gestao-pedagogica/rendimento', recurso: 'gestao-pedagogica.rendimento' },
     ],
   },
   {
@@ -328,8 +329,8 @@ export function AppSidebar() {
                             'relative flex items-center gap-3 px-3 py-2.5 rounded-md text-sm font-medium transition-colors w-full',
                             effectivelyCollapsed && 'justify-center px-2 gap-0',
                             effectiveActive
-                              ? 'bg-sidebar-accent text-accent-foreground dark:text-sidebar-accent-foreground'
-                              : 'text-sidebar-foreground hover:text-accent-foreground hover:bg-sidebar-accent dark:hover:text-sidebar-accent-foreground'
+                              ? 'bg-sidebar-accent text-sidebar-foreground'
+                              : 'text-sidebar-foreground hover:text-sidebar-foreground hover:bg-sidebar-accent dark:hover:text-sidebar-accent-foreground'
                           )}
                         >
                           {!effectivelyCollapsed && effectiveActive && (
@@ -337,7 +338,7 @@ export function AppSidebar() {
                           )}
                           <module.icon className={cn(
                             'h-4 w-4 shrink-0',
-                            effectiveActive ? 'text-accent-foreground dark:text-sidebar-accent-foreground' : ''
+                            effectiveActive ? 'text-sidebar-foreground' : ''
                           )} />
                           <span className={cn(
                             'truncate transition-opacity duration-200',
@@ -353,8 +354,8 @@ export function AppSidebar() {
                             'relative flex items-center gap-3 px-3 py-2.5 rounded-md text-sm font-medium transition-colors w-full',
                             effectivelyCollapsed && 'justify-center px-2 gap-0',
                             effectiveActive
-                              ? 'bg-sidebar-accent text-accent-foreground dark:text-sidebar-accent-foreground'
-                              : 'text-sidebar-foreground hover:text-accent-foreground hover:bg-sidebar-accent dark:hover:text-sidebar-accent-foreground'
+                              ? 'bg-sidebar-accent text-sidebar-foreground'
+                              : 'text-sidebar-foreground hover:text-sidebar-foreground hover:bg-sidebar-accent dark:hover:text-sidebar-accent-foreground'
                           )}
                         >
                           {!effectivelyCollapsed && effectiveActive && (
@@ -362,7 +363,7 @@ export function AppSidebar() {
                           )}
                           <module.icon className={cn(
                             'h-4 w-4 shrink-0',
-                            effectiveActive ? 'text-accent-foreground dark:text-sidebar-accent-foreground' : ''
+                            effectiveActive ? 'text-sidebar-foreground' : ''
                           )} />
                           <span className={cn(
                             'truncate transition-opacity duration-200',
@@ -379,8 +380,8 @@ export function AppSidebar() {
                               'relative flex items-center gap-3 w-full px-3 py-2.5 rounded-md text-sm font-medium transition-colors',
                               effectivelyCollapsed && 'justify-center px-2 gap-0',
                               effectiveActive
-                                ? 'bg-sidebar-accent text-accent-foreground dark:text-sidebar-accent-foreground'
-                                : 'text-sidebar-foreground hover:text-accent-foreground hover:bg-sidebar-accent dark:hover:text-sidebar-accent-foreground'
+                                ? 'bg-sidebar-accent text-sidebar-foreground'
+                                : 'text-sidebar-foreground hover:text-sidebar-foreground hover:bg-sidebar-accent dark:hover:text-sidebar-accent-foreground'
                             )}
                           >
                             {!effectivelyCollapsed && effectiveActive && (
@@ -388,7 +389,7 @@ export function AppSidebar() {
                             )}
                             <module.icon className={cn(
                               'h-4 w-4 shrink-0',
-                              effectiveActive ? 'text-accent-foreground dark:text-sidebar-accent-foreground' : ''
+                              effectiveActive ? 'text-sidebar-foreground' : ''
                             )} />
                             <span className={cn(
                               'flex-1 text-left truncate transition-opacity duration-200',
@@ -442,8 +443,8 @@ export function AppSidebar() {
                                                   className={cn(
                                                     'flex items-center px-3 py-1.5 rounded-sm text-sm transition-colors',
                                                     isSubActive
-                                                      ? 'bg-sidebar-accent text-accent-foreground dark:text-sidebar-accent-foreground font-medium'
-                                                      : 'text-sidebar-foreground hover:text-accent-foreground hover:bg-sidebar-accent dark:hover:text-sidebar-accent-foreground'
+                                                      ? 'bg-sidebar-accent text-sidebar-foreground font-medium'
+                                                      : 'text-sidebar-foreground hover:text-sidebar-foreground hover:bg-sidebar-accent dark:hover:text-sidebar-accent-foreground'
                                                   )}
                                                 >
                                                   {isSubActive && (
@@ -469,8 +470,8 @@ export function AppSidebar() {
                                       className={cn(
                                         'flex items-center px-3 py-1.5 rounded-sm text-sm transition-colors',
                                         isSubActive
-                                          ? 'bg-sidebar-accent text-accent-foreground dark:text-sidebar-accent-foreground font-medium'
-                                          : 'text-sidebar-foreground hover:text-accent-foreground hover:bg-sidebar-accent dark:hover:text-sidebar-accent-foreground'
+                                          ? 'bg-sidebar-accent text-sidebar-foreground font-medium'
+                                          : 'text-sidebar-foreground hover:text-sidebar-foreground hover:bg-sidebar-accent dark:hover:text-sidebar-accent-foreground'
                                       )}
                                     >
                                       {isSubActive && (
@@ -503,7 +504,7 @@ export function AppSidebar() {
             onClick={toggleSidebar}
             className={cn(
               'flex items-center gap-3 px-3 py-2 rounded-md text-sm w-full transition-colors',
-              'text-sidebar-foreground hover:text-accent-foreground hover:bg-sidebar-accent dark:hover:text-sidebar-accent-foreground',
+              'text-sidebar-foreground hover:text-sidebar-foreground hover:bg-sidebar-accent dark:hover:text-sidebar-accent-foreground',
               effectivelyCollapsed && 'justify-center px-0 gap-0'
             )}
           >

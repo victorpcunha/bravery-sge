@@ -12,6 +12,7 @@ export interface MetodoAvaliacao {
   descricao: string | null
   criterio_frequencia: string
   frecuencia_minima: number
+  faixa_atencao_pp: number | null
   tipos_avaliacao: Record<string, boolean>
   quantidade_periodos_numerico: number | null
   quantidade_periodos_parecer: number | null

@@ -3,6 +3,12 @@
 import { getSupabaseAdmin } from '@/lib/auth'
 import { registrarAuditoriaAgregada } from '@/lib/auditoria'
 import { garantirTurmaAberta } from './garantir-turma-aberta'
+import {
+  computarMediasPeriodo,
+  type NotaDbRow,
+  type RecuperacaoDbRow,
+  type ConselhoDbRow,
+} from './rendimento-calculo'
 
 const supabase = getSupabaseAdmin()
 
@@ -476,115 +482,11 @@ export async function getDescricoesNotas(turmaId: string, periodo: number, disci
 }
 
 // ── FASE 6: Engine de Cálculo ──
-
-type NotaDbRow = { periodo: number; valor: number | string | null; descricao: string | null }
-type RecuperacaoDbRow = {
-  periodo: number | null
-  tipo: string
-  descricao: string | null
-  valor: number | string | null
-}
+// (computarMediasPeriodo vive em rendimento-calculo.ts — módulo neutro
+// sem 'use server' — e é consumido aqui e no Painel de Rendimento.)
 
 function mensagemErro(e: unknown): string {
   return e instanceof Error ? e.message : 'Erro interno'
-}
-
-type ConselhoDbRow = { periodo: number; nota_conselho: number | null }
-
-// Matemática pura das médias por período (pesos, somatória, recuperações,
-// conselho). Extração literal do engine abaixo: mesma regra para 1 disciplina
-// (calcularDesempenhoAluno) ou lote (calcularMediasPeriodoTurma).
-function computarMediasPeriodo(
-  notasData: NotaDbRow[],
-  recuperacoesData: RecuperacaoDbRow[],
-  conselhoData: ConselhoDbRow[],
-  config: ConfigNumericaCompleta,
-  quantidadePeriodos: number
-): { medias: (number | null)[]; conselho: (number | null)[] } {
-  const periodos = Array.from({ length: quantidadePeriodos }, (_, i) => i + 1)
-
-  const pesoMap = new Map<string, number>()
-  for (const av of config.avaliacoes_list) {
-    pesoMap.set(av.nome, av.peso)
-  }
-
-  // Recuperação por avaliação: a nota recuperada substitui a nota original da avaliação
-  const recAvaliacaoPorPeriodo = new Map<number, Map<string, number>>()
-  for (const rec of recuperacoesData) {
-    if (rec.tipo !== 'avaliacao' || rec.periodo === null || rec.valor === null || !rec.descricao) continue
-    let porPeriodo = recAvaliacaoPorPeriodo.get(rec.periodo)
-    if (!porPeriodo) {
-      porPeriodo = new Map<string, number>()
-      recAvaliacaoPorPeriodo.set(rec.periodo, porPeriodo)
-    }
-    porPeriodo.set(rec.descricao, Number(rec.valor))
-  }
-
-  // Calcular média de cada período
-  const mediasPeriodo: (number | null)[] = periodos.map(p => {
-    const recAvaliacao = recAvaliacaoPorPeriodo.get(p) || new Map<string, number>()
-    const notasDoPeriodo = notasData
-      .filter((n): n is NotaDbRow => n.periodo === p && n.valor !== null)
-      .map(n => {
-        const recVal = n.descricao ? recAvaliacao.get(n.descricao) : undefined
-        if (recVal === undefined) return n
-        return config.recuperacao_substitutiva
-          ? { ...n, valor: recVal }
-          : { ...n, valor: Math.max(Number(n.valor), recVal) }
-      })
-
-    if (notasDoPeriodo.length === 0) return null
-
-    if (config.tipo_media_periodo === 'somatoria') {
-      const soma = notasDoPeriodo.reduce((acc, n) => acc + Number(n.valor), 0)
-      return Math.min(soma, config.media_maxima_periodo)
-    }
-
-    let somaPonderada = 0
-    let somaPesos = 0
-    for (const n of notasDoPeriodo) {
-      const peso = pesoMap.get(n.descricao ?? '') ?? 1
-      somaPonderada += Number(n.valor) * peso
-      somaPesos += peso
-    }
-    const media = somaPesos > 0 ? somaPonderada / somaPesos : 0
-    const capped = Math.min(media, config.media_maxima_periodo)
-    return Math.round(capped * 100) / 100
-  })
-
-  // Aplicar recuperação por período: substitui a média do período, ou mantém a maior se substitutiva
-  for (const rec of recuperacoesData) {
-    if (rec.tipo !== 'periodo' || rec.periodo === null || rec.valor === null) continue
-    const idx = rec.periodo - 1
-    if (idx >= 0 && idx < mediasPeriodo.length) {
-      const recVal = Number(rec.valor)
-      mediasPeriodo[idx] = config.recuperacao_periodo_substitutiva
-        ? mediasPeriodo[idx] === null
-          ? recVal
-          : Math.max(mediasPeriodo[idx]!, recVal)
-        : recVal
-    }
-  }
-
-  // Aplicar nota do conselho de classe por período: substitui a média do período,
-  // ou mantém a maior se a recuperação por período for substitutiva
-  const conselhoPorPeriodo = new Map<number, number>()
-  for (const c of conselhoData) {
-    if (c.nota_conselho === null) continue
-    const conselhoVal = Number(c.nota_conselho)
-    conselhoPorPeriodo.set(c.periodo, conselhoVal)
-    const idx = c.periodo - 1
-    if (idx >= 0 && idx < mediasPeriodo.length) {
-      mediasPeriodo[idx] = config.recuperacao_periodo_substitutiva
-        ? mediasPeriodo[idx] === null
-          ? conselhoVal
-          : Math.max(mediasPeriodo[idx]!, conselhoVal)
-        : conselhoVal
-    }
-  }
-  const conselhoPeriodos = periodos.map(p => conselhoPorPeriodo.get(p) ?? null)
-
-  return { medias: mediasPeriodo, conselho: conselhoPeriodos }
 }
 
 export async function calcularDesempenhoAluno(

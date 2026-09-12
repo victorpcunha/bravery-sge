@@ -255,6 +255,26 @@ Sistema de Gestão Escolar completo: turmas, quadro de aulas, indicadores de ava
   - Server actions `src/lib/actions/comunicados.ts` (CRUD + validação server-side + snapshot
     multietapa-aware); `portal.ts` filtra janela em `listarComunicadosPortal`/`marcarComunicadoLido`
   - Notas: 2 migrations (aplicar via SQL Editor); 0 novas deps npm; `tsc` + `next build` verdes (46 rotas)
+- **Painel de Rendimento Escolar (spec 028)**:
+  - Spec + plan + data-model + contracts + quickstart + tasks em `specs/028-painel-rendimento-escolar/`
+  - Rota `/gestao-pedagogica/rendimento` (módulo Gestão Pedagógica); recurso `gestao-pedagogica.rendimento`
+    (migration seed); item "Rendimento Escolar" no sidebar + módulo de aba `rendimento`
+  - **Cálculo sem regra paralela**: `src/lib/actions/rendimento-calculo.ts` (módulo neutro sem
+    `'use server'`) com `computarMediasPeriodo` (movido de `avaliacoes-numericas.ts` sem alterar a
+    regra), `computarMediaAnual`, `classificarLinha`, `FAIXAS_RENDIMENTO`, `MARGEM_TENDENCIA=1,0`,
+    `ROTULOS_MOTIVO`; frequência com semântica `calcularFrequenciaBoletim` (FJ, horários ativos,
+    janela matrícula ∩ período); parâmetros do Método da turma (`media_minima`, `frecuencia_minima`)
+  - **Carga progressiva**: `getPanoramaRendimento` (só agregados, bulk `turma_id IN` em chunks) →
+    `getListaSituacao` (só Atenção/Risco) → drill-downs sob demanda (`getDetalheTurma`,
+    `getDetalheAluno`, `getSituacaoFinal`, `getCruzamentoRendimento`); 7 actions em `rendimento.ts`
+  - **UI** (`src/components/rendimento/`): Resumo fixo (Ano/Período/Escola p/ superadmin + 4 StatCards),
+    Geral (Período c/ linha Recharts + distribuição, Etapas, Turmas c/ paginação 10/pág + Dialog
+    drill-down), Situação (blocos + tabela + Sheet do aluno + tendência), Situação Final (blocos
+    dinâmicos rotulados via `labelSituacaoMatricula`, tabela por turma, aviso de abertas, cruzamento)
+  - **Faixa de Atenção**: coluna `faixa_atencao_pp DEFAULT 5` (`patch_metodo_faixa_atencao.sql`) + campo
+    na tela de Métodos (0–50); banda média = pp/100×escala, banda frequência = pp somado
+  - Só turmas com avaliação numérica entram (mistas contam só o numérico); "Avaliado" = ≥1 nota no recorte
+  - Notas: 2 migrations (aplicar via SQL Editor); 0 novas deps npm; `tsc` + `next build` verdes
 
 ## Known Issues
 - All server actions use `'use server'` + `getSupabaseAdmin()` (service_role, bypass RLS)
@@ -306,25 +326,26 @@ Use SEMPRE os tokens Tailwind v4 derivados das CSS variables do `globals.css`:
 
 | Uso | Token Tailwind | Hex (referência) |
 |-----|---------------|------------------|
-| Marca principal (blue) | `primary` / `bg-primary` / `text-primary` | #1F88EB |
+| Marca principal (steel blue) | `primary` / `bg-primary` / `text-primary` | #4682B4 |
 | Texto em primary | `primary-foreground` | #FFFFFF |
-| Interação/foco complementar (cianês) | `accent` / `bg-accent` / `text-accent` | #4FC3D7 |
-| Ação secundária (deep blue) | `secondary` / `bg-secondary` / `text-secondary` | #1A6FC2 |
-| Fundo de página | `background` / `bg-background` | #F6F8FA |
+| Texto em accent | `accent-foreground` | #192E40 |
+| Interação complementar (azul claro) | `accent` / `bg-accent` / `text-accent` | #59A5E3 |
+| Ação secundária (steel profundo) | `secondary` / `bg-secondary` / `text-secondary` | #396991 |
+| Fundo de página | `background` / `bg-background` | #EDF1F5 |
 | Fundo de card | `card` / `bg-card` | #FFFFFF |
 | Texto principal (slate-800) | `foreground` / `text-foreground` | #1E293B |
-| Texto secundário (slate-600) | `muted-foreground` / `text-muted-foreground` | #475569 |
-| Bordas (slate-200) | `border` / `border-border` | #E2E8F0 |
-| Fundo muted (slate-100) | `muted` / `bg-muted` | #F1F5F9 |
-| Foco/destaque (= primary) | `ring` / `bg-ring` / `text-ring` | #1F88EB |
-| Destruição | `destructive` / `bg-destructive` | #DC2626 |
+| Texto secundário (slate-600) | `muted-foreground` / `text-muted-foreground` | #52607A |
+| Bordas (slate-200) | `border` / `border-border` | #D7DEE8 |
+| Fundo muted (slate-100) | `muted` / `bg-muted` | #E4E9F0 |
+| Foco (dourado fixo) | `ring` / `bg-ring` / `text-ring` | #B8863B |
+| Destruição | `destructive` / `bg-destructive` | #C4453A |
 | Sucesso | `success` / `bg-success` / `text-success` | #16A34A |
-| Aviso | `warning` / `bg-warning` / `text-warning` | #D97706 |
-| Info (= primary) | `info` / `text-info` | #1F88EB |
-| Sidebar fundo (quase branco) | `sidebar` / `bg-sidebar` | #FAFBFC |
-| Sidebar texto | `sidebar-foreground` | #1E293B |
-| Sidebar hover (muted) | `sidebar-accent` | #F1F5F9 |
-| Sidebar ativo (= primary) | `sidebar-primary` | #1F88EB |
+| Aviso | `warning` / `bg-warning` / `text-warning` | #C2571C |
+| Info (= secondary) | `info` / `text-info` | #396991 |
+| Sidebar fundo (steel profundo) | `sidebar` / `bg-sidebar` | #294C69 |
+| Sidebar texto | `sidebar-foreground` | #FFFFFF |
+| Sidebar hover (branco translúcido) | `sidebar-accent` | rgba(255,255,255,0.12) |
+| Sidebar ativo (pílula branca) | `sidebar-primary` | #FFFFFF |
 
 ### Regra #2: Componentes de formulário
 - SEMPRE use componentes shadcn/ui: `<Select>`, `<Input>`, `<Textarea>`, `<Button>`, etc.
@@ -344,9 +365,9 @@ Use SEMPRE os tokens Tailwind v4 derivados das CSS variables do `globals.css`:
 ### Regra #4: Sidebar
 - SEMPRE use tokens `sidebar-*`: `bg-sidebar`, `text-sidebar-foreground`, `bg-sidebar-accent`, `border-sidebar-border`, `bg-sidebar-primary`.
 - NUNCA hardcode `#1D3557`, `#457B9D`, `#4FB3BF`, `#0F2B46` no sidebar.
-- Sidebar é **branca** em light mode (`bg-sidebar`) e slate-950 em dark mode.
-- Para ativo: `bg-primary/10 text-primary` (blue com 10% opacidade + texto blue).
-- Para hover: `hover:bg-muted hover:text-foreground`.
+- Sidebar é **steel profundo** em light mode (`bg-sidebar` `#294C69`, texto branco) e slate-950 em dark mode.
+- Para ativo: pílula branca (`bg-sidebar-primary`) com texto steel (`text-sidebar-primary-foreground`).
+- Para hover: wash translúcido (`hover:bg-sidebar-accent`), texto sempre `text-sidebar-foreground` (nunca `text-accent-foreground` — contraste).
 - Para sub-item ativo: `bg-sidebar-accent/80`.
 - Logo do sidebar usa gradiente `from-primary to-accent`.
 
@@ -433,9 +454,9 @@ Use SEMPRE os tokens Tailwind v4 derivados das CSS variables do `globals.css`:
 <!-- END:project-summary -->
 
 <!-- SPECKIT START -->
-Current plan: specs/026-ocorrencias-gestao-academica/plan.md
-Feature: Ocorrências da Gestão Acadêmica
-Spec: specs/026-ocorrencias-gestao-academica/spec.md
-Data model: specs/026-ocorrencias-gestao-academica/data-model.md
-Quickstart: specs/026-ocorrencias-gestao-academica/quickstart.md
+Current plan: specs/028-painel-rendimento-escolar/plan.md
+Feature: Painel de Rendimento Escolar
+Spec: specs/028-painel-rendimento-escolar/spec.md
+Data model: specs/028-painel-rendimento-escolar/data-model.md
+Quickstart: specs/028-painel-rendimento-escolar/quickstart.md
 <!-- SPECKIT END -->
