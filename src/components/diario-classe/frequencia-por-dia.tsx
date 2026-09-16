@@ -5,6 +5,7 @@ import { useAuth } from '@/components/providers/auth-provider'
 import { usePermissoes } from '@/hooks/use-permissoes'
 import {
   registrarFrequenciaDia,
+  registrarFrequenciaDiaLote,
   listarFrequenciasDia,
   getDiasLetivosDaTurma,
   getEstatisticasFrequencia,
@@ -12,10 +13,13 @@ import {
   type AlunoMatriculado,
   type FrequenciaDia,
 } from '@/lib/actions/diario-classe'
-import { Button } from '@/components/ui/button'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
-import { ChevronLeft, ChevronRight, Check, X, AlertTriangle, CalendarDays, Info, Users } from 'lucide-react'
+import { Button } from '@/components/ui/button'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { Check, X, AlertTriangle, CalendarDays, Info, Users } from 'lucide-react'
+import SeletorMes from './seletor-mes'
+import ListaPresencaMobile, { type AlunoPresencaRow } from './lista-presenca-mobile'
 import { cn } from '@/lib/utils'
 import { toast } from 'sonner'
 
@@ -45,6 +49,7 @@ export default function FrequenciaPorDia({ turmaId, alunos, disciplinas, readOnl
   const [salvando, setSalvando] = useState<Set<string>>(new Set())
   const [semCalendario, setSemCalendario] = useState(false)
   const [popoverOpen, setPopoverOpen] = useState<string | null>(null)
+  const [diaSel, setDiaSel] = useState<number | null>(null)
 
   const { pessoaId } = usePermissoes(schoolId || '')
 
@@ -131,27 +136,29 @@ export default function FrequenciaPorDia({ turmaId, alunos, disciplinas, readOnl
     if (alunosValidos.length === 0) { toast.info('Nenhum aluno ativo nesta data'); return }
 
     try {
-      let erros = 0
-      for (const aluno of alunosValidos) {
-        await registrarFrequenciaDia(schoolId, turmaId, aluno.id, diaStr, status, pessoaId)
-        const key = `${aluno.id}_${dia}`
-        setFrequencias(prev => {
-          const next = new Map(prev)
+      const result = await registrarFrequenciaDiaLote(
+        schoolId, turmaId,
+        alunosValidos.map(a => a.id), diaStr, status, pessoaId
+      )
+      if (!result.success) {
+        toast.error(result.error || 'Erro ao marcar frequência')
+        return
+      }
+      setFrequencias(prev => {
+        const next = new Map(prev)
+        alunosValidos.forEach(aluno => {
+          const key = `${aluno.id}_${dia}`
           if (status) { next.set(key, status) }
           else { next.delete(key) }
-          return next
         })
-      }
-      if (erros === 0) {
-        toast.success(status === 'P' ? 'Todos presentes' : status === 'F' ? 'Todos ausentes' : 'Registros removidos')
-      }
+        return next
+      })
+      toast.success(status === 'P' ? 'Todos presentes' : status === 'F' ? 'Todos ausentes' : 'Registros removidos')
       recarregarEstatisticas()
     } catch {
       toast.error('Erro ao marcar frequência')
     }
   }
-
-  const nomeMes = new Date(ano, mes - 1).toLocaleDateString('pt-BR', { month: 'long' })
 
   const nomeDiaSemana = (dia: number) => {
     const d = new Date(ano, mes - 1, dia)
@@ -180,33 +187,56 @@ export default function FrequenciaPorDia({ turmaId, alunos, disciplinas, readOnl
     return diaStr <= hojeStr
   })
 
+  const diaStrDe = (dia: number) => `${ano}-${String(mes).padStart(2, '0')}-${String(dia).padStart(2, '0')}`
+
+  useEffect(() => {
+    if (dias.length === 0) {
+      setDiaSel(null)
+      return
+    }
+    if (!diaSel || !dias.includes(diaSel)) {
+      const primeiroPassado = dias.find(d => diaStrDe(d) <= hojeStr)
+      setDiaSel(primeiroPassado ?? dias[0])
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [dias, ano, mes])
+
+  const periodoAlunoDia = (aluno: (typeof alunosVisiveis)[number], diaStr: string): string | null => {
+    if (aluno.data_matricula && diaStr < aluno.data_matricula) return 'Aluno ainda não matriculado nesta data'
+    if (aluno.data_saida && diaStr > aluno.data_saida) return 'Aluno não pertence mais à turma nesta data'
+    return null
+  }
+
+  const mobileRows: AlunoPresencaRow[] = diaSel !== null
+    ? alunosVisiveis.map(aluno => {
+        const diaStr = diaStrDe(diaSel)
+        const motivo = periodoAlunoDia(aluno, diaStr)
+        return {
+          id: aluno.id,
+          nome: aluno.nome_completo,
+          status: frequencias.get(`${aluno.id}_${diaSel}`) || null,
+          disabled: readOnly || diaStr > hojeStr || motivo !== null,
+          disabledReason: motivo || (diaStr > hojeStr ? 'Data futura' : undefined),
+        }
+      })
+    : []
+
+  const diaAtualStr = diaSel !== null ? diaStrDe(diaSel) : null
+  const mobileAllPresent = diaSel !== null && diaAtualStr !== null && diaAtualStr <= hojeStr
+    ? (() => {
+        const validos = alunosVisiveis.filter(al => periodoAlunoDia(al, diaAtualStr) === null)
+        return validos.length > 0 && validos.every(al => frequencias.get(`${al.id}_${diaSel}`) === 'P')
+      })()
+    : false
+
   return (
-    <div>
-      <div className="flex items-center mb-8">
-        <div className="flex items-center gap-2">
-          <Button variant="outline" size="icon" onClick={() => {
-            if (mes === 1) { setMes(12); setAno(a => a - 1) }
-            else setMes(m => m - 1)
-          }}>
-            <ChevronLeft className="h-4 w-4" />
-          </Button>
-          <span className="text-sm font-medium capitalize min-w-[140px] text-center tabular-nums">
-            {nomeMes} {ano}
-          </span>
-          <Button variant="outline" size="icon" onClick={() => {
-            if (mes === 12) { setMes(1); setAno(a => a + 1) }
-            else setMes(m => m + 1)
-          }}>
-            <ChevronRight className="h-4 w-4" />
-          </Button>
-          <Button variant="ghost" size="sm" onClick={() => { setAno(hoje.getFullYear()); setMes(hoje.getMonth() + 1) }}>
-            Hoje
-          </Button>
-        </div>
+    <div className="min-w-0 max-w-full p-4 sm:p-6 space-y-5">
+      <div className="flex items-center">
+        <SeletorMes ano={ano} mes={mes} onChange={(a, m) => { setAno(a); setMes(m) }} />
       </div>
 
       {estatisticas && (
-        <div className="flex flex-wrap gap-3 mb-4">
+        <div className="flex flex-wrap gap-3">
           <div className="rounded-md border border-border bg-card px-3 py-2 text-center whitespace-nowrap">
             <div className="text-base font-bold text-foreground tabular-nums">{estatisticas.totalDiasLetivos}</div>
             <div className="text-[11px] text-muted-foreground mt-0.5">Dias Letivos no mês</div>
@@ -232,7 +262,7 @@ export default function FrequenciaPorDia({ turmaId, alunos, disciplinas, readOnl
         <div className="py-8 text-center text-muted-foreground text-sm">Carregando dias letivos...</div>
       ) : (
         <>
-          <div className="flex flex-wrap items-center gap-x-6 gap-y-2 mb-4 rounded-lg bg-muted/40 border border-border px-4 py-2.5 text-xs text-muted-foreground">
+          <div className="flex flex-wrap items-center gap-x-6 gap-y-2 rounded-lg bg-muted/40 border border-border px-4 py-2.5 text-xs text-muted-foreground">
             <span className="flex items-center gap-1.5">
               <span className="flex h-4 w-4 items-center justify-center rounded-sm bg-success"><Check className="h-2.5 w-2.5 text-white" /></span>
               Presente
@@ -252,7 +282,7 @@ export default function FrequenciaPorDia({ turmaId, alunos, disciplinas, readOnl
             </span>
           </div>
 
-          <div className="overflow-auto border border-border rounded-lg">
+          <div className="hidden md:block overflow-x-auto max-w-full border border-border rounded-lg">
             <Table className="min-w-max text-xs">
               <TableHeader>
                 <TableRow>
@@ -431,6 +461,39 @@ export default function FrequenciaPorDia({ turmaId, alunos, disciplinas, readOnl
                 )}
               </TableBody>
             </Table>
+          </div>
+
+          <div className="md:hidden space-y-4">
+            <Select value={diaSel !== null ? String(diaSel) : ''} onValueChange={(v) => setDiaSel(Number(v))}>
+              <SelectTrigger className="w-full h-11" aria-label="Selecionar dia">
+                <SelectValue placeholder="Selecione um dia" />
+              </SelectTrigger>
+              <SelectContent>
+                {dias.map(d => (
+                  <SelectItem key={d} value={String(d)}>
+                    Dia {d} · {nomeDiaSemana(d)}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+
+            {diaSel !== null && diaAtualStr !== null && (
+              <>
+                <Button
+                  className="w-full min-h-[44px] text-[14px] font-semibold"
+                  disabled={readOnly || diaAtualStr > hojeStr}
+                  onClick={() => handleMarcarTodosDia(diaSel, mobileAllPresent ? null : 'P')}
+                >
+                  <Users className="h-4 w-4 mr-2" />
+                  {mobileAllPresent ? 'Limpar marcações' : 'Todos presentes'}
+                </Button>
+                <ListaPresencaMobile
+                  alunos={mobileRows}
+                  onChange={(alunoId, status) => handleRegistrar(alunoId, diaSel, status)}
+                  emptyMessage="Nenhum aluno ativo nesta turma."
+                />
+              </>
+            )}
           </div>
         </>
       )}

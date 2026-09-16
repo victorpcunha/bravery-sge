@@ -211,6 +211,10 @@ export default function PlanoEnsinoDetailPage() {
     carregarAulas()
   }
 
+  const voltarHref = plano
+    ? `/gestao-pedagogica/plano-ensino/turma/${plano.turma_id}?escola=${plano.school_id}&ano=${plano.ano_letivo_id}`
+    : '/gestao-pedagogica/plano-ensino'
+
   return (
     <PageContainer>
       <PageHeader
@@ -221,7 +225,7 @@ export default function PlanoEnsinoDetailPage() {
           <Button
             variant="outline"
             size="sm"
-            onClick={() => (showForm ? cancelarForm() : router.push('/gestao-pedagogica/plano-ensino'))}
+            onClick={() => (showForm ? cancelarForm() : router.push(voltarHref))}
           >
             <ArrowLeft className="h-4 w-4 mr-1.5" />
             {showForm ? 'Cancelar' : 'Voltar'}

@@ -77,6 +77,37 @@ export async function listarDiasComAula(
     dias.push(`${y}-${m}-${day}`)
   }
 
+  // SPEC 030 FR-015: une dias de aulas extras com a disciplina.
+  // Defensivo: tabelas podem ainda não existir (migration via SQL Editor).
+  try {
+    const mm = String(mes).padStart(2, '0')
+    const primeiroDiaIso = `${ano}-${mm}-01`
+    const ultimoDiaIso = `${ano}-${mm}-${new Date(ano, mes, 0).getDate()}`
+    const { data: datasExtras } = await supabase
+      .from('quadro_aulas_datas_extras')
+      .select('id, data_aula')
+      .eq('quadro_aula_id', quadro.id)
+      .gte('data_aula', primeiroDiaIso)
+      .lte('data_aula', ultimoDiaIso)
+
+    if (datasExtras?.length) {
+      const { data: horariosExtras } = await supabase
+        .from('quadro_aulas_extras_horarios')
+        .select('data_extra_id')
+        .in('data_extra_id', datasExtras.map(d => d.id))
+        .eq('disciplina_id', matrizDisciplinaId)
+        .eq('ativo', true)
+      const comAula = new Set((horariosExtras || []).map(h => h.data_extra_id))
+      for (const d of datasExtras) {
+        const iso = String(d.data_aula).slice(0, 10)
+        if (comAula.has(d.id) && !dias.includes(iso)) dias.push(iso)
+      }
+      dias.sort()
+    }
+  } catch {
+    // Tabelas SPEC 030 ausentes: segue só com a grade regular
+  }
+
   return dias
 }
 

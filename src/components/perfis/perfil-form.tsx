@@ -4,12 +4,11 @@ import { useState } from 'react'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
-import { Switch } from '@/components/ui/switch'
 import { Separator } from '@/components/ui/separator'
 import { Button } from '@/components/ui/button'
+import { ClickablePill } from '@/components/ui/clickable-pill'
 import { MatrizPermissoes } from './matriz-permissoes'
 import type { Perfil, RecursoComPermissao } from '@/lib/actions/perfis'
-import { Shield, GraduationCap } from 'lucide-react'
 import { FormCard } from '@/components/layout/form-card'
 
 type PerfilFormProps = {
@@ -78,17 +77,37 @@ export function PerfilForm({ perfil, recursos, onSave, onCancel, saving }: Perfi
     <>
       <div className="space-y-6 py-4">
         <FormCard title="Identificação">
-          <div className="space-y-2">
-            <Label htmlFor="perfil-nome">Nome do Perfil *</Label>
-            <Input
-              id="perfil-nome"
-              value={nome}
-              onChange={e => setNome(e.target.value)}
-              placeholder="Ex: Professor, Coordenação, Secretaria"
-              className="border-border"
-              aria-required="true"
-            />
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-end">
+            <div className="w-full space-y-2 sm:w-1/2">
+              <Label htmlFor="perfil-nome">Nome do Perfil *</Label>
+              <Input
+                id="perfil-nome"
+                value={nome}
+                onChange={e => setNome(e.target.value)}
+                placeholder="Ex: Professor, Coordenação, Secretaria"
+                className="border-border"
+                aria-required="true"
+              />
+            </div>
+            <div className="flex flex-1 flex-wrap items-center gap-2">
+              <ClickablePill
+                label="Perfil Ativo"
+                active={ativo}
+                onClick={() => setAtivo(!ativo)}
+              />
+              <ClickablePill
+                label="Perfil com Vínculo em Turma (Professor)"
+                active={usaVinculoTurma}
+                onClick={() => setUsaVinculoTurma(!usaVinculoTurma)}
+                title="Este perfil terá acesso apenas às turmas em que o profissional estiver vinculado"
+              />
+            </div>
           </div>
+          {!ativo && (
+            <p role="alert" className="text-[13px] text-warning">
+              Perfis inativos não podem ser vinculados a usuários.
+            </p>
+          )}
           <div className="space-y-2">
             <Label htmlFor="perfil-descricao">Descrição</Label>
             <Textarea
@@ -99,28 +118,9 @@ export function PerfilForm({ perfil, recursos, onSave, onCancel, saving }: Perfi
               className="border-border min-h-[80px]"
             />
           </div>
-          <div className="flex items-center gap-3">
-            <Switch id="ativo" checked={ativo} onCheckedChange={setAtivo} />
-            <Label htmlFor="ativo" className="cursor-pointer">
-              Perfil {ativo ? 'Ativo' : 'Inativo'}
-            </Label>
-          </div>
-          {!ativo && (
-            <p role="alert" className="text-[13px] text-warning">
-              Perfis inativos não podem ser vinculados a usuários.
-            </p>
-          )}
-
-          <div className="flex items-center gap-3 pt-2">
-            <Switch id="usa_vinculo_turma" checked={usaVinculoTurma} onCheckedChange={setUsaVinculoTurma} />
-            <Label htmlFor="usa_vinculo_turma" className="cursor-pointer flex items-center gap-2">
-              <GraduationCap className="h-4 w-4 text-muted-foreground" />
-              <span>Perfil com vínculo em turma (professor)</span>
-            </Label>
-          </div>
           {usaVinculoTurma ? (
             <p className="text-[13px] text-muted-foreground">
-              Este perfil terá acesso apenas às turmas vinculadas em <code>turmas_profissionais</code>.
+              Este perfil terá acesso apenas às turmas em que o profissional estiver vinculado.
             </p>
           ) : (
             <p className="text-[13px] text-muted-foreground">

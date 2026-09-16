@@ -329,16 +329,13 @@ export function AppSidebar() {
                             'relative flex items-center gap-3 px-3 py-2.5 rounded-md text-sm font-medium transition-colors w-full',
                             effectivelyCollapsed && 'justify-center px-2 gap-0',
                             effectiveActive
-                              ? 'bg-sidebar-accent text-sidebar-foreground'
+                              ? 'bg-sidebar-primary text-sidebar-primary-foreground'
                               : 'text-sidebar-foreground hover:text-sidebar-foreground hover:bg-sidebar-accent dark:hover:text-sidebar-accent-foreground'
                           )}
                         >
-                          {!effectivelyCollapsed && effectiveActive && (
-                            <span className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-5 bg-sidebar-primary rounded-full" />
-                          )}
                           <module.icon className={cn(
                             'h-4 w-4 shrink-0',
-                            effectiveActive ? 'text-sidebar-foreground' : ''
+                            effectiveActive ? 'text-sidebar-primary-foreground' : ''
                           )} />
                           <span className={cn(
                             'truncate transition-opacity duration-200',
@@ -354,16 +351,13 @@ export function AppSidebar() {
                             'relative flex items-center gap-3 px-3 py-2.5 rounded-md text-sm font-medium transition-colors w-full',
                             effectivelyCollapsed && 'justify-center px-2 gap-0',
                             effectiveActive
-                              ? 'bg-sidebar-accent text-sidebar-foreground'
+                              ? 'bg-sidebar-primary text-sidebar-primary-foreground'
                               : 'text-sidebar-foreground hover:text-sidebar-foreground hover:bg-sidebar-accent dark:hover:text-sidebar-accent-foreground'
                           )}
                         >
-                          {!effectivelyCollapsed && effectiveActive && (
-                            <span className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-5 bg-sidebar-primary rounded-full" />
-                          )}
                           <module.icon className={cn(
                             'h-4 w-4 shrink-0',
-                            effectiveActive ? 'text-sidebar-foreground' : ''
+                            effectiveActive ? 'text-sidebar-primary-foreground' : ''
                           )} />
                           <span className={cn(
                             'truncate transition-opacity duration-200',
@@ -380,16 +374,13 @@ export function AppSidebar() {
                               'relative flex items-center gap-3 w-full px-3 py-2.5 rounded-md text-sm font-medium transition-colors',
                               effectivelyCollapsed && 'justify-center px-2 gap-0',
                               effectiveActive
-                                ? 'bg-sidebar-accent text-sidebar-foreground'
+                                ? 'bg-sidebar-primary text-sidebar-primary-foreground'
                                 : 'text-sidebar-foreground hover:text-sidebar-foreground hover:bg-sidebar-accent dark:hover:text-sidebar-accent-foreground'
                             )}
                           >
-                            {!effectivelyCollapsed && effectiveActive && (
-                              <span className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-5 bg-sidebar-primary rounded-full" />
-                            )}
                             <module.icon className={cn(
                               'h-4 w-4 shrink-0',
-                              effectiveActive ? 'text-sidebar-foreground' : ''
+                              effectiveActive ? 'text-sidebar-primary-foreground' : ''
                             )} />
                             <span className={cn(
                               'flex-1 text-left truncate transition-opacity duration-200',
@@ -399,12 +390,14 @@ export function AppSidebar() {
                             </span>
                             {submenuOpen ? (
                               <ChevronDown className={cn(
-                                'h-3.5 shrink-0 text-sidebar-foreground transition-all duration-200',
+                                'h-3.5 shrink-0 transition-all duration-200',
+                              effectiveActive ? 'text-sidebar-primary-foreground' : 'text-sidebar-foreground',
                                 effectivelyCollapsed ? 'w-0 opacity-0 invisible' : 'w-3.5 opacity-100 visible'
                               )} />
                             ) : (
                               <ChevronRight className={cn(
-                                'h-3.5 shrink-0 text-sidebar-foreground transition-all duration-200',
+                                'h-3.5 shrink-0 transition-all duration-200',
+                              effectiveActive ? 'text-sidebar-primary-foreground' : 'text-sidebar-foreground',
                                 effectivelyCollapsed ? 'w-0 opacity-0 invisible' : 'w-3.5 opacity-100 visible'
                               )} />
                             )}
@@ -443,13 +436,10 @@ export function AppSidebar() {
                                                   className={cn(
                                                     'flex items-center px-3 py-1.5 rounded-sm text-sm transition-colors',
                                                     isSubActive
-                                                      ? 'bg-sidebar-accent text-sidebar-foreground font-medium'
+                                                        ? 'bg-sidebar-primary text-sidebar-primary-foreground font-medium'
                                                       : 'text-sidebar-foreground hover:text-sidebar-foreground hover:bg-sidebar-accent dark:hover:text-sidebar-accent-foreground'
                                                   )}
                                                 >
-                                                  {isSubActive && (
-                                                    <span className="absolute left-0 top-1/2 -translate-y-1/2 w-0.5 h-4 bg-sidebar-primary rounded-full" />
-                                                  )}
                                                   {subitem.title}
                                                 </Link>
                                               </SidebarMenuSubItem>
@@ -470,13 +460,10 @@ export function AppSidebar() {
                                       className={cn(
                                         'flex items-center px-3 py-1.5 rounded-sm text-sm transition-colors',
                                         isSubActive
-                                          ? 'bg-sidebar-accent text-sidebar-foreground font-medium'
+                                          ? 'bg-sidebar-primary text-sidebar-primary-foreground font-medium'
                                           : 'text-sidebar-foreground hover:text-sidebar-foreground hover:bg-sidebar-accent dark:hover:text-sidebar-accent-foreground'
                                       )}
                                     >
-                                      {isSubActive && (
-                                        <span className="absolute left-0 top-1/2 -translate-y-1/2 w-0.5 h-4 bg-sidebar-primary rounded-full" />
-                                      )}
                                       {entry.title}
                                     </Link>
                                   </SidebarMenuSubItem>

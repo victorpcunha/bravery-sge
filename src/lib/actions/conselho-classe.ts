@@ -190,7 +190,7 @@ export async function listarAlunosAbaixoMedia(
 
   let query = supabase
     .from('turmas_disciplinas')
-    .select('matriz_disciplina_id, academico_matriz_disciplinas(disciplina_id, academico_disciplinas(nome))')
+    .select('matriz_disciplina_id, academico_matriz_disciplinas(disciplina_id, nao_reprova_nota, nao_reprova_frequencia, academico_disciplinas(nome))')
     .eq('turma_id', turmaId)
 
   if (disciplinaId) {
@@ -278,6 +278,8 @@ export async function listarAlunosAbaixoMedia(
 
     for (const disc of disciplinas as any[]) {
       const discId = disc.matriz_disciplina_id
+      // spec 032: "Não reprova por nota" não entra na lista do conselho (não há o que deliberar)
+      if ((disc.academico_matriz_disciplinas as any)?.nao_reprova_nota === true) continue
       const notasAluno = notasPorAlunoDisc.get(`${alunoId}|${discId}`) || []
       const conselho = conselhoMap.get(conselhoKey(alunoId, discId))
 

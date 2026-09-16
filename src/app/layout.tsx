@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Plus_Jakarta_Sans } from "next/font/google";
+import { Plus_Jakarta_Sans, Spectral } from "next/font/google";
 import "./globals.css";
 import { cn } from "@/lib/utils";
 import { AuthProvider } from "@/components/providers/auth-provider";
@@ -11,6 +11,13 @@ const plusJakarta = Plus_Jakarta_Sans({
   subsets: ['latin'],
   variable: '--font-sans',
   weight: ['400', '500', '600', '700'],
+});
+
+// Spectral — serifada de títulos (papéis Title 28px e Heading 20px); corpo segue Plus Jakarta Sans
+const spectral = Spectral({
+  subsets: ['latin'],
+  variable: '--font-display',
+  weight: ['500', '600', '700'],
 });
 
 export const metadata: Metadata = {
@@ -26,7 +33,7 @@ export default function RootLayout({
   return (
     <html
       lang="pt-BR"
-      className={cn("h-full", "antialiased", plusJakarta.variable)}
+      className={cn("h-full", "antialiased", plusJakarta.variable, spectral.variable)}
       suppressHydrationWarning
     >
       <body className="min-h-full flex flex-col">

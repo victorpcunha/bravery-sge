@@ -5,10 +5,14 @@ import { useRouter } from 'next/navigation'
 import { useAuth } from '@/components/providers/auth-provider'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
+import { ClickablePill } from '@/components/ui/clickable-pill'
+import { Label } from '@/components/ui/label'
+import { StatCard } from '@/components/ui/stat-card'
+import { CopyChip } from '@/components/usuarios/copy-chip'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Pagination } from '@/components/ui/pagination'
-import { Plus, Pencil, Trash2, ToggleLeft, UserCheck, Users } from 'lucide-react'
+import { Plus, Pencil, Trash2, Users, GraduationCap, Briefcase, HeartHandshake, School } from 'lucide-react'
 import { getPeople, getPerson, deletePerson, inativarPessoa, reativarPessoa, type Person } from '@/lib/actions/people'
 import { PessoaForm } from './PessoaForm'
 import { toast } from 'sonner'
@@ -37,6 +41,14 @@ const perfilStatusMap: Record<string, 'warning' | 'primary' | 'info' | 'success'
   responsavel: 'success',
 }
 
+const STATUS_OPCOES = [
+  { value: 'todos', label: 'Todos' },
+  { value: 'ativos', label: 'Ativos' },
+  { value: 'inativos', label: 'Inativos' },
+] as const
+
+type StatusFiltro = typeof STATUS_OPCOES[number]['value']
+
 const PERFIS = [
   { value: '', label: 'Todos' },
   { value: 'aluno', label: 'Aluno' },
@@ -56,6 +68,7 @@ export default function UsuariosPage() {
   const { user, loading: authLoading, schoolId, isSuperAdmin, allSchools, pessoaId } = useAuth()
   const router = useRouter()
   const [pessoas, setPessoas] = useState<Person[]>([])
+  const [basePessoas, setBasePessoas] = useState<Person[]>([])
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
   const [perfilFiltro, setPerfilFiltro] = useState('')
@@ -63,11 +76,13 @@ export default function UsuariosPage() {
   const [editPerson, setEditPerson] = useState<Person | null>(null)
   const [deleting, setDeleting] = useState<string | null>(null)
   const [inativando, setInativando] = useState<string | null>(null)
-  const [mostrarInativos, setMostrarInativos] = useState(false)
+  const [statusFiltro, setStatusFiltro] = useState<StatusFiltro>('todos')
   const [deleteTarget, setDeleteTarget] = useState<Person | null>(null)
   const [selectedSchoolId, setSelectedSchoolId] = useState<string | null>(null)
   const [currentPage, setCurrentPage] = useState(1)
   const editUrlProcessed = useRef(false)
+
+  const effectiveSchoolId = isSuperAdmin ? selectedSchoolId : schoolId
 
   useEffect(() => {
     const stored = sessionStorage.getItem('usuarios_search')
@@ -83,37 +98,68 @@ export default function UsuariosPage() {
     return pessoas.slice(start, start + ITEMS_PER_PAGE)
   }, [pessoas, currentPage])
 
-  const filtrosAtivos = search.trim() !== '' || perfilFiltro !== '' || mostrarInativos
+  const filtrosAtivos = search.trim() !== '' || perfilFiltro !== '' || statusFiltro !== 'todos'
 
   const limparFiltros = () => {
     setSearch('')
     setPerfilFiltro('')
-    setMostrarInativos(false)
+    setStatusFiltro('todos')
     setCurrentPage(1)
   }
 
   useEffect(() => {
     setCurrentPage(1)
-  }, [search, perfilFiltro, mostrarInativos, selectedSchoolId])
+  }, [search, perfilFiltro, statusFiltro, selectedSchoolId])
 
   useEffect(() => {
     if (!authLoading && !user) router.push('/login')
   }, [user, authLoading, router])
 
   const loadPessoas = useCallback(async () => {
+    if (isSuperAdmin && !selectedSchoolId) {
+      setPessoas([])
+      setLoading(false)
+      return
+    }
     setLoading(true)
     try {
-      const effectiveId = isSuperAdmin ? selectedSchoolId : schoolId
-      const data = await getPeople(effectiveId, search || undefined, perfilFiltro || undefined, mostrarInativos)
-      setPessoas(data)
+      const mostrarInativos = statusFiltro !== 'ativos'
+      const data = await getPeople(effectiveSchoolId, search || undefined, perfilFiltro || undefined, mostrarInativos)
+      setPessoas(statusFiltro === 'inativos' ? data.filter(p => !p.ativo) : data)
     } catch {
       toast.error('Erro ao carregar usuários')
     } finally {
       setLoading(false)
     }
-  }, [schoolId, isSuperAdmin, selectedSchoolId, search, perfilFiltro, mostrarInativos])
+  }, [effectiveSchoolId, isSuperAdmin, selectedSchoolId, search, perfilFiltro, statusFiltro])
 
   useEffect(() => { loadPessoas() }, [loadPessoas])
+
+  const loadKpis = useCallback(async () => {
+    if (isSuperAdmin && !selectedSchoolId) {
+      setBasePessoas([])
+      return
+    }
+    try {
+      const data = await getPeople(effectiveSchoolId, undefined, undefined, true)
+      setBasePessoas(data)
+    } catch {
+      // KPIs são acessórios: falha silenciosa mantém zeros
+    }
+  }, [effectiveSchoolId, isSuperAdmin, selectedSchoolId])
+
+  useEffect(() => { loadKpis() }, [loadKpis])
+
+  const kpis = useMemo(() => {
+    const ativos = basePessoas.filter(p => p.ativo)
+    const temPerfil = (p: Person, perfis: string[]) => (p.perfil || []).some(x => perfis.includes(x))
+    return {
+      total: ativos.length,
+      alunos: ativos.filter(p => temPerfil(p, ['aluno'])).length,
+      profissionais: ativos.filter(p => temPerfil(p, ['profissional', 'gestor'])).length,
+      responsaveis: ativos.filter(p => temPerfil(p, ['responsavel'])).length,
+    }
+  }, [basePessoas])
 
   const handleDelete = async () => {
     if (!deleteTarget) return
@@ -123,6 +169,7 @@ export default function UsuariosPage() {
       toast.success('Usuário excluído permanentemente')
       setDeleteTarget(null)
       loadPessoas()
+      loadKpis()
     } catch {
       toast.error('Erro ao excluir usuário')
     } finally {
@@ -136,6 +183,7 @@ export default function UsuariosPage() {
       await inativarPessoa(id, pessoaId)
       toast.success('Usuário inativado')
       loadPessoas()
+      loadKpis()
     } catch {
       toast.error('Erro ao inativar usuário')
     } finally {
@@ -149,6 +197,7 @@ export default function UsuariosPage() {
       await reativarPessoa(id, pessoaId)
       toast.success('Usuário reativado')
       loadPessoas()
+      loadKpis()
     } catch {
       toast.error('Erro ao reativar usuário')
     } finally {
@@ -192,6 +241,7 @@ export default function UsuariosPage() {
     setModalOpen(false)
     setEditPerson(null)
     loadPessoas()
+    loadKpis()
   }
 
   if (authLoading) {
@@ -210,9 +260,15 @@ export default function UsuariosPage() {
       <PageContainer>
         <PageHeader
           title="Usuários"
-          description="Cadastro único de usuários (Registro 30 INEP)"
           icon={Users}
         />
+
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+          <StatCard icon={Users} value={kpis.total} label="Usuários Ativos" />
+          <StatCard icon={GraduationCap} value={kpis.alunos} label="Alunos Ativos" variant="warning" />
+          <StatCard icon={Briefcase} value={kpis.profissionais} label="Profissionais / Gestores Ativos" variant="success" />
+          <StatCard icon={HeartHandshake} value={kpis.responsaveis} label="Responsáveis Ativos" variant="default" />
+        </div>
 
         <PageSection variant="compact" title="Filtros" className="mb-6">
           <FilterBar
@@ -222,44 +278,57 @@ export default function UsuariosPage() {
           >
             {isSuperAdmin && allSchools.length > 0 && (
               <Select
-                value={selectedSchoolId ?? '__all__'}
-                onValueChange={(v) => setSelectedSchoolId(v === '__all__' ? null : v)}
+                value={selectedSchoolId ?? ''}
+                onValueChange={(v) => setSelectedSchoolId(v || null)}
               >
                 <SelectTrigger className="w-auto min-w-[180px] h-9">
-                  <SelectValue placeholder="Todas as escolas" />
+                  <SelectValue placeholder="Selecione uma escola" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="__all__">Todas as escolas</SelectItem>
                   {allSchools.map(s => (
                     <SelectItem key={s.id} value={s.id}>{s.nome_escola}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
             )}
-            <div className="flex gap-2 flex-wrap">
-              {PERFIS.map(p => (
-                <Button
-                  key={p.value}
-                  variant={perfilFiltro === p.value ? 'default' : 'outline'}
-                  size="sm"
-                  onClick={() => setPerfilFiltro(p.value)}
-                >
-                  {p.label}
-                </Button>
-              ))}
+            <div className="flex flex-col gap-1.5">
+              <Label className="text-[13px] font-semibold uppercase tracking-wider text-muted-foreground">Tipo</Label>
+              <div className="flex gap-2 flex-wrap">
+                {PERFIS.map(p => (
+                  <ClickablePill
+                    key={p.value}
+                    label={p.label}
+                    active={perfilFiltro === p.value}
+                    onClick={() => setPerfilFiltro(p.value)}
+                  />
+                ))}
+              </div>
             </div>
-            <Button
-              variant={mostrarInativos ? 'default' : 'outline'}
-              size="sm"
-              onClick={() => setMostrarInativos(v => !v)}
-            >
-              <ToggleLeft className="mr-1.5 h-3.5 w-3.5" />
-              {mostrarInativos ? 'Ocultar inativos' : 'Mostrar inativos'}
-            </Button>
+            <div className="flex flex-col gap-1.5">
+              <Label className="text-[13px] font-semibold uppercase tracking-wider text-muted-foreground">Status</Label>
+              <div className="flex gap-2 flex-wrap">
+                {STATUS_OPCOES.map(s => (
+                  <ClickablePill
+                    key={s.value}
+                    label={s.label}
+                    active={statusFiltro === s.value}
+                    onClick={() => setStatusFiltro(s.value)}
+                  />
+                ))}
+              </div>
+            </div>
           </FilterBar>
         </PageSection>
 
-        {loading ? (
+        {isSuperAdmin && !selectedSchoolId ? (
+          <Card className="shadow-sm">
+            <EmptyState
+              icon={School}
+              title="Selecione uma escola"
+              description="Escolha uma unidade escolar no filtro acima para listar os usuários."
+            />
+          </Card>
+        ) : loading ? (
           <Card className="shadow-sm">
             <div className="p-6 space-y-3">
               {[1, 2, 3].map(i => (
@@ -311,13 +380,11 @@ export default function UsuariosPage() {
                   <div className="flex items-start justify-between gap-3 mb-2">
                     <div className="min-w-0 flex-1">
                       <p className="text-[15px] font-semibold text-foreground truncate">
+                        {pessoa.codigo_pessoa ? (
+                          <span className="text-[13px] font-medium text-muted-foreground tabular-nums mr-1.5">#{pessoa.codigo_pessoa}</span>
+                        ) : null}
                         {pessoa.nome_completo}
                       </p>
-                      {pessoa.codigo_pessoa && (
-                        <p className="text-[13px] text-muted-foreground mt-0.5">
-                          #{pessoa.codigo_pessoa}
-                        </p>
-                      )}
                     </div>
                     <StatusBadge
                       status={pessoa.ativo ? 'success' : 'destructive'}
@@ -326,9 +393,9 @@ export default function UsuariosPage() {
                       {pessoa.ativo ? 'Ativo' : 'Inativo'}
                     </StatusBadge>
                   </div>
-                  <div className="flex flex-wrap gap-x-4 gap-y-1 text-[13px] text-muted-foreground tabular-nums mb-3">
-                    <span>{formatCpf(pessoa.cpf)}</span>
-                    <span>INEP {pessoa.inep_id || '—'}</span>
+                  <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 text-[13px] text-muted-foreground tabular-nums mb-3">
+                    <CopyChip raw={pessoa.cpf} display={formatCpf(pessoa.cpf)} />
+                    <CopyChip raw={pessoa.inep_id} display={pessoa.inep_id ? `INEP ${pessoa.inep_id}` : '—'} />
                   </div>
                   {(pessoa.perfil || []).length > 0 && (
                     <div className="flex gap-1 flex-wrap mb-4">
@@ -365,29 +432,30 @@ export default function UsuariosPage() {
             </ul>
 
             {/* Desktop: tabela */}
-            <div className="hidden md:block px-4">
+            <div className="hidden md:block">
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Nome Completo</TableHead>
-                    <TableHead>CPF</TableHead>
-                    <TableHead>INEP</TableHead>
-                    <TableHead>Tipo</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead className="w-[90px]">Ações</TableHead>
+                    <TableHead className="bg-muted text-foreground w-[80px]">ID</TableHead>
+                    <TableHead className="bg-muted text-foreground">Nome Completo</TableHead>
+                    <TableHead className="bg-muted text-foreground">CPF</TableHead>
+                    <TableHead className="bg-muted text-foreground">INEP</TableHead>
+                    <TableHead className="bg-muted text-foreground">Tipo</TableHead>
+                    <TableHead className="bg-muted text-foreground">Status</TableHead>
+                    <TableHead className="bg-muted text-foreground w-[90px]">Ações</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {paginatedPessoas.map((pessoa) => (
                     <TableRow key={pessoa.id}>
+                      <TableCell className="text-muted-foreground tabular-nums">
+                        {pessoa.codigo_pessoa ? `#${pessoa.codigo_pessoa}` : '—'}
+                      </TableCell>
                       <TableCell>
                         <span className="font-medium text-foreground">{pessoa.nome_completo}</span>
-                        {pessoa.codigo_pessoa && (
-                          <span className="text-[13px] text-muted-foreground ml-2">#{pessoa.codigo_pessoa}</span>
-                        )}
                       </TableCell>
-                      <TableCell className="text-muted-foreground">{formatCpf(pessoa.cpf)}</TableCell>
-                      <TableCell className="text-muted-foreground">{pessoa.inep_id || '—'}</TableCell>
+                      <TableCell><CopyChip raw={pessoa.cpf} display={formatCpf(pessoa.cpf)} /></TableCell>
+                      <TableCell><CopyChip raw={pessoa.inep_id} display={pessoa.inep_id || '—'} /></TableCell>
                       <TableCell>
                         <div className="flex gap-1 flex-wrap">
                           {(pessoa.perfil || []).map(p => (
@@ -440,13 +508,13 @@ export default function UsuariosPage() {
       <Dialog open={modalOpen} onOpenChange={(open) => { if (!open) { setModalOpen(false); setEditPerson(null) }}}>
         <DialogContent className="max-w-4xl max-h-[90vh] flex flex-col p-0 gap-0">
           <DialogHeader className="shrink-0 px-6 pt-6 pb-4 border-b border-border">
-            <DialogTitle>{editPerson ? 'Editar Usuário' : 'Novo Usuário'}</DialogTitle>
+            <DialogTitle className="text-[20px] font-semibold">{editPerson ? 'Editar Usuário' : 'Novo Usuário'}</DialogTitle>
             <DialogDescription>
               {editPerson ? 'Edite os dados cadastrais.' : 'Preencha os dados cadastrais (Registro 30 INEP).'}
             </DialogDescription>
           </DialogHeader>
           <PessoaForm
-            schoolId={schoolId}
+            schoolId={effectiveSchoolId ?? null}
             person={editPerson}
             onSaved={handleSaved}
             onCancel={() => { setModalOpen(false); setEditPerson(null) }}

@@ -194,6 +194,7 @@ export type TurmaDiarioInfo = {
   quadro_aula_id: string | null
   fechada: boolean
   data_fechamento: string | null
+  chamada_bloqueada: boolean
 }
 
 export async function getTurmaDiarioInfo(turmaId: string, pessoaId?: string | null): Promise<TurmaDiarioInfo | null> {
@@ -201,7 +202,7 @@ export async function getTurmaDiarioInfo(turmaId: string, pessoaId?: string | nu
 
   const { data: turma, error } = await supabase
     .from('turmas')
-    .select('id, nome, capacidade_alunos, ano_letivo_id, etapa_ensino_id, turnos, fechada, data_fechamento')
+    .select('id, nome, capacidade_alunos, ano_letivo_id, etapa_ensino_id, turnos, fechada, data_fechamento, chamada_bloqueada')
     .eq('id', turmaId)
     .maybeSingle()
 
@@ -230,7 +231,63 @@ export async function getTurmaDiarioInfo(turmaId: string, pessoaId?: string | nu
     quadro_aula_id: results[3].data?.id || null,
     fechada: turma.fechada === true,
     data_fechamento: turma.data_fechamento || null,
+    chamada_bloqueada: (turma as any).chamada_bloqueada === true,
   }
+}
+
+export type ProfissionalTurma = {
+  nome: string
+  disciplinas: string[]
+}
+
+export async function getProfissionaisDaTurma(turmaId: string, pessoaId?: string | null): Promise<ProfissionalTurma[]> {
+  await validarPermRead('gestao-pedagogica.diario-classe', pessoaId)
+
+  const { data: vinculos } = await supabase
+    .from('turmas_profissionais')
+    .select('person_id, disciplinas_ids, people(nome_completo)')
+    .eq('turma_id', turmaId)
+    .eq('ativo', true)
+
+  if (!vinculos?.length) return []
+
+  const matrizIds = [...new Set(vinculos.flatMap(v => (v.disciplinas_ids || []) as string[]))]
+
+  const nomePorMatriz = new Map<string, string>()
+  if (matrizIds.length > 0) {
+    const { data: matrizes } = await supabase
+      .from('academico_matriz_disciplinas')
+      .select('id, disciplina_id')
+      .in('id', matrizIds)
+
+    const discIds = [...new Set((matrizes || []).map(m => m.disciplina_id).filter(Boolean))]
+    if (discIds.length > 0) {
+      const { data: disciplinas } = await supabase
+        .from('academico_disciplinas')
+        .select('id, nome')
+        .in('id', discIds)
+
+      const nomePorDisc = new Map((disciplinas || []).map(d => [d.id, d.nome]))
+      for (const m of matrizes || []) {
+        nomePorMatriz.set(m.id, nomePorDisc.get(m.disciplina_id) || '')
+      }
+    }
+  }
+
+  const porPessoa = new Map<string, Set<string>>()
+  for (const v of vinculos) {
+    const nome = (v.people as any)?.nome_completo || ''
+    if (!nome) continue
+    if (!porPessoa.has(nome)) porPessoa.set(nome, new Set())
+    for (const matrizId of (v.disciplinas_ids || []) as string[]) {
+      const discNome = nomePorMatriz.get(matrizId)
+      if (discNome) porPessoa.get(nome)!.add(discNome)
+    }
+  }
+
+  return [...porPessoa.entries()]
+    .map(([nome, discs]) => ({ nome, disciplinas: [...discs].sort((a, b) => a.localeCompare(b)) }))
+    .sort((a, b) => a.nome.localeCompare(b.nome))
 }
 
 export async function getAlunosDaTurma(turmaId: string, pessoaId?: string | null) {
@@ -293,7 +350,14 @@ export async function getAlunosDaTurmaComPeriodo(turmaId: string, pessoaId?: str
       data_nascimento: pessoaMap.get(m.aluno_id)?.data_nascimento || null,
       situacao: m.situacao,
     }))
-    .sort((a, b) => a.nome_completo.localeCompare(b.nome_completo))
+    .sort((a, b) => {
+      // Com numeração: ordena por número (sem número vão para o fim, em ordem alfabética).
+      // Sem numeração: ordem alfabética.
+      const na = a.numero_chamada ?? Number.MAX_SAFE_INTEGER
+      const nb = b.numero_chamada ?? Number.MAX_SAFE_INTEGER
+      if (na !== nb) return na - nb
+      return a.nome_completo.localeCompare(b.nome_completo)
+    })
 }
 
 export async function gerarNumeroChamada(turmaId: string, pessoaId?: string | null) {
@@ -303,9 +367,17 @@ export async function gerarNumeroChamada(turmaId: string, pessoaId?: string | nu
     throw new Error('A turma está fechada. Não é possível gerar a numeração de chamada.')
   }
 
+  const { data: turma } = await supabase
+    .from('turmas')
+    .select('chamada_bloqueada')
+    .eq('id', turmaId)
+    .maybeSingle()
+
+  const bloqueada = (turma as any)?.chamada_bloqueada === true
+
   const { data: matriculas, error } = await supabase
     .from('academico_matriculas')
-    .select('id, aluno_id')
+    .select('id, aluno_id, numero_chamada')
     .eq('turma_id', turmaId)
     .eq('situacao', 'Ativo')
 
@@ -325,8 +397,38 @@ export async function gerarNumeroChamada(turmaId: string, pessoaId?: string | nu
     .map(m => ({
       matriculaId: m.id,
       nome: pessoaMap.get(m.aluno_id)?.nome_completo || '',
+      numeroAtual: m.numero_chamada ?? null,
     }))
     .sort((a, b) => a.nome.localeCompare(b.nome))
+
+  if (bloqueada) {
+    // Numeração bloqueada: só numera alunos ainda sem número, ao final da sequência,
+    // sem alterar a numeração dos demais.
+    const semNumero = ordenados.filter(o => o.numeroAtual === null)
+    if (semNumero.length === 0) return 0
+
+    const maxExistente = ordenados.reduce((max, o) => Math.max(max, o.numeroAtual ?? 0), 0)
+    for (let i = 0; i < semNumero.length; i++) {
+      const { error: errUpdate } = await supabase
+        .from('academico_matriculas')
+        .update({ numero_chamada: maxExistente + i + 1 })
+        .eq('id', semNumero[i].matriculaId)
+      if (errUpdate) throw errUpdate
+    }
+
+    const ctx = await contextoTurmaAuditoria(turmaId)
+    await registrarAuditoriaAgregada({
+      school_id: ctx.school_id,
+      pessoa_id: pessoaId || null,
+      modulo: 'Alunos Matriculados',
+      entidade: 'academico_matriculas',
+      entidade_id: turmaId,
+      registro_nome: ctx.nome || null,
+      resumo: { turma: ctx.nome || null, turma_id: turmaId, quantidade: semNumero.length },
+    })
+
+    return semNumero.length
+  }
 
   for (let i = 0; i < ordenados.length; i++) {
     const { error: errUpdate } = await supabase
@@ -348,6 +450,37 @@ export async function gerarNumeroChamada(turmaId: string, pessoaId?: string | nu
   })
 
   return ordenados.length
+}
+
+export async function bloquearNumeracaoChamada(turmaId: string, pessoaId?: string | null) {
+  if (pessoaId) {
+    const { validarPermissaoServer } = await import('./perfis')
+    await validarPermissaoServer(pessoaId, 'gestao-pedagogica.diario-classe.chamada', 'editar')
+  }
+
+  if (await verificarTurmaFechada(turmaId)) {
+    throw new Error('A turma está fechada. Não é possível bloquear a numeração de chamada.')
+  }
+
+  const { error } = await supabase
+    .from('turmas')
+    .update({ chamada_bloqueada: true })
+    .eq('id', turmaId)
+
+  if (error) throw error
+
+  const ctx = await contextoTurmaAuditoria(turmaId)
+  await registrarAuditoriaAgregada({
+    school_id: ctx.school_id,
+    pessoa_id: pessoaId || null,
+    modulo: 'Alunos Matriculados',
+    entidade: 'turmas',
+    entidade_id: turmaId,
+    registro_nome: ctx.nome || null,
+    resumo: { turma: ctx.nome || null, turma_id: turmaId, quantidade: 1 },
+  })
+
+  return true
 }
 
 export async function getDisciplinasDiario(turmaId: string, pessoaId?: string | null) {
@@ -507,6 +640,69 @@ export async function registrarFrequenciaDia(
   })
 
   return { success: true }
+}
+
+export async function registrarFrequenciaDiaLote(
+  schoolId: string | null,
+  turmaId: string,
+  alunoIds: string[],
+  diaLetivo: string,
+  status: 'P' | 'F' | 'FJ' | null,
+  pessoaId: string | null
+) {
+  try {
+    if (alunoIds.length === 0) return { success: true, quantidade: 0 }
+
+    if (diaLetivo > new Date().toISOString().split('T')[0]) {
+      return { success: false, error: 'Não é permitido registrar frequência em data futura' }
+    }
+
+    if (pessoaId) {
+      const { validarPermissaoServer } = await import('./perfis')
+      await validarPermissaoServer(pessoaId, 'gestao-pedagogica.diario-classe.frequencia', 'editar')
+    }
+
+    if (await verificarTurmaFechada(turmaId)) {
+      return { success: false, error: 'A turma está fechada. Não é possível registrar frequência.' }
+    }
+
+    if (status) {
+      const linhas = alunoIds.map(alunoId => ({
+        school_id: schoolId,
+        turma_id: turmaId,
+        aluno_id: alunoId,
+        dia_letivo: diaLetivo,
+        status,
+        created_by: pessoaId,
+        updated_by: pessoaId,
+      }))
+
+      const { error } = await supabase
+        .from('academico_frequencias_dia')
+        .upsert(linhas, { onConflict: 'turma_id,aluno_id,dia_letivo' })
+
+      if (error) return { success: false, error: error.message }
+    } else {
+      const { error } = await supabase
+        .from('academico_frequencias_dia')
+        .delete()
+        .eq('turma_id', turmaId)
+        .in('aluno_id', alunoIds)
+        .eq('dia_letivo', diaLetivo)
+
+      if (error) return { success: false, error: error.message }
+    }
+
+    await registrarFrequenciaAgg(pessoaId, 'academico_frequencias_dia', turmaId, {
+      turma_id: turmaId,
+      periodo: diaLetivo,
+      quantidade: alunoIds.length,
+    })
+
+    return { success: true, quantidade: alunoIds.length }
+  } catch (e: any) {
+    return { success: false, error: e?.message || 'Erro interno' }
+  }
 }
 
 export async function listarFrequenciasDia(turmaId: string, ano: number, mes: number, pessoaId?: string | null) {
@@ -697,6 +893,51 @@ export async function getAulasDaTurma(
     }
   }
 
+  // SPEC 030 FR-015: une aulas extras (sábados letivos etc.) às regulares.
+  // Defensivo: tabelas podem ainda não existir (migration via SQL Editor).
+  try {
+    const mm = String(mes).padStart(2, '0')
+    const primeiroDiaIso = `${ano}-${mm}-01`
+    const ultimoDiaIso = `${ano}-${mm}-${new Date(ano, mes, 0).getDate()}`
+    const { data: datasExtras } = await supabase
+      .from('quadro_aulas_datas_extras')
+      .select('id, data_aula')
+      .eq('quadro_aula_id', quadro.id)
+      .gte('data_aula', primeiroDiaIso)
+      .lte('data_aula', ultimoDiaIso)
+
+    if (datasExtras?.length) {
+      const { data: horariosExtras } = await supabase
+        .from('quadro_aulas_extras_horarios')
+        .select('id, horario_inicial, horario_final, disciplina_id, data_extra_id')
+        .in('data_extra_id', datasExtras.map(d => d.id))
+        .eq('disciplina_id', matrizDisciplinaId)
+        .eq('ativo', true)
+        .order('horario_inicial')
+
+      const dataPorId = new Map(datasExtras.map(d => [d.id, String(d.data_aula).slice(0, 10)]))
+      const seqPorData = new Map<string, number>()
+      for (const h of horariosExtras || []) {
+        const data = dataPorId.get(h.data_extra_id) || ''
+        if (!data) continue
+        const seq = (seqPorData.get(data) || 0) + 1
+        seqPorData.set(data, seq)
+        const [ey, em, ed] = data.split('-').map(Number)
+        aulas.push({
+          horario_id: h.id,
+          data,
+          data_iso: `${data}T${h.horario_inicial}`,
+          horario_inicial: String(h.horario_inicial).slice(0, 5),
+          horario_final: String(h.horario_final).slice(0, 5),
+          dia_semana: new Date(ey, em - 1, ed, 12, 0, 0).getDay(),
+          numero_aula: seq,
+        })
+      }
+    }
+  } catch {
+    // Tabelas SPEC 030 ausentes: segue só com a grade regular
+  }
+
   aulas.sort((a, b) => a.data_iso.localeCompare(b.data_iso))
   return aulas
 }
@@ -792,6 +1033,88 @@ export async function registrarFrequenciaAula(
     }, disciplinaId)
 
     return { success: true }
+  } catch (e: any) {
+    return { success: false, error: e?.message || 'Erro interno' }
+  }
+}
+
+export async function registrarFrequenciaAulaLote(
+  schoolId: string | null,
+  turmaId: string,
+  horarioId: string,
+  alunoIds: string[],
+  dataAula: string,
+  status: 'P' | 'F' | 'FJ' | null,
+  pessoaId: string | null
+) {
+  try {
+    if (alunoIds.length === 0) return { success: true, quantidade: 0 }
+
+    if (dataAula > new Date().toISOString().split('T')[0]) {
+      return { success: false, error: 'Não é permitido registrar frequência em data futura' }
+    }
+
+    if (pessoaId) {
+      const { validarPermissaoServer } = await import('./perfis')
+      await validarPermissaoServer(pessoaId, 'gestao-pedagogica.diario-classe.frequencia', 'editar')
+    }
+
+    if (await verificarTurmaFechada(turmaId)) {
+      return { success: false, error: 'A turma está fechada. Não é possível registrar frequência.' }
+    }
+
+    if (status) {
+      const { data: horario } = await supabase
+        .from('quadro_aulas_horarios')
+        .select('disciplina_id')
+        .eq('id', horarioId)
+        .maybeSingle()
+
+      if (!horario?.disciplina_id) {
+        return { success: false, error: 'Horário sem disciplina vinculada' }
+      }
+
+      const linhas = alunoIds.map(alunoId => ({
+        school_id: schoolId,
+        turma_id: turmaId,
+        horario_id: horarioId,
+        aluno_id: alunoId,
+        disciplina_id: horario.disciplina_id,
+        data_aula: dataAula,
+        status,
+        created_by: pessoaId,
+        updated_by: pessoaId,
+      }))
+
+      const { error } = await supabase
+        .from('academico_frequencias_aula')
+        .upsert(linhas, { onConflict: 'horario_id,aluno_id,data_aula' })
+
+      if (error) return { success: false, error: error.message }
+
+      await registrarFrequenciaAgg(pessoaId, 'academico_frequencias_aula', turmaId, {
+        turma_id: turmaId,
+        periodo: dataAula,
+        quantidade: alunoIds.length,
+      }, horario.disciplina_id)
+    } else {
+      const { error } = await supabase
+        .from('academico_frequencias_aula')
+        .delete()
+        .eq('horario_id', horarioId)
+        .in('aluno_id', alunoIds)
+        .eq('data_aula', dataAula)
+
+      if (error) return { success: false, error: error.message }
+
+      await registrarFrequenciaAgg(pessoaId, 'academico_frequencias_aula', turmaId, {
+        turma_id: turmaId,
+        periodo: dataAula,
+        quantidade: alunoIds.length,
+      })
+    }
+
+    return { success: true, quantidade: alunoIds.length }
   } catch (e: any) {
     return { success: false, error: e?.message || 'Erro interno' }
   }

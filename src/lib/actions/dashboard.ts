@@ -15,7 +15,6 @@ export type DashboardData = {
   alunosPorTipoTurma: { tipo: string; quantidade: number }[]
   alunosPorDeficiencia: { nome: string; quantidade: number }[]
   alunosPorTranstorno: { nome: string; quantidade: number }[]
-  alunosPorModalidade: { modalidade: string; quantidade: number }[]
   alunosPorTurno: { turno: string; quantidade: number }[]
 
   ocupacao: { capacidadeTotal: number; matriculasAtivas: number }
@@ -41,7 +40,6 @@ export async function getDashboardData(schoolId: string | null): Promise<Dashboa
     alunosPorTipoRes,
     alunosPorDeficienciaRes,
     alunosPorTranstornoRes,
-    alunosPorModalidadeRes,
     alunosPorTurnoRes,
     ocupacaoRes,
     frequenciaRes,
@@ -221,30 +219,6 @@ export async function getDashboardData(schoolId: string | null): Promise<Dashboa
       })
 
       return result.filter(r => r.quantidade > 0).sort((a, b) => b.quantidade - a.quantidade)
-    })(),
-
-    // 11. Alunos por Modalidade
-    (async () => {
-      let query = supabase.from('academico_matriculas')
-        .select('aluno_id, turmas!inner(modalidade)')
-        .eq('ativo', true)
-        .eq('situacao', 'Ativo')
-      if (schoolId) query = query.eq('school_id', schoolId)
-      const { data } = await query
-
-      if (!data) return [] as { modalidade: string; quantidade: number }[]
-
-      const map = new Map<string, Set<string>>()
-      for (const row of data) {
-        const modalidade = (row as any).turmas?.modalidade || 'Não definida'
-        const alunoId = (row as any).aluno_id
-        if (!map.has(modalidade)) map.set(modalidade, new Set())
-        map.get(modalidade)!.add(alunoId)
-      }
-
-      return Array.from(map.entries())
-        .map(([modalidade, alunos]) => ({ modalidade, quantidade: alunos.size }))
-        .sort((a, b) => b.quantidade - a.quantidade)
     })(),
 
     // 12. Alunos por Turno
@@ -530,7 +504,6 @@ export async function getDashboardData(schoolId: string | null): Promise<Dashboa
     alunosPorTipoTurma: alunosPorTipoRes as DashboardData['alunosPorTipoTurma'],
     alunosPorDeficiencia: alunosPorDeficienciaRes as DashboardData['alunosPorDeficiencia'],
     alunosPorTranstorno: alunosPorTranstornoRes as DashboardData['alunosPorTranstorno'],
-    alunosPorModalidade: alunosPorModalidadeRes as DashboardData['alunosPorModalidade'],
     alunosPorTurno: alunosPorTurnoRes as DashboardData['alunosPorTurno'],
     ocupacao: ocupacaoRes as DashboardData['ocupacao'],
     frequenciaMedia: frequenciaRes as DashboardData['frequenciaMedia'],

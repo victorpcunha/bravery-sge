@@ -744,8 +744,8 @@ export default function AvaliacoesNumericas({
   }
 
   return (
-    <div className="space-y-4">
-      <div className="flex flex-wrap items-center gap-3 px-1 pt-2">
+    <div className="min-w-0 max-w-full p-4 sm:p-6 space-y-5">
+      <div className="flex flex-wrap items-center gap-3">
         <Select
           value={disciplinaId}
           onValueChange={v => {

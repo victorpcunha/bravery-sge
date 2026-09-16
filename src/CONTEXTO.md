@@ -60,7 +60,7 @@ O Bravery SGE é uma solução SaaS multi-tenant para escolas particulares brasi
 - Rotas: `/gestao-turmas/quadro-aulas`, `/gestao-turmas/quadro-aulas/cadastro`
 
 ### Matrículas (Enrollments)
-- 3 tabelas: matrícula + transporte + dispensas
+- 2 tabelas: matrícula (+ transporte) + movimentações (dispensas removidas — spec 034)
 - Movimentações: Transferir, Reclassificar, Remanejar, Desistir
 - Rotas: `/gestao-academica/matriculas`, `/gestao-academica/matriculas/cadastro`
 

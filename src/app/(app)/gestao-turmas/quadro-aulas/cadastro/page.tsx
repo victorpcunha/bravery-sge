@@ -1,6 +1,6 @@
 'use client'
 
-import { Suspense, useState, useEffect } from 'react'
+import { Suspense, useState, useEffect, useRef } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useAuth } from '@/components/providers/auth-provider'
 import { usePermissoes } from '@/hooks/use-permissoes'
@@ -12,16 +12,21 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { PageContainer } from '@/components/layout/page-container'
 import { PageHeader } from '@/components/layout/page-header'
 import { FormCard } from '@/components/layout/form-card'
+import { DatePicker } from '@/components/ui/date-picker'
+import { TimePicker } from '@/components/ui/time-picker'
+import { ConfirmDialog } from '@/components/feedback/confirm-dialog'
+import { StatusBadge } from '@/components/feedback/status-badge'
 import { toast } from 'sonner'
 import {
-  Plus, Trash2, Save, Calendar, Clock, AlertCircle, Loader2, GraduationCap, Pencil, ChevronLeft,
+  Plus, Trash2, Save, Clock, AlertCircle, Loader2, GraduationCap, Pencil, ChevronLeft,
 } from 'lucide-react'
 import {
-  getQuadroAula, createQuadroAula, updateQuadroAula,
+  getQuadroAula, createQuadroAula, updateQuadroAula, deleteQuadroAula,
   gerarGradeHorarios, validarConflitosProfessor, validarSobreposicaoVigencia,
   getTurmasAtivas, getDisciplinasDaTurma, getProfessoresDaTurma,
-  getAnosLetivosAtivos,
-  type Intervalo, type SlotGerado,
+  getAnosLetivosAtivos, getDiasExtrasDoCalendario, getExtrasDoQuadro,
+  saveExtrasDoQuadro, removerDataExtra,
+  type Intervalo, type SlotGerado, type AulaExtra,
 } from '@/lib/actions/quadro-aulas'
 
 const DIAS_NOME: Record<number, string> = {
@@ -90,6 +95,151 @@ function CadastroForm() {
   const [disciplinasTurma, setDisciplinasTurma] = useState<any[]>([])
   const [profissionaisTurma, setProfissionaisTurma] = useState<any[]>([])
   const [turmaDados, setTurmaDados] = useState<any>(null)
+  const [confirmDelete, setConfirmDelete] = useState(false)
+
+  // SPEC 030 — Aulas Extras (dias letivos extras do Calendário da Etapa)
+  const [extrasState, setExtrasState] = useState<Record<string, { id?: string; intervalos: Intervalo[]; aulas: AulaExtra[]; foraDoCalendario?: boolean }>>({})
+  const [extrasCarregando, setExtrasCarregando] = useState(false)
+  const [addingAulaData, setAddingAulaData] = useState<string | null>(null)
+  const [extraForm, setExtraForm] = useState({ inicio: '', fim: '', disciplina: '', professor: '' })
+  const extrasPersistedDone = useRef(false)
+
+  const formatDataExtra = (iso: string) => {
+    const [y, m, d] = iso.split('-')
+    return `${d}/${m}/${y}`
+  }
+
+  const diaSemanaDe = (iso: string) => {
+    const [y, m, d] = iso.split('-').map(Number)
+    return new Date(y, m - 1, d, 12, 0, 0).getDay()
+  }
+
+  const loadExtrasCalendario = async (tId: string, ini: string, fim: string) => {
+    if (!tId || !ini || !fim || fim < ini) return
+    setExtrasCarregando(true)
+    try {
+      const buscarPersistidos = editId && !extrasPersistedDone.current
+      const [calDates, persisted] = await Promise.all([
+        getDiasExtrasDoCalendario(tId, ini, fim),
+        buscarPersistidos ? getExtrasDoQuadro(editId as string) : Promise.resolve([]),
+      ])
+      if (buscarPersistidos) extrasPersistedDone.current = true
+      const calSet = new Set(calDates)
+      setExtrasState(prev => {
+        const next = { ...prev }
+        for (const d of calDates) {
+          if (!next[d]) next[d] = { intervalos: [], aulas: [] }
+          else next[d] = { ...next[d], foraDoCalendario: false }
+        }
+        for (const p of persisted || []) {
+          if (!next[p.data_aula]) {
+            next[p.data_aula] = { id: p.id, intervalos: p.intervalos, aulas: p.aulas }
+          } else if (!next[p.data_aula].id) {
+            next[p.data_aula] = { ...next[p.data_aula], id: p.id }
+          }
+        }
+        for (const d of Object.keys(next)) {
+          next[d] = { ...next[d], foraDoCalendario: !!next[d].id && !calSet.has(d) }
+        }
+        return next
+      })
+    } catch {
+      // Calendário/extras indisponíveis: card segue vazio sem bloquear a grade
+    } finally {
+      setExtrasCarregando(false)
+    }
+  }
+
+  useEffect(() => {
+    if (!turmaId || !dataInicial || !dataFinal) return
+    loadExtrasCalendario(turmaId, dataInicial, dataFinal)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [turmaId, dataInicial, dataFinal])
+
+  const profsParaDisciplinaExtra = (disciplinaId: string) =>
+    profissionaisTurma.filter(p =>
+      p.ativo && Array.isArray(p.disciplinas_ids) && p.disciplinas_ids.includes(disciplinaId)
+    )
+
+  const handleExtraDisciplinaChange = (val: string) => {
+    const profs = val ? profsParaDisciplinaExtra(val) : []
+    setExtraForm(f => ({
+      ...f,
+      disciplina: val,
+      professor: profs.length === 1 ? profs[0].person_id : '',
+    }))
+  }
+
+  const handleAddAulaExtra = (dataAula: string) => {
+    if (!extraForm.inicio || !extraForm.fim) { toast.error('Informe início e término da aula'); return }
+    if (extraForm.fim <= extraForm.inicio) { toast.error('Término deve ser maior que o início'); return }
+    if (!extraForm.disciplina) { toast.error('Selecione a disciplina'); return }
+    setExtrasState(prev => ({
+      ...prev,
+      [dataAula]: {
+        ...prev[dataAula],
+        aulas: [...(prev[dataAula]?.aulas || []), {
+          horario_inicial: extraForm.inicio,
+          horario_final: extraForm.fim,
+          disciplina_id: extraForm.disciplina,
+          professor_id: extraForm.professor || null,
+        }],
+      },
+    }))
+    setExtraForm({ inicio: '', fim: '', disciplina: '', professor: '' })
+    setAddingAulaData(null)
+  }
+
+  const handleRemoveAulaExtra = (dataAula: string, idx: number) => {
+    setExtrasState(prev => ({
+      ...prev,
+      [dataAula]: { ...prev[dataAula], aulas: prev[dataAula].aulas.filter((_, i) => i !== idx) },
+    }))
+  }
+
+  const handleRemoverDataExtra = async (dataAula: string) => {
+    const entry = extrasState[dataAula]
+    if (entry?.id) {
+      try {
+        await removerDataExtra(entry.id, pessoaId)
+        toast.success('Data extra removida')
+      } catch (e: any) {
+        toast.error(e?.message || 'Erro ao remover data extra')
+        return
+      }
+    }
+    setExtrasState(prev => {
+      const next = { ...prev }
+      delete next[dataAula]
+      return next
+    })
+  }
+
+  const addIntervaloExtra = (dataAula: string) => {
+    const entry = extrasState[dataAula]
+    if (!entry || entry.intervalos.length >= 3) return
+    setExtrasState(prev => ({
+      ...prev,
+      [dataAula]: { ...prev[dataAula], intervalos: [...prev[dataAula].intervalos, { hora_inicial: '', hora_final: '' }] },
+    }))
+  }
+
+  const updateIntervaloExtra = (dataAula: string, idx: number, field: 'hora_inicial' | 'hora_final', val: string) => {
+    setExtrasState(prev => ({
+      ...prev,
+      [dataAula]: {
+        ...prev[dataAula],
+        intervalos: prev[dataAula].intervalos.map((iv, i) => i === idx ? { ...iv, [field]: val } : iv),
+      },
+    }))
+  }
+
+  const removeIntervaloExtra = (dataAula: string, idx: number) => {
+    setExtrasState(prev => ({
+      ...prev,
+      [dataAula]: { ...prev[dataAula], intervalos: prev[dataAula].intervalos.filter((_, i) => i !== idx) },
+    }))
+  }
 
   useEffect(() => {
     if (!authLoading && !user) router.push('/login')
@@ -191,6 +341,10 @@ function CadastroForm() {
     setConflitos(new Set())
     setMensagensConflito({})
     setEditingCell(null)
+    // SPEC 030: troca de turma reinicia as extras (novo calendário/etapa)
+    setExtrasState({})
+    extrasPersistedDone.current = false
+    setAddingAulaData(null)
 
     const turma = turmasAtivas.find(t => t.id === val)
     setTurmaDados(turma || null)
@@ -323,7 +477,9 @@ function CadastroForm() {
     try {
       const conflitosEncontrados = await validarConflitosProfessor(
         professorId, diaSemana, slot.horario_inicial, slot.horario_final,
-        editId || undefined
+        editId || undefined,
+        // SPEC 030 FR-011: só conflita com quadros de vigência sobreposta
+        dataInicial && dataFinal ? { dataInicial, dataFinal } : undefined
       )
 
       setConflitos(prev => {
@@ -338,9 +494,12 @@ function CadastroForm() {
 
       if (conflitosEncontrados.length > 0) {
         const c = conflitosEncontrados[0]
+        // SPEC 030 FR-010: HH:MM sem segundos
+        const hi = (c.horario_inicial || '').slice(0, 5)
+        const hf = (c.horario_final || '').slice(0, 5)
         setMensagensConflito(prev => ({
           ...prev,
-          [key]: `Professor ${c.professor_nome} já possui aula na ${DIAS_NOME[c.dia_semana] || '?'} das ${c.horario_inicial} às ${c.horario_final} na turma ${c.turma_nome}`
+          [key]: `Professor ${c.professor_nome} já possui aula na ${DIAS_NOME[c.dia_semana] || '?'} das ${hi} às ${hf} na turma ${c.turma_nome}`
         }))
       } else {
         setMensagensConflito(prev => {
@@ -434,7 +593,7 @@ function CadastroForm() {
         toast.success('Quadro de aulas atualizado')
       } else {
         if (!schoolId) { toast.error('Escola não identificada'); setSaving(false); return }
-        await createQuadroAula({
+        const novo = await createQuadroAula({
           school_id: schoolId,
           ano_letivo_id: anoLetivoId,
           turma_id: turmaId,
@@ -445,12 +604,42 @@ function CadastroForm() {
           horarios,
         }, pessoaId)
         toast.success('Quadro de aulas criado')
+        // SPEC 030: extras do modo criação são salvas no quadro recém-criado
+        const extrasPayloadCriacao = Object.entries(extrasState)
+          .filter(([, e]) => e.aulas.length > 0 || e.intervalos.length > 0)
+          .map(([data_aula, e]) => ({ data_aula, intervalos: e.intervalos, aulas: e.aulas }))
+        if (novo?.id && extrasPayloadCriacao.length > 0) {
+          await saveExtrasDoQuadro(novo.id, extrasPayloadCriacao, pessoaId)
+        }
+        router.push('/gestao-turmas/quadro-aulas')
+        return
+      }
+
+      // SPEC 030: persiste aulas extras junto com a grade (modo edição)
+      const extrasPayload = Object.entries(extrasState)
+        .filter(([, e]) => e.aulas.length > 0 || e.intervalos.length > 0 || e.id)
+        .map(([data_aula, e]) => ({ data_aula, intervalos: e.intervalos, aulas: e.aulas }))
+      if (extrasPayload.length > 0) {
+        await saveExtrasDoQuadro(editId, extrasPayload, pessoaId)
       }
       router.push('/gestao-turmas/quadro-aulas')
     } catch {
       toast.error('Erro ao salvar quadro de aulas')
     } finally {
       setSaving(false)
+    }
+  }
+
+  const handleExcluir = async () => {
+    if (!editId) return
+    try {
+      await deleteQuadroAula(editId, pessoaId)
+      toast.success('Quadro excluído')
+      router.push('/gestao-turmas/quadro-aulas')
+    } catch (e: any) {
+      toast.error(e?.message || 'Erro ao excluir quadro')
+    } finally {
+      setConfirmDelete(false)
     }
   }
 
@@ -471,126 +660,136 @@ function CadastroForm() {
         title={editId ? 'Editar Quadro de Aulas' : 'Novo Quadro de Aulas'}
         description={editId ? 'Altere as informações do quadro' : 'Preencha os dados para gerar a grade horária'}
         actions={
-          <Button variant="outline" size="sm" onClick={() => router.push('/gestao-turmas/quadro-aulas')}>
-            <ChevronLeft className="mr-2 h-4 w-4" />
-            Voltar
-          </Button>
+          <div className="flex items-center gap-2">
+            {editId && (
+              <Button variant="destructive" size="sm" onClick={() => setConfirmDelete(true)}>
+                <Trash2 className="mr-2 h-4 w-4" />
+                Excluir
+              </Button>
+            )}
+            <Button variant="outline" size="sm" onClick={() => router.push('/gestao-turmas/quadro-aulas')}>
+              <ChevronLeft className="mr-2 h-4 w-4" />
+              Voltar
+            </Button>
+          </div>
         }
+      />
+
+      <ConfirmDialog
+        open={confirmDelete}
+        onOpenChange={(open) => !open && setConfirmDelete(false)}
+        title="Excluir quadro de aulas"
+        description="Excluir este quadro de aulas permanentemente? Esta ação não pode ser desfeita."
+        confirmLabel="Excluir"
+        variant="destructive"
+        onConfirm={handleExcluir}
       />
 
       <FormCard
         title="Identificação"
-        description="Ano letivo, turma e vigência"
+        description="Ano letivo, turma, vigência e tempo de aula"
         className="mb-6"
       >
-        {/* Grupo 1: Ano letivo, Turma, Data inicial, Data final */}
-        <div className="space-y-1.5">
-          <Label className="text-[14px] font-medium">Grupo 1 — Ano letivo, turma e vigência</Label>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            <div>
-              <Label className="text-xs text-muted-foreground mb-1 block">Ano Letivo</Label>
-              <Input value={anoLetivoDesc} disabled className="border-border bg-muted" />
-            </div>
-            <div>
-              <Label className="text-xs text-muted-foreground mb-1 block">Turma <span className="text-destructive">*</span></Label>
-              <Select value={turmaId} onValueChange={handleTurmaChange} disabled={!!editId}>
-                <SelectTrigger className="border-border">
-                  <SelectValue placeholder="Selecione a turma" />
-                </SelectTrigger>
-                <SelectContent>
-                  {turmasAtivas.map((t: any) => (
-                    <SelectItem key={t.id} value={t.id}>
-                      {t.codigo_inep ? `${t.codigo_inep} - ` : ''}{t.nome}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div>
-              <Label className="text-xs text-muted-foreground mb-1 block">Data Inicial <span className="text-destructive">*</span></Label>
-              <Input
-                type="date"
-                value={dataInicial}
-                min={anoLetivoDataInicio}
-                max={anoLetivoDataTermino}
-                onChange={e => setDataInicial(e.target.value)}
-                className="border-border"
-              />
-              {dataInicial && anoLetivoDataInicio && dataInicial < anoLetivoDataInicio && (
-                <p className="text-[11px] text-destructive mt-0.5">Data anterior ao início do ano letivo</p>
-              )}
-            </div>
-            <div>
-              <Label className="text-xs text-muted-foreground mb-1 block">Data Final <span className="text-destructive">*</span></Label>
-              <Input
-                type="date"
-                value={dataFinal}
-                min={anoLetivoDataInicio}
-                max={anoLetivoDataTermino}
-                onChange={e => setDataFinal(e.target.value)}
-                className="border-border"
-              />
-              {dataFinal && anoLetivoDataTermino && dataFinal > anoLetivoDataTermino && (
-                <p className="text-[11px] text-destructive mt-0.5">Data posterior ao término do ano letivo</p>
-              )}
-            </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+          <div>
+            <Label className="text-[14px] font-medium mb-1 block">Ano Letivo</Label>
+            <Input value={anoLetivoDesc} disabled className="border-border bg-muted" />
           </div>
-        </div>
-
-        {/* Grupo 2: Tempo da aula */}
-        <div className="space-y-1.5 pt-6">
-          <Label className="text-[14px] font-medium">Grupo 2 — Tempo da aula</Label>
-          <div className="flex items-center gap-2">
-            <Input
-              type="number"
-              min={1}
-              value={tempoAula}
-              onChange={e => setTempoAula(e.target.value)}
-              className="border-border w-28"
+          <div>
+            <Label className="text-[14px] font-medium mb-1 block">Turma <span className="text-destructive">*</span></Label>
+            <Select value={turmaId} onValueChange={handleTurmaChange} disabled={!!editId}>
+              <SelectTrigger className="border-border">
+                <SelectValue placeholder="Selecione a turma" />
+              </SelectTrigger>
+              <SelectContent>
+                {turmasAtivas.map((t: any) => (
+                  <SelectItem key={t.id} value={t.id}>
+                    {t.codigo_inep ? `${t.codigo_inep} - ` : ''}{t.nome}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div>
+            <Label className="text-[14px] font-medium mb-1 block">Data Inicial <span className="text-destructive">*</span></Label>
+            <DatePicker
+              value={dataInicial}
+              onChange={setDataInicial}
+              minDate={anoLetivoDataInicio || undefined}
+              maxDate={anoLetivoDataTermino || undefined}
             />
-            <span className="text-sm text-muted-foreground">minutos</span>
+            {dataInicial && anoLetivoDataInicio && dataInicial < anoLetivoDataInicio && (
+              <p className="text-[11px] text-destructive mt-0.5">Data anterior ao início do ano letivo</p>
+            )}
+          </div>
+          <div>
+            <Label className="text-[14px] font-medium mb-1 block">Data Final <span className="text-destructive">*</span></Label>
+            <DatePicker
+              value={dataFinal}
+              onChange={setDataFinal}
+              minDate={dataInicial || anoLetivoDataInicio || undefined}
+              maxDate={anoLetivoDataTermino || undefined}
+            />
+            {dataFinal && anoLetivoDataTermino && dataFinal > anoLetivoDataTermino && (
+              <p className="text-[11px] text-destructive mt-0.5">Data posterior ao término do ano letivo</p>
+            )}
+          </div>
+          <div>
+            <Label className="text-[14px] font-medium mb-1 block">Tempo de Aula <span className="text-destructive">*</span></Label>
+            <div className="flex items-center gap-2">
+              <Input
+                type="number"
+                min={1}
+                value={tempoAula}
+                onChange={e => setTempoAula(e.target.value)}
+                className="border-border"
+              />
+              <span className="text-[14px] text-muted-foreground whitespace-nowrap">min</span>
+            </div>
           </div>
         </div>
 
-        {/* Grupo 3: Intervalos (com divisor) */}
         <div className="pt-6">
-          <div className="border-t border-border pt-6 space-y-3">
-            <div className="flex items-center justify-between">
-              <Label className="text-[14px] font-medium">Grupo 3 — Intervalos</Label>
-              {intervalos.length < 3 && (
+          <div className="rounded-lg border border-border p-4 space-y-3">
+            <Label className="text-[14px] font-medium">Intervalos</Label>
+            {intervalos.length === 0 ? (
+              <div className="space-y-2">
                 <Button variant="outline" size="sm" onClick={addIntervalo}
                   className="h-8 text-xs border-border">
                   <Plus className="h-3 w-3 mr-1" />
                   Adicionar intervalo
                 </Button>
-              )}
-            </div>
-            {intervalos.length === 0 ? (
-              <p className="text-[15px] text-muted-foreground italic">Nenhum intervalo cadastrado</p>
+                <p className="text-[15px] text-muted-foreground italic">Nenhum intervalo cadastrado</p>
+              </div>
             ) : (
               <div className="space-y-2">
                 {intervalos.map((iv, idx) => (
                   <div key={idx} className="flex items-center gap-3">
                     <span className="text-xs text-muted-foreground w-6">{idx + 1}.</span>
-                    <Input
-                      type="time"
-                      value={iv.hora_inicial}
-                      onChange={e => updateIntervalo(idx, 'hora_inicial', e.target.value)}
-                      className="border-border w-36"
-                    />
+                    <div className="w-36">
+                      <TimePicker value={iv.hora_inicial}
+                        onChange={v => updateIntervalo(idx, 'hora_inicial', v)}
+                        ariaLabel="Início do intervalo" placeholder="--:--" />
+                    </div>
                     <span className="text-muted-foreground">às</span>
-                    <Input
-                      type="time"
-                      value={iv.hora_final}
-                      onChange={e => updateIntervalo(idx, 'hora_final', e.target.value)}
-                      className="border-border w-36"
-                    />
+                    <div className="w-36">
+                      <TimePicker value={iv.hora_final}
+                        onChange={v => updateIntervalo(idx, 'hora_final', v)}
+                        ariaLabel="Término do intervalo" placeholder="--:--" />
+                    </div>
                     <Button variant="ghost" size="icon" className="h-8 w-8"
                       onClick={() => removeIntervalo(idx)}>
                       <Trash2 className="h-4 w-4 text-destructive" />
                     </Button>
                   </div>
                 ))}
+                {intervalos.length < 3 && (
+                  <Button variant="outline" size="sm" onClick={addIntervalo}
+                    className="h-8 text-xs border-border">
+                    <Plus className="h-3 w-3 mr-1" />
+                    Adicionar intervalo
+                  </Button>
+                )}
               </div>
             )}
           </div>
@@ -619,12 +818,13 @@ function CadastroForm() {
           title={`Quadro de Aulas (${slots.length} horários gerados)`}
           className="mb-6"
         >
+          <div className="overflow-x-auto max-w-full">
           <Table>
             <TableHeader>
-              <TableRow>
-                <TableHead className="sticky left-0 bg-muted z-10 w-24">Horário</TableHead>
+              <TableRow className="bg-muted">
+                <TableHead className="sticky left-0 bg-muted z-10 w-24 text-foreground font-semibold uppercase text-[13px] tracking-wider">Horário</TableHead>
                 {diasPresentes.map(dia => (
-                  <TableHead key={dia} className="text-center min-w-[180px]">
+                  <TableHead key={dia} className="text-center min-w-[180px] text-foreground font-semibold uppercase text-[13px] tracking-wider">
                     {DIAS_NOME[dia] || `Dia ${dia}`}
                   </TableHead>
                 ))}
@@ -648,7 +848,7 @@ function CadastroForm() {
                       <TableRow key={hr}>
                         <TableCell className="sticky left-0 bg-muted/40 z-10 py-3">
                           <div className="text-xs font-medium text-muted-foreground whitespace-nowrap">
-                            {hInicio} - {hFim}
+                            {hInicio.slice(0, 5)} - {hFim.slice(0, 5)}
                           </div>
                         </TableCell>
                         {diasPresentes.map(dia => (
@@ -669,7 +869,7 @@ function CadastroForm() {
                   return (
                     <TableRow key={hr}>
                       <TableCell className="sticky left-0 bg-card z-10 font-medium text-xs whitespace-nowrap py-4">
-                        {hInicio} - {hFim}
+                        {hInicio.slice(0, 5)} - {hFim.slice(0, 5)}
                       </TableCell>
                       {diasPresentes.map(dia => {
                         const key = getSlotKey(dia, hr)
@@ -680,7 +880,7 @@ function CadastroForm() {
                         const professorNome = getProfessorName(cell.professor_id)
 
                         return (
-                          <TableCell key={key} className={`p-2 ${temConflito ? 'bg-destructive/5' : ''}`}>
+                          <TableCell key={key} className={`p-2 border-l border-border first:border-l-0 ${temConflito ? 'bg-destructive/5' : ''}`}>
                             {isEditing ? (
                               <div className="space-y-1.5">
                                 <Select
@@ -768,7 +968,7 @@ function CadastroForm() {
                             {temConflito && mensagensConflito[key] && (
                               <div className="flex items-start gap-1 mt-1.5">
                                 <AlertCircle className="h-3 w-3 text-destructive mt-0.5 shrink-0" />
-                                <p className="text-[11px] text-destructive leading-tight">
+                                <p className="text-[11px] text-destructive leading-tight break-words whitespace-normal max-w-[220px]">
                                   {mensagensConflito[key]}
                                 </p>
                               </div>
@@ -782,6 +982,7 @@ function CadastroForm() {
               })()}
             </TableBody>
           </Table>
+          </div>
 
           {/* Dica */}
           <div className="mt-4 flex items-start gap-2 text-[13px] text-muted-foreground bg-muted/50 rounded-lg p-3">
@@ -791,10 +992,178 @@ function CadastroForm() {
         </FormCard>
       )}
 
+      {/* SPEC 030 — Aulas Extras: dias letivos fora da grade semanal (ex: sábados letivos) */}
+      {turmaId && dataInicial && dataFinal && dataFinal >= dataInicial && (() => {
+        const datasExtras = Object.keys(extrasState).sort()
+        return (
+          <FormCard
+            title={`Aulas Extras${datasExtras.length > 0 ? ` (${datasExtras.length} dia(s))` : ''}`}
+            description="Dias letivos extras do calendário da etapa (ex: sábados letivos)"
+            className="mb-6"
+          >
+            {extrasCarregando ? (
+              <div className="flex items-center gap-2 py-4 text-muted-foreground">
+                <Loader2 className="h-4 w-4 animate-spin" />
+                <span className="text-[14px]">Buscando dias letivos extras no calendário...</span>
+              </div>
+            ) : datasExtras.length === 0 ? (
+              <p className="text-[15px] text-muted-foreground italic py-2">
+                Nenhum dia letivo extra no calendário da etapa para este período.
+              </p>
+            ) : (
+              <div className="space-y-4">
+                {datasExtras.map(dataAula => {
+                  const entry = extrasState[dataAula]
+                  const dow = diaSemanaDe(dataAula)
+                  return (
+                    <div key={dataAula} className="rounded-lg border border-border p-4 space-y-3">
+                      <div className="flex items-center justify-between gap-2 flex-wrap">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className="text-[15px] font-semibold text-foreground">
+                            {formatDataExtra(dataAula)} — {DIAS_NOME[dow] || `Dia ${dow}`}
+                          </span>
+                          {entry.foraDoCalendario && (
+                            <StatusBadge status="warning">Removida do calendário</StatusBadge>
+                          )}
+                        </div>
+                        <Button variant="ghost" size="icon-sm"
+                          onClick={() => handleRemoverDataExtra(dataAula)}
+                          title="Remover data e aulas associadas">
+                          <Trash2 className="h-4 w-4 text-destructive" />
+                        </Button>
+                      </div>
+
+                      {entry.aulas.length > 0 && (
+                        <div className="space-y-2">
+                          {entry.aulas.map((a, idx) => (
+                            <div key={idx} className="flex items-center gap-3 flex-wrap rounded-md bg-muted/40 px-3 py-2">
+                              <span className="text-[13px] font-medium text-foreground font-mono whitespace-nowrap">
+                                {(a.horario_inicial || '').slice(0, 5)} - {(a.horario_final || '').slice(0, 5)}
+                              </span>
+                              <span className="text-[13px] font-semibold text-foreground">
+                                {getDisciplinaName(a.disciplina_id) || '—'}
+                              </span>
+                              <span className="text-[13px] text-muted-foreground">
+                                {getProfessorName(a.professor_id) || 'Sem professor'}
+                              </span>
+                              <Button variant="ghost" size="icon-sm" className="ml-auto"
+                                onClick={() => handleRemoveAulaExtra(dataAula, idx)}
+                                title="Excluir aula">
+                                <Trash2 className="h-4 w-4 text-destructive" />
+                              </Button>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+
+                      {addingAulaData === dataAula ? (
+                        <div className="rounded-md border border-border p-3 space-y-3">
+                          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+                            <div>
+                              <Label className="text-[13px] font-medium mb-1 block">Hora de Início <span className="text-destructive">*</span></Label>
+                              <TimePicker value={extraForm.inicio}
+                                onChange={v => setExtraForm(f => ({ ...f, inicio: v }))}
+                                ariaLabel="Hora de início" placeholder="--:--" />
+                            </div>
+                            <div>
+                              <Label className="text-[13px] font-medium mb-1 block">Hora de Término <span className="text-destructive">*</span></Label>
+                              <TimePicker value={extraForm.fim}
+                                onChange={v => setExtraForm(f => ({ ...f, fim: v }))}
+                                ariaLabel="Hora de término" placeholder="--:--" />
+                            </div>
+                            <div>
+                              <Label className="text-[13px] font-medium mb-1 block">Disciplina <span className="text-destructive">*</span></Label>
+                              <Select value={extraForm.disciplina} onValueChange={handleExtraDisciplinaChange}>
+                                <SelectTrigger className="border-border">
+                                  <SelectValue placeholder="Selecione" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  {disciplinasTurma.map((d: any) => (
+                                    <SelectItem key={d.matriz_disciplina_id} value={d.matriz_disciplina_id}
+                                      title={getDisciplinaFullName(d)}>
+                                      {getDisciplinaDisplay(d)}
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                            </div>
+                            <div>
+                              <Label className="text-[13px] font-medium mb-1 block">Professor</Label>
+                              <Select value={extraForm.professor}
+                                onValueChange={v => setExtraForm(f => ({ ...f, professor: v }))}
+                                disabled={!extraForm.disciplina}>
+                                <SelectTrigger className="border-border">
+                                  <SelectValue placeholder={extraForm.disciplina ? 'Selecione' : 'Disciplina primeiro'} />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  {extraForm.disciplina && profsParaDisciplinaExtra(extraForm.disciplina).map((p: any) => (
+                                    <SelectItem key={p.person_id} value={p.person_id}>
+                                      {p.people?.codigo_pessoa ? `${p.people.codigo_pessoa} - ` : ''}{p.people?.nome_completo || 'Sem nome'}
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                            </div>
+                          </div>
+                          <div className="flex justify-end gap-2">
+                            <Button variant="outline" size="sm" onClick={() => { setAddingAulaData(null); setExtraForm({ inicio: '', fim: '', disciplina: '', professor: '' }) }}>
+                              Cancelar
+                            </Button>
+                            <Button size="sm" onClick={() => handleAddAulaExtra(dataAula)}>
+                              <Plus className="h-3 w-3 mr-1" /> Adicionar
+                            </Button>
+                          </div>
+                        </div>
+                      ) : (
+                        <Button variant="outline" size="sm" onClick={() => { setAddingAulaData(dataAula); setExtraForm({ inicio: '', fim: '', disciplina: '', professor: '' }) }}
+                          className="h-8 text-xs border-border">
+                          <Plus className="h-3 w-3 mr-1" />
+                          Adicionar Aula
+                        </Button>
+                      )}
+
+                      <div className="space-y-2 pt-1">
+                        <Label className="text-[13px] font-medium">Intervalos</Label>
+                        {entry.intervalos.map((iv, idx) => (
+                          <div key={idx} className="flex items-center gap-3">
+                            <div className="w-36">
+                              <TimePicker value={iv.hora_inicial}
+                                onChange={v => updateIntervaloExtra(dataAula, idx, 'hora_inicial', v)}
+                                ariaLabel="Início do intervalo" placeholder="--:--" />
+                            </div>
+                            <span className="text-muted-foreground">às</span>
+                            <div className="w-36">
+                              <TimePicker value={iv.hora_final}
+                                onChange={v => updateIntervaloExtra(dataAula, idx, 'hora_final', v)}
+                                ariaLabel="Término do intervalo" placeholder="--:--" />
+                            </div>
+                            <Button variant="ghost" size="icon" className="h-8 w-8"
+                              onClick={() => removeIntervaloExtra(dataAula, idx)}>
+                              <Trash2 className="h-4 w-4 text-destructive" />
+                            </Button>
+                          </div>
+                        ))}
+                        {entry.intervalos.length < 3 && (
+                          <Button variant="outline" size="sm" onClick={() => addIntervaloExtra(dataAula)}
+                            className="h-8 text-xs border-border">
+                            <Plus className="h-3 w-3 mr-1" />
+                            Adicionar intervalo
+                          </Button>
+                        )}
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+            )}
+          </FormCard>
+        )
+      })()}
+
       {/* Footer */}
       {gradeGerada && (
         <div className="flex items-center justify-end gap-3 border-t border-border pt-4">
-          <Button variant="ghost" size="lg"
+          <Button variant="outline" size="lg" className="min-h-[40px] sm:min-h-[44px]"
             onClick={() => router.push('/gestao-turmas/quadro-aulas')}>
             Cancelar
           </Button>

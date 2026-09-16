@@ -1,29 +1,23 @@
 'use client'
 
-import { useState, useEffect, useMemo, useCallback, useRef } from 'react'
+import { useState, useEffect, useMemo, useRef } from 'react'
+import { useRouter } from 'next/navigation'
 import { useAuth } from '@/components/providers/auth-provider'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Label } from '@/components/ui/label'
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
-import { Switch } from '@/components/ui/switch'
+import { PageSection } from '@/components/layout/page-section'
+import { FilterBar } from '@/components/layout/filter-bar'
 import { ConfirmDialog } from '@/components/feedback/confirm-dialog'
 import { EmptyState } from '@/components/ui/empty-state'
 import { StatusBadge } from '@/components/feedback/status-badge'
-import { ScrollArea } from '@/components/ui/scroll-area'
 import { toast } from 'sonner'
 import { Plus, Pencil, Trash2, ShieldAlert, GraduationCap, ChevronDown, ChevronRight } from 'lucide-react'
 import { usePermissoes } from '@/hooks/use-permissoes'
 import { getAnosLetivosAtivos } from '@/lib/actions/quadro-aulas'
 import { getEtapasEnsino } from '@/lib/actions/etapas-ensino'
-import {
-  getMatrizes, deleteMatriz, toggleMatrizAtiva,
-  getPeriodos, createDisciplinaMatriz, updateDisciplinaMatriz, deleteDisciplinaMatriz,
-  getDisciplinasPorPeriodo, replicarDisciplinas, getMetodosAvaliacao, getDisciplinas,
-  type DisciplinaMatriz,
-} from '@/lib/actions/matrizes'
-import { MatrizForm } from './MatrizForm'
+import { getMatrizes, deleteMatriz, getResumoMatrizes } from '@/lib/actions/matrizes'
 
 function formatDate(d: string) {
   if (!d) return ''
@@ -41,11 +35,14 @@ const gruposEtapaLabels: Record<string, string> = {
   eja: 'EJA',
 }
 
+const RECURSO = 'gestao-academica.estrutura-academica.matrizes'
+
 interface TabMatrizesProps {
   schoolId: string | null
 }
 
 export function TabMatrizes({ schoolId }: TabMatrizesProps) {
+  const router = useRouter()
   const { isSuperAdmin, allSchools, pessoaId } = useAuth()
   const { pode, loaded: permLoaded } = usePermissoes(schoolId)
 
@@ -57,31 +54,11 @@ export function TabMatrizes({ schoolId }: TabMatrizesProps) {
   const [matrizes, setMatrizes] = useState<any[]>([])
   const [loading, setLoading] = useState(false)
 
-  const [showFormModal, setShowFormModal] = useState(false)
-  const [editingMatrizId, setEditingMatrizId] = useState<string | null>(null)
-
   const [deleteTarget, setDeleteTarget] = useState<any>(null)
   const [periodosExpandidos, setPeriodosExpandidos] = useState<Set<string>>(new Set())
-  const [disciplinasPorPeriodo, setDisciplinasPorPeriodo] = useState<Record<string, any[]>>({})
-  const [periodNames, setPeriodNames] = useState<Record<string, string>>({})
-
-  const [showDiscModal, setShowDiscModal] = useState(false)
-  const [discPeriodoId, setDiscPeriodoId] = useState('')
-  const [discEditId, setDiscEditId] = useState<string | null>(null)
-  const [discForm, setDiscForm] = useState({
-    disciplina_id: '',
-    tipo: 'obrigatoria' as string,
-    desconsidera_reprovacao: false,
-    carga_horaria_regular: 0,
-    carga_horaria_integral: 0,
-    carga_horaria_regular_habilitada: false,
-    carga_horaria_integral_habilitada: false,
-    habilidades_ids: [] as string[],
-    outras_habilidades: [] as { codigo: string; descricao: string }[],
-  })
-  const [savingDisc, setSavingDisc] = useState(false)
-
-  const [replicarTarget, setReplicarTarget] = useState<{ periodoOrigemId: string; periodoDestinoIds: string[]; periodoOrigemNome: string } | null>(null)
+  const [periodosPorMatriz, setPeriodosPorMatriz] = useState<Record<string, { id: string; nome: string }[]>>({})
+  const [disciplinasPorPeriodo, setDisciplinasPorPeriodo] = useState<Record<string, { id: string; nome: string }[]>>({})
+  const [contagemPorMatriz, setContagemPorMatriz] = useState<Record<string, number>>({})
 
   const effectiveSchoolId = selectedSchoolId || schoolId
   const lastKey = useRef('')
@@ -134,6 +111,11 @@ export function TabMatrizes({ schoolId }: TabMatrizesProps) {
     try {
       const data = await getMatrizes(effectiveSchoolId!, anoLetivoId || undefined, etapaFiltro === '__all__' ? undefined : etapaFiltro)
       setMatrizes(data)
+      // Resumo batch (2 queries): períodos + disciplinas por matriz, sem N+1
+      const resumo = await getResumoMatrizes(data.map((m: any) => m.id))
+      setPeriodosPorMatriz(resumo.periodosPorMatriz)
+      setDisciplinasPorPeriodo(resumo.disciplinasPorPeriodo)
+      setContagemPorMatriz(resumo.contagemPorMatriz)
     } catch (error) {
       console.error('Erro ao carregar matrizes:', error)
       toast.error('Erro ao carregar matrizes')
@@ -152,46 +134,21 @@ export function TabMatrizes({ schoolId }: TabMatrizesProps) {
     }
   }
 
-  async function handleToggleAtiva(id: string, ativa: boolean) {
-    try {
-      await toggleMatrizAtiva(id, ativa, pessoaId)
-      setMatrizes(prev => prev.map(m => m.id === id ? { ...m, ativa } : m))
-      toast.success(ativa ? 'Matriz ativada' : 'Matriz inativada')
-    } catch (e: any) {
-      toast.error(e?.message || 'Erro')
-    }
+  function toggleExpand(matrizId: string) {
+    const ns = new Set(periodosExpandidos)
+    if (ns.has(matrizId)) ns.delete(matrizId)
+    else ns.add(matrizId)
+    setPeriodosExpandidos(ns)
   }
 
-  function handleSaved() {
-    setShowFormModal(false)
-    setEditingMatrizId(null)
-    loadMatrizes()
+  const basePath = '/gestao-academica/estrutura-academica/matrizes'
+  const handleOpenNew = () => {
+    const q = new URLSearchParams()
+    if (effectiveSchoolId) q.set('escola', effectiveSchoolId)
+    if (anoLetivoId) q.set('ano', anoLetivoId)
+    router.push(`${basePath}/novo?${q.toString()}`)
   }
-
-  async function toggleExpandPeriodo(matrizId: string) {
-    const newSet = new Set(periodosExpandidos)
-    if (newSet.has(matrizId)) {
-      newSet.delete(matrizId)
-      setPeriodosExpandidos(newSet)
-    } else {
-      newSet.add(matrizId)
-      setPeriodosExpandidos(new Set(newSet))
-      try {
-        const periodos = await getPeriodos(matrizId)
-        const map: Record<string, any[]> = {}
-        const names: Record<string, string> = {}
-        for (const p of periodos) {
-          map[p.id] = await getDisciplinasPorPeriodo(p.id)
-          names[p.id] = p.periodo_nome
-        }
-        setDisciplinasPorPeriodo(prev => ({ ...prev, ...map }))
-        setPeriodNames(prev => ({ ...prev, ...names }))
-      } catch { toast.error('Erro ao carregar períodos') }
-    }
-  }
-
-  const handleOpenNew = () => { setEditingMatrizId(null); setShowFormModal(true) }
-  const handleOpenEdit = (id: string) => { setEditingMatrizId(id); setShowFormModal(true) }
+  const handleOpenEdit = (id: string) => router.push(`${basePath}/${id}`)
 
   if (loading) {
     return (
@@ -201,62 +158,63 @@ export function TabMatrizes({ schoolId }: TabMatrizesProps) {
     )
   }
 
-  if (permLoaded && !pode.visualizar('gestao-academica.estrutura-academica.matrizes')) {
+  if (permLoaded && !pode.visualizar(RECURSO)) {
     return <EmptyState icon={ShieldAlert} title="Sem permissão" description="Você não tem permissão para acessar Matrizes Curriculares." />
   }
 
   return (
     <>
-      {/* Filters */}
-      <div className="mb-6 flex flex-wrap items-end gap-4">
-        {isSuperAdmin && allSchools.length > 0 && (
-          <div className="max-w-md">
-            <Label className="text-xs text-muted-foreground mb-1 block">Escola</Label>
-            <Select value={selectedSchoolId ?? ''} onValueChange={(v) => { setSelectedSchoolId(v); setAnoLetivoId(null); setMatrizes([]) }}>
-              <SelectTrigger className="w-full border-border [&_svg]:!rotate-0">
-                <SelectValue placeholder="Selecione uma Escola" />
-              </SelectTrigger>
-              <SelectContent>
-                {allSchools.map((s: any) => <SelectItem key={s.id} value={s.id}>{s.nome_escola}</SelectItem>)}
-              </SelectContent>
-            </Select>
-          </div>
-        )}
-        {(effectiveSchoolId || !isSuperAdmin) && anosLetivos.length > 0 && (
-          <div>
-            <Label className="text-xs text-muted-foreground mb-1 block">Ano Letivo</Label>
-            <Select value={anoLetivoId ?? ''} onValueChange={setAnoLetivoId}>
-              <SelectTrigger className="w-[160px] border-border [&_svg]:!rotate-0">
-                <SelectValue placeholder="Selecione" />
-              </SelectTrigger>
-              <SelectContent>
-                {anosLetivos.map((a: any) => <SelectItem key={a.id} value={a.id}>{a.descricao}</SelectItem>)}
-              </SelectContent>
-            </Select>
-          </div>
-        )}
-        {(effectiveSchoolId || !isSuperAdmin) && anoLetivoId && etapas.length > 0 && (
-          <div>
-            <Label className="text-xs text-muted-foreground mb-1 block">Etapa</Label>
-            <Select value={etapaFiltro} onValueChange={setEtapaFiltro}>
-              <SelectTrigger className="w-[200px] border-border [&_svg]:!rotate-0">
-                <SelectValue placeholder="Todas as etapas" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="__all__">Todas as etapas</SelectItem>
-                {Object.entries(etapasAgrupadas).map(([tipo, lista]) => (
-                  <div key={tipo}>
-                    <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground">{gruposEtapaLabels[tipo] || tipo}</div>
-                    {lista.map((e: any) => (
-                      <SelectItem key={e.id} value={e.id}>{e.etapa_nome}</SelectItem>
-                    ))}
-                  </div>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-        )}
-      </div>
+      <PageSection variant="compact" title="Filtros">
+        <FilterBar>
+          {isSuperAdmin && allSchools.length > 0 && (
+            <div className="max-w-md flex-1 min-w-[200px]">
+              <Label className="text-[14px] font-medium mb-1 block">Escola</Label>
+              <Select value={selectedSchoolId ?? ''} onValueChange={(v) => { setSelectedSchoolId(v); setAnoLetivoId(null); setMatrizes([]) }}>
+                <SelectTrigger className="w-full border-border">
+                  <SelectValue placeholder="Selecione uma Escola" />
+                </SelectTrigger>
+                <SelectContent>
+                  {allSchools.map((s: any) => <SelectItem key={s.id} value={s.id}>{s.nome_escola}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
+          {(effectiveSchoolId || !isSuperAdmin) && anosLetivos.length > 0 && (
+            <div>
+              <Label className="text-[14px] font-medium mb-1 block">Ano Letivo</Label>
+              <Select value={anoLetivoId ?? ''} onValueChange={setAnoLetivoId}>
+                <SelectTrigger className="w-[160px] border-border">
+                  <SelectValue placeholder="Selecione" />
+                </SelectTrigger>
+                <SelectContent>
+                  {anosLetivos.map((a: any) => <SelectItem key={a.id} value={a.id}>{a.descricao}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
+          {(effectiveSchoolId || !isSuperAdmin) && anoLetivoId && etapas.length > 0 && (
+            <div>
+              <Label className="text-[14px] font-medium mb-1 block">Etapa</Label>
+              <Select value={etapaFiltro} onValueChange={setEtapaFiltro}>
+                <SelectTrigger className="w-[220px] border-border">
+                  <SelectValue placeholder="Todas as etapas" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="__all__">Todas as etapas</SelectItem>
+                  {Object.entries(etapasAgrupadas).map(([tipo, lista]) => (
+                    <SelectGroup key={tipo}>
+                      <SelectLabel>{gruposEtapaLabels[tipo] || tipo}</SelectLabel>
+                      {lista.map((e: any) => (
+                        <SelectItem key={e.id} value={e.id}>{e.etapa_nome}</SelectItem>
+                      ))}
+                    </SelectGroup>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
+        </FilterBar>
+      </PageSection>
 
       {isSuperAdmin && !selectedSchoolId ? (
         <EmptyState icon={ShieldAlert} title="Selecione uma Escola" description="Escolha uma escola para gerenciar as matrizes." />
@@ -265,8 +223,8 @@ export function TabMatrizes({ schoolId }: TabMatrizesProps) {
       ) : (
         <Card className="shadow-sm">
           <CardHeader className="pb-3 flex flex-row items-center justify-between">
-            <CardTitle className="text-[16px] font-semibold text-foreground">
-              Matrizes Curriculares {matrizes.length > 0 && <span className="text-muted-foreground font-normal">({matrizes.length})</span>}
+            <CardTitle className="font-display text-[20px] font-semibold text-foreground">
+              Matrizes Curriculares {matrizes.length > 0 && <span className="text-muted-foreground font-normal text-[16px]">({matrizes.length})</span>}
             </CardTitle>
             <Button size="lg" onClick={handleOpenNew}>
               <Plus className="h-4 w-4 mr-2" />Nova Matriz
@@ -274,42 +232,48 @@ export function TabMatrizes({ schoolId }: TabMatrizesProps) {
           </CardHeader>
           <CardContent>
             {matrizes.length === 0 ? (
-              <p className="text-muted-foreground text-center py-8 text-sm">Nenhuma matriz curricular cadastrada</p>
+              <p className="text-muted-foreground text-center py-8 text-[15px]">Nenhuma matriz curricular cadastrada</p>
             ) : (
               <div className="space-y-3">
                 {matrizes.map(m => {
                   const isExpanded = periodosExpandidos.has(m.id)
                   const statusAno = anosLetivos.find((a: any) => a.id === m.ano_letivo_id)
                   const isEncerrado = statusAno?.status === 'encerrado'
+                  const periodos = periodosPorMatriz[m.id] || []
+                  const qtd = contagemPorMatriz[m.id] ?? 0
+                  const turnos = Array.isArray(m.turnos) ? m.turnos.join(', ') : ''
+                  const tipos = Array.isArray(m.tipo_turma) ? m.tipo_turma.join(', ') : ''
                   return (
                     <Card key={m.id} className="shadow-sm">
                       <CardContent className="p-0">
                         <div className="flex items-center gap-3 p-4">
-                          <button type="button" onClick={() => toggleExpandPeriodo(m.id)} className="text-muted-foreground shrink-0">
+                          <button type="button" onClick={() => toggleExpand(m.id)} className="text-muted-foreground shrink-0" aria-label={isExpanded ? 'Recolher' : 'Expandir'}>
                             {isExpanded ? <ChevronDown className="h-5 w-5" /> : <ChevronRight className="h-5 w-5" />}
                           </button>
+                          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10 shrink-0" aria-hidden="true">
+                            <GraduationCap className="h-5 w-5 text-primary" />
+                          </div>
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-2 flex-wrap">
-                              <span className="text-[15px] font-semibold text-foreground">{m.descricao}</span>
+                              <span className="text-[16px] font-semibold text-foreground">{m.descricao}</span>
                               <StatusBadge status={m.ativa ? 'success' : 'muted'}>{m.ativa ? 'Ativa' : 'Inativa'}</StatusBadge>
-                              {m.academico_etapas_ensino?.etapa_nome && (
-                                <span className="text-xs text-muted-foreground bg-muted px-2 py-0.5 rounded-full">{m.academico_etapas_ensino.etapa_nome}</span>
-                              )}
                             </div>
-                            <div className="flex items-center gap-2 text-xs text-muted-foreground mt-1 flex-wrap">
-                              <span>{formatDate(m.data_inicio)} – {formatDate(m.data_final)}</span>
-                              {m.turnos?.length > 0 && <span>· {m.turnos.join(', ')}</span>}
-                              {m.tipo_turma?.length > 0 && <span>· {m.tipo_turma.join(', ')}</span>}
+                            <div className="flex items-center gap-x-2 gap-y-0.5 text-[13px] text-muted-foreground mt-1 flex-wrap">
+                              {m.academico_anos_letivos?.descricao && <span>Ano Letivo: {m.academico_anos_letivos.descricao}</span>}
+                              {(m.data_inicio || m.data_final) && (
+                                <span>· {formatDate(m.data_inicio)} – {formatDate(m.data_final)}</span>
+                              )}
+                              {m.academico_etapas_ensino?.etapa_nome && <span>· {m.academico_etapas_ensino.etapa_nome}</span>}
+                              {turnos && <span>· Turnos: {turnos}</span>}
+                              {tipos && <span>· Tipo: {tipos}</span>}
+                              <span>· {qtd} disciplina{qtd === 1 ? '' : 's'}</span>
                             </div>
                           </div>
                           <div className="flex items-center gap-1 shrink-0">
                             {!isEncerrado && (
-                              <>
-                                <Switch checked={m.ativa} onCheckedChange={(v) => handleToggleAtiva(m.id, v)} />
-                                <Button variant="ghost" size="icon-sm" onClick={() => handleOpenEdit(m.id)} title="Editar">
-                                  <Pencil className="h-4 w-4" />
-                                </Button>
-                              </>
+                              <Button variant="ghost" size="icon-sm" onClick={() => handleOpenEdit(m.id)} title="Editar">
+                                <Pencil className="h-4 w-4" />
+                              </Button>
                             )}
                             <Button variant="ghost" size="icon-sm" onClick={() => setDeleteTarget(m)} title="Excluir">
                               <Trash2 className="h-4 w-4 text-destructive" />
@@ -318,19 +282,26 @@ export function TabMatrizes({ schoolId }: TabMatrizesProps) {
                         </div>
                         {isExpanded && (
                           <div className="border-t border-border px-4 py-3 space-y-2">
-                            {Object.values(disciplinasPorPeriodo).flat().length === 0 && (
-                              <p className="text-xs text-muted-foreground py-2">Nenhum período configurado</p>
+                            {periodos.length === 0 && (
+                              <p className="text-[13px] text-muted-foreground py-2">Nenhum período configurado</p>
                             )}
-                            {Object.entries(disciplinasPorPeriodo).filter(([, discs]) => discs && discs.length > 0).map(([pid, discs]) => (
-                              <div key={pid}>
-                                <div className="text-xs font-medium text-muted-foreground mb-1.5">{periodNames[pid] || pid}</div>
-                                <div className="flex flex-wrap gap-1.5">
-                                  {discs.map((d: any) => (
-                                    <span key={d.id} className="text-xs bg-card border border-border rounded px-2 py-0.5">{d.academico_disciplinas?.nome || d.disciplina_id}</span>
-                                  ))}
+                            {periodos.map(p => {
+                              const discs = disciplinasPorPeriodo[p.id] || []
+                              return (
+                                <div key={p.id}>
+                                  <div className="text-[13px] font-medium text-muted-foreground mb-1.5">{p.nome}</div>
+                                  {discs.length === 0 ? (
+                                    <p className="text-[13px] text-muted-foreground">Nenhuma disciplina neste período</p>
+                                  ) : (
+                                    <div className="flex flex-wrap gap-1.5">
+                                      {discs.map((d) => (
+                                        <span key={d.id} className="text-[13px] bg-muted border border-border rounded px-2 py-0.5 text-foreground">{d.nome}</span>
+                                      ))}
+                                    </div>
+                                  )}
                                 </div>
-                              </div>
-                            ))}
+                              )
+                            })}
                           </div>
                         )}
                       </CardContent>
@@ -342,23 +313,6 @@ export function TabMatrizes({ schoolId }: TabMatrizesProps) {
           </CardContent>
         </Card>
       )}
-
-      {/* Matriz Form Dialog */}
-      <Dialog open={showFormModal} onOpenChange={(open) => { if (!open) { setShowFormModal(false); setEditingMatrizId(null) } }}>
-        <DialogContent className="max-w-6xl max-h-[90vh] flex flex-col p-0 gap-0">
-          <DialogHeader className="px-6 pt-6 pb-0 shrink-0">
-            <DialogTitle>{editingMatrizId ? 'Editar Matriz Curricular' : 'Nova Matriz Curricular'}</DialogTitle>
-          </DialogHeader>
-          <div className="flex-1 overflow-y-auto px-6 py-4">
-            <MatrizForm
-              schoolId={effectiveSchoolId}
-              matrizId={editingMatrizId}
-              onSaved={handleSaved}
-              onCancel={() => { setShowFormModal(false); setEditingMatrizId(null) }}
-            />
-          </div>
-        </DialogContent>
-      </Dialog>
 
       <ConfirmDialog
         open={!!deleteTarget}

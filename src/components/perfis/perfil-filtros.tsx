@@ -1,32 +1,44 @@
 'use client'
 
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { Label } from '@/components/ui/label'
+import { ClickablePill } from '@/components/ui/clickable-pill'
 import { FilterBar } from '@/components/layout/filter-bar'
+
+const SITUACAO_OPCOES = [
+  { value: 'todas', label: 'Todos' },
+  { value: 'ativas', label: 'Ativos' },
+  { value: 'inativas', label: 'Inativos' },
+] as const
 
 type PerfilFiltrosProps = {
   search: string
   onSearchChange: (v: string) => void
   situacao: string
   onSituacaoChange: (v: string) => void
+  escolaFiltro?: React.ReactNode
 }
 
-export function PerfilFiltros({ search, onSearchChange, situacao, onSituacaoChange }: PerfilFiltrosProps) {
+export function PerfilFiltros({ search, onSearchChange, situacao, onSituacaoChange, escolaFiltro }: PerfilFiltrosProps) {
   return (
     <FilterBar
       searchValue={search}
       onSearchChange={onSearchChange}
       searchPlaceholder="Buscar por nome do perfil..."
     >
-      <Select value={situacao} onValueChange={onSituacaoChange}>
-        <SelectTrigger className="w-full sm:w-44 border-border">
-          <SelectValue placeholder="Todas situações" />
-        </SelectTrigger>
-        <SelectContent>
-          <SelectItem value="todas">Todas situações</SelectItem>
-          <SelectItem value="ativas">Ativas</SelectItem>
-          <SelectItem value="inativas">Inativas</SelectItem>
-        </SelectContent>
-      </Select>
+      {escolaFiltro}
+      <div className="flex flex-col gap-1.5">
+        <Label className="text-[13px] font-semibold uppercase tracking-wider text-muted-foreground">Situação</Label>
+        <div className="flex gap-2 flex-wrap">
+          {SITUACAO_OPCOES.map(s => (
+            <ClickablePill
+              key={s.value}
+              label={s.label}
+              active={situacao === s.value}
+              onClick={() => onSituacaoChange(s.value)}
+            />
+          ))}
+        </div>
+      </div>
     </FilterBar>
   )
 }

@@ -398,7 +398,9 @@ export async function validarConflitosProfessor(
   diaSemana: number,
   horarioInicial: string,
   horarioFinal: string,
-  ignoreQuadroId?: string
+  ignoreQuadroId?: string,
+  // SPEC 030 FR-011: só conflita com quadros cuja vigência se sobrepõe a este período
+  vigencia?: { dataInicial: string; dataFinal: string }
 ): Promise<ConflitoInfo[]> {
   const { data, error } = await supabase
     .from('quadro_aulas_horarios')
@@ -406,7 +408,7 @@ export async function validarConflitosProfessor(
       horario_inicial, horario_final, dia_semana,
       professor:professor_id(nome_completo),
       quadro:quadro_aula_id!inner(
-        id, turma_id,
+        id, turma_id, data_inicial, data_final, status, ativo,
         turma:turma_id(nome)
       )
     `)
@@ -421,11 +423,20 @@ export async function validarConflitosProfessor(
 
   const currentStart = parseTimeToMinutes(horarioInicial)
   const currentEnd = parseTimeToMinutes(horarioFinal)
+  const novaIni = vigencia?.dataInicial?.slice(0, 10)
+  const novaFim = vigencia?.dataFinal?.slice(0, 10)
 
   const conflitos: ConflitoInfo[] = []
 
   for (const row of data as any[]) {
     if (ignoreQuadroId && row.quadro?.id === ignoreQuadroId) continue
+    // SPEC 030 FR-011: ignora quadros inativos e sem sobreposição de vigência
+    if (row.quadro?.ativo === false || row.quadro?.status === 'inativo') continue
+    if (novaIni && novaFim) {
+      const exIni = row.quadro?.data_inicial?.slice(0, 10)
+      const exFim = row.quadro?.data_final?.slice(0, 10)
+      if (exIni && exFim && (novaFim < exIni || novaIni > exFim)) continue
+    }
 
     const existingStart = parseTimeToMinutes(row.horario_inicial)
     const existingEnd = parseTimeToMinutes(row.horario_final)
@@ -489,6 +500,265 @@ export async function validarSobreposicaoVigencia(
   }
 
   return false
+}
+
+// ------- Aulas Extras (SPEC 030) -------
+
+export type AulaExtra = {
+  id?: string
+  horario_inicial: string
+  horario_final: string
+  disciplina_id: string | null
+  professor_id: string | null
+}
+
+export type DataExtra = {
+  id: string
+  quadro_aula_id: string
+  data_aula: string
+  intervalos: Intervalo[]
+  aulas: AulaExtra[]
+}
+
+const DIAS_FUNCIONAMENTO_MAP: Record<string, number> = {
+  'Domingo': 0, 'Segunda-feira': 1, 'Terça-feira': 2, 'Quarta-feira': 3,
+  'Quinta-feira': 4, 'Sexta-feira': 5, 'Sábado': 6,
+}
+
+/**
+ * Dias letivos extras do Calendário da Etapa da turma (ex: sábados letivos).
+ * Derivação em tempo real — dias vazios não persistem (SPEC 030 FR-012/FR-014).
+ * Retorna YYYY-MM-DD ordenadas, excluindo os dias de funcionamento regular.
+ */
+export async function getDiasExtrasDoCalendario(
+  turmaId: string,
+  dataInicial?: string,
+  dataFinal?: string
+): Promise<string[]> {
+  const { data: turma } = await supabase
+    .from('turmas')
+    .select('ano_letivo_id, etapa_ensino_id, dias_funcionamento')
+    .eq('id', turmaId)
+    .maybeSingle()
+
+  if (!turma?.ano_letivo_id) return []
+
+  // Etapas: principal + multietapa (união)
+  const etapaIds = new Set<string>()
+  if (turma.etapa_ensino_id) etapaIds.add(turma.etapa_ensino_id)
+  const { data: multi } = await supabase
+    .from('turmas_multietapa')
+    .select('etapa_ensino_id')
+    .eq('turma_id', turmaId)
+  for (const m of multi || []) {
+    if (m.etapa_ensino_id) etapaIds.add(m.etapa_ensino_id)
+  }
+
+  const codigos = new Set<string>()
+  if (etapaIds.size > 0) {
+    const { data: etapas } = await supabase
+      .from('academico_etapas_ensino')
+      .select('id, etapa_codigo')
+      .in('id', [...etapaIds])
+    for (const e of etapas || []) {
+      codigos.add(String((e as any).id))
+      if ((e as any).etapa_codigo != null) codigos.add(String((e as any).etapa_codigo))
+    }
+  }
+
+  const { data: calendarios } = await supabase
+    .from('academico_calendarios')
+    .select('id')
+    .eq('ano_letivo_id', turma.ano_letivo_id)
+
+  const calendarioIds = (calendarios || []).map(c => c.id)
+  if (!calendarioIds.length) return []
+
+  const { data: eventos } = await supabase
+    .from('academico_calendario_eventos')
+    .select('data_inicio, data_termino, etapas')
+    .in('calendario_id', calendarioIds)
+    .eq('tipo', 'dia_letivo')
+
+  const aplicaveis = (eventos || []).filter(ev => {
+    const etapasEv = Array.isArray(ev.etapas) ? (ev.etapas as string[]) : []
+    if (!etapasEv.length) return true
+    if ([...codigos].some(c => etapasEv.includes(c))) return true
+    return false
+  })
+
+  // Dias de funcionamento regular (não são "extras")
+  const diasFunc = Array.isArray(turma.dias_funcionamento) && turma.dias_funcionamento.length > 0
+    ? new Set(turma.dias_funcionamento.map((d: string) => DIAS_FUNCIONAMENTO_MAP[d]).filter((d: number) => d !== undefined))
+    : new Set([1, 2, 3, 4, 5])
+
+  const ini = dataInicial?.slice(0, 10)
+  const fim = dataFinal?.slice(0, 10)
+  const datas = new Set<string>()
+
+  for (const ev of aplicaveis) {
+    const eIni = String(ev.data_inicio || '').slice(0, 10)
+    const eFim = String(ev.data_termino || '').slice(0, 10)
+    if (!eIni || !eFim) continue
+    const start = ini && eIni < ini ? ini : eIni
+    const end = fim && eFim > fim ? fim : eFim
+    if (start > end) continue
+    const [sy, sm, sd] = start.split('-').map(Number)
+    const [ey, em, ed] = end.split('-').map(Number)
+    const d = new Date(sy, sm - 1, sd, 12, 0, 0)
+    const last = new Date(ey, em - 1, ed, 12, 0, 0)
+    while (d <= last) {
+      if (!diasFunc.has(d.getDay())) {
+        const y = d.getFullYear()
+        const m = String(d.getMonth() + 1).padStart(2, '0')
+        const day = String(d.getDate()).padStart(2, '0')
+        datas.add(`${y}-${m}-${day}`)
+      }
+      d.setDate(d.getDate() + 1)
+    }
+  }
+
+  return [...datas].sort()
+}
+
+export async function getExtrasDoQuadro(quadroId: string): Promise<DataExtra[]> {
+  const { data: datas, error } = await supabase
+    .from('quadro_aulas_datas_extras')
+    .select('*')
+    .eq('quadro_aula_id', quadroId)
+    .order('data_aula')
+
+  if (error) {
+    if ((error as any)?.code === '42P01' || (error as any)?.message?.includes?.('does not exist')) return []
+    throw error
+  }
+  if (!datas?.length) return []
+
+  const { data: horarios } = await supabase
+    .from('quadro_aulas_extras_horarios')
+    .select('*, disciplina:disciplina_id(academico_disciplinas(nome)), professor:professor_id(nome_completo)')
+    .in('data_extra_id', datas.map(d => d.id))
+    .eq('ativo', true)
+    .order('horario_inicial')
+
+  const porData = new Map<string, any[]>()
+  for (const h of horarios || []) {
+    const arr = porData.get(h.data_extra_id) || []
+    arr.push(h)
+    porData.set(h.data_extra_id, arr)
+  }
+
+  return datas.map(d => ({
+    id: d.id,
+    quadro_aula_id: d.quadro_aula_id,
+    data_aula: String(d.data_aula).slice(0, 10),
+    intervalos: (d.intervalos || []) as Intervalo[],
+    aulas: (porData.get(d.id) || []).map(h => ({
+      id: h.id,
+      horario_inicial: String(h.horario_inicial).slice(0, 5),
+      horario_final: String(h.horario_final).slice(0, 5),
+      disciplina_id: h.disciplina_id || null,
+      professor_id: h.professor_id || null,
+    })),
+  }))
+}
+
+export async function saveExtrasDoQuadro(
+  quadroId: string,
+  extras: { data_aula: string; intervalos?: Intervalo[]; aulas: AulaExtra[] }[],
+  pessoaId?: string | null
+) {
+  await validarPermWrite('gestao-turmas.quadro-aulas', 'editar', pessoaId)
+
+  const { data: quadro } = await supabase
+    .from('quadro_aulas')
+    .select('turma_id, school_id')
+    .eq('id', quadroId)
+    .maybeSingle()
+  if (!quadro) throw new Error('Quadro não encontrado')
+  await garantirTurmaAberta(quadro.turma_id)
+
+  const { data: anteriores } = await supabase
+    .from('quadro_aulas_datas_extras')
+    .select('id, data_aula')
+    .eq('quadro_aula_id', quadroId)
+  const porData = new Map((anteriores || []).map(a => [String(a.data_aula).slice(0, 10), a.id]))
+
+  for (const ex of extras) {
+    const dataAula = ex.data_aula.slice(0, 10)
+    let dataExtraId = porData.get(dataAula)
+
+    if (!dataExtraId) {
+      const { data: novo, error } = await supabase
+        .from('quadro_aulas_datas_extras')
+        .insert({ quadro_aula_id: quadroId, data_aula: dataAula, intervalos: ex.intervalos || [] })
+        .select('id')
+        .single()
+      if (error) throw error
+      dataExtraId = novo.id
+    } else {
+      const { error } = await supabase
+        .from('quadro_aulas_datas_extras')
+        .update({ intervalos: ex.intervalos || [] })
+        .eq('id', dataExtraId)
+      if (error) throw error
+    }
+
+    // Soft-inativa anteriores e reinsere (paridade com updateQuadroAula)
+    await supabase.from('quadro_aulas_extras_horarios').update({ ativo: false }).eq('data_extra_id', dataExtraId)
+
+    const validas = (ex.aulas || []).filter(a =>
+      a.horario_inicial && a.horario_final && a.horario_final > a.horario_inicial && a.disciplina_id
+    )
+    if (validas.length > 0) {
+      const { error } = await supabase.from('quadro_aulas_extras_horarios').insert(
+        validas.map(a => ({
+          data_extra_id: dataExtraId,
+          horario_inicial: a.horario_inicial.slice(0, 5),
+          horario_final: a.horario_final.slice(0, 5),
+          disciplina_id: a.disciplina_id,
+          professor_id: a.professor_id || null,
+        }))
+      )
+      if (error) throw error
+    }
+  }
+
+  const info = await dadosQuadroAula(quadroId)
+  await registrarQuadro('editar', quadroId, pessoaId, info.school_id || quadro.school_id, info.nome || null, null, { aulas_extras: extras.length })
+}
+
+/**
+ * Remove um bloco de data extra. SPEC 030 FR-014:
+ * com frequência lançada → bloqueia (throws); sem → remove (UI confirma antes).
+ */
+export async function removerDataExtra(dataExtraId: string, pessoaId?: string | null) {
+  await validarPermWrite('gestao-turmas.quadro-aulas', 'editar', pessoaId)
+
+  const { data: bloco } = await supabase
+    .from('quadro_aulas_datas_extras')
+    .select('id, data_aula, quadro_aula_id, quadro:quadro_aula_id!inner(turma_id)')
+    .eq('id', dataExtraId)
+    .maybeSingle()
+
+  if (!bloco) throw new Error('Data extra não encontrada')
+  const turmaId = (bloco.quadro as any)?.turma_id
+  const dataAula = String(bloco.data_aula).slice(0, 10)
+  if (turmaId) await garantirTurmaAberta(turmaId)
+
+  const [freqAula, freqDia] = await Promise.all([
+    supabase.from('academico_frequencias_aula').select('id').eq('turma_id', turmaId).eq('data_aula', dataAula).limit(1),
+    supabase.from('academico_frequencias_dia').select('id').eq('turma_id', turmaId).eq('dia_letivo', dataAula).limit(1),
+  ])
+  if ((freqAula.data?.length || 0) > 0 || (freqDia.data?.length || 0) > 0) {
+    throw new Error('Não é possível remover esta data porque já existe frequência registrada para este dia. Exclua primeiro o registro de frequência no Diário de Classe.')
+  }
+
+  const { error } = await supabase.from('quadro_aulas_datas_extras').delete().eq('id', dataExtraId)
+  if (error) throw error
+
+  const info = await dadosQuadroAula(bloco.quadro_aula_id)
+  await registrarQuadro('editar', bloco.quadro_aula_id, pessoaId, info.school_id, info.nome || null, null, { data_extra_removida: dataAula })
 }
 
 // ------- Turmas para select -------

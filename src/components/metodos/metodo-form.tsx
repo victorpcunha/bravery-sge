@@ -8,48 +8,13 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Separator } from '@/components/ui/separator'
+import { ClickablePill } from '@/components/ui/clickable-pill'
+import { ConfirmDialog } from '@/components/feedback/confirm-dialog'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 import { Plus, Trash2, Info } from 'lucide-react'
 import { getMetodoCompleto, saveMetodo, type MetodoConceito, type MetodoNivel } from '@/lib/actions/metodos'
 import { useAuth } from '@/components/providers/auth-provider'
 import { toast } from 'sonner'
-
-const COLORS_BG = ['#1D3557', '#457B9D', '#E63946', '#2BAE66', '#E8A838', '#8B5CF6', '#EC4899', '#6366F1']
-const COLORS_TEXT = ['#FFFFFF', '#F8FAFC', '#1E293B']
-
-function hexToRgb(hex: string) {
-  const h = hex.replace('#', '')
-  return {
-    r: parseInt(h.substring(0, 2), 16) / 255,
-    g: parseInt(h.substring(2, 4), 16) / 255,
-    b: parseInt(h.substring(4, 6), 16) / 255,
-  }
-}
-
-function luminance(r: number, g: number, b: number) {
-  const [rl, gl, bl] = [r, g, b].map((c) => {
-    const v = c <= 0.03928 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4)
-    return v
-  })
-  return 0.2126 * rl + 0.7152 * gl + 0.0722 * bl
-}
-
-function contrastRatio(hex1: string, hex2: string) {
-  const c1 = hexToRgb(hex1)
-  const c2 = hexToRgb(hex2)
-  const l1 = luminance(c1.r, c1.g, c1.b)
-  const l2 = luminance(c2.r, c2.g, c2.b)
-  const lighter = Math.max(l1, l2)
-  const darker = Math.min(l1, l2)
-  return (lighter + 0.05) / (darker + 0.05)
-}
-
-function contrastLevel(ratio: number) {
-  if (ratio >= 7) return { label: 'AAA', class: 'text-success' }
-  if (ratio >= 4.5) return { label: 'AA', class: 'text-warning' }
-  if (ratio >= 3) return { label: 'AA (large)', class: 'text-warning' }
-  return { label: 'FAIL', class: 'text-destructive' }
-}
 
 type FormData = {
   id?: string
@@ -203,7 +168,7 @@ interface Props {
   onCancel: () => void
 }
 
-export function MetodosForm({ schoolId, editId, onSaved, onCancel }: Props) {
+export function MetodoForm({ schoolId, editId, onSaved, onCancel }: Props) {
   const { pessoaId } = useAuth()
   const [form, setForm] = useState<FormData>({ ...defaultForm, pesos_periodos: [...defaultForm.pesos_periodos] })
   const [saving, setSaving] = useState(false)
@@ -404,7 +369,7 @@ export function MetodosForm({ schoolId, editId, onSaved, onCancel }: Props) {
             <Input id="nome" value={form.nome} onChange={(e) => set('nome', e.target.value)} placeholder="Ex: Avaliação Regular" />
           </div>
 
-          <div className="grid grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div className="space-y-2">
               <Label>Critério de Frequência</Label>
               <Select value={form.criterio_frequencia} onValueChange={(v) => set('criterio_frequencia', v)}>
@@ -427,9 +392,15 @@ export function MetodosForm({ schoolId, editId, onSaved, onCancel }: Props) {
               <p className="text-[13px] text-muted-foreground">Pontos percentuais acima do mínimo p/ o Painel de Rendimento.</p>
             </div>
 
-            <div className="flex items-center gap-3 pt-6">
-              <Checkbox id="met_ativo" checked={form.ativo} onCheckedChange={(v) => set('ativo', !!v)} />
-              <Label htmlFor="met_ativo" className="cursor-pointer font-medium">{form.ativo ? 'Ativo' : 'Inativo'}</Label>
+            <div className="space-y-2 pt-6">
+              <Label>Status</Label>
+              <div>
+                <ClickablePill
+                  label={form.ativo ? 'Ativo' : 'Inativo'}
+                  active={form.ativo}
+                  onClick={() => set('ativo', !form.ativo)}
+                />
+              </div>
             </div>
           </div>
 
@@ -448,15 +419,12 @@ export function MetodosForm({ schoolId, editId, onSaved, onCancel }: Props) {
                 const periodKey = `quantidade_periodos_${tipo}` as keyof FormData
                 const periodValue = form[periodKey] as number
                 return (
-                  <div key={tipo} className="flex items-center justify-between gap-4 py-2">
-                    <div className="flex items-center gap-2 shrink-0">
-                      <Checkbox
-                        id={`tipo_${tipo}`}
-                        checked={form.tipos_avaliacao[tipo]}
-                        onCheckedChange={(v) => set('tipos_avaliacao', { ...form.tipos_avaliacao, [tipo]: !!v })}
-                      />
-                      <Label htmlFor={`tipo_${tipo}`} className="cursor-pointer">{labelMap[tipo]}</Label>
-                    </div>
+                  <div key={tipo} className="flex items-center justify-between gap-4 py-2 flex-wrap">
+                    <ClickablePill
+                      label={labelMap[tipo]}
+                      active={form.tipos_avaliacao[tipo]}
+                      onClick={() => set('tipos_avaliacao', { ...form.tipos_avaliacao, [tipo]: !form.tipos_avaliacao[tipo] })}
+                    />
                     {form.tipos_avaliacao[tipo] && (
                       <div className="flex items-center gap-2">
                         <span className="text-sm text-muted-foreground">Períodos:</span>
@@ -487,68 +455,83 @@ export function MetodosForm({ schoolId, editId, onSaved, onCancel }: Props) {
           <Card className="border-border shadow-sm">
             <CardHeader className="border-b border-border pb-4"><CardTitle className="text-base font-semibold text-foreground">Configuração de Avaliações Numéricas</CardTitle></CardHeader>
             <CardContent className="space-y-5 px-6 pb-6 pt-0">
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="space-y-2 max-w-xs">
                   <LabelWithTooltip label="Forma de Registro da Avaliação" tooltip="Define se as notas são registradas como números inteiros (ex: 7) ou decimais (ex: 7.5)." />
-                  <Select value={form.forma_registro} onValueChange={(v) => set('forma_registro', v)}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Selecione" />
-                    </SelectTrigger>
-                    <SelectContent position="popper" side="bottom" sideOffset={5}>
-                      <SelectItem value="inteiro">Inteiro</SelectItem>
-                      <SelectItem value="decimal">Decimal</SelectItem>
-                    </SelectContent>
-                  </Select>
+                  <div className="flex flex-wrap gap-2 pt-1">
+                    {([
+                      { value: 'inteiro', label: 'Inteiro' },
+                      { value: 'decimal', label: 'Decimal' },
+                    ] as const).map((opt) => (
+                      <ClickablePill
+                        key={opt.value}
+                        label={opt.label}
+                        active={form.forma_registro === opt.value}
+                        onClick={() => set('forma_registro', opt.value)}
+                      />
+                    ))}
+                  </div>
                 </div>
                 <div className="space-y-2">
                   <LabelWithTooltip label="Permite Recuperação" tooltip="Define em quais momentos o aluno pode fazer recuperação: por avaliação individual, por período (bimestre/semestre), e/ou final (após o ano letivo)." />
-                  <div className="flex flex-wrap gap-3 pt-1">
-                    {(['avaliacao', 'periodo', 'final'] as const).map((opt) => (
-                      <div key={opt} className="flex items-center gap-1.5">
-                        <Checkbox
-                          id={`rec_${opt}`}
-                          checked={form.permite_recuperacao.includes(opt)}
-                          onCheckedChange={(v) => {
-                            if (v) {
-                              set('permite_recuperacao', [...form.permite_recuperacao, opt])
+                  <div className="flex flex-wrap gap-2 pt-1">
+                    {([
+                      { value: 'avaliacao', label: 'Por Avaliação' },
+                      { value: 'periodo', label: 'Por Período' },
+                      { value: 'final', label: 'Final' },
+                    ] as const).map((opt) => {
+                      const checked = form.permite_recuperacao.includes(opt.value)
+                      return (
+                        <ClickablePill
+                          key={opt.value}
+                          label={opt.label}
+                          active={checked}
+                          onClick={() => {
+                            if (checked) {
+                              set('permite_recuperacao', form.permite_recuperacao.filter((x) => x !== opt.value))
                             } else {
-                              set('permite_recuperacao', form.permite_recuperacao.filter((x) => x !== opt))
+                              set('permite_recuperacao', [...form.permite_recuperacao, opt.value])
                             }
                           }}
                         />
-                        <Label htmlFor={`rec_${opt}`} className="cursor-pointer text-sm">
-                          {opt === 'avaliacao' ? 'Por Avaliação' : opt === 'periodo' ? 'Por Período' : 'Final'}
-                        </Label>
-                      </div>
-                    ))}
+                      )
+                    })}
                   </div>
                 </div>
               </div>
 
-              <div className="grid grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <div className="space-y-2">
                   <LabelWithTooltip label="Tipo de Média do Período" tooltip="Ponderada: cada avaliação tem um peso. Somatória: soma simples das notas sem divisão." />
-                  <Select value={form.tipo_media_periodo} onValueChange={(v) => set('tipo_media_periodo', v)}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Selecione" />
-                    </SelectTrigger>
-                    <SelectContent position="popper" side="bottom" sideOffset={5}>
-                      <SelectItem value="ponderada">Ponderada</SelectItem>
-                      <SelectItem value="somatoria">Somatória</SelectItem>
-                    </SelectContent>
-                  </Select>
+                  <div className="flex flex-wrap gap-2 pt-1">
+                    {([
+                      { value: 'ponderada', label: 'Ponderada' },
+                      { value: 'somatoria', label: 'Somatória' },
+                    ] as const).map((opt) => (
+                      <ClickablePill
+                        key={opt.value}
+                        label={opt.label}
+                        active={form.tipo_media_periodo === opt.value}
+                        onClick={() => set('tipo_media_periodo', opt.value)}
+                      />
+                    ))}
+                  </div>
                 </div>
                 <div className="space-y-2">
                   <LabelWithTooltip label="Tipo de Resultado Final" tooltip="Média dos Períodos: soma os resultados dos períodos e divide pela quantidade. Somatória dos Períodos: soma direta sem divisão." />
-                  <Select value={form.tipo_resultado_final} onValueChange={(v) => set('tipo_resultado_final', v)}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Selecione" />
-                    </SelectTrigger>
-                    <SelectContent position="popper" side="bottom" sideOffset={5}>
-                      <SelectItem value="media_periodos">Média dos Períodos</SelectItem>
-                      <SelectItem value="somatoria">Somatória dos Períodos</SelectItem>
-                    </SelectContent>
-                  </Select>
+                  <div className="flex flex-wrap gap-2 pt-1">
+                    {([
+                      { value: 'media_periodos', label: 'Média dos Períodos' },
+                      { value: 'somatoria', label: 'Somatória dos Períodos' },
+                    ] as const).map((opt) => (
+                      <ClickablePill
+                        key={opt.value}
+                        label={opt.label}
+                        active={form.tipo_resultado_final === opt.value}
+                        onClick={() => set('tipo_resultado_final', opt.value)}
+                      />
+                    ))}
+                  </div>
                 </div>
                 <div className="space-y-2">
                   <LabelWithTooltip label="Média Máxima no Período" tooltip="Nota máxima que um aluno pode atingir em cada período. Ex: 10, 100, etc." />
@@ -560,6 +543,7 @@ export function MetodosForm({ schoolId, editId, onSaved, onCancel }: Props) {
 
               <div className="space-y-3">
                 <Label className="text-sm font-medium">Opções</Label>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                 <CheckboxWithTooltip id="permite_conselho" checked={form.permite_conselho_componente} onCheckedChange={(v) => set('permite_conselho_componente', v)} label="Permite Conselho de Classe por Componente Curricular" tooltipKey="permite_conselho_componente" />
                 <CheckboxWithTooltip id="atribui_media_minima" checked={form.atribui_media_minima_conselho} onCheckedChange={(v) => set('atribui_media_minima_conselho', v)} label="Atribui média mínima para aprovados em Conselho de Classe" tooltipKey="atribui_media_minima_conselho" />
                 <CheckboxWithTooltip id="usa_media_5" checked={form.usa_media_5_conceito} onCheckedChange={(v) => set('usa_media_5_conceito', v)} label="Utiliza média 5º conceito" tooltipKey="usa_media_5_conceito" />
@@ -577,9 +561,10 @@ export function MetodosForm({ schoolId, editId, onSaved, onCancel }: Props) {
                 )}
                 <CheckboxWithTooltip id="reclassificacao" checked={form.realizava_avaliacao_reclassificacao} onCheckedChange={(v) => set('realizava_avaliacao_reclassificacao', v)} label="Realiza avaliação de reclassificação" tooltipKey="realizava_avaliacao_reclassificacao" />
 
-                <div className="flex items-center gap-2 pt-2">
+                <div className="flex items-center gap-2">
                   <Checkbox id="limitar_avaliacoes" checked={form.limitar_avaliacoes} onCheckedChange={(v) => set('limitar_avaliacoes', !!v)} />
                   <Label htmlFor="limitar_avaliacoes" className="cursor-pointer">Limitar quantidade de avaliações</Label>
+                </div>
                 </div>
               </div>
             </CardContent>
@@ -653,9 +638,12 @@ export function MetodosForm({ schoolId, editId, onSaved, onCancel }: Props) {
             <CardContent className="space-y-5 px-6 pb-6 pt-0">
               <div>
                 <h4 className="text-sm font-semibold mb-3">Aprovação Direta</h4>
-                <div className="flex items-center gap-2 mb-3">
-                  <Checkbox id="aprov_auto" checked={form.aprovacao_automatica} onCheckedChange={(v) => set('aprovacao_automatica', !!v)} />
-                  <Label htmlFor="aprov_auto" className="cursor-pointer">Aprovação Automática</Label>
+                <div className="mb-3">
+                  <ClickablePill
+                    label="Aprovação Automática"
+                    active={form.aprovacao_automatica}
+                    onClick={() => set('aprovacao_automatica', !form.aprovacao_automatica)}
+                  />
                 </div>
                 <div className={`grid grid-cols-1 sm:grid-cols-2 gap-4 ${form.aprovacao_automatica ? 'pointer-events-none select-none [&_input]:opacity-40 [&_label]:opacity-40' : ''}`}>
                   <div className="space-y-2 w-40">
@@ -686,25 +674,40 @@ export function MetodosForm({ schoolId, editId, onSaved, onCancel }: Props) {
                         <LabelWithTooltip label="Média Mínima após Recuperação" tooltip="Nota mínima que o aluno precisa atingir na média final (após recuperação) para ser aprovado. Geralmente menor que a média direta." />
                         <Input id="media_min_rec" type="number" step="0.1" min={0} value={form.media_minima_recuperacao} onChange={(e) => set('media_minima_recuperacao', Number(e.target.value) || 0)} />
                       </div>
-                      <div className="flex items-center gap-2">
-                        <Checkbox id="media_pond_rec" checked={form.usa_media_ponderada_recuperacao} onCheckedChange={(v) => set('usa_media_ponderada_recuperacao', !!v)} />
-                        <Label htmlFor="media_pond_rec" className="cursor-pointer flex items-center">
-                          Média Ponderada
-                          <TooltipProvider>
-                            <Tooltip>
-                              <TooltipTrigger asChild onClick={(e) => e.preventDefault()}>
-                                <Info className="h-3.5 w-3.5 text-muted-foreground hover:text-muted-foreground cursor-help transition-colors ml-1" />
-                              </TooltipTrigger>
-                              <TooltipContent className="max-w-xs">
-                                <p>Aritmética: (MA + RF) / 2. Ponderada: (MA × Peso + RF × Peso) / soma dos pesos. Recomendado: marcar com pesos 2 e 1.</p>
-                              </TooltipContent>
-                            </Tooltip>
-                          </TooltipProvider>
-                          <span className="ml-1 text-xs text-muted-foreground">(Se desmarcado: média aritmética)</span>
-                        </Label>
+                      <div className="flex flex-wrap items-center gap-2">
+                        <ClickablePill
+                          label="Média Aritmética"
+                          active={!form.usa_media_ponderada_recuperacao}
+                          onClick={() => set('usa_media_ponderada_recuperacao', false)}
+                        />
+                        <TooltipProvider>
+                          <Tooltip>
+                            <TooltipTrigger asChild onClick={(e) => e.preventDefault()}>
+                              <Info className="h-3.5 w-3.5 text-muted-foreground hover:text-muted-foreground cursor-help transition-colors" />
+                            </TooltipTrigger>
+                            <TooltipContent className="max-w-xs">
+                              <p>A nota final é a média simples entre a Média das Avaliações (MA) e a nota da Recuperação (RF). Exemplo: se a MA foi 5,0 e a Recuperação foi 8,0, a nota final é (5,0 + 8,0) ÷ 2 = 6,5.</p>
+                            </TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
+                        <ClickablePill
+                          label="Média Ponderada"
+                          active={form.usa_media_ponderada_recuperacao}
+                          onClick={() => set('usa_media_ponderada_recuperacao', true)}
+                        />
+                        <TooltipProvider>
+                          <Tooltip>
+                            <TooltipTrigger asChild onClick={(e) => e.preventDefault()}>
+                              <Info className="h-3.5 w-3.5 text-muted-foreground hover:text-muted-foreground cursor-help transition-colors" />
+                            </TooltipTrigger>
+                            <TooltipContent className="max-w-xs">
+                              <p>A nota final dá pesos diferentes para a Média das Avaliações (MA) e a Recuperação (RF), em vez de uma média simples. Exemplo com os pesos recomendados (peso 2 para a MA e peso 1 para a Recuperação): se a MA foi 5,0 e a Recuperação foi 8,0, a nota final é (5,0 × 2 + 8,0 × 1) ÷ 3 = 6,0.</p>
+                            </TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
                       </div>
                       {form.usa_media_ponderada_recuperacao && (
-                        <div className="grid grid-cols-2 gap-4">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                           <div className="space-y-2">
                             <LabelWithTooltip label="Peso Média Anual" tooltip="Peso da média do ano no cálculo da recuperação. Quanto maior, mais a nota do ano vale. Recomendado: 2." />
                             <Input id="peso_anual" type="number" step="0.1" min={0} value={form.peso_media_anual} onChange={(e) => set('peso_media_anual', Number(e.target.value) || 0)} />
@@ -715,9 +718,6 @@ export function MetodosForm({ schoolId, editId, onSaved, onCancel }: Props) {
                           </div>
                         </div>
                       )}
-                      <p className="text-xs text-muted-foreground">
-                        Ex: (MA × Peso_MA + RF × Peso_RF) / (Peso_MA + Peso_RF)
-                      </p>
                     </div>
                   </div>
                 </>
@@ -728,19 +728,59 @@ export function MetodosForm({ schoolId, editId, onSaved, onCancel }: Props) {
           <Card className="border-border shadow-sm">
             <CardHeader className="border-b border-border pb-4"><CardTitle className="text-base font-semibold text-foreground">Configuração de Arredondamento</CardTitle></CardHeader>
             <CardContent className="space-y-5 px-6 pb-6 pt-0">
-              {form.tipo_arredondamento === 'meio_ponto' ? (
+              <div className="space-y-2">
+                <Label>Tipo de Arredondamento</Label>
+                <div className="flex flex-wrap items-center gap-2">
+                  <ClickablePill
+                    label="Nenhum"
+                    active={form.tipo_arredondamento === 'nenhum'}
+                    onClick={() => set('tipo_arredondamento', 'nenhum')}
+                  />
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild onClick={(e) => e.preventDefault()}>
+                        <Info className="h-3.5 w-3.5 text-muted-foreground hover:text-muted-foreground cursor-help transition-colors" />
+                      </TooltipTrigger>
+                      <TooltipContent className="max-w-xs">
+                        <p>A nota final permanece exatamente como foi calculada, sem nenhum ajuste. Exemplo: 7,3 continua 7,3.</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                  <ClickablePill
+                    label="Meio Ponto"
+                    active={form.tipo_arredondamento === 'meio_ponto'}
+                    onClick={() => set('tipo_arredondamento', 'meio_ponto')}
+                  />
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild onClick={(e) => e.preventDefault()}>
+                        <Info className="h-3.5 w-3.5 text-muted-foreground hover:text-muted-foreground cursor-help transition-colors" />
+                      </TooltipTrigger>
+                      <TooltipContent className="max-w-xs">
+                        <p>A nota final é ajustada para o meio ponto mais próximo. Exemplo: 7,3 vira 7,5; 7,1 vira 7,0.</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                  <ClickablePill
+                    label="Decimal"
+                    active={form.tipo_arredondamento === 'decimal'}
+                    onClick={() => set('tipo_arredondamento', 'decimal')}
+                  />
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild onClick={(e) => e.preventDefault()}>
+                        <Info className="h-3.5 w-3.5 text-muted-foreground hover:text-muted-foreground cursor-help transition-colors" />
+                      </TooltipTrigger>
+                      <TooltipContent className="max-w-xs">
+                        <p>A nota final é ajustada para um número inteiro. Exemplo: 7,3 vira 7,0; 7,6 vira 8,0.</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                </div>
+              </div>
+
+              {form.tipo_arredondamento === 'meio_ponto' && (
                 <div className="flex items-start gap-4 flex-wrap">
-                  <div className="space-y-2 w-48">
-                    <Label>Tipo de Arredondamento</Label>
-                    <Select value={form.tipo_arredondamento} onValueChange={(v) => set('tipo_arredondamento', v)}>
-                      <SelectTrigger><SelectValue placeholder="Nenhum" /></SelectTrigger>
-                      <SelectContent position="popper" side="bottom" sideOffset={5}>
-                        <SelectItem value="nenhum">Nenhum</SelectItem>
-                        <SelectItem value="meio_ponto">Meio Ponto</SelectItem>
-                        <SelectItem value="decimal">Decimal</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
                   <div className="space-y-2 w-32">
                     <Label htmlFor="intervalo_ini">Intervalo Inicial</Label>
                     <Input id="intervalo_ini" type="number" min={0} step="0.1" value={form.intervalo_inicial} onChange={(e) => set('intervalo_inicial', Number(e.target.value) || 0)} />
@@ -750,53 +790,35 @@ export function MetodosForm({ schoolId, editId, onSaved, onCancel }: Props) {
                     <Input id="intervalo_fim" type="number" min={0} step="0.1" value={form.intervalo_final} onChange={(e) => set('intervalo_final', Number(e.target.value) || 0)} />
                   </div>
                 </div>
-              ) : form.tipo_arredondamento === 'decimal' ? (
+              )}
+
+              {form.tipo_arredondamento === 'decimal' && (
                 <div className="flex items-start gap-4 flex-wrap">
-                  <div className="space-y-2 w-48">
-                    <Label>Tipo de Arredondamento</Label>
-                    <Select value={form.tipo_arredondamento} onValueChange={(v) => set('tipo_arredondamento', v)}>
-                      <SelectTrigger><SelectValue placeholder="Nenhum" /></SelectTrigger>
-                      <SelectContent position="popper" side="bottom" sideOffset={5}>
-                        <SelectItem value="nenhum">Nenhum</SelectItem>
-                        <SelectItem value="meio_ponto">Meio Ponto</SelectItem>
-                        <SelectItem value="decimal">Decimal</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
                   <div className="space-y-2 w-40">
                     <Label htmlFor="margem_dec">Margem</Label>
                     <Input id="margem_dec" type="number" min={0} max={9} value={form.margem_decimal} onChange={(e) => set('margem_decimal', Number(e.target.value) || 0)} />
                   </div>
                 </div>
-              ) : (
-                <div className="w-1/3 space-y-2">
-                  <Label>Tipo de Arredondamento</Label>
-                  <Select value={form.tipo_arredondamento} onValueChange={(v) => set('tipo_arredondamento', v)}>
-                    <SelectTrigger><SelectValue placeholder="Nenhum" /></SelectTrigger>
-                    <SelectContent position="popper" side="bottom" sideOffset={5}>
-                      <SelectItem value="nenhum">Nenhum</SelectItem>
-                      <SelectItem value="meio_ponto">Meio Ponto</SelectItem>
-                      <SelectItem value="decimal">Decimal</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
               )}
 
               <div className="space-y-2">
                 <Label className="text-sm font-medium">Aplicar Arredondamento na</Label>
-                <div className="flex flex-wrap gap-4">
-                  <div className="flex items-center gap-2">
-                    <Checkbox id="arr_periodo" checked={form.aplica_media_periodo} onCheckedChange={(v) => set('aplica_media_periodo', !!v)} />
-                    <Label htmlFor="arr_periodo" className="cursor-pointer">Média do Período</Label>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Checkbox id="arr_anual" checked={form.aplica_media_anual} onCheckedChange={(v) => set('aplica_media_anual', !!v)} />
-                    <Label htmlFor="arr_anual" className="cursor-pointer">Média Anual</Label>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Checkbox id="arr_final" checked={form.aplica_media_final} onCheckedChange={(v) => set('aplica_media_final', !!v)} />
-                    <Label htmlFor="arr_final" className="cursor-pointer">Média Final</Label>
-                  </div>
+                <div className="flex flex-wrap gap-2">
+                  <ClickablePill
+                    label="Média do Período"
+                    active={form.aplica_media_periodo}
+                    onClick={() => set('aplica_media_periodo', !form.aplica_media_periodo)}
+                  />
+                  <ClickablePill
+                    label="Média Anual"
+                    active={form.aplica_media_anual}
+                    onClick={() => set('aplica_media_anual', !form.aplica_media_anual)}
+                  />
+                  <ClickablePill
+                    label="Média Final"
+                    active={form.aplica_media_final}
+                    onClick={() => set('aplica_media_final', !form.aplica_media_final)}
+                  />
                 </div>
               </div>
             </CardContent>
@@ -808,10 +830,11 @@ export function MetodosForm({ schoolId, editId, onSaved, onCancel }: Props) {
         <Card className="border-border shadow-sm">
           <CardHeader className="border-b border-border pb-4"><CardTitle className="text-base font-semibold text-foreground">Configuração de Pareceres Descritivos</CardTitle></CardHeader>
           <CardContent>
-            <div className="flex items-center gap-2">
-              <Checkbox id="reg_geral" checked={form.registro_geral} onCheckedChange={(v) => set('registro_geral', !!v)} />
-              <Label htmlFor="reg_geral" className="cursor-pointer">Registro de Parecer Geral</Label>
-            </div>
+            <ClickablePill
+              label="Registro de Parecer Geral"
+              active={form.registro_geral}
+              onClick={() => set('registro_geral', !form.registro_geral)}
+            />
             <p className="text-xs text-muted-foreground mt-1">
               Se marcado, os pareceres descritivos devem ser informados de forma geral e não por disciplina.
             </p>
@@ -839,19 +862,18 @@ export function MetodosForm({ schoolId, editId, onSaved, onCancel }: Props) {
 
             <Separator className="bg-border" />
 
-            <div className="flex items-center gap-2 pt-2">
-              <Checkbox
-                id="usa_conceito_final"
-                checked={form.conceitos.some((c) => c.eh_conceito_final)}
-                onCheckedChange={(v) => {
-                  if (!v) {
+            <div className="pt-2">
+              <ClickablePill
+                label="Utiliza Conceito Final"
+                active={form.conceitos.some((c) => c.eh_conceito_final)}
+                onClick={() => {
+                  if (form.conceitos.some((c) => c.eh_conceito_final)) {
                     set('conceitos', form.conceitos.filter((c) => !c.eh_conceito_final))
-                  } else if (!form.conceitos.some((c) => c.eh_conceito_final)) {
-                    set('conceitos', [...form.conceitos, { descricao: '', sigla: '', cor_fundo: '#1D3557', cor_letra: '#FFFFFF', eh_conceito_final: true, ordem: form.conceitos.length }])
+                  } else {
+                    set('conceitos', [...form.conceitos, { descricao: '', sigla: '', cor_fundo: '#E2E8F0', cor_letra: '#1E293B', eh_conceito_final: true, ordem: form.conceitos.length }])
                   }
                 }}
               />
-              <Label htmlFor="usa_conceito_final" className="cursor-pointer font-medium">Utiliza Conceito Final</Label>
             </div>
 
             {form.conceitos.some((c) => c.eh_conceito_final) && (
@@ -913,14 +935,6 @@ function LabelWithTooltip({ label, tooltip }: { label: string; tooltip: string }
   )
 }
 
-function ColorPreview({ bg, text, sigla }: { bg: string; text: string; sigla?: string }) {
-  return (
-    <div className="w-10 h-10 rounded-md flex items-center justify-center text-xs font-bold border-2 border-border shadow-sm shrink-0" style={{ backgroundColor: bg, color: text }}>
-      {sigla || 'Aa'}
-    </div>
-  )
-}
-
 function CardConceitosList({
   conceitos,
   onChange,
@@ -938,12 +952,14 @@ function CardConceitosList({
 }) {
   const add = () => {
     if (conceitos.length >= max) return
-    onChange([...conceitos, { descricao: '', sigla: '', cor_fundo: '#1D3557', cor_letra: '#FFFFFF', eh_conceito_final: final, ordem: conceitos.length }])
+    onChange([...conceitos, { descricao: '', sigla: '', cor_fundo: '#E2E8F0', cor_letra: '#1E293B', eh_conceito_final: final, ordem: conceitos.length }])
   }
 
   const remove = (index: number) => {
     onChange(conceitos.filter((_, i) => i !== index))
   }
+
+  const [confirmIndex, setConfirmIndex] = useState<number | null>(null)
 
   const update = (index: number, field: keyof MetodoConceito, value: string | boolean) => {
     const updated = conceitos.map((item, i) => (i === index ? { ...item, [field]: value } : item))
@@ -960,65 +976,31 @@ function CardConceitosList({
         </Button>
       </div>
       {conceitos.map((item, i) => (
-        <div key={i} className="flex items-start gap-3 p-4 border border-border rounded-lg bg-muted">
-          <div className="flex-1 space-y-2">
-            <div className="flex gap-2">
-              <div className="flex-1 space-y-1">
-                <Label className="text-xs">Descrição</Label>
-                <Input value={item.descricao} onChange={(e) => update(i, 'descricao', e.target.value)} placeholder="Ex: Bom" />
-              </div>
-              <div className="w-24 space-y-1">
-                <Label className="text-xs">Sigla</Label>
-                <Input value={item.sigla} onChange={(e) => update(i, 'sigla', e.target.value.toUpperCase().slice(0, 4))} maxLength={4} placeholder="Ex: B" />
-              </div>
+        <div key={i} className="flex items-center gap-3 p-4 border border-border rounded-lg">
+          <div className="flex-1 flex gap-2">
+            <div className="flex-1 space-y-1">
+              <Label className="text-xs">Descrição</Label>
+              <Input value={item.descricao} onChange={(e) => update(i, 'descricao', e.target.value)} placeholder="Ex: Bom" />
             </div>
-            <div className="space-y-3">
-              <div className="space-y-2">
-                <Label className="text-xs">Cor de Fundo</Label>
-                <div className="flex gap-1 items-center flex-wrap">
-                  <label className="relative w-6 h-6 rounded-full border-2 border-dashed border-border flex items-center justify-center cursor-pointer bg-card hover:bg-muted shrink-0 overflow-hidden">
-                    <span className="text-muted-foreground text-sm font-bold leading-none">+</span>
-                    <input type="color" value={item.cor_fundo} onChange={(e) => update(i, 'cor_fundo', e.target.value)} className="absolute inset-0 opacity-0 cursor-pointer" title="Personalizar cor" />
-                  </label>
-                  {COLORS_BG.map((cor) => (
-                    <Button
-                      key={cor}
-                      variant="ghost"
-                      size="icon-xs"
-                      className={`rounded-full border-2 ${item.cor_fundo === cor ? 'border-foreground scale-110' : 'border-border'}`}
-                      style={{ backgroundColor: cor }}
-                      onClick={() => update(i, 'cor_fundo', cor)}
-                    />
-                  ))}
-                </div>
-              </div>
-              <div className="space-y-2">
-                <Label className="text-xs">Cor da Letra</Label>
-                <div className="flex gap-1 items-center flex-wrap">
-                  <label className="relative w-6 h-6 rounded-full border-2 border-dashed border-border flex items-center justify-center cursor-pointer bg-card hover:bg-muted shrink-0 overflow-hidden">
-                    <span className="text-muted-foreground text-sm font-bold leading-none">+</span>
-                    <input type="color" value={item.cor_letra} onChange={(e) => update(i, 'cor_letra', e.target.value)} className="absolute inset-0 opacity-0 cursor-pointer" title="Personalizar cor" />
-                  </label>
-                  {COLORS_TEXT.map((cor) => (
-                    <Button
-                      key={cor}
-                      variant="ghost"
-                      size="icon-xs"
-                      className={`rounded-full border-2 ${item.cor_letra === cor ? 'border-foreground scale-110' : 'border-border'}`}
-                      style={{ backgroundColor: cor }}
-                      onClick={() => update(i, 'cor_letra', cor)}
-                    />
-                  ))}
-                </div>
-              </div>
-              <ColorPreview bg={item.cor_fundo} text={item.cor_letra} sigla={item.sigla} />
+            <div className="w-24 space-y-1">
+              <Label className="text-xs">Sigla</Label>
+              <Input value={item.sigla} onChange={(e) => update(i, 'sigla', e.target.value.toUpperCase().slice(0, 4))} maxLength={4} placeholder="Ex: B" />
             </div>
           </div>
-          <Button variant="ghost" size="icon-sm" onClick={() => remove(i)} className="mt-1 shrink-0">
-            <Trash2 className="h-4 w-4 text-destructive" />
+          <Button variant="ghost" size="icon" className="h-11 w-11 shrink-0" onClick={() => setConfirmIndex(i)} aria-label="Excluir conceito">
+            <Trash2 className="h-5 w-5 text-destructive" />
           </Button>
         </div>
       ))}
+      <ConfirmDialog
+        open={confirmIndex !== null}
+        onOpenChange={(open) => { if (!open) setConfirmIndex(null) }}
+        title="Excluir conceito"
+        description="Tem certeza que deseja excluir este conceito? Esta ação não pode ser desfeita."
+        confirmLabel="Excluir"
+        variant="destructive"
+        onConfirm={() => { if (confirmIndex !== null) remove(confirmIndex); setConfirmIndex(null) }}
+      />
     </div>
   )
 }
@@ -1034,12 +1016,14 @@ function CardNiveisList({
 }) {
   const add = () => {
     if (niveis.length >= max) return
-    onChange([...niveis, { descricao: '', sigla: '', cor_fundo: '#457B9D', cor_letra: '#FFFFFF', ordem: niveis.length }])
+    onChange([...niveis, { descricao: '', sigla: '', cor_fundo: '#E2E8F0', cor_letra: '#1E293B', ordem: niveis.length }])
   }
 
   const remove = (index: number) => {
     onChange(niveis.filter((_, i) => i !== index))
   }
+
+  const [confirmIndex, setConfirmIndex] = useState<number | null>(null)
 
   const update = (index: number, field: keyof MetodoNivel, value: string | boolean | number) => {
     const updated = niveis.map((item, i) => (i === index ? { ...item, [field]: value } : item))
@@ -1056,65 +1040,31 @@ function CardNiveisList({
         </Button>
       </div>
       {niveis.map((item, i) => (
-        <div key={i} className="flex items-start gap-3 p-4 border border-border rounded-lg bg-muted">
-          <div className="flex-1 space-y-2">
-            <div className="flex gap-2">
-              <div className="flex-1 space-y-1">
-                <Label className="text-xs">Descrição</Label>
-                <Input value={item.descricao} onChange={(e) => update(i, 'descricao', e.target.value)} placeholder="Ex: Intermediário" />
-              </div>
-              <div className="w-24 space-y-1">
-                <Label className="text-xs">Sigla</Label>
-                <Input value={item.sigla} onChange={(e) => update(i, 'sigla', e.target.value.toUpperCase().slice(0, 4))} maxLength={4} placeholder="Ex: I" />
-              </div>
+        <div key={i} className="flex items-center gap-3 p-4 border border-border rounded-lg">
+          <div className="flex-1 flex gap-2">
+            <div className="flex-1 space-y-1">
+              <Label className="text-xs">Descrição</Label>
+              <Input value={item.descricao} onChange={(e) => update(i, 'descricao', e.target.value)} placeholder="Ex: Intermediário" />
             </div>
-            <div className="space-y-3">
-              <div className="space-y-2">
-                <Label className="text-xs">Cor de Fundo</Label>
-                <div className="flex gap-1 items-center flex-wrap">
-                  <label className="relative w-6 h-6 rounded-full border-2 border-dashed border-border flex items-center justify-center cursor-pointer bg-card hover:bg-muted shrink-0 overflow-hidden">
-                    <span className="text-muted-foreground text-sm font-bold leading-none">+</span>
-                    <input type="color" value={item.cor_fundo} onChange={(e) => update(i, 'cor_fundo', e.target.value)} className="absolute inset-0 opacity-0 cursor-pointer" title="Personalizar cor" />
-                  </label>
-                  {COLORS_BG.map((cor) => (
-                    <Button
-                      key={cor}
-                      variant="ghost"
-                      size="icon-xs"
-                      className={`rounded-full border-2 ${item.cor_fundo === cor ? 'border-foreground scale-110' : 'border-border'}`}
-                      style={{ backgroundColor: cor }}
-                      onClick={() => update(i, 'cor_fundo', cor)}
-                    />
-                  ))}
-                </div>
-              </div>
-              <div className="space-y-2">
-                <Label className="text-xs">Cor da Letra</Label>
-                <div className="flex gap-1 items-center flex-wrap">
-                  <label className="relative w-6 h-6 rounded-full border-2 border-dashed border-border flex items-center justify-center cursor-pointer bg-card hover:bg-muted shrink-0 overflow-hidden">
-                    <span className="text-muted-foreground text-sm font-bold leading-none">+</span>
-                    <input type="color" value={item.cor_letra} onChange={(e) => update(i, 'cor_letra', e.target.value)} className="absolute inset-0 opacity-0 cursor-pointer" title="Personalizar cor" />
-                  </label>
-                  {COLORS_TEXT.map((cor) => (
-                    <Button
-                      key={cor}
-                      variant="ghost"
-                      size="icon-xs"
-                      className={`rounded-full border-2 ${item.cor_letra === cor ? 'border-foreground scale-110' : 'border-border'}`}
-                      style={{ backgroundColor: cor }}
-                      onClick={() => update(i, 'cor_letra', cor)}
-                    />
-                  ))}
-                </div>
-              </div>
-              <ColorPreview bg={item.cor_fundo} text={item.cor_letra} sigla={item.sigla} />
+            <div className="w-24 space-y-1">
+              <Label className="text-xs">Sigla</Label>
+              <Input value={item.sigla} onChange={(e) => update(i, 'sigla', e.target.value.toUpperCase().slice(0, 4))} maxLength={4} placeholder="Ex: I" />
             </div>
           </div>
-          <Button variant="ghost" size="icon-sm" onClick={() => remove(i)} className="mt-1 shrink-0">
-            <Trash2 className="h-4 w-4 text-destructive" />
+          <Button variant="ghost" size="icon" className="h-11 w-11 shrink-0" onClick={() => setConfirmIndex(i)} aria-label="Excluir nível">
+            <Trash2 className="h-5 w-5 text-destructive" />
           </Button>
         </div>
       ))}
+      <ConfirmDialog
+        open={confirmIndex !== null}
+        onOpenChange={(open) => { if (!open) setConfirmIndex(null) }}
+        title="Excluir nível de desenvolvimento"
+        description="Tem certeza que deseja excluir este nível? Esta ação não pode ser desfeita."
+        confirmLabel="Excluir"
+        variant="destructive"
+        onConfirm={() => { if (confirmIndex !== null) remove(confirmIndex); setConfirmIndex(null) }}
+      />
     </div>
   )
 }

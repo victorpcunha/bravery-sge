@@ -11,40 +11,89 @@ import { Label } from '@/components/ui/label'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog'
-import { Badge } from '@/components/ui/badge'
-import { Separator } from '@/components/ui/separator'
 import { Textarea } from '@/components/ui/textarea'
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
+import { Calendar } from '@/components/ui/calendar'
+import { cn } from '@/lib/utils'
+import { format } from 'date-fns'
+import { ptBR } from 'date-fns/locale'
 import { toast } from 'sonner'
 import {
-  ArrowLeft, Save, Pencil, Trash2, Plus, X,
-  Bus, BookOpen, History, AlertCircle, DoorOpen, UserPlus
+  ArrowLeft, Save, Pencil, Trash2, X, CalendarIcon,
+  Bus, History, AlertCircle, DoorOpen, UserPlus
 } from 'lucide-react'
 import { PageContainer } from '@/components/layout/page-container'
 import { PageHeader } from '@/components/layout/page-header'
 import { FormCard } from '@/components/layout/form-card'
+import { ConfirmDialog } from '@/components/feedback/confirm-dialog'
+import { ClickablePill } from '@/components/ui/clickable-pill'
+import { StatusBadge } from '@/components/feedback/status-badge'
 import { getAnosLetivosAtivos } from '@/lib/actions/quadro-aulas'
 import {
-  getMatricula, createMatricula, updateMatricula,
+  getMatricula, createMatricula, updateMatricula, deleteMatricula,
   getMovimentacoes, salvarMovimentacoes,
-  getDispensas, adicionarDispensa, removerDispensa,
   getAlunos, getTurmasAtivas, getEtapasDaTurma, getSubetapasDaEtapa,
-  getDisciplinasDaTurma, getAnoLetivoAtivo,
-  type Movimentacao, type Dispensa,
+  getEtapaById, getSubetapaById,
+  getAnoLetivoAtivo, getNomesReferenciaMovimentacoes,
+  type Movimentacao,
 } from '@/lib/actions/matriculas'
+import { labelTipoMovimentacao, variantTipoMovimentacao } from '@/lib/situacoes-matricula'
 
 function formatData(data: string) {
   if (!data) return ''
-  const d = new Date(data + 'T00:00:00')
-  return d.toLocaleDateString('pt-BR')
+  // Aceita DATE (YYYY-MM-DD) e TIMESTAMPTZ (data_registro do banco)
+  const somenteData = data.includes('T') ? data.split('T')[0] : data
+  const [y, m, day] = somenteData.split('-')
+  if (!y || !m || !day) return data
+  return `${day}/${m}/${y}`
+}
+
+function hojeLocalIso() {
+  const agora = new Date()
+  return `${agora.getFullYear()}-${String(agora.getMonth() + 1).padStart(2, '0')}-${String(agora.getDate()).padStart(2, '0')}`
+}
+
+// Campo de data padrão do sistema (Popover + Calendar): abre clicando em
+// qualquer ponto do campo e bloqueia datas posteriores a hoje.
+function CampoDataMovimentacao({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+  const selecionada = (() => {
+    if (!value) return undefined
+    const [y, m, d] = value.split('T')[0].split('-').map(Number)
+    if (!y || !m || !d) return undefined
+    return new Date(y, m - 1, d)
+  })()
+  return (
+    <Popover>
+      <PopoverTrigger asChild>
+        <Button
+          variant="outline"
+          className={cn(
+            'h-9 w-full justify-start text-left font-normal border-border',
+            !selecionada && 'text-muted-foreground'
+          )}
+        >
+          <CalendarIcon className="mr-2 h-4 w-4 shrink-0" />
+          {selecionada ? format(selecionada, 'dd/MM/yyyy') : 'Selecione a data'}
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent className="w-auto p-0" align="start">
+        <Calendar
+          mode="single"
+          selected={selecionada}
+          onSelect={(d) => onChange(d ? format(d, 'yyyy-MM-dd') : '')}
+          disabled={{ after: new Date() }}
+          captionLayout="dropdown"
+          locale={ptBR}
+        />
+      </PopoverContent>
+    </Popover>
+  )
 }
 
 function toDateInput(data: string) {
   if (!data) return ''
   return data.substring(0, 10)
 }
-
-const veiculosRodoviarios = ['Bicicleta', 'Microônibus', 'Ônibus', 'Tração animal', 'Vans/Kombis', 'Outro']
-const veiculosAquaviarios = ['Capacidade de até 5 alunos', 'Capacidade entre 5 a 15 alunos', 'Capacidade entre 15 a 35 alunos', 'Capacidade acima de 35 alunos']
 
 const motivosDesistencia = [
   'Ingresso no trabalho', 'Falta de recursos', 'Condições de saúde',
@@ -69,7 +118,6 @@ export default function MatriculaCadastroContent({ searchParams }: { searchParam
   const [turmas, setTurmas] = useState<any[]>([])
   const [etapasDisponiveis, setEtapasDisponiveis] = useState<any[]>([])
   const [subetapasDisponiveis, setSubetapasDisponiveis] = useState<any[]>([])
-  const [disciplinasTurma, setDisciplinasTurma] = useState<any[]>([])
 
   // Form principal
   const [form, setForm] = useState({
@@ -82,8 +130,6 @@ export default function MatriculaCadastroContent({ searchParams }: { searchParam
     escolarizacao_externa: 'Não recebe escolarização fora da escola',
     observacoes: '',
     transporte_responsavel: '1',
-    transporte_veiculo_rodoviario: '',
-    transporte_veiculo_aquaviario: '',
     // INEP Registro 60
     turma_multi: '',
     carga_horaria_iftp: '',
@@ -96,14 +142,10 @@ export default function MatriculaCadastroContent({ searchParams }: { searchParam
     veiculo_aqua_5: false, veiculo_aqua_15: false, veiculo_aqua_35: false, veiculo_aqua_mais: false,
   })
 
-  // Dispensas
-  const [dispensas, setDispensas] = useState<Dispensa[]>([])
-  const [novaDispensaDisciplina, setNovaDispensaDisciplina] = useState('')
-  const [novaDispensaMotivo, setNovaDispensaMotivo] = useState('')
-
   // Movimentações (estado pendente)
   const [movimentacoes, setMovimentacoes] = useState<any[]>([])
   const [movSalvas, setMovSalvas] = useState(false)
+  const [nomesMov, setNomesMov] = useState<{ etapas: Record<string, string>; turmas: Record<string, string> }>({ etapas: {}, turmas: {} })
 
   // Modais de movimentação
   const [modalTransferencia, setModalTransferencia] = useState(false)
@@ -131,6 +173,21 @@ export default function MatriculaCadastroContent({ searchParams }: { searchParam
 
   // Matrícula carregada (edição)
   const [matricula, setMatricula] = useState<any>(null)
+
+  // Exclusão do vínculo (apenas edição)
+  const [deleteOpen, setDeleteOpen] = useState(false)
+  const podeExcluirMatricula = pode.excluir('gestao-academica.matriculas')
+
+  const handleDeleteMatricula = async () => {
+    if (!editId) return
+    try {
+      await deleteMatricula(editId, pessoaId || '')
+      toast.success('Vínculo excluído')
+      router.push('/gestao-academica/matriculas')
+    } catch (e: any) {
+      toast.error(e.message || 'Erro ao excluir vínculo')
+    }
+  }
 
   const resetMovForm = () => {
     setMovForm({ data_movimentacao: '', nova_etapa_id: '', nova_turma_id: '', turma_destino_id: '', motivo_desistencia: '', observacoes: '' })
@@ -186,8 +243,6 @@ export default function MatriculaCadastroContent({ searchParams }: { searchParam
         escolarizacao_externa: m.escolarizacao_externa || 'Não recebe escolarização fora da escola',
         observacoes: m.observacoes || '',
         transporte_responsavel: m.transporte_responsavel || '1',
-        transporte_veiculo_rodoviario: m.transporte_veiculos?.rodoviario || '',
-        transporte_veiculo_aquaviario: m.transporte_veiculos?.aquaviario || '',
         turma_multi: (m as any).turma_multi || '',
         carga_horaria_iftp: (m as any).carga_horaria_iftp || '',
         aee_funcao_cognitiva: !!(m as any).aee_funcao_cognitiva, aee_vida_autonoma: !!(m as any).aee_vida_autonoma,
@@ -214,24 +269,37 @@ export default function MatriculaCadastroContent({ searchParams }: { searchParam
         }, ...prev]
       })
 
-      const [movs, disps, etapas] = await Promise.all([
+      const [movs, etapas] = await Promise.all([
         getMovimentacoes(id),
-        getDispensas(id),
         getEtapasDaTurma(m.turma_id),
       ])
       setMovimentacoes(movs)
       setMovSalvas(movs.length > 0)
-      setDispensas(disps)
       setEtapasDisponiveis(etapas)
+
+      // Garante que a etapa gravada apareça no Select mesmo se estiver fora
+      // da lista filtrada (turma sem a etapa, etapa inativada etc.)
+      if (m.etapa_ensino_id && !etapas.some((e: any) => e.id === m.etapa_ensino_id)) {
+        const extra = await getEtapaById(m.etapa_ensino_id)
+        if (extra) setEtapasDisponiveis(prev => (prev.some((e: any) => e.id === extra.id) ? prev : [...prev, extra]))
+      }
+
+      // Resolve nomes de etapas/turmas destino das movimentações (batch)
+      const etapaIds = movs.flatMap((x: any) => [x.dados_complementares?.nova_etapa_id]).filter(Boolean)
+      const turmaIds = movs.flatMap((x: any) => [x.dados_complementares?.nova_turma_id, x.dados_complementares?.turma_destino_id]).filter(Boolean)
+      if (etapaIds.length > 0 || turmaIds.length > 0) {
+        getNomesReferenciaMovimentacoes(etapaIds, turmaIds).then(setNomesMov).catch(() => {})
+      }
 
       if (m.subetapa_id) {
         const subs = await getSubetapasDaEtapa(m.etapa_ensino_id)
         setSubetapasDisponiveis(subs)
-      }
-
-      if (m.turma_id) {
-        const discs = await getDisciplinasDaTurma(m.turma_id)
-        setDisciplinasTurma(discs)
+        // Garante que a subetapa gravada apareça no Select mesmo se estiver
+        // fora da lista filtrada
+        if (!subs.some((s: any) => s.id === m.subetapa_id)) {
+          const extraSub = await getSubetapaById(m.subetapa_id)
+          if (extraSub) setSubetapasDisponiveis(prev => (prev.some((s: any) => s.id === extraSub.id) ? prev : [...prev, extraSub]))
+        }
       }
     } catch (e) {
       console.error('Erro ao carregar matrícula:', e)
@@ -246,12 +314,8 @@ export default function MatriculaCadastroContent({ searchParams }: { searchParam
 
     if (!turmaId) return
 
-    const [etapas, discs] = await Promise.all([
-      getEtapasDaTurma(turmaId),
-      getDisciplinasDaTurma(turmaId),
-    ])
+    const etapas = await getEtapasDaTurma(turmaId)
     setEtapasDisponiveis(etapas)
-    setDisciplinasTurma(discs)
 
     // Auto-select etapa if single
     if (etapas.length === 1) {
@@ -270,52 +334,6 @@ export default function MatriculaCadastroContent({ searchParams }: { searchParam
     setSubetapasDisponiveis(subs)
   }
 
-  // Adicionar/remover dispensa (apenas visual, persistido ao salvar)
-  const handleAdicionarDispensa = async () => {
-    if (!novaDispensaDisciplina || !novaDispensaMotivo.trim()) {
-      toast.error('Selecione a disciplina e informe o motivo')
-      return
-    }
-    if (!editId) {
-      // Em criação, manter em estado local
-      setDispensas(prev => [...prev, {
-        id: `temp_${Date.now()}`,
-        matricula_id: '',
-        disciplina_id: novaDispensaDisciplina,
-        motivo: novaDispensaMotivo,
-        ativo: true,
-        created_at: '',
-        disciplina: { nome: disciplinasTurma.find(d => d.disciplina_id === novaDispensaDisciplina)?.nome || '' },
-      } as any])
-      setNovaDispensaDisciplina('')
-      setNovaDispensaMotivo('')
-      return
-    }
-    try {
-      const disp = await adicionarDispensa(editId, novaDispensaDisciplina, novaDispensaMotivo, pessoaId)
-      setDispensas(prev => [...prev, { ...disp, disciplina: { nome: disciplinasTurma.find(d => d.disciplina_id === novaDispensaDisciplina)?.nome || '' } }])
-      setNovaDispensaDisciplina('')
-      setNovaDispensaMotivo('')
-      toast.success('Dispensa adicionada')
-    } catch (e: any) {
-      toast.error(e.message || 'Erro ao adicionar dispensa')
-    }
-  }
-
-  const handleRemoverDispensa = async (id: string) => {
-    if (id.startsWith('temp_')) {
-      setDispensas(prev => prev.filter(d => d.id !== id))
-      return
-    }
-    try {
-      await removerDispensa(id, pessoaId)
-      setDispensas(prev => prev.filter(d => d.id !== id))
-      toast.success('Dispensa removida')
-    } catch (e: any) {
-      toast.error(e.message || 'Erro ao remover dispensa')
-    }
-  }
-
   // Modais de movimentação
   const abrirModalTransferencia = (mov?: any) => {
     if (mov) { setEditMovId(mov.id); setMovForm({ ...movForm, data_movimentacao: toDateInput(mov.data_movimentacao), observacoes: mov.observacoes || '' }) }
@@ -325,6 +343,7 @@ export default function MatriculaCadastroContent({ searchParams }: { searchParam
 
   const confirmarTransferencia = () => {
     if (!movForm.data_movimentacao) { toast.error('Data de transferência obrigatória'); return }
+    if (movForm.data_movimentacao > hojeLocalIso()) { toast.error('A data não pode ser posterior a hoje'); return }
     const mov = {
       id: editMovId || undefined,
       tipo: 'Transferencia' as const,
@@ -381,6 +400,7 @@ export default function MatriculaCadastroContent({ searchParams }: { searchParam
 
   const confirmarReclassificacao = () => {
     if (!movForm.data_movimentacao) { toast.error('Data de reclassificação obrigatória'); return }
+    if (movForm.data_movimentacao > hojeLocalIso()) { toast.error('A data não pode ser posterior a hoje'); return }
     if (!movForm.nova_etapa_id) { toast.error('Selecione a nova etapa'); return }
     if (!movForm.nova_turma_id) { toast.error('Selecione a nova turma'); return }
     const mov = {
@@ -425,6 +445,7 @@ export default function MatriculaCadastroContent({ searchParams }: { searchParam
 
   const confirmarRemanejamento = () => {
     if (!movForm.data_movimentacao) { toast.error('Data de remanejamento obrigatória'); return }
+    if (movForm.data_movimentacao > hojeLocalIso()) { toast.error('A data não pode ser posterior a hoje'); return }
     if (!movForm.turma_destino_id) { toast.error('Selecione a turma de destino'); return }
     const mov = {
       id: editMovId || undefined,
@@ -451,6 +472,7 @@ export default function MatriculaCadastroContent({ searchParams }: { searchParam
 
   const confirmarDesistencia = () => {
     if (!movForm.data_movimentacao) { toast.error('Data de desistência obrigatória'); return }
+    if (movForm.data_movimentacao > hojeLocalIso()) { toast.error('A data não pode ser posterior a hoje'); return }
     if (!movForm.motivo_desistencia) { toast.error('Selecione o motivo'); return }
     const mov = {
       id: editMovId || undefined,
@@ -543,13 +565,6 @@ export default function MatriculaCadastroContent({ searchParams }: { searchParam
           ...newFields,
         }, pessoaId)
 
-        // Salvar dispensas (se houver)
-        for (const d of dispensas) {
-          if (d.id.startsWith('temp_')) {
-            await adicionarDispensa((nova as any).id, d.disciplina_id, d.motivo, pessoaId)
-          }
-        }
-
         // Salvar movimentações (se houver)
         if (movimentacoes.length > 0) {
           await salvarMovimentacoes(
@@ -591,24 +606,49 @@ export default function MatriculaCadastroContent({ searchParams }: { searchParam
         title={isEditing ? 'Editar Matrícula' : 'Nova Matrícula'}
         description={isEditing ? 'Edite os dados da matrícula do aluno' : 'Registre um novo aluno na turma'}
         actions={
-          <Link href="/gestao-academica/matriculas">
-            <Button variant="outline" size="sm">
-              <ArrowLeft className="mr-2 h-4 w-4" />
-              Voltar
-            </Button>
-          </Link>
+          <div className="flex items-center gap-2">
+            {isEditing && podeExcluirMatricula && (
+              <Button variant="destructive" size="sm" onClick={() => setDeleteOpen(true)}>
+                <Trash2 className="mr-2 h-4 w-4" />
+                Excluir
+              </Button>
+            )}
+            <Link href="/gestao-academica/matriculas">
+              <Button variant="outline" size="sm">
+                <ArrowLeft className="mr-2 h-4 w-4" />
+                Voltar
+              </Button>
+            </Link>
+          </div>
         }
       />
+      <ConfirmDialog
+        open={deleteOpen}
+        onOpenChange={setDeleteOpen}
+        title="Excluir vínculo acadêmico"
+        description="Tem certeza que deseja excluir este vínculo permanentemente? A movimentação vinculada também será excluída."
+        confirmLabel="Excluir"
+        variant="destructive"
+        onConfirm={handleDeleteMatricula}
+      />
 
-      <div className="space-y-6 pb-20">
+      <div className="space-y-6">
         {/* Dados da Matrícula */}
         <FormCard title="Dados da Matrícula">
-          <div className="grid grid-cols-3 gap-4">
-            <div>
+          <div className="flex flex-wrap gap-4">
+            <div className="w-36">
+              <Label className="text-xs text-muted-foreground mb-1 block">Código de Matrícula</Label>
+              <Input
+                value={isEditing ? (matricula?.codigo_matricula ?? '—') : 'Gerado ao salvar'}
+                disabled
+                className="h-9 border-border bg-muted font-mono tabular-nums"
+              />
+            </div>
+            <div className="w-44">
               <Label className="text-xs text-muted-foreground mb-1 block">Ano Letivo</Label>
               <Input value={anoLetivo?.descricao || '—'} disabled className="h-9 border-border bg-muted" />
             </div>
-            <div className="col-span-2">
+            <div className="flex-1 min-w-[220px]">
               <Label className="text-xs text-muted-foreground mb-1 block">Aluno <span className="text-destructive">*</span></Label>
               <Select value={form.aluno_id} onValueChange={v => setForm(p => ({ ...p, aluno_id: v }))} disabled={isEditing}>
                 <SelectTrigger className="h-9 border-border">
@@ -623,12 +663,11 @@ export default function MatriculaCadastroContent({ searchParams }: { searchParam
             </div>
           </div>
 
-          <div className="grid grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div>
               <Label className="text-xs text-muted-foreground mb-1 block">Data de Matrícula <span className="text-destructive">*</span></Label>
-              <Input type="date" value={form.data_matricula}
-                onChange={e => setForm(p => ({ ...p, data_matricula: e.target.value }))}
-                className="h-9 border-border" />
+              <CampoDataMovimentacao value={form.data_matricula}
+                onChange={v => setForm(p => ({ ...p, data_matricula: v }))} />
             </div>
             <div>
               <Label className="text-xs text-muted-foreground mb-1 block">Código INEP</Label>
@@ -649,7 +688,7 @@ export default function MatriculaCadastroContent({ searchParams }: { searchParam
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <Label className="text-xs text-muted-foreground mb-1 block">Etapa de Ensino <span className="text-destructive">*</span></Label>
               <Select value={form.etapa_ensino_id} onValueChange={handleEtapaChange}
@@ -680,7 +719,7 @@ export default function MatriculaCadastroContent({ searchParams }: { searchParam
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <Label className="text-xs text-muted-foreground mb-1 block">Forma de Ingresso <span className="text-destructive">*</span></Label>
               <Select value={form.forma_ingresso} onValueChange={v => setForm(p => ({ ...p, forma_ingresso: v }))}>
@@ -722,41 +761,59 @@ export default function MatriculaCadastroContent({ searchParams }: { searchParam
 
         {/* Transporte Escolar */}
         <FormCard title="Transporte Escolar" description="Configurações de transporte escolar do aluno">
-          <div className="w-72">
+          <div>
             <Label className="text-xs text-muted-foreground mb-1 block">Poder público responsável</Label>
-            <Select value={form.transporte_responsavel} onValueChange={v => setForm(p => ({ ...p, transporte_responsavel: v }))}>
-              <SelectTrigger className="h-9 border-border">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="1">Não utiliza</SelectItem>
-                <SelectItem value="2">Municipal</SelectItem>
-                <SelectItem value="3">Estadual</SelectItem>
-              </SelectContent>
-            </Select>
+            <div className="flex flex-wrap gap-2 mt-1" role="group" aria-label="Poder público responsável">
+              {[
+                { value: '1', label: 'Nenhum' },
+                { value: '2', label: 'Municipal' },
+                { value: '3', label: 'Estadual' },
+              ].map(op => (
+                <ClickablePill
+                  key={op.value}
+                  label={op.label}
+                  active={form.transporte_responsavel === op.value}
+                  onClick={() => setForm(p => ({ ...p, transporte_responsavel: op.value }))}
+                />
+              ))}
+            </div>
           </div>
 
           {['2', '3'].includes(form.transporte_responsavel) && (
             <div className="border border-border rounded-md p-3 bg-muted/30 space-y-3">
-              <p className="text-xs font-medium text-foreground">Veículos utilizados no transporte escolar</p>
-              <div className="grid grid-cols-2 gap-x-4 gap-y-1.5">
-                {[
-                  ['veiculo_bicicleta', 'Bicicleta'], ['veiculo_microonibus', 'Microônibus'],
-                  ['veiculo_onibus', 'Ônibus'], ['veiculo_tracao', 'Tração animal'],
-                  ['veiculo_vans', 'Vans/Kombis'], ['veiculo_outro', 'Outro rodoviário'],
-                  ['veiculo_aqua_5', 'Aquaviário até 5 alunos'], ['veiculo_aqua_15', 'Aquaviário 5-15 alunos'],
-                  ['veiculo_aqua_35', 'Aquaviário 15-35 alunos'], ['veiculo_aqua_mais', 'Aquaviário acima de 35'],
-                ].map(([key, label]) => (
-                  <div key={key} className="flex items-center gap-2">
-                    <Checkbox
-                      checked={(form as any)[key] || false}
-                      onCheckedChange={(v) => setForm(p => ({ ...p, [key]: !!v }))}
-                      id={`v-${key}`}
-                      className="data-[state=checked]:bg-primary border-border"
+              <p className="text-xs font-medium text-foreground">Veículos Utilizados no Transporte Escolar</p>
+              <div>
+                <p className="text-[11px] font-medium text-muted-foreground mb-1.5">Rodoviários</p>
+                <div className="flex flex-wrap gap-2">
+                  {[
+                    ['veiculo_bicicleta', 'Bicicleta'], ['veiculo_microonibus', 'Micro-ônibus'],
+                    ['veiculo_onibus', 'Ônibus'], ['veiculo_tracao', 'Tração Animal'],
+                    ['veiculo_vans', 'Vans/Kombis'], ['veiculo_outro', 'Outro Rodoviário'],
+                  ].map(([key, label]) => (
+                    <ClickablePill
+                      key={key}
+                      label={label}
+                      active={!!(form as any)[key]}
+                      onClick={() => setForm(p => ({ ...p, [key]: !(p as any)[key] }))}
                     />
-                    <Label htmlFor={`v-${key}`} className="text-xs cursor-pointer">{label}</Label>
-                  </div>
-                ))}
+                  ))}
+                </div>
+              </div>
+              <div>
+                <p className="text-[11px] font-medium text-muted-foreground mb-1.5">Aquaviários</p>
+                <div className="flex flex-wrap gap-2">
+                  {[
+                    ['veiculo_aqua_5', 'Até 5 alunos'], ['veiculo_aqua_15', '5 a 15 alunos'],
+                    ['veiculo_aqua_35', '15 a 35 alunos'], ['veiculo_aqua_mais', 'Acima de 35 alunos'],
+                  ].map(([key, label]) => (
+                    <ClickablePill
+                      key={key}
+                      label={label}
+                      active={!!(form as any)[key]}
+                      onClick={() => setForm(p => ({ ...p, [key]: !(p as any)[key] }))}
+                    />
+                  ))}
+                </div>
               </div>
             </div>
           )}
@@ -765,7 +822,7 @@ export default function MatriculaCadastroContent({ searchParams }: { searchParam
         {/* AEE - apenas se turma for AEE */}
         {turmas.find((t: any) => t.id === form.turma_id)?.tipos_turma?.some((t: string) => t.toLowerCase().includes('aee')) && (
         <FormCard title="AEE — Atendimento Educacional Especializado" description="Campos do Censo INEP para Atendimento Educacional Especializado">
-          <div className="grid grid-cols-2 gap-x-4 gap-y-1.5">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-1.5">
             {[
               ['aee_funcao_cognitiva', 'Desenvolvimento de funções cognitivas'],
               ['aee_vida_autonoma', 'Desenvolvimento de vida autônoma'],
@@ -794,70 +851,6 @@ export default function MatriculaCadastroContent({ searchParams }: { searchParam
         )}
 
         {/* INEP Registro 60 */}
-        {/* Disciplinas */}
-        <FormCard title="Dispensa de Disciplinas">
-          {disciplinasTurma.length === 0 ? (
-            <p className="text-xs text-muted-foreground italic">Selecione uma turma para visualizar as disciplinas</p>
-          ) : (
-            <div className="flex flex-wrap gap-2">
-              {disciplinasTurma.map((d: any) => (
-                <Badge key={d.disciplina_id} variant="outline" className="text-xs border-border">
-                  {d.nome}
-                </Badge>
-              ))}
-            </div>
-          )}
-
-          <Separator />
-
-          {/* Dispensa de Disciplinas */}
-          <div>
-            <Label className="text-xs text-muted-foreground mb-2 block">Dispensa de Disciplinas</Label>
-
-            {dispensas.length > 0 && (
-              <div className="space-y-1.5 mb-3">
-                {dispensas.map(d => (
-                  <div key={d.id} className="flex items-center justify-between bg-warning/5 border border-warning/20 rounded px-2.5 py-1.5">
-                    <div>
-                      <span className="text-xs font-medium text-warning">{d.disciplina?.nome || '—'}</span>
-                      <p className="text-[11px] text-warning">{d.motivo}</p>
-                    </div>
-                    <Button variant="ghost" size="icon" className="h-5 w-5" onClick={() => handleRemoverDispensa(d.id)}>
-                      <X className="h-3 w-3 text-warning" />
-                    </Button>
-                  </div>
-                ))}
-              </div>
-            )}
-
-            <div className="flex items-end gap-2">
-              <div className="flex-1">
-                <Label className="text-[11px] text-muted-foreground mb-0.5 block">Disciplina</Label>
-                <Select value={novaDispensaDisciplina} onValueChange={setNovaDispensaDisciplina}>
-                  <SelectTrigger className="h-8 border-border text-xs">
-                    <SelectValue placeholder="Selecione" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {disciplinasTurma.map((d: any) => (
-                      <SelectItem key={d.disciplina_id} value={d.disciplina_id}>{d.nome}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="flex-[2]">
-                <Label className="text-[11px] text-muted-foreground mb-0.5 block">Motivo</Label>
-                <Input className="h-10 border-border text-xs" placeholder="Descreva o motivo..."
-                  value={novaDispensaMotivo} onChange={e => setNovaDispensaMotivo(e.target.value)} />
-              </div>
-              <Button variant="outline" size="sm" className="h-8 border-border text-xs"
-                onClick={handleAdicionarDispensa}>
-                <Plus className="h-3 w-3" />
-                Adicionar
-              </Button>
-            </div>
-          </div>
-        </FormCard>
-
         {/* Movimentações (apenas edição) */}
         {isEditing && (
           <FormCard title="Movimentações">
@@ -889,24 +882,58 @@ export default function MatriculaCadastroContent({ searchParams }: { searchParam
                 <Label className="text-xs text-muted-foreground mb-2 block">Histórico de Movimentações</Label>
                 <div className="space-y-2">
                   {movimentacoes.map((mov: any) => (
-                    <div key={mov.id} className="border border-border rounded-md p-2.5 bg-card">
-                      <div className="flex items-start justify-between">
-                        <div>
-                          <div className="flex items-center gap-2">
-                            <Badge variant="outline" className="text-[10px] px-1.5 py-0">
-                              {mov.tipo}
-                            </Badge>
-                            <span className="text-xs text-muted-foreground">{formatData(mov.data_movimentacao)}</span>
+                    <div key={mov.id} className="border border-border rounded-lg p-3 bg-card">
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="flex-1 min-w-0">
+                          <StatusBadge status={variantTipoMovimentacao(mov.tipo)}>{labelTipoMovimentacao(mov.tipo)}</StatusBadge>
+                          <div className="flex flex-wrap gap-x-4 gap-y-0.5 mt-1.5">
+                            <p className="text-[13px]">
+                              <span className="text-muted-foreground">Data efetiva: </span>
+                              <span className="font-medium text-foreground">{formatData(mov.data_movimentacao)}</span>
+                            </p>
+                            <p className="text-[13px]">
+                              <span className="text-muted-foreground">Registrada em: </span>
+                              <span className="font-medium text-foreground">{mov.data_registro ? formatData(mov.data_registro) : '—'}</span>
+                            </p>
                           </div>
-                          <p className="text-[11px] text-muted-foreground mt-1">
-                            {mov.profissional?.nome_completo || '—'} • {mov.data_registro ? formatData(mov.data_registro) : ''}
+                          <p className="text-[13px] text-muted-foreground mt-0.5">
+                            {mov.profissional?.nome_completo || '—'}
                           </p>
-                          {mov.observacoes && (
-                            <p className="text-[11px] text-muted-foreground mt-0.5 italic">{mov.observacoes}</p>
-                          )}
+                          <div className="mt-1.5 space-y-0.5">
+                            {mov.tipo === 'Reclassificacao' && (
+                              <>
+                                <p className="text-[13px]">
+                                  <span className="text-muted-foreground">Nova Etapa: </span>
+                                  <span className="font-medium text-foreground">{nomesMov.etapas[mov.dados_complementares?.nova_etapa_id] || '—'}</span>
+                                </p>
+                                <p className="text-[13px]">
+                                  <span className="text-muted-foreground">Nova Turma: </span>
+                                  <span className="font-medium text-foreground">{nomesMov.turmas[mov.dados_complementares?.nova_turma_id] || '—'}</span>
+                                </p>
+                              </>
+                            )}
+                            {mov.tipo === 'Remanejamento' && (
+                              <p className="text-[13px]">
+                                <span className="text-muted-foreground">Turma de Destino: </span>
+                                <span className="font-medium text-foreground">{nomesMov.turmas[mov.dados_complementares?.turma_destino_id] || '—'}</span>
+                              </p>
+                            )}
+                            {mov.tipo === 'Desistencia' && mov.dados_complementares?.motivo_desistencia && (
+                              <p className="text-[13px]">
+                                <span className="text-muted-foreground">Motivo: </span>
+                                <span className="font-medium text-foreground">{mov.dados_complementares.motivo_desistencia}</span>
+                              </p>
+                            )}
+                            {mov.observacoes && (
+                              <p className="text-[13px]">
+                                <span className="text-muted-foreground">Observações: </span>
+                                <span className="text-foreground italic">{mov.observacoes}</span>
+                              </p>
+                            )}
+                          </div>
                         </div>
                         {!movSalvas && podeMovimentar && (
-                          <div className="flex items-center gap-1">
+                          <div className="flex items-center gap-1 shrink-0">
                             <Button variant="ghost" size="icon" className="h-6 w-6"
                               onClick={() => {
                                 if (mov.tipo === 'Transferencia') abrirModalTransferencia(mov)
@@ -932,10 +959,14 @@ export default function MatriculaCadastroContent({ searchParams }: { searchParam
         )}
       </div>
 
-      {/* Botão Salvar fixo */}
-      <div className="fixed bottom-6 right-6 z-10">
-        <Button onClick={handleSave} disabled={saving} size="lg" className="rounded-full shadow-lg">
-          <Save className="h-4 w-4" />
+      {/* Rodapé padrão: Cancelar + Salvar */}
+      <div className="sticky bottom-0 z-10 -mx-4 px-4 py-3 bg-background/95 backdrop-blur border-t border-border flex justify-end gap-3">
+        <Button variant="outline" size="lg" className="h-11 min-w-[120px]" onClick={() => router.push('/gestao-academica/matriculas')} disabled={saving}>
+          <X className="h-4 w-4 mr-1.5" />
+          Cancelar
+        </Button>
+        <Button size="lg" className="h-11 min-w-[140px] shadow-md" onClick={handleSave} disabled={saving}>
+          <Save className="h-4 w-4 mr-1.5" />
           {saving ? 'Salvando...' : 'Salvar'}
         </Button>
       </div>
@@ -949,8 +980,8 @@ export default function MatriculaCadastroContent({ searchParams }: { searchParam
           <div className="space-y-3">
             <div>
               <Label className="text-xs text-muted-foreground mb-1 block">Data de Transferência <span className="text-destructive">*</span></Label>
-              <Input type="date" className="h-9 border-border" value={movForm.data_movimentacao}
-                onChange={e => setMovForm(p => ({ ...p, data_movimentacao: e.target.value }))} />
+              <CampoDataMovimentacao value={movForm.data_movimentacao}
+                onChange={v => setMovForm(p => ({ ...p, data_movimentacao: v }))} />
             </div>
             <div>
               <Label className="text-xs text-muted-foreground mb-1 block">Observações</Label>
@@ -976,8 +1007,8 @@ export default function MatriculaCadastroContent({ searchParams }: { searchParam
           <div className="space-y-3">
             <div>
               <Label className="text-xs text-muted-foreground mb-1 block">Data de Reclassificação <span className="text-destructive">*</span></Label>
-              <Input type="date" className="h-9 border-border" value={movForm.data_movimentacao}
-                onChange={e => setMovForm(p => ({ ...p, data_movimentacao: e.target.value }))} />
+              <CampoDataMovimentacao value={movForm.data_movimentacao}
+                onChange={v => setMovForm(p => ({ ...p, data_movimentacao: v }))} />
             </div>
             <div>
               <Label className="text-xs text-muted-foreground mb-1 block">Nova Etapa de Ensino <span className="text-destructive">*</span></Label>
@@ -1029,8 +1060,8 @@ export default function MatriculaCadastroContent({ searchParams }: { searchParam
           <div className="space-y-3">
             <div>
               <Label className="text-xs text-muted-foreground mb-1 block">Data de Remanejamento <span className="text-destructive">*</span></Label>
-              <Input type="date" className="h-9 border-border" value={movForm.data_movimentacao}
-                onChange={e => setMovForm(p => ({ ...p, data_movimentacao: e.target.value }))} />
+              <CampoDataMovimentacao value={movForm.data_movimentacao}
+                onChange={v => setMovForm(p => ({ ...p, data_movimentacao: v }))} />
             </div>
             <div>
               <Label className="text-xs text-muted-foreground mb-1 block">Turma de Destino <span className="text-destructive">*</span></Label>
@@ -1069,8 +1100,8 @@ export default function MatriculaCadastroContent({ searchParams }: { searchParam
           <div className="space-y-3">
             <div>
               <Label className="text-xs text-muted-foreground mb-1 block">Data de Desistência <span className="text-destructive">*</span></Label>
-              <Input type="date" className="h-9 border-border" value={movForm.data_movimentacao}
-                onChange={e => setMovForm(p => ({ ...p, data_movimentacao: e.target.value }))} />
+              <CampoDataMovimentacao value={movForm.data_movimentacao}
+                onChange={v => setMovForm(p => ({ ...p, data_movimentacao: v }))} />
             </div>
             <div>
               <Label className="text-xs text-muted-foreground mb-1 block">Motivo <span className="text-destructive">*</span></Label>

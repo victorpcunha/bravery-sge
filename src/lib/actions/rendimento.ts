@@ -198,7 +198,7 @@ type TurmaCtx = {
   faixaPp: number
   mediaMaxima: number
   config: ConfigNumericaCompleta
-  disciplinas: { id: string; disciplinaId: string; nome: string }[]
+  disciplinas: { id: string; disciplinaId: string; nome: string; naoReprovaNota: boolean; naoReprovaFreq: boolean }[]
   periodos: PeriodoOpcao[]
 }
 
@@ -327,15 +327,17 @@ async function carregarTurmasCtx(schoolId: string, anoLetivoId: string): Promise
 
   // Disciplinas por turma (query pattern canônica)
   const turmaIds = turmas.map(t => t.id)
-  const discPorTurma = new Map<string, { id: string; disciplinaId: string; nome: string }[]>()
+  const discPorTurma = new Map<string, { id: string; disciplinaId: string; nome: string; naoReprovaNota: boolean; naoReprovaFreq: boolean }[]>()
   for (const grupo of chunk(turmaIds)) {
     const { data: relacoes } = await supabase
       .from('turmas_disciplinas')
-      .select('turma_id, matriz_disciplina_id, academico_matriz_disciplinas(disciplina_id, academico_disciplinas(nome))')
+      .select('turma_id, matriz_disciplina_id, academico_matriz_disciplinas(disciplina_id, nao_reprova_nota, nao_reprova_frequencia, academico_disciplinas(nome))')
       .in('turma_id', grupo)
     for (const r of relacoes || []) {
       const md = r.academico_matriz_disciplinas as unknown as {
         disciplina_id: string
+        nao_reprova_nota?: boolean | null
+        nao_reprova_frequencia?: boolean | null
         academico_disciplinas: { nome: string } | null
       } | null
       if (!md) continue
@@ -345,6 +347,8 @@ async function carregarTurmasCtx(schoolId: string, anoLetivoId: string): Promise
           id: r.matriz_disciplina_id as string,
           disciplinaId: (md.disciplina_id as string) || (r.matriz_disciplina_id as string),
           nome: md.academico_disciplinas?.nome || 'Disciplina',
+          naoReprovaNota: md.nao_reprova_nota === true,
+          naoReprovaFreq: md.nao_reprova_frequencia === true,
         })
       }
       discPorTurma.set(r.turma_id as string, lista)
@@ -542,7 +546,7 @@ export type LinhaAluno = {
   turmaId: string
   alunoId: string
   nome: string
-  porDisciplina: { id: string; disciplinaId: string; nome: string; medias: (number | null)[]; anual: number | null }[]
+  porDisciplina: { id: string; disciplinaId: string; nome: string; naoReprovaNota: boolean; naoReprovaFreq: boolean; medias: (number | null)[]; anual: number | null }[]
   mediasOrdinal: (number | null)[] // média do aluno por ordinal (média das disciplinas com nota)
   freqOrdinal: (number | null)[] // frequência do aluno por ordinal (janela matrícula ∩ período)
   avaliadoOrdinal: boolean[] // ≥1 nota no ordinal
@@ -605,6 +609,8 @@ function computarLinhas(
     const ativos = bulk.horariosAtivos.get(t.id) || new Set<string>()
 
     const matriculasTurma = [...matPorChave.values()].filter(m => m.turma_id === t.id)
+    // spec 032: pills "Não reprova" saem dos agregados (por disciplina continua exibido)
+    const ignorarFreq = new Set(t.disciplinas.filter(d => d.naoReprovaFreq).map(d => d.id))
     for (const m of matriculasTurma) {
       const porDisciplina = t.disciplinas.map(d => {
         const notasDisc = notas.filter(n => n.aluno_id === m.aluno_id && n.disciplina_id === d.id)
@@ -613,11 +619,12 @@ function computarLinhas(
           .filter(c => c.aluno_id === m.aluno_id && c.matriz_disciplina_id === d.id)
           .map(c => ({ periodo: c.periodo, nota_conselho: c.nota_conselho === null ? null : Number(c.nota_conselho) }))
         const { medias } = computarMediasPeriodo(notasDisc, recsDisc, consDisc, t.config, t.qtd)
-        return { id: d.id, disciplinaId: d.disciplinaId, nome: d.nome, medias, anual: computarMediaAnual(medias, t.config) }
+        return { id: d.id, disciplinaId: d.disciplinaId, nome: d.nome, naoReprovaNota: d.naoReprovaNota, naoReprovaFreq: d.naoReprovaFreq, medias, anual: computarMediaAnual(medias, t.config) }
       })
+      const comNota = porDisciplina.filter(d => !d.naoReprovaNota)
 
       const mediasOrdinal: (number | null)[] = Array.from({ length: t.qtd }, (_, i) =>
-        mediaLista(porDisciplina.map(d => d.medias[i] ?? null))
+        mediaLista(comNota.map(d => d.medias[i] ?? null))
       )
       const avaliadoOrdinal: boolean[] = Array.from({ length: t.qtd }, (_, i) =>
         porDisciplina.some(d => (d.medias[i] ?? null) !== null)
@@ -638,6 +645,7 @@ function computarLinhas(
         } else {
           for (const f of aulasAluno) {
             if (!f.status || !ativos.has(f.horario_id as string)) continue
+            if (ignorarFreq.has(f.disciplina_id as string)) continue
             if (!dentroJanela(f.data_aula, ini, fim)) continue
             total++
             if (f.status === 'P' || f.status === 'FJ') presencas++
@@ -662,7 +670,7 @@ function computarLinhas(
           mediaAnterior = null
         }
       } else {
-        mediaAtual = mediaLista(porDisciplina.map(d => d.anual))
+        mediaAtual = mediaLista(comNota.map(d => d.anual))
         const naoNulos = mediasOrdinal
           .map((v, i) => ({ v, i }))
           .filter(x => x.v !== null)
@@ -671,7 +679,7 @@ function computarLinhas(
 
       const temNota = periodoOrdem !== null
         ? (avaliadoOrdinal[periodoOrdem - 1] ?? false)
-        : porDisciplina.some(d => d.anual !== null)
+        : comNota.some(d => d.anual !== null)
 
       // Frequência do recorte: ordinal selecionado ou ano completo (só janela da matrícula)
       const frequencia = periodoOrdem !== null

@@ -47,6 +47,7 @@ const ETAPA_TIPO_LABELS: Record<string, string> = {
   fundamental_outros: 'Fundamental (Outros)',
   medio: 'Ensino Médio',
   eja: 'EJA',
+  tecnico: 'Curso Técnico e Qualificação Profissional',
 }
 
 function agruparTurmas(turmas: TurmaOpcao[]): Array<{ chave: string; rotulo: string; itens: TurmaOpcao[] }> {

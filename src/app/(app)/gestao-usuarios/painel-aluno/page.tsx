@@ -20,6 +20,7 @@ import { PageHeader } from '@/components/layout/page-header'
 import { PageSection } from '@/components/layout/page-section'
 import { EmptyState } from '@/components/ui/empty-state'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { Label } from '@/components/ui/label'
 import { Button } from '@/components/ui/button'
 import { User, Loader2, Plus } from 'lucide-react'
 import { useRouter } from 'next/navigation'
@@ -27,7 +28,7 @@ import { toast } from 'sonner'
 
 export default function PainelAlunoPage() {
   const router = useRouter()
-  const { user, loading: authLoading, schoolId, isSuperAdmin } = useAuth()
+  const { user, loading: authLoading, schoolId, isSuperAdmin, allSchools } = useAuth()
   const [pessoaSelecionada, setPessoaSelecionada] = useState<PessoaResumida | null>(null)
   const [turmas, setTurmas] = useState<TurmaResumida[]>([])
   const [turmaId, setTurmaId] = useState<string>('')
@@ -35,6 +36,15 @@ export default function PainelAlunoPage() {
   const [situacao, setSituacao] = useState<string | null>(null)
   const [historicoModalOpen, setHistoricoModalOpen] = useState(false)
   const [historicoRefreshKey, setHistoricoRefreshKey] = useState(0)
+  const [escolaFiltro, setEscolaFiltro] = useState('')
+
+  const effectiveSchoolId = isSuperAdmin ? (escolaFiltro || null) : schoolId
+
+  useEffect(() => {
+    if (isSuperAdmin && allSchools.length === 1 && !escolaFiltro) {
+      setEscolaFiltro(allSchools[0].id)
+    }
+  }, [isSuperAdmin, allSchools, escolaFiltro])
 
   const { loaded: permLoaded, pessoaId, pode } = usePermissoes(schoolId || '')
 
@@ -45,11 +55,19 @@ export default function PainelAlunoPage() {
     }
   }, [permLoaded, pode, router])
 
+  const handleSelectEscola = (escolaId: string) => {
+    setEscolaFiltro(escolaId)
+    setPessoaSelecionada(null)
+    setTurmas([])
+    setTurmaId('')
+    setSituacao(null)
+  }
+
   const handleSelectPessoa = async (pessoa: PessoaResumida) => {
     setPessoaSelecionada(pessoa)
     setLoadingTurmas(true)
     try {
-      const data = await getTurmasDaPessoa(pessoa.id, schoolId, pessoaId)
+      const data = await getTurmasDaPessoa(pessoa.id, effectiveSchoolId, pessoaId)
       setTurmas(data)
       if (data.length === 1) {
         setTurmaId(data[0].id)
@@ -93,7 +111,7 @@ export default function PainelAlunoPage() {
     return null
   }
 
-  const canSearch = isSuperAdmin || !!schoolId
+  const canSearch = isSuperAdmin ? !!escolaFiltro : !!schoolId
   const turmaSelecionadaNome = turmas.find(t => t.id === turmaId)?.nome || null
   const hasTurma = !!turmaId
 
@@ -105,18 +123,49 @@ export default function PainelAlunoPage() {
         icon={User}
       />
 
-      {canSearch && (
+      {(isSuperAdmin || !!schoolId) && (
         <PageSection variant="compact" title="Busca" className="mb-6">
-          <div className="grid grid-cols-1 sm:grid-cols-5 gap-4">
-            <div className="sm:col-span-3">
+          <div className={isSuperAdmin ? 'grid grid-cols-1 gap-4 lg:grid-cols-[280px_1fr_1fr]' : 'grid grid-cols-1 sm:grid-cols-5 gap-4'}>
+            {isSuperAdmin && allSchools.length > 0 && (
+              <div>
+                <Label className="mb-1.5 block text-[14px] font-medium text-foreground">
+                  Unidade Escolar
+                </Label>
+                <Select value={escolaFiltro} onValueChange={handleSelectEscola}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione a unidade escolar" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {allSchools.map(s => (
+                      <SelectItem key={s.id} value={s.id}>
+                        {s.nome_escola}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+            <div className={isSuperAdmin ? undefined : 'sm:col-span-3'}>
+              <Label className="mb-1.5 block text-[14px] font-medium text-foreground">
+                Aluno
+              </Label>
               <FiltroPessoa
-                schoolId={schoolId}
+                schoolId={effectiveSchoolId}
                 pessoaLogadaId={pessoaId}
                 onSelect={handleSelectPessoa}
                 selectedId={pessoaSelecionada?.id}
+                disabled={!canSearch}
               />
+              {isSuperAdmin && !escolaFiltro && (
+                <p className="mt-1 text-[13px] text-muted-foreground">
+                  Selecione uma unidade escolar para buscar o aluno.
+                </p>
+              )}
             </div>
-            <div className="sm:col-span-2">
+            <div className={isSuperAdmin ? undefined : 'sm:col-span-2'}>
+              <Label className="mb-1.5 block text-[14px] font-medium text-foreground">
+                Turma
+              </Label>
               {loadingTurmas ? (
                 <div className="h-9 flex items-center gap-2 text-muted-foreground">
                   <Loader2 className="h-4 w-4 animate-spin" />
@@ -171,7 +220,7 @@ export default function PainelAlunoPage() {
             </PageSection>
 
             <PageSection title="Saúde">
-              <CardSaude pessoaId={pessoaSelecionada.id} schoolId={schoolId} pessoaLogadaId={pessoaId} />
+              <CardSaude pessoaId={pessoaSelecionada.id} schoolId={effectiveSchoolId} pessoaLogadaId={pessoaId} />
             </PageSection>
 
             {hasTurma ? (
@@ -179,7 +228,7 @@ export default function PainelAlunoPage() {
                 <CardKpis
                   pessoaId={pessoaSelecionada.id}
                   turmaId={turmaId}
-                  schoolId={schoolId}
+                  schoolId={effectiveSchoolId}
                   pessoaLogadaId={pessoaId}
                 />
               </PageSection>
@@ -196,7 +245,7 @@ export default function PainelAlunoPage() {
 
           {/* Aba: Desempenho */}
           {hasTurma ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 gap-6">
               <PageSection title="Desempenho por Disciplina">
                 <CardDesempenhoDisciplina
                   pessoaId={pessoaSelecionada.id}
@@ -257,7 +306,7 @@ export default function PainelAlunoPage() {
 
             {hasTurma ? (
               <PageSection title="Ocorrências">
-                <CardOcorrencias pessoaId={pessoaSelecionada.id} schoolId={schoolId!} pessoaLogadaId={pessoaId} />
+                <CardOcorrencias pessoaId={pessoaSelecionada.id} schoolId={effectiveSchoolId!} pessoaLogadaId={pessoaId} />
               </PageSection>
             ) : (
               <PageSection title="Ocorrências">
@@ -278,7 +327,7 @@ export default function PainelAlunoPage() {
           onClose={() => setHistoricoModalOpen(false)}
           onSuccess={() => setHistoricoRefreshKey(k => k + 1)}
           personId={pessoaSelecionada.id}
-          schoolId={schoolId}
+          schoolId={effectiveSchoolId}
           pessoaLogadaId={pessoaId}
         />
       )}
@@ -291,7 +340,15 @@ export default function PainelAlunoPage() {
         />
       )}
 
-      {!pessoaSelecionada && !canSearch && (
+      {!pessoaSelecionada && !canSearch && isSuperAdmin && (
+        <EmptyState
+          icon={User}
+          title="Selecione uma unidade escolar"
+          description="Escolha uma unidade escolar no filtro acima para buscar o aluno."
+        />
+      )}
+
+      {!pessoaSelecionada && !canSearch && !isSuperAdmin && (
         <EmptyState
           icon={User}
           title="Painel do Aluno"

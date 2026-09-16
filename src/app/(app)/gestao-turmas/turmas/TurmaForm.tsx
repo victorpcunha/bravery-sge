@@ -1,15 +1,23 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { format } from 'date-fns'
+import { ptBR } from 'date-fns/locale'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { PillToggleGroup } from '@/components/ui/pill-toggle'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { Calendar } from '@/components/ui/calendar'
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
+import { ConfirmDialog } from '@/components/feedback/confirm-dialog'
+import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
-import { Plus, Pencil, Trash2, UserPlus, Clock, Calendar, BookOpen, GraduationCap } from 'lucide-react'
+import { Plus, Pencil, Trash2, UserPlus, UserX, UserCheck, Clock, Calendar as CalendarIconLucide, CalendarIcon, BookOpen, GraduationCap, Puzzle, X } from 'lucide-react'
 import { getSubetapas, type Subetapa } from '@/lib/actions/etapas-ensino'
 import { ETAPAS_ENSINO, ETAPAS_AGREGADAS } from '@/data/censo/etapas-ensino'
+import { COMPATIBILIDADE_MEDIACAO_TURMA_ETAPA } from '@/data/censo/tipo-turma-mediacao'
+import { codigoTipoTurma } from '@/data/censo/tipo-turma-codigos'
+import { agruparAtividades, getAtividadeByCodigo, MAX_ATIVIDADES_POR_TURMA } from '@/data/censo/atividades-complementares'
 import {
   getTurma, createTurma, updateTurma,
   addProfissionalTurma, updateProfissionalTurma, removeProfissionalTurma,
@@ -24,6 +32,17 @@ function formatDate(d: string) {
   const [y, m, day] = d.split('T')[0].split('-')
   if (!y || !m || !day) return d
   return `${day}/${m}/${y}`
+}
+
+function parseDataLocal(s: string): Date | undefined {
+  if (!s) return undefined
+  const [y, m, d] = s.split('T')[0].split('-').map(Number)
+  if (!y || !m || !d) return undefined
+  return new Date(y, m - 1, d)
+}
+
+function toISODate(d: Date): string {
+  return format(d, 'yyyy-MM-dd')
 }
 
 const DIAS_SEMANA = [
@@ -41,7 +60,6 @@ const LOCAIS_FUNCIONAMENTO = [
 ]
 
 const CICLOS_INICIO = ['1° Semestre', '2° Semestre']
-const MODALIDADES = ['Ensino Regular', 'Educação especial - modalidade substitutiva', 'Educação de jovens e adultos', 'Educação profissional']
 const TURNOS_OPCOES = ['Matutino', 'Vespertino', 'Integral', 'Noturno']
 
 const TIPOS_TURMA = [
@@ -50,6 +68,19 @@ const TIPOS_TURMA = [
   'Curricular',
   'Curricular com Atividade Complementar',
 ]
+
+// Tipos que exigem Etapa (Agregada + Ensino) — demais tipos têm etapa nula
+const TIPOS_COM_ETAPA = ['Curricular', 'Curricular com Atividade Complementar']
+
+// Tipos que exibem o card Atividades Complementares
+const TIPOS_COM_ATIVIDADES = ['Atividade Complementar', 'Curricular com Atividade Complementar']
+
+function codigoMediacao(mediacao: string): string {
+  if (mediacao === 'Presencial') return '1'
+  if (mediacao === 'Semipresencial') return '2'
+  if (mediacao === 'Educação a Distância - EAD') return '3'
+  return mediacao
+}
 
 const ORGANIZACAO_CURRICULAR = ['Formação geral básica', 'Itinerário formativo de aprofundamento', 'Itinerário de formação técnica e profissional']
 const AREAS_ITINERARIO = ['Linguagens e suas tecnologias', 'Ciências humanas e sociais aplicadas', 'Ciências da natureza e suas tecnologias', 'Matemática e suas tecnologias']
@@ -62,6 +93,10 @@ const FORMAS_ORGANIZACAO = [
   'Alternância regular de períodos de estudos',
 ]
 const TIPOS_CURSO = ['Curso Técnico', 'Qualificação profissional técnica']
+
+const FORMA_ORGANIZACAO_LABELS: Record<string, string> = {
+  'Grupos não-seriados com base na idade ou competência (art. 23 da LDB)': 'Grupos Não Seriados',
+}
 
 const MULTIETA_CODES = [3, 22, 56, 72]
 const EIXO_QUALIFICACAO_CODES = [67, 68, 73, 75]
@@ -87,7 +122,6 @@ type FormData = {
   ciclo_inicio: string | null
   educacao_bilingue_surdos: boolean
   formacao_alternancia: boolean
-  modalidade: string
   etapa_ensino_id: string
   multietapa: boolean
   turnos: Turno[]
@@ -108,7 +142,7 @@ type FormData = {
 const emptyForm: FormData = {
   nome: '', tipo_mediacao: 'Presencial', tipo_ensino: 'Não informado', capacidade_alunos: 0,
   local_funcionamento: 'A turma não está em local de funcionamento diferenciado', ciclo_inicio: null, educacao_bilingue_surdos: false,
-  formacao_alternancia: false, modalidade: '', etapa_ensino_id: '', multietapa: false,
+  formacao_alternancia: false, etapa_ensino_id: '', multietapa: false,
   turnos: [], dias_funcionamento: [], tipos_turma: [], organizacao_curricular: [],
   areas_itinerario: [], tipo_curso: null, curso_tecnico_id: null, forma_organizacao: null,
   etapa_agregada: null, etapa_codigo: null, turma_especial: false, eixo_qualificacao: null,
@@ -128,6 +162,8 @@ type TurmaFormProps = {
 export function TurmaForm({ schoolId, anoLetivo, etapas, editId, pessoaId, onSaved, onCancel }: TurmaFormProps) {
   const [form, setForm] = useState<FormData>(emptyForm)
   const [selectedDisciplinas, setSelectedDisciplinas] = useState<string[]>([])
+  const [atividadesSelecionadas, setAtividadesSelecionadas] = useState<string[]>([])
+  const [atividadeSelect, setAtividadeSelect] = useState('')
   const [multietapaEtapas, setMultietapaEtapas] = useState<string[]>([])
   const [profissionais, setProfissionais] = useState<any[]>([])
   const [disciplinasDisponiveis, setDisciplinasDisponiveis] = useState<any[]>([])
@@ -139,9 +175,13 @@ export function TurmaForm({ schoolId, anoLetivo, etapas, editId, pessoaId, onSav
   const [profFormVinculoId, setProfFormVinculoId] = useState('')
   const [profFormDataInicio, setProfFormDataInicio] = useState('')
   const [profFormDisciplinas, setProfFormDisciplinas] = useState<string[]>([])
+  const [profFormAtividades, setProfFormAtividades] = useState<string[]>([])
   const [profEditId, setProfEditId] = useState<string | null>(null)
   const [profVinculosDisponiveis, setProfVinculosDisponiveis] = useState<any[]>([])
   const [profVinculoDataInicio, setProfVinculoDataInicio] = useState('')
+  const [deleteProfId, setDeleteProfId] = useState<string | null>(null)
+  const [inativarProfId, setInativarProfId] = useState<string | null>(null)
+  const [dataTermino, setDataTermino] = useState('')
 
   const [loading, setLoading] = useState(false)
 
@@ -156,7 +196,7 @@ export function TurmaForm({ schoolId, anoLetivo, etapas, editId, pessoaId, onSav
           nome: t.nome || '', tipo_mediacao: t.tipo_mediacao || 'Presencial', tipo_ensino: t.tipo_ensino || null,
           capacidade_alunos: t.capacidade_alunos || 0, local_funcionamento: t.local_funcionamento || null,
           ciclo_inicio: t.ciclo_inicio || null, educacao_bilingue_surdos: t.educacao_bilingue_surdos || false,
-          formacao_alternancia: t.formacao_alternancia || false, modalidade: t.modalidade || '',
+          formacao_alternancia: t.formacao_alternancia || false,
           etapa_ensino_id: t.etapa_ensino_id || '', multietapa: t.multietapa || false,
           turnos: t.turnos || [], dias_funcionamento: t.dias_funcionamento || [],
           tipos_turma: t.tipos_turma || [], organizacao_curricular: t.organizacao_curricular || [],
@@ -169,6 +209,12 @@ export function TurmaForm({ schoolId, anoLetivo, etapas, editId, pessoaId, onSav
           multietapa_subetapas_ids: (t as any).multietapa_subetapas_ids || [],
         })
         setSelectedDisciplinas(result.disciplinas.map((d: any) => d.matriz_disciplina_id))
+        setAtividadesSelecionadas(
+          [1, 2, 3, 4, 5, 6]
+            .map(i => (t as any)[`atividade_complementar_${i}`])
+            .filter(c => c && String(c).trim() !== '')
+            .map(c => String(c).trim())
+        )
         setMultietapaEtapas(result.multietapa.map((m: any) => m.etapa_ensino_id))
         setProfissionais(result.profissionais || [])
       }).catch(() => toast.error('Erro ao carregar turma'))
@@ -176,6 +222,7 @@ export function TurmaForm({ schoolId, anoLetivo, etapas, editId, pessoaId, onSav
     } else {
       setForm(emptyForm)
       setSelectedDisciplinas([])
+      setAtividadesSelecionadas([])
       setMultietapaEtapas([])
       setProfissionais([])
       setDisciplinasDisponiveis([])
@@ -191,7 +238,20 @@ export function TurmaForm({ schoolId, anoLetivo, etapas, editId, pessoaId, onSav
   }
 
   const handleTipoTurmaSelect = (tipo: string) => {
-    updateForm('tipos_turma', [tipo])
+    if (TIPOS_COM_ETAPA.includes(tipo)) {
+      updateForm('tipos_turma', [tipo])
+    } else {
+      // AEE / Atividade Complementar (pura): sem etapa — limpa e nula (FR-006)
+      setForm(prev => ({
+        ...prev,
+        tipos_turma: [tipo],
+        etapa_agregada: null,
+        etapa_ensino_id: '',
+        etapa_codigo: null,
+        forma_organizacao: null,
+      }))
+      setSubetapasDisponiveis([])
+    }
   }
 
   const handleToggleDia = (dia: string) => {
@@ -222,7 +282,6 @@ export function TurmaForm({ schoolId, anoLetivo, etapas, editId, pessoaId, onSav
         : [...prev, matrizDisciplinaId]
     )
   }
-
   const handleToggleSubetapa = (subetapaId: string) => {
     setForm(prev => ({
       ...prev,
@@ -230,6 +289,24 @@ export function TurmaForm({ schoolId, anoLetivo, etapas, editId, pessoaId, onSav
         ? prev.multietapa_subetapas_ids.filter(id => id !== subetapaId)
         : [...prev.multietapa_subetapas_ids, subetapaId],
     }))
+  }
+
+  const handleAdicionarAtividade = () => {
+    if (!atividadeSelect) { toast.error('Selecione uma atividade'); return }
+    if (atividadesSelecionadas.includes(atividadeSelect)) {
+      toast.error('Esta atividade já foi adicionada à turma')
+      return
+    }
+    if (atividadesSelecionadas.length >= MAX_ATIVIDADES_POR_TURMA) {
+      toast.error(`A turma admite no máximo ${MAX_ATIVIDADES_POR_TURMA} atividades complementares`)
+      return
+    }
+    setAtividadesSelecionadas(prev => [...prev, atividadeSelect])
+    setAtividadeSelect('')
+  }
+
+  const handleRemoverAtividade = (codigo: string) => {
+    setAtividadesSelecionadas(prev => prev.filter(c => c !== codigo))
   }
 
   const etapaSelecionada = etapas.find(e => e.id === form.etapa_ensino_id)
@@ -269,6 +346,30 @@ export function TurmaForm({ schoolId, anoLetivo, etapas, editId, pessoaId, onSav
       .catch(() => setDisciplinasDisponiveis([]))
   }, [form.etapa_ensino_id, schoolId, anoLetivo])
 
+  // Agregadas derivadas das etapas ATIVAS da escola/ano (FR-007)
+  const agregadasDisponiveis = ETAPAS_AGREGADAS.filter(a =>
+    (etapas ?? []).some(e => {
+      const cod = parseInt(e.etapa_codigo)
+      return !isNaN(cod) && ETAPAS_ENSINO.find(et => et.codigo === cod)?.agregada === a.codigo
+    })
+  )
+
+  // Etapas permitidas pela matriz oficial Tipo x Etapa (FR-008)
+  // null = sem restrição adicional (AEE/complementar não usam etapa; EAD sem lista = todas da agregada)
+  function etapasPermitidasMatriz(): Set<number> | null {
+    const tipoCod = codigoTipoTurma(form.tipos_turma)
+    if (!TIPOS_COM_ETAPA.includes(form.tipos_turma[0])) return new Set()
+    const med = codigoMediacao(form.tipo_mediacao)
+    const entradas = COMPATIBILIDADE_MEDIACAO_TURMA_ETAPA.filter(c => c.tipo_mediacao === med && c.tipo_turma === tipoCod)
+    if (entradas.length === 0) return new Set()
+    if (entradas.some(c => c.etapa_agregada === '-')) return null
+    if (!form.etapa_agregada) return null
+    const rel = entradas.filter(c => c.etapa_agregada === form.etapa_agregada)
+    if (rel.length === 0) return new Set()
+    if (rel.some(c => c.etapas_ensino.length === 0)) return null
+    return new Set(rel.flatMap(c => c.etapas_ensino))
+  }
+
   const etapasFiltradas = (etapas ?? []).filter(e => {
     if (form.multietapa) {
       const cod = parseInt(e.etapa_codigo)
@@ -278,14 +379,39 @@ export function TurmaForm({ schoolId, anoLetivo, etapas, editId, pessoaId, onSav
     const cod = parseInt(e.etapa_codigo)
     if (isNaN(cod)) return true
     const agregada = ETAPAS_ENSINO.find(et => et.codigo === cod)?.agregada
-    return agregada === parseInt(form.etapa_agregada)
+    if (agregada !== parseInt(form.etapa_agregada)) return false
+    const permitidas = etapasPermitidasMatriz()
+    if (permitidas === null) return true
+    return permitidas.has(cod)
   })
+
+  // Validação cruzada Tipo x Etapa contra a Tabela oficial (FR-008)
+  // Retorna mensagem de erro ou null quando válido
+  function validarMatrizTipoEtapa(): string | null {
+    const tipoCod = codigoTipoTurma(form.tipos_turma)
+    if (!TIPOS_COM_ETAPA.includes(form.tipos_turma[0])) return null
+    const med = codigoMediacao(form.tipo_mediacao)
+    const entradas = COMPATIBILIDADE_MEDIACAO_TURMA_ETAPA.filter(c => c.tipo_mediacao === med && c.tipo_turma === tipoCod)
+    if (entradas.some(c => c.etapa_agregada === '-')) return null
+    if (!form.etapa_agregada || etapaCodigoNum == null) {
+      return 'Selecione a Etapa Agregada e a Etapa de Ensino compatíveis com o Tipo de Turma.'
+    }
+    const ok = entradas.some(c =>
+      c.etapa_agregada === form.etapa_agregada &&
+      (c.etapas_ensino.length === 0 || c.etapas_ensino.includes(etapaCodigoNum))
+    )
+    return ok ? null : 'A combinação de Tipo de Mediação, Tipo de Turma e Etapa não é compatível (Tabela de Etapas 2026).'
+  }
 
   const etapaAgregadaNum = etapaCodigoNum ? ETAPAS_ENSINO.find(e => e.codigo === etapaCodigoNum)?.agregada : null
   const isInfantil = etapaAgregadaNum === AGREGADA_INFANTIL
   const isMedio = etapaAgregadaNum === AGREGADA_MEDIO || etapaAgregadaNum === AGREGADA_MEDIO_MAGISTERIO
 
   const isCurricular = form.tipos_turma.includes('Curricular') || form.tipos_turma.includes('Curricular com Atividade Complementar')
+  const isTipoComEtapa = form.tipos_turma.length > 0 && TIPOS_COM_ETAPA.includes(form.tipos_turma[0])
+  const showAtividadesCard = form.tipos_turma.some(t => TIPOS_COM_ATIVIDADES.includes(t))
+  // Turma puramente de Atividade Complementar: profissional vincula atividades, não disciplinas
+  const isComplementarPura = form.tipos_turma.length === 1 && form.tipos_turma[0] === 'Atividade Complementar'
 
   const showOrganizacaoCurricular = isMedio && isCurricular
   const showAreasItinerario = showOrganizacaoCurricular && form.organizacao_curricular.includes('Itinerário formativo de aprofundamento')
@@ -301,12 +427,18 @@ export function TurmaForm({ schoolId, anoLetivo, etapas, editId, pessoaId, onSav
 
   const handleSave = async () => {
     if (!form.nome.trim()) { toast.error('Nome da turma é obrigatório'); return }
-    if (!form.modalidade) { toast.error('Modalidade é obrigatória'); return }
-    if (!form.etapa_ensino_id) { toast.error('Etapa de ensino é obrigatória'); return }
+    if (form.tipos_turma.length === 0) { toast.error('Selecione ao menos um tipo de turma'); return }
+    if (isTipoComEtapa && !form.etapa_ensino_id) { toast.error('Etapa de ensino é obrigatória'); return }
     if (form.capacidade_alunos <= 0) { toast.error('Capacidade deve ser positiva'); return }
     if (form.dias_funcionamento.length === 0) { toast.error('Selecione ao menos um dia de funcionamento'); return }
-    if (form.tipos_turma.length === 0) { toast.error('Selecione ao menos um tipo de turma'); return }
     if (form.turnos.length === 0 || !form.turnos[0]?.turno) { toast.error('Selecione o turno da turma'); return }
+    if (isTipoComEtapa) {
+      const erroMatriz = validarMatrizTipoEtapa()
+      if (erroMatriz) { toast.error(erroMatriz); return }
+    }
+    if (showAtividadesCard && atividadesSelecionadas.length === 0) {
+      toast.error('Turma com atividade complementar deve ter ao menos uma atividade'); return
+    }
     if (showDisciplinas && selectedDisciplinas.length === 0) {
       toast.error('Turma curricular deve ter ao menos uma disciplina'); return
     }
@@ -316,8 +448,19 @@ export function TurmaForm({ schoolId, anoLetivo, etapas, editId, pessoaId, onSav
 
     setLoading(true)
     try {
+      const atividadesPayload: Record<string, string | null> = {}
+      for (let i = 1; i <= 6; i++) {
+        atividadesPayload[`atividade_complementar_${i}`] = showAtividadesCard
+          ? (atividadesSelecionadas[i - 1] || null)
+          : null
+      }
       const payload = {
         ...form,
+        // Fora de Curricular/tipo 9 a etapa é sempre nula, inclusive p/ o Censo (FR-006)
+        etapa_agregada: isTipoComEtapa ? form.etapa_agregada : null,
+        etapa_codigo: isTipoComEtapa ? form.etapa_codigo : null,
+        etapa_ensino_id: isTipoComEtapa ? form.etapa_ensino_id : null,
+        ...atividadesPayload,
         turma_especial: form.turma_especial ? '1' : '0',
         disciplinas: showDisciplinas ? selectedDisciplinas : [],
         multietapa_etapas: form.multietapa ? multietapaEtapas : [],
@@ -341,6 +484,7 @@ export function TurmaForm({ schoolId, anoLetivo, etapas, editId, pessoaId, onSav
             vinculo_profissional_id: p.vinculo_profissional_id,
             data_inicio: p.data_inicio,
             disciplinas_ids: p.disciplinas_ids,
+            atividades_ids: p.atividades_ids || [],
           }, pessoaId)
         }
         toast.success('Turma criada!')
@@ -359,6 +503,7 @@ export function TurmaForm({ schoolId, anoLetivo, etapas, editId, pessoaId, onSav
     setProfFormVinculoId('')
     setProfFormDataInicio('')
     setProfFormDisciplinas([])
+    setProfFormAtividades([])
     setProfVinculosDisponiveis([])
     try {
       const profs = await getProfissionaisAtivos(schoolId)
@@ -379,6 +524,7 @@ export function TurmaForm({ schoolId, anoLetivo, etapas, editId, pessoaId, onSav
     setProfFormVinculoId(prof.vinculo_profissional_id || '')
     setProfFormDataInicio(prof.data_inicio || '')
     setProfFormDisciplinas(prof.disciplinas_ids || [])
+    setProfFormAtividades(prof.atividades_ids || [])
     try {
       const todos = await getProfissionaisAtivos(schoolId)
       const pessoa = todos.find(p => p.id === prof.person_id)
@@ -415,7 +561,8 @@ export function TurmaForm({ schoolId, anoLetivo, etapas, editId, pessoaId, onSav
         await updateProfissionalTurma(profEditId, {
           vinculo_profissional_id: profFormVinculoId || null,
           data_inicio: profFormDataInicio,
-          disciplinas_ids: profFormDisciplinas,
+          disciplinas_ids: isComplementarPura ? [] : profFormDisciplinas,
+          atividades_ids: isComplementarPura ? profFormAtividades : [],
         }, pessoaId)
         if (editId) {
           const result = await getTurma(editId)
@@ -427,7 +574,8 @@ export function TurmaForm({ schoolId, anoLetivo, etapas, editId, pessoaId, onSav
           person_id: profFormPersonId,
           vinculo_profissional_id: profFormVinculoId || null,
           data_inicio: profFormDataInicio,
-          disciplinas_ids: profFormDisciplinas,
+          disciplinas_ids: isComplementarPura ? [] : profFormDisciplinas,
+          atividades_ids: isComplementarPura ? profFormAtividades : [],
         }, pessoaId)
         const result = await getTurma(editId)
         setProfissionais(result.profissionais)
@@ -440,7 +588,8 @@ export function TurmaForm({ schoolId, anoLetivo, etapas, editId, pessoaId, onSav
           data_inicio: profFormDataInicio,
           data_encerramento: null,
           ativo: true,
-          disciplinas_ids: profFormDisciplinas,
+          disciplinas_ids: isComplementarPura ? [] : profFormDisciplinas,
+          atividades_ids: isComplementarPura ? profFormAtividades : [],
           person_nome: profissionaisDisponiveis.find(p => p.id === profFormPersonId)?.nome_completo || 'Profissional',
         }
         setProfissionais(prev => [...prev, novoProf])
@@ -452,10 +601,13 @@ export function TurmaForm({ schoolId, anoLetivo, etapas, editId, pessoaId, onSav
     }
   }
 
-  const handleRemoveProfissional = async (id: string) => {
-    if (!confirm('Remover este profissional da turma?')) return
+  const handleRemoveProfissional = async () => {
+    if (!deleteProfId) return
+    const id = deleteProfId
     try {
-      await removeProfissionalTurma(id, pessoaId)
+      if (!id.startsWith('temp_')) {
+        await removeProfissionalTurma(id, pessoaId)
+      }
       toast.success('Profissional removido')
       if (editId) {
         const result = await getTurma(editId)
@@ -464,6 +616,46 @@ export function TurmaForm({ schoolId, anoLetivo, etapas, editId, pessoaId, onSav
         setProfissionais(prev => prev.filter(p => p.id !== id))
       }
     } catch { toast.error('Erro ao remover') }
+    finally { setDeleteProfId(null) }
+  }
+
+  const recarregarProfissionais = async () => {
+    if (editId) {
+      const result = await getTurma(editId)
+      setProfissionais(result.profissionais)
+    }
+  }
+
+  const handleInativarProfissional = async () => {
+    if (!inativarProfId) return
+    if (!dataTermino) { toast.error('Informe a Data de Término do vínculo'); return }
+    const id = inativarProfId
+    try {
+      if (id.startsWith('temp_')) {
+        setProfissionais(prev => prev.map(p =>
+          p.id === id ? { ...p, ativo: false, data_encerramento: dataTermino } : p
+        ))
+      } else {
+        await updateProfissionalTurma(id, { ativo: false, data_encerramento: dataTermino }, pessoaId)
+        await recarregarProfissionais()
+      }
+      toast.success('Vínculo inativado — histórico preservado')
+    } catch { toast.error('Erro ao inativar vínculo') }
+    finally { setInativarProfId(null); setDataTermino('') }
+  }
+
+  const handleReativarProfissional = async (id: string) => {
+    try {
+      if (id.startsWith('temp_')) {
+        setProfissionais(prev => prev.map(p =>
+          p.id === id ? { ...p, ativo: true, data_encerramento: null } : p
+        ))
+      } else {
+        await updateProfissionalTurma(id, { ativo: true, data_encerramento: null }, pessoaId)
+        await recarregarProfissionais()
+      }
+      toast.success('Vínculo reativado')
+    } catch { toast.error('Erro ao reativar vínculo') }
   }
 
   if (loading && editId) {
@@ -568,7 +760,9 @@ export function TurmaForm({ schoolId, anoLetivo, etapas, editId, pessoaId, onSav
           </div>
 
           {/* Bilíngue + Alternância + Turma Especial — 3 colunas */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="space-y-1.5">
+            <Label>Turma de:</Label>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <button
               type="button"
               onClick={() => updateForm('educacao_bilingue_surdos', !form.educacao_bilingue_surdos)}
@@ -603,8 +797,9 @@ export function TurmaForm({ schoolId, anoLetivo, etapas, editId, pessoaId, onSav
                   : 'border-border bg-card text-foreground hover:border-primary/60'
               )}
             >
-              Turma de Educação Especial
+              Educação Especial
             </button>
+          </div>
           </div>
         </div>
 
@@ -650,7 +845,7 @@ export function TurmaForm({ schoolId, anoLetivo, etapas, editId, pessoaId, onSav
         {/* Card: Dias de Funcionamento */}
         <div className="border border-border rounded-lg p-5 bg-muted/40 space-y-3">
           <h3 className="font-semibold text-base flex items-center gap-2">
-            <Calendar className="h-4 w-4 text-primary" />
+            <CalendarIconLucide className="h-4 w-4 text-primary" />
             Dias de Funcionamento *
           </h3>
           <PillToggleGroup
@@ -676,6 +871,82 @@ export function TurmaForm({ schoolId, anoLetivo, etapas, editId, pessoaId, onSav
             onValueChange={handleTipoTurmaSelect}
           />
         </div>
+
+        {/* Card: Atividades Complementares (conditional) */}
+        {showAtividadesCard && (
+          <div className="border border-border rounded-lg p-5 bg-muted/40 space-y-4">
+            <h3 className="font-semibold text-base flex items-center gap-2">
+              <Puzzle className="h-4 w-4 text-primary" />
+              Atividades Complementares
+              <span className="text-xs font-normal text-muted-foreground">
+                ({atividadesSelecionadas.length}/{MAX_ATIVIDADES_POR_TURMA})
+              </span>
+            </h3>
+            <div className="flex flex-col sm:flex-row gap-2">
+              <Select value={atividadeSelect} onValueChange={setAtividadeSelect}>
+                <SelectTrigger className="flex-1">
+                  <SelectValue placeholder="Selecione uma atividade" />
+                </SelectTrigger>
+                <SelectContent className="max-h-72">
+                  {agruparAtividades().map(g => (
+                    <SelectGroup key={g.area}>
+                      <SelectLabel className="text-foreground font-semibold">{g.area}</SelectLabel>
+                      {g.subareas.map(s => (
+                        <div key={s.subarea}>
+                          <SelectLabel className="pl-4">{s.subarea}</SelectLabel>
+                          {s.itens
+                            .filter(a => !atividadesSelecionadas.includes(a.codigo))
+                            .map(a => (
+                              <SelectItem key={a.codigo} value={a.codigo} className="pl-6">
+                                {a.nome}
+                              </SelectItem>
+                            ))}
+                        </div>
+                      ))}
+                    </SelectGroup>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={handleAdicionarAtividade}
+                disabled={atividadesSelecionadas.length >= MAX_ATIVIDADES_POR_TURMA}
+                className="shrink-0 min-h-[40px] sm:min-h-[44px]"
+              >
+                <Plus className="h-4 w-4" /> Adicionar
+              </Button>
+            </div>
+            {atividadesSelecionadas.length === 0 ? (
+              <p className="text-sm text-muted-foreground">
+                Nenhuma atividade adicionada. Selecione acima e clique em Adicionar.
+              </p>
+            ) : (
+              <div className="flex flex-wrap gap-2">
+                {atividadesSelecionadas.map((codigo, idx) => {
+                  const atv = getAtividadeByCodigo(codigo)
+                  return (
+                    <span
+                      key={codigo}
+                      className="inline-flex items-center gap-1.5 rounded-md border border-primary bg-primary/10 px-2.5 py-1 text-xs font-medium text-primary"
+                    >
+                      <span className="font-mono tabular-nums text-[11px]">{idx + 1}.</span>
+                      {atv?.nome || codigo}
+                      <button
+                        type="button"
+                        onClick={() => handleRemoverAtividade(codigo)}
+                        className="cursor-pointer hover:text-destructive"
+                        title="Remover"
+                      >
+                        <X className="h-3.5 w-3.5" />
+                      </button>
+                    </span>
+                  )
+                })}
+              </div>
+            )}
+          </div>
+        )}
 
         {/* Organização Curricular (conditional) */}
         {showOrganizacaoCurricular && (
@@ -750,57 +1021,22 @@ export function TurmaForm({ schoolId, anoLetivo, etapas, editId, pessoaId, onSav
             Configurações
           </h3>
 
-          {/* Modalidade + Multietapa */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-1.5">
-              <Label>Modalidade *</Label>
-              <Select value={form.modalidade} onValueChange={v => updateForm('modalidade', v)}>
-                <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
-                <SelectContent>
-                  {MODALIDADES.map(m => <SelectItem key={m} value={m}>{m}</SelectItem>)}
-                </SelectContent>
-              </Select>
-            </div>
-            <button
-              type="button"
-              onClick={() => {
-                const newVal = !form.multietapa
-                updateForm('multietapa', newVal)
-                if (!newVal) {
-                  updateForm('etapa_ensino_id', '')
-                  setSubetapasDisponiveis([])
-                  updateForm('multietapa_subetapas_ids', [])
-                } else {
-                  updateForm('etapa_ensino_id', '')
-                }
-              }}
-              className={cn(
-                'rounded-md border px-3.5 py-2 text-[13px] font-medium transition cursor-pointer h-10 w-full',
-                form.multietapa
-                  ? 'border-primary bg-primary text-primary-foreground shadow-xs'
-                  : 'border-border bg-card text-foreground hover:border-primary/60'
-              )}
-            >
-              Multietapa
-            </button>
-          </div>
-
           {/* Etapa Agregada + Etapa de Ensino */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-end">
             <div className="space-y-1.5">
               <Label>Etapa Agregada *</Label>
               <Select
                 value={form.etapa_agregada || ''}
                 onValueChange={handleEtapaAgregadaChange}
-                disabled={form.multietapa || !form.modalidade}
+                disabled={form.multietapa || !isTipoComEtapa}
               >
-                <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
+                <SelectTrigger><SelectValue placeholder={isTipoComEtapa ? 'Selecione' : 'Não se aplica a este tipo de turma'} /></SelectTrigger>
                 <SelectContent>
-                  {ETAPAS_AGREGADAS.map(a => <SelectItem key={a.codigo} value={String(a.codigo)}>{a.nome}</SelectItem>)}
+                  {agregadasDisponiveis.map(a => <SelectItem key={a.codigo} value={String(a.codigo)}>{a.nome}</SelectItem>)}
                 </SelectContent>
               </Select>
-              {!form.modalidade && !form.multietapa && (
-                <p className="text-xs text-muted-foreground">Selecione a modalidade antes</p>
+              {!isTipoComEtapa && (
+                <p className="text-xs text-muted-foreground">Etapa nula para este tipo de turma (inclusive no Censo)</p>
               )}
               {form.multietapa && (
                 <p className="text-xs text-muted-foreground">Determinada automaticamente pela etapa multietapa selecionada</p>
@@ -818,10 +1054,36 @@ export function TurmaForm({ schoolId, anoLetivo, etapas, editId, pessoaId, onSav
                   {etapasFiltradas.map(e => <SelectItem key={e.id} value={e.id}>{e.etapa_nome}</SelectItem>)}
                 </SelectContent>
               </Select>
-              {!form.etapa_agregada && !form.multietapa && (
+              {!form.etapa_agregada && !form.multietapa && isTipoComEtapa && (
                 <p className="text-xs text-muted-foreground">Selecione a etapa agregada antes</p>
               )}
             </div>
+          </div>
+
+          {/* Multietapa */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <button
+              type="button"
+              onClick={() => {
+                const newVal = !form.multietapa
+                updateForm('multietapa', newVal)
+                if (!newVal) {
+                  updateForm('etapa_ensino_id', '')
+                  setSubetapasDisponiveis([])
+                  updateForm('multietapa_subetapas_ids', [])
+                } else {
+                  updateForm('etapa_ensino_id', '')
+                }
+              }}
+              className={cn(
+                'rounded-md border px-3.5 py-2 text-[13px] font-medium transition cursor-pointer h-9 w-full',
+                form.multietapa
+                  ? 'border-primary bg-primary text-primary-foreground shadow-xs'
+                  : 'border-border bg-card text-foreground hover:border-primary/60'
+              )}
+            >
+              Multietapa
+            </button>
           </div>
         </div>
 
@@ -830,9 +1092,10 @@ export function TurmaForm({ schoolId, anoLetivo, etapas, editId, pessoaId, onSav
           <div className="border border-border rounded-lg p-5 bg-muted/40 space-y-3">
             <h3 className="font-semibold text-base">Formas de Organização da Turma</h3>
             <PillToggleGroup
-              options={formasDisponiveis.map(f => ({ value: f, label: f }))}
+              options={formasDisponiveis.map(f => ({ value: f, label: FORMA_ORGANIZACAO_LABELS[f] || f }))}
               value={form.forma_organizacao || ''}
               onValueChange={v => updateForm('forma_organizacao', v)}
+              className="grid grid-cols-2 md:grid-cols-4"
             />
           </div>
         )}
@@ -860,10 +1123,28 @@ export function TurmaForm({ schoolId, anoLetivo, etapas, editId, pessoaId, onSav
         {/* Card: Disciplinas (conditional) */}
         {showDisciplinas && (
           <div className="border border-border rounded-lg p-5 bg-muted/40 space-y-3">
-            <h3 className="font-semibold text-base flex items-center gap-2">
-              <BookOpen className="h-4 w-4 text-primary" />
-              Disciplinas
-            </h3>
+            <div className="flex items-center justify-between gap-4">
+              <h3 className="font-semibold text-base flex items-center gap-2">
+                <BookOpen className="h-4 w-4 text-primary" />
+                Disciplinas
+              </h3>
+              {disciplinasDisponiveis.length > 0 && (
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    const todas = disciplinasDisponiveis.map(d => d.id)
+                    const todasMarcadas = todas.every(id => selectedDisciplinas.includes(id))
+                    setSelectedDisciplinas(todasMarcadas ? [] : todas)
+                  }}
+                >
+                  {disciplinasDisponiveis.every(d => selectedDisciplinas.includes(d.id))
+                    ? 'Limpar Todas'
+                    : 'Selecionar Todas'}
+                </Button>
+              )}
+            </div>
             {disciplinasDisponiveis.length === 0 ? (
               <p className="text-sm text-muted-foreground">
                 Nenhuma disciplina encontrada na matriz curricular para a etapa selecionada.
@@ -875,6 +1156,7 @@ export function TurmaForm({ schoolId, anoLetivo, etapas, editId, pessoaId, onSav
                 onToggleValue={handleToggleDisciplina}
                 multiple
                 size="sm"
+                className="grid grid-cols-2 md:grid-cols-4"
               />
             )}
           </div>
@@ -913,7 +1195,20 @@ export function TurmaForm({ schoolId, anoLetivo, etapas, editId, pessoaId, onSav
                     {p.data_inicio && (
                       <p className="text-xs text-muted-foreground mt-0.5">
                         Início: {formatDate(p.data_inicio)}
+                        {p.data_encerramento ? ` · Término: ${formatDate(p.data_encerramento)}` : ''}
                       </p>
+                    )}
+                    {Array.isArray(p.atividades_ids) && p.atividades_ids.length > 0 && (
+                      <div className="flex flex-wrap gap-1.5 mt-1.5">
+                        {p.atividades_ids.map((codigo: string) => {
+                          const atv = getAtividadeByCodigo(codigo)
+                          return atv ? (
+                            <span key={codigo} className="text-[11px] font-medium text-primary bg-primary/10 px-2 py-0.5 rounded-sm">
+                              {atv.nome}
+                            </span>
+                          ) : null
+                        })}
+                      </div>
                     )}
                     {Array.isArray(p.disciplinas_ids) && p.disciplinas_ids.length > 0 && (
                       <div className="flex flex-wrap gap-1.5 mt-1.5">
@@ -929,10 +1224,29 @@ export function TurmaForm({ schoolId, anoLetivo, etapas, editId, pessoaId, onSav
                     )}
                   </div>
                   <div className="flex gap-0.5 shrink-0">
-                    <Button variant="ghost" size="icon-sm" onClick={() => handleEditProfissional(p)}>
+                    <Button variant="ghost" size="icon-sm" onClick={() => handleEditProfissional(p)} title="Editar">
                       <Pencil className="h-3.5 w-3.5" />
                     </Button>
-                    <Button variant="ghost" size="icon-sm" onClick={() => handleRemoveProfissional(p.id)}>
+                    {p.ativo ? (
+                      <Button
+                        variant="ghost"
+                        size="icon-sm"
+                        onClick={() => { setInativarProfId(p.id); setDataTermino(p.data_encerramento || '') }}
+                        title="Inativar vínculo (solicita Data de Término)"
+                      >
+                        <UserX className="h-3.5 w-3.5 text-warning" />
+                      </Button>
+                    ) : (
+                      <Button
+                        variant="ghost"
+                        size="icon-sm"
+                        onClick={() => handleReativarProfissional(p.id)}
+                        title="Reativar vínculo"
+                      >
+                        <UserCheck className="h-3.5 w-3.5 text-success" />
+                      </Button>
+                    )}
+                    <Button variant="ghost" size="icon-sm" onClick={() => setDeleteProfId(p.id)} title="Excluir vínculo">
                       <Trash2 className="h-3.5 w-3.5 text-destructive" />
                     </Button>
                   </div>
@@ -954,7 +1268,7 @@ export function TurmaForm({ schoolId, anoLetivo, etapas, editId, pessoaId, onSav
       <Dialog open={profModalOpen} onOpenChange={setProfModalOpen}>
         <DialogContent className="max-w-lg max-h-[80vh] flex flex-col p-0 gap-0">
           <DialogHeader className="px-6 pt-6 pb-0 shrink-0">
-            <DialogTitle>{profEditId ? 'Editar Profissional' : 'Adicionar Profissional'}</DialogTitle>
+            <DialogTitle className="font-display text-[20px] font-semibold">{profEditId ? 'Editar Profissional' : 'Adicionar Profissional'}</DialogTitle>
           </DialogHeader>
           <div className="flex-1 overflow-y-auto px-6 py-4 space-y-4">
             <div className="space-y-1.5">
@@ -1003,12 +1317,30 @@ export function TurmaForm({ schoolId, anoLetivo, etapas, editId, pessoaId, onSav
 
             <div className="space-y-1.5">
               <Label>Data de Início *</Label>
-              <Input
-                type="date"
-                value={profFormDataInicio}
-                min={profVinculoDataInicio || undefined}
-                onChange={e => setProfFormDataInicio(e.target.value)}
-              />
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    className={cn(
+                      'h-10 w-full justify-start text-left font-normal',
+                      !profFormDataInicio && 'text-muted-foreground'
+                    )}
+                  >
+                    <CalendarIcon className="mr-2 h-4 w-4 shrink-0" />
+                    {profFormDataInicio ? formatDate(profFormDataInicio) : 'Selecione a data'}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <Calendar
+                    mode="single"
+                    selected={parseDataLocal(profFormDataInicio)}
+                    onSelect={(d) => setProfFormDataInicio(d ? toISODate(d) : '')}
+                    disabled={profVinculoDataInicio ? { before: parseDataLocal(profVinculoDataInicio)! } : undefined}
+                    captionLayout="dropdown"
+                    locale={ptBR}
+                  />
+                </PopoverContent>
+              </Popover>
               {profVinculoDataInicio && (
                 <p className="text-xs text-muted-foreground">
                   Data mínima: {formatDate(profVinculoDataInicio)} (início do vínculo profissional)
@@ -1016,9 +1348,68 @@ export function TurmaForm({ schoolId, anoLetivo, etapas, editId, pessoaId, onSav
               )}
             </div>
 
-            {!isInfantil && (
+            {isComplementarPura ? (
             <div className="space-y-2">
-              <Label>Disciplinas do Profissional</Label>
+              <div className="flex items-center justify-between gap-4">
+                <Label>Atividades Complementares do Profissional</Label>
+                {atividadesSelecionadas.length > 0 && (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      const todasMarcadas = atividadesSelecionadas.every(c => profFormAtividades.includes(c))
+                      setProfFormAtividades(todasMarcadas ? [] : [...atividadesSelecionadas])
+                    }}
+                  >
+                    {atividadesSelecionadas.every(c => profFormAtividades.includes(c))
+                      ? 'Limpar Todas'
+                      : 'Selecionar Todas'}
+                  </Button>
+                )}
+              </div>
+              {atividadesSelecionadas.length === 0 ? (
+                <p className="text-sm text-muted-foreground">Nenhuma atividade adicionada à turma.</p>
+              ) : (
+                <PillToggleGroup
+                  options={atividadesSelecionadas.map(codigo => ({
+                    value: codigo,
+                    label: getAtividadeByCodigo(codigo)?.nome || codigo,
+                  }))}
+                  selectedValues={profFormAtividades}
+                  onToggleValue={(val) => {
+                    setProfFormAtividades(prev =>
+                      prev.includes(val)
+                        ? prev.filter(id => id !== val)
+                        : [...prev, val]
+                    )
+                  }}
+                  multiple
+                  size="sm"
+                  className="max-h-40 overflow-y-auto"
+                />
+              )}
+            </div>
+            ) : !isInfantil && (
+            <div className="space-y-2">
+              <div className="flex items-center justify-between gap-4">
+                <Label>Disciplinas do Profissional</Label>
+                {selectedDisciplinas.length > 0 && (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      const todasMarcadas = selectedDisciplinas.every(id => profFormDisciplinas.includes(id))
+                      setProfFormDisciplinas(todasMarcadas ? [] : [...selectedDisciplinas])
+                    }}
+                  >
+                    {selectedDisciplinas.every(id => profFormDisciplinas.includes(id))
+                      ? 'Limpar Todas'
+                      : 'Selecionar Todas'}
+                  </Button>
+                )}
+              </div>
               {selectedDisciplinas.length === 0 ? (
                 <p className="text-sm text-muted-foreground">Nenhuma disciplina selecionada na turma.</p>
               ) : (
@@ -1050,6 +1441,64 @@ export function TurmaForm({ schoolId, anoLetivo, etapas, editId, pessoaId, onSav
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Inativar vínculo — solicita Data de Término (histórico preservado) */}
+      <Dialog open={!!inativarProfId} onOpenChange={(open) => { if (!open) { setInativarProfId(null); setDataTermino('') } }}>
+        <DialogContent className="max-w-md max-h-[80vh] flex flex-col p-0 gap-0">
+          <DialogHeader className="px-6 pt-6 pb-0 shrink-0">
+            <DialogTitle className="font-display text-[20px] font-semibold">Inativar vínculo</DialogTitle>
+          </DialogHeader>
+          <div className="flex-1 overflow-y-auto px-6 py-4 space-y-4">
+            <p className="text-[15px] text-muted-foreground">
+              O vínculo será encerrado, mas todo o histórico do profissional será mantido.
+            </p>
+            <div className="space-y-1.5">
+              <Label>Data de Término *</Label>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    className={cn(
+                      'h-10 w-full justify-start text-left font-normal',
+                      !dataTermino && 'text-muted-foreground'
+                    )}
+                  >
+                    <CalendarIcon className="mr-2 h-4 w-4 shrink-0" />
+                    {dataTermino ? formatDate(dataTermino) : 'Selecione a data'}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <Calendar
+                    mode="single"
+                    selected={parseDataLocal(dataTermino)}
+                    onSelect={(d) => setDataTermino(d ? toISODate(d) : '')}
+                    disabled={{ after: new Date() }}
+                    captionLayout="dropdown"
+                    locale={ptBR}
+                  />
+                </PopoverContent>
+              </Popover>
+            </div>
+          </div>
+          <div className="shrink-0 border-t border-border px-6 py-3 flex justify-end gap-2 bg-muted/30">
+            <Button variant="outline" onClick={() => { setInativarProfId(null); setDataTermino('') }} className="min-h-[40px] sm:min-h-[44px]">Cancelar</Button>
+            <Button onClick={handleInativarProfissional} className="min-h-[40px] sm:min-h-[44px]">
+              Inativar
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Excluir vínculo — confirmação padrão do sistema */}
+      <ConfirmDialog
+        open={!!deleteProfId}
+        onOpenChange={(open) => !open && setDeleteProfId(null)}
+        title="Excluir vínculo"
+        description="Remover este profissional da turma? Use apenas para lançamento indevido — para saída da escola, prefira Inativar (preserva o histórico)."
+        confirmLabel="Excluir"
+        variant="destructive"
+        onConfirm={handleRemoveProfissional}
+      />
     </>
   )
 }

@@ -102,6 +102,7 @@ export default function IndicadoresPage() {
   const [formNiveisPersonalizados, setFormNiveisPersonalizados] = useState<{ id?: string; descricao: string; sigla: string }[]>([])
   const [novoNivelDescricao, setNovoNivelDescricao] = useState('')
   const [novoNivelSigla, setNovoNivelSigla] = useState('')
+  const [formLoading, setFormLoading] = useState(false)
 
   // Arvore expansivel
   const [expandedGrupos, setExpandedGrupos] = useState<Record<string, boolean>>({})
@@ -226,11 +227,16 @@ export default function IndicadoresPage() {
 
   const adicionarNivelPersonalizado = () => {
     const desc = novoNivelDescricao.trim()
+    const sigla = novoNivelSigla.trim()
+    if (!sigla) { toast.error('Digite a sigla do nivel'); return }
     if (!desc) { toast.error('Digite uma descricao para o nivel'); return }
     if (formNiveisPersonalizados.some(n => n.descricao.toLowerCase() === desc.toLowerCase())) {
       toast.error('Ja existe um nivel com esta descricao'); return
     }
-    setFormNiveisPersonalizados(prev => [...prev, { descricao: desc, sigla: novoNivelSigla.trim() }])
+    if (formNiveisPersonalizados.some(n => n.sigla.toLowerCase() === sigla.toLowerCase())) {
+      toast.error('Ja existe um nivel com esta sigla'); return
+    }
+    setFormNiveisPersonalizados(prev => [...prev, { descricao: desc, sigla }])
     setNovoNivelDescricao('')
     setNovoNivelSigla('')
   }
@@ -243,13 +249,34 @@ export default function IndicadoresPage() {
     setFormNiveisPersonalizados(prev => prev.filter((_, i) => i !== index))
   }
 
-  // Abrir dialog de novo indicador
-  const openNewDialog = async () => {
+  // Carrega os dados auxiliares do formulario em segundo plano (modal ja aberto)
+  const carregarDependenciasForm = async (anoId: string, etapaId: string, infantil: boolean, school: string | null | undefined) => {
+    if (!anoId || !etapaId || !school) return
+    const [periodos, opcoes, subs] = await Promise.all([
+      getPeriodosMatriz(school, anoId, etapaId),
+      getOpcoesRegistro(school, anoId, etapaId),
+      getSubetapas(etapaId),
+    ])
+    setFormPeriodos(periodos)
+    setFormOpcoes(opcoes)
+    setFormSubetapas(subs)
+    if (!infantil) {
+      getDisciplinas(school).then(setFormDisciplinas).catch(() => setFormDisciplinas([]))
+    } else {
+      setFormDisciplinas([])
+    }
+  }
+
+  // Abrir dialog de novo indicador — abre imediatamente, carrega dados em segundo plano
+  const openNewDialog = () => {
+    const etapa = etapas.find(e => e.id === filtroEtapa)
+    const infantil = etapa?.etapa_tipo?.toLowerCase().includes('infantil') || false
+
     setEditId(null)
     setFormData({ descricao: '', periodo_ids: [] })
     setFormContexto({
-      ano_letivo_id: '',
-      etapa_ensino_id: '',
+      ano_letivo_id: filtroAno || '',
+      etapa_ensino_id: filtroEtapa || '',
       subetapa_ids: [],
       campo_experiencia: '',
       disciplina_id: '',
@@ -259,31 +286,62 @@ export default function IndicadoresPage() {
     setFormSubetapas([])
     setFormCampos(camposExperiencia)
     setFormDisciplinas([])
-    setFormIsInfantil(false)
+    setFormIsInfantil(infantil)
     resetFormNiveis()
 
-    const etapa = etapas.find(e => e.id === filtroEtapa)
-    if (etapa) setFormIsInfantil(etapa.etapa_tipo?.toLowerCase().includes('infantil'))
-
-    if (filtroEtapa) {
-      const subs = await getSubetapas(filtroEtapa)
-      setFormSubetapas(subs)
-    }
-    if (filtroAno && filtroEtapa) {
-      const [periodos, opcoes, disciplinas] = await Promise.all([
-        getPeriodosMatriz(effectiveSchoolId!, filtroAno, filtroEtapa),
-        getOpcoesRegistro(effectiveSchoolId!, filtroAno, filtroEtapa),
-        formIsInfantil ? Promise.resolve([]) : getDisciplinas(effectiveSchoolId!),
-      ])
-      setFormPeriodos(periodos)
-      setFormOpcoes(opcoes)
-      setFormDisciplinas(disciplinas)
-    }
+    // Abre o modal na hora — equivalente aos demais modais do sistema
     setDialogOpen(true)
+
+    if (filtroAno && filtroEtapa && effectiveSchoolId) {
+      setFormLoading(true)
+      carregarDependenciasForm(filtroAno, filtroEtapa, infantil, effectiveSchoolId)
+        .catch(() => toast.error('Erro ao carregar dados do formulario'))
+        .finally(() => setFormLoading(false))
+    }
   }
 
-  // Abrir dialog de edicao
-  const openEditDialog = async (ind: any) => {
+  // Recarrega periodos/opcoes quando ano/etapa mudam dentro do modal (modo criacao)
+  const handleFormContextoChange = (patch: Partial<typeof formContexto>) => {
+    const next = { ...formContexto, ...patch }
+    // Ao trocar a etapa, reseta selecoes dependentes
+    if (patch.etapa_ensino_id && patch.etapa_ensino_id !== formContexto.etapa_ensino_id) {
+      next.subetapa_ids = []
+      next.campo_experiencia = ''
+      next.disciplina_id = ''
+      const etapa = etapas.find(e => e.id === patch.etapa_ensino_id)
+      const infantil = etapa?.etapa_tipo?.toLowerCase().includes('infantil') || false
+      setFormIsInfantil(infantil)
+      setFormData(p => ({ ...p, periodo_ids: [] }))
+      setFormNiveisMetodo([])
+      setFormPeriodos([])
+      setFormOpcoes([])
+      setFormSubetapas([])
+      setFormDisciplinas([])
+      if (next.ano_letivo_id && effectiveSchoolId) {
+        setFormLoading(true)
+        carregarDependenciasForm(next.ano_letivo_id, patch.etapa_ensino_id, infantil, effectiveSchoolId)
+          .catch(() => toast.error('Erro ao carregar dados do formulario'))
+          .finally(() => setFormLoading(false))
+      }
+    } else if (patch.ano_letivo_id && patch.ano_letivo_id !== formContexto.ano_letivo_id && next.etapa_ensino_id) {
+      setFormData(p => ({ ...p, periodo_ids: [] }))
+      setFormNiveisMetodo([])
+      setFormPeriodos([])
+      setFormOpcoes([])
+      if (effectiveSchoolId) {
+        setFormLoading(true)
+        carregarDependenciasForm(patch.ano_letivo_id, next.etapa_ensino_id, formIsInfantil, effectiveSchoolId)
+          .catch(() => toast.error('Erro ao carregar dados do formulario'))
+          .finally(() => setFormLoading(false))
+      }
+    }
+    setFormContexto(next)
+  }
+
+  // Abrir dialog de edicao — abre imediatamente, carrega dados em segundo plano
+  const openEditDialog = (ind: any) => {
+    const infantil = ind.campo_experiencia ? true : false
+
     setEditId(ind.id)
     setFormData({
       descricao: ind.descricao || '',
@@ -297,42 +355,51 @@ export default function IndicadoresPage() {
       disciplina_id: ind.disciplina_id || '',
     })
 
-    const infantil = ind.campo_experiencia ? true : false
     setFormIsInfantil(infantil)
     resetFormNiveis()
+    setFormPeriodos([])
+    setFormOpcoes([])
+    setFormSubetapas([])
+    setFormDisciplinas([])
+    setFormCampos(camposExperiencia)
+
+    // Abre o modal na hora — equivalente aos demais modais do sistema
+    setDialogOpen(true)
 
     if (ind.ano_letivo_id && ind.etapa_ensino_id) {
-      const [periodos, opcoes, subs, niveis] = await Promise.all([
+      setFormLoading(true)
+      Promise.all([
         getPeriodosMatriz(effectiveSchoolId!, ind.ano_letivo_id, ind.etapa_ensino_id),
         getOpcoesRegistro(effectiveSchoolId!, ind.ano_letivo_id, ind.etapa_ensino_id),
         getSubetapas(ind.etapa_ensino_id),
         getIndicadorNiveis(ind.id),
       ])
-      setFormPeriodos(periodos)
-      setFormOpcoes(opcoes)
-      setFormSubetapas(subs)
+        .then(([periodos, opcoes, subs, niveis]) => {
+          setFormPeriodos(periodos)
+          setFormOpcoes(opcoes)
+          setFormSubetapas(subs)
 
-      // Separar niveis em metodo e personalizados
-      const metodoIds: string[] = []
-      const personalizados: { id: string; descricao: string; sigla: string }[] = []
-      for (const n of niveis) {
-        if (n.origem === 'metodo' && n.metodo_nivel_id) {
-          metodoIds.push(n.metodo_nivel_id)
-        } else {
-          personalizados.push({ id: n.id, descricao: n.descricao, sigla: n.sigla || '' })
-        }
-      }
-      setFormNiveisMetodo(metodoIds)
-      setFormNiveisPersonalizados(personalizados)
+          // Separar niveis em metodo e personalizados
+          const metodoIds: string[] = []
+          const personalizados: { id: string; descricao: string; sigla: string }[] = []
+          for (const n of niveis) {
+            if (n.origem === 'metodo' && n.metodo_nivel_id) {
+              metodoIds.push(n.metodo_nivel_id)
+            } else {
+              personalizados.push({ id: n.id, descricao: n.descricao, sigla: n.sigla || '' })
+            }
+          }
+          setFormNiveisMetodo(metodoIds)
+          setFormNiveisPersonalizados(personalizados)
 
-      // Carregar disciplinas para exibir valor salvo no Select
-      if (!infantil) {
-        getDisciplinas(effectiveSchoolId!).then(setFormDisciplinas).catch(() => {})
-      }
+          // Carregar disciplinas para exibir valor salvo no Select
+          if (!infantil) {
+            getDisciplinas(effectiveSchoolId!).then(setFormDisciplinas).catch(() => setFormDisciplinas([]))
+          }
+        })
+        .catch(() => toast.error('Erro ao carregar dados do indicador'))
+        .finally(() => setFormLoading(false))
     }
-
-    setFormCampos(camposExperiencia)
-    setDialogOpen(true)
   }
 
   // Salvar indicador
@@ -598,17 +665,30 @@ export default function IndicadoresPage() {
           />
         ) : (
           <div className="p-4 space-y-2">
-            {grupos.map(grupo => (
-              <div key={grupo.key} className="border border-border rounded-lg overflow-hidden">
+            {grupos.map(grupo => {
+              const totalGrupo = grupo.indicadores.length + grupo.subgrupos.reduce((acc, s) => acc + s.indicadores.length, 0)
+              const expandido = !!expandedGrupos[grupo.key]
+              return (
+              <div key={grupo.key} className="border border-border rounded-lg overflow-hidden bg-card shadow-xs">
                 {/* Grupo (Campo/Disciplina) */}
                 <div
-                  className="flex items-center gap-2 px-3 py-2 bg-muted cursor-pointer hover:bg-muted/80 transition-colors"
+                  className={`flex items-center gap-3 px-4 py-3 cursor-pointer transition-colors ${expandido ? 'bg-primary/[0.06]' : 'bg-muted/40 hover:bg-muted/60'}`}
                   onClick={() => toggleGrupo(grupo.key)}
                 >
-                  {expandedGrupos[grupo.key] ? <ChevronDown className="h-4 w-4 text-muted-foreground" /> : <ChevronRight className="h-4 w-4 text-muted-foreground" />}
-                  <Layers className="h-4 w-4 text-muted-foreground" />
-                  <span className="text-sm font-medium text-foreground">{formatNome(grupo.nome)}</span>
-                  <Badge variant="secondary" className="text-[11px] px-1.5 py-0">{grupo.indicadores.length + grupo.subgrupos.reduce((acc, s) => acc + s.indicadores.length, 0)}</Badge>
+                  {expandido ? <ChevronDown className="h-4 w-4 text-primary shrink-0" /> : <ChevronRight className="h-4 w-4 text-muted-foreground shrink-0" />}
+                  <div className="flex h-9 w-9 items-center justify-center rounded-md bg-primary/10 text-primary shrink-0">
+                    {isInfantil
+                      ? <Layers className="h-4 w-4" />
+                      : <BookOpen className="h-4 w-4" />}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-[15px] font-semibold text-foreground truncate">{formatNome(grupo.nome)}</p>
+                    <p className="text-[12px] text-muted-foreground">
+                      {totalGrupo} indicador{totalGrupo !== 1 ? 'es' : ''}
+                      {grupo.subgrupos.length > 0 && ` em ${grupo.subgrupos.length} subetapa${grupo.subgrupos.length !== 1 ? 's' : ''}`}
+                    </p>
+                  </div>
+                  <Badge variant="secondary" className="bg-primary/10 text-primary border border-primary/20 text-[12px] font-semibold px-2 py-0.5 tabular-nums shrink-0">{totalGrupo}</Badge>
                 </div>
 
                 {expandedGrupos[grupo.key] && (
@@ -617,12 +697,12 @@ export default function IndicadoresPage() {
                       grupo.subgrupos.map(sub => (
                         <div key={sub.key}>
                           <div
-                            className="flex items-center gap-2 px-6 py-1.5 bg-card cursor-pointer hover:bg-muted/50 transition-colors"
+                            className="flex items-center gap-2 px-6 py-2 bg-card cursor-pointer hover:bg-muted/50 transition-colors"
                             onClick={() => toggleSubgrupo(sub.key)}
                           >
-                            {expandedSubgrupos[sub.key] ? <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" /> : <ChevronRight className="h-3.5 w-3.5 text-muted-foreground" />}
-                            <span className="text-xs font-medium text-muted-foreground">{sub.nome}</span>
-                            <Badge variant="outline" className="text-[10px] px-1 py-0">{sub.indicadores.length}</Badge>
+                            {expandedSubgrupos[sub.key] ? <ChevronDown className="h-3.5 w-3.5 text-primary" /> : <ChevronRight className="h-3.5 w-3.5 text-muted-foreground" />}
+                            <span className="text-[13px] font-semibold text-foreground">{sub.nome}</span>
+                            <Badge variant="outline" className="bg-muted/60 text-muted-foreground border-border text-[11px] px-1.5 py-0 tabular-nums">{sub.indicadores.length}</Badge>
                           </div>
                           {expandedSubgrupos[sub.key] && (
                             <div className="border-t border-border">
@@ -637,7 +717,8 @@ export default function IndicadoresPage() {
                   </div>
                 )}
               </div>
-            ))}
+              )
+            })}
           </div>
         )}
       </PageSection>
@@ -654,7 +735,7 @@ export default function IndicadoresPage() {
               <div>
                 <Label className="text-xs text-muted-foreground">Ano Letivo</Label>
                 <Select value={formContexto.ano_letivo_id}
-                  onValueChange={v => setFormContexto(p => ({ ...p, ano_letivo_id: v }))}
+                  onValueChange={v => handleFormContextoChange({ ano_letivo_id: v })}
                   disabled={!!editId}>
                   <SelectTrigger className="h-9">
                     <SelectValue placeholder="Selecione" />
@@ -669,7 +750,7 @@ export default function IndicadoresPage() {
               <div>
                 <Label className="text-xs text-muted-foreground">Etapa de Ensino</Label>
                 <Select value={formContexto.etapa_ensino_id}
-                  onValueChange={v => setFormContexto(p => ({ ...p, etapa_ensino_id: v }))}
+                  onValueChange={v => handleFormContextoChange({ etapa_ensino_id: v })}
                   disabled={!!editId}>
                   <SelectTrigger className="h-9">
                     <SelectValue placeholder="Selecione" />
@@ -758,31 +839,46 @@ export default function IndicadoresPage() {
             {/* Periodos */}
             <div>
               <Label className="text-xs text-muted-foreground mb-1 block">Periodos</Label>
-              {formPeriodos.length === 0 ? (
+              {formLoading ? (
+                <div className="space-y-2">
+                  <div className="h-[62px] bg-muted rounded-md animate-pulse" />
+                  <div className="flex gap-2">
+                    <div className="h-9 w-24 bg-muted rounded-md animate-pulse" />
+                    <div className="h-9 w-24 bg-muted rounded-md animate-pulse" />
+                    <div className="h-9 w-24 bg-muted rounded-md animate-pulse" />
+                  </div>
+                </div>
+              ) : formPeriodos.length === 0 ? (
                 <p className="text-xs text-muted-foreground italic">Nenhum periodo disponivel</p>
               ) : (
                 <div className="space-y-2">
-                  <div className="rounded-md border border-primary/20 bg-primary/[0.04] px-3 py-2.5">
-                    <label className="flex items-center gap-2.5 text-xs cursor-pointer">
-                      <Switch
-                        checked={formData.periodo_ids.length === formPeriodos.length}
-                        onCheckedChange={(checked) => {
-                          setFormData(p => ({
-                            ...p,
-                            periodo_ids: checked ? formPeriodos.map(per => per.id) : []
-                          }))
-                        }}
-                      />
-                      <div>
-                        <span className="text-[13px] font-semibold text-foreground">Todos os periodos</span>
-                        <p className="text-[11px] text-muted-foreground mt-0.5">
-                          {formData.periodo_ids.length === formPeriodos.length
-                            ? `${formPeriodos.length} periodo(s) selecionado(s)`
-                            : `${formData.periodo_ids.length} de ${formPeriodos.length} periodo(s) selecionado(s)`}
-                        </p>
+                  {(() => {
+                    const todosAtivos = formData.periodo_ids.length === formPeriodos.length && formPeriodos.length > 0
+                    return (
+                      <div className={`rounded-md border px-3 py-2.5 transition-colors ${todosAtivos ? 'border-primary/40 bg-primary/10' : 'border-border bg-muted/40'}`}>
+                        <label className="flex items-center gap-2.5 text-xs cursor-pointer">
+                          <Switch
+                            checked={todosAtivos}
+                            onCheckedChange={(checked) => {
+                              setFormData(p => ({
+                                ...p,
+                                periodo_ids: checked ? formPeriodos.map(per => per.id) : []
+                              }))
+                            }}
+                            className="data-unchecked:bg-muted-foreground/40 data-unchecked:border data-unchecked:border-border"
+                          />
+                          <div>
+                            <span className={`text-[13px] font-semibold ${todosAtivos ? 'text-primary' : 'text-foreground'}`}>Todos os periodos</span>
+                            <p className="text-[11px] text-muted-foreground mt-0.5">
+                              {todosAtivos
+                                ? `${formPeriodos.length} periodo(s) selecionado(s)`
+                                : `${formData.periodo_ids.length} de ${formPeriodos.length} periodo(s) selecionado(s)`}
+                            </p>
+                          </div>
+                        </label>
                       </div>
-                    </label>
-                  </div>
+                    )
+                  })()}
                   <PillToggleGroup
                     multiple
                     selectedValues={formData.periodo_ids}
@@ -811,7 +907,15 @@ export default function IndicadoresPage() {
               <div className="p-4 space-y-4">
 
               {/* Niveis do Metodo */}
-              {formOpcoes.length > 0 && (
+              {formLoading ? (
+                <div>
+                  <p className="text-[12px] font-medium text-foreground mb-2">Niveis do Metodo de Avaliacao:</p>
+                  <div className="flex gap-2">
+                    <div className="h-9 w-28 bg-muted rounded-md animate-pulse" />
+                    <div className="h-9 w-28 bg-muted rounded-md animate-pulse" />
+                  </div>
+                </div>
+              ) : formOpcoes.length > 0 && (
                 <div>
                   <p className="text-[12px] font-medium text-foreground mb-2">Niveis do Metodo de Avaliacao:</p>
                   <PillToggleGroup
@@ -839,8 +943,7 @@ export default function IndicadoresPage() {
                   <div className="flex flex-wrap gap-1.5 mb-3">
                     {formNiveisPersonalizados.map((n, i) => (
                       <span key={i} className="inline-flex items-center gap-1 rounded-md bg-card border border-border px-2 py-1 text-xs">
-                        <span className="font-semibold text-primary">{n.sigla || '-'}</span>
-                        <span className="text-muted-foreground">{n.descricao}</span>
+                        <span className="text-foreground">({n.sigla || '-'} - {n.descricao})</span>
                         <button
                           type="button"
                           className="ml-0.5 rounded-full hover:bg-muted p-0.5 cursor-pointer"
@@ -855,17 +958,17 @@ export default function IndicadoresPage() {
 
                 <div className="flex items-center gap-1.5">
                   <Input
-                    className="h-7 text-xs flex-1"
-                    placeholder="Descricao do nivel..."
-                    value={novoNivelDescricao}
-                    onChange={e => setNovoNivelDescricao(e.target.value)}
+                    className="h-7 text-xs w-20"
+                    placeholder="Sigla *"
+                    value={novoNivelSigla}
+                    onChange={e => setNovoNivelSigla(e.target.value)}
                     onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); adicionarNivelPersonalizado() } }}
                   />
                   <Input
-                    className="h-7 text-xs w-16"
-                    placeholder="Sigla"
-                    value={novoNivelSigla}
-                    onChange={e => setNovoNivelSigla(e.target.value)}
+                    className="h-7 text-xs flex-1"
+                    placeholder="Descricao do nivel... *"
+                    value={novoNivelDescricao}
+                    onChange={e => setNovoNivelDescricao(e.target.value)}
                     onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); adicionarNivelPersonalizado() } }}
                   />
                   <Button variant="outline" size="sm" className="h-7 text-xs whitespace-nowrap px-2"

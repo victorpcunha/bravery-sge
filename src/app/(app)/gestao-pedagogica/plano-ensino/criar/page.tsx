@@ -40,6 +40,8 @@ function CriarPlanoForm() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const escolaParam = searchParams.get('escola')
+  const turmaParam = searchParams.get('turma')
+  const anoParam = searchParams.get('ano')
   const { schoolId: authSchoolId, isSuperAdmin } = useAuth()
   const schoolId = isSuperAdmin ? escolaParam : authSchoolId
   const [pessoaId, setPessoaId] = useState<string | null>(null)
@@ -48,8 +50,8 @@ function CriarPlanoForm() {
   const [disciplinas, setDisciplinas] = useState<any[]>([])
   const [saving, setSaving] = useState(false)
 
-  const [anoLetivoId, setAnoLetivoId] = useState('')
-  const [turmaId, setTurmaId] = useState('')
+  const [anoLetivoId, setAnoLetivoId] = useState(anoParam || '')
+  const [turmaId, setTurmaId] = useState(turmaParam || '')
   const [selectedDiscs, setSelectedDiscs] = useState<string[]>([])
   const [isInterdisciplinar, setIsInterdisciplinar] = useState(false)
 
@@ -64,8 +66,12 @@ function CriarPlanoForm() {
     getAnosLetivosAtivos(schoolId)
       .then(list => {
         setAnosLetivos(list)
-        const ativo = list.find((a: any) => a.status === 'ativo')
-        setAnoLetivoId(ativo?.id || '')
+        if (anoParam && list.some((a: any) => a.id === anoParam)) {
+          setAnoLetivoId(anoParam)
+        } else if (!anoLetivoId) {
+          const ativo = list.find((a: any) => a.status === 'ativo')
+          setAnoLetivoId(ativo?.id || '')
+        }
       })
       .catch(() => {})
   }, [schoolId])
@@ -129,6 +135,17 @@ function CriarPlanoForm() {
     }
   }
 
+  const voltarDestino = (() => {
+    if (turmaId) {
+      const params = new URLSearchParams()
+      if (isSuperAdmin && escolaParam) params.set('escola', escolaParam)
+      if (anoLetivoId) params.set('ano', anoLetivoId)
+      const qs = params.toString()
+      return `/gestao-pedagogica/plano-ensino/turma/${turmaId}${qs ? `?${qs}` : ''}`
+    }
+    return '/gestao-pedagogica/plano-ensino'
+  })()
+
   if (isSuperAdmin && !escolaParam) {
     return (
       <PageContainer>
@@ -160,6 +177,12 @@ function CriarPlanoForm() {
         title="Novo Plano de Ensino"
         description="Configure o ano letivo, turma e disciplinas do plano"
         icon={BookOpen}
+        actions={
+          <Button variant="outline" size="sm" onClick={() => router.push(voltarDestino)}>
+            <ArrowLeft className="h-4 w-4 mr-1.5" />
+            Voltar
+          </Button>
+        }
       />
 
       <div className="space-y-6">
@@ -246,7 +269,7 @@ function CriarPlanoForm() {
         )}
 
         <div className="flex justify-end gap-3">
-          <Button variant="outline" className="h-11" onClick={() => router.push('/gestao-pedagogica/plano-ensino')}>
+          <Button variant="outline" className="h-11" onClick={() => router.push(voltarDestino)}>
             Cancelar
           </Button>
           <Button className="h-11 shadow-md" onClick={handleSave} disabled={saving || !turmaId || selectedDiscs.length === 0}>

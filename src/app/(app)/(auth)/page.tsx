@@ -16,7 +16,6 @@ import AlunosPorEtapaChart from '@/components/dashboard/alunos-por-etapa-chart'
 import AlunosPorTipoChart from '@/components/dashboard/alunos-por-tipo-chart'
 import AlunosPorDeficienciaChart from '@/components/dashboard/alunos-por-deficiencia-chart'
 import AlunosPorTranstornoChart from '@/components/dashboard/alunos-por-transtorno-chart'
-import AlunosPorModalidadeChart from '@/components/dashboard/alunos-por-modalidade-chart'
 import AlunosPorTurnoChart from '@/components/dashboard/alunos-por-turno-chart'
 import { OcupacaoCard } from '@/components/dashboard/ocupacao-card'
 import { FrequenciaMediaCard } from '@/components/dashboard/frequencia-media-card'
@@ -139,7 +138,6 @@ function AcademicoTab({ data }: { data: DashboardData | null }) {
       <AlunosPorTipoChart data={data?.alunosPorTipoTurma ?? []} />
       <AlunosPorDeficienciaChart data={data?.alunosPorDeficiencia ?? []} />
       <AlunosPorTranstornoChart data={data?.alunosPorTranstorno ?? []} />
-      <AlunosPorModalidadeChart data={data?.alunosPorModalidade ?? []} />
       <AlunosPorTurnoChart data={data?.alunosPorTurno ?? []} />
     </div>
   )

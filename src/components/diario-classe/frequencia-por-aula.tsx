@@ -5,6 +5,7 @@ import { useAuth } from '@/components/providers/auth-provider'
 import { usePermissoes } from '@/hooks/use-permissoes'
 import {
   registrarFrequenciaAula,
+  registrarFrequenciaAulaLote,
   listarFrequenciasAula,
   getAulasDaTurma,
   getEstatisticasFrequencia,
@@ -13,11 +14,13 @@ import {
   type AulaQuadro,
   type FrequenciaAula,
 } from '@/lib/actions/diario-classe'
-import { Button } from '@/components/ui/button'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
-import { ChevronLeft, ChevronRight, Check, X, AlertTriangle, Info, Users } from 'lucide-react'
+import { Button } from '@/components/ui/button'
+import { Check, X, AlertTriangle, Info, Users } from 'lucide-react'
+import SeletorMes from './seletor-mes'
+import ListaPresencaMobile, { type AlunoPresencaRow } from './lista-presenca-mobile'
 import { cn } from '@/lib/utils'
 import { toast } from 'sonner'
 
@@ -56,6 +59,7 @@ export default function FrequenciaPorAula({ turmaId, alunos, disciplinas, readOn
   const { schoolId } = useAuth()
   const [salvando, setSalvando] = useState<Set<string>>(new Set())
   const [popoverOpen, setPopoverOpen] = useState<string | null>(null)
+  const [aulaSel, setAulaSel] = useState<string | null>(null)
   const tableRef = useRef<HTMLDivElement>(null)
 
   const { pessoaId } = usePermissoes(schoolId || '')
@@ -159,43 +163,31 @@ export default function FrequenciaPorAula({ turmaId, alunos, disciplinas, readOn
       toast.info('Nenhum aluno ativo nesta data')
       return
     }
-    const savingKeys = new Set<string>()
-    alunosValidos.forEach(aluno => {
-      savingKeys.add(`${aluno.id}_${horarioId}_${dataAula}_${status}`)
-    })
-    setSalvando(prev => new Set([...prev, ...savingKeys]))
 
     try {
-      let erros = 0
-      for (const aluno of alunosValidos) {
-        const result = await registrarFrequenciaAula(schoolId, turmaId, horarioId, aluno.id, dataAula, status, pessoaId)
-        if (!result.success) { erros++; continue }
-        const key = `${aluno.id}_${horarioId}_${dataAula}`
-        setFrequencias(prev => {
-          const next = new Map(prev)
+      const result = await registrarFrequenciaAulaLote(
+        schoolId, turmaId, horarioId,
+        alunosValidos.map(a => a.id), dataAula, status, pessoaId
+      )
+      if (!result.success) {
+        toast.error(result.error || 'Erro ao marcar frequência em lote')
+        return
+      }
+      setFrequencias(prev => {
+        const next = new Map(prev)
+        alunosValidos.forEach(aluno => {
+          const key = `${aluno.id}_${horarioId}_${dataAula}`
           if (status) { next.set(key, status) }
           else { next.delete(key) }
-          return next
         })
-      }
-      if (erros === 0) {
-        toast.success(status === 'P' ? 'Todos marcados como presente' : status === 'F' ? 'Todos marcados como ausente' : 'Frequências removidas')
-      } else {
-        toast.error(`${erros} aluno(s) com erro`)
-      }
+        return next
+      })
+      toast.success(status === 'P' ? 'Todos marcados como presente' : status === 'F' ? 'Todos marcados como ausente' : 'Frequências removidas')
       recarregarEstatisticas()
     } catch {
       toast.error('Erro ao marcar frequência em lote')
-    } finally {
-      setSalvando(prev => {
-        const next = new Set(prev)
-        savingKeys.forEach(k => next.delete(k))
-        return next
-      })
     }
   }
-
-  const nomeMes = new Date(ano, mes - 1).toLocaleDateString('pt-BR', { month: 'long' })
 
   const aulasPorData = aulas.reduce<{ data: string; diaSemana: string; aulas: AulaQuadro[] }[]>((acc, aula) => {
     const grupo = acc.find(g => g.data === aula.data)
@@ -240,9 +232,59 @@ export default function FrequenciaPorAula({ turmaId, alunos, disciplinas, readOn
     })
   )
 
+  const aulasFlat = aulasPorData.flatMap(grupo => grupo.aulas)
+  const chaveAula = (a: AulaQuadro) => `${a.horario_id}_${a.data}`
+
+  useEffect(() => {
+    const chaves = aulasFlat.map(chaveAula)
+    if (chaves.length === 0) {
+      setAulaSel(null)
+      return
+    }
+    if (!aulaSel || !chaves.includes(aulaSel)) {
+      const primeiraPassada = chaves.find(k => (k.split('_').pop() || '') <= hojeStr)
+      setAulaSel(primeiraPassada ?? chaves[0])
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [aulas])
+
+  const aulaAtual = aulasFlat.find(a => chaveAula(a) === aulaSel) ?? null
+
+  const rotuloAula = (a: AulaQuadro) =>
+    `${formatarDataCurta(a.data)} · Aula ${a.numero_aula}ª · ${a.horario_inicial}`
+
+  const periodoAlunoAula = (aluno: (typeof alunosVisiveis)[number], dataAula: string): string | null => {
+    if (aluno.data_matricula && dataAula < aluno.data_matricula) return 'Aluno ainda não matriculado nesta data'
+    if (aluno.data_saida && dataAula > aluno.data_saida) return 'Aluno não pertence mais à turma nesta data'
+    return null
+  }
+
+  const mobileRows: AlunoPresencaRow[] = aulaAtual
+    ? alunosVisiveis.map(aluno => {
+        const motivo = periodoAlunoAula(aluno, aulaAtual.data)
+        return {
+          id: aluno.id,
+          nome: aluno.nome_completo,
+          status: frequencias.get(`${aluno.id}_${aulaAtual.horario_id}_${aulaAtual.data}`) || null,
+          disabled: readOnly || aulaAtual.data > hojeStr || motivo !== null,
+          disabledReason: motivo || (aulaAtual.data > hojeStr ? 'Data futura' : undefined),
+        }
+      })
+    : []
+
+  const mobileAllPresent = aulaAtual
+    ? alunosVisiveis
+        .filter(al => periodoAlunoAula(al, aulaAtual.data) === null)
+        .map(al => frequencias.get(`${al.id}_${aulaAtual.horario_id}_${aulaAtual.data}`))
+        .filter(Boolean).length > 0 &&
+      alunosVisiveis
+        .filter(al => periodoAlunoAula(al, aulaAtual.data) === null)
+        .every(al => frequencias.get(`${al.id}_${aulaAtual.horario_id}_${aulaAtual.data}`) === 'P')
+    : false
+
   return (
-    <div>
-      <div className="flex flex-wrap items-center gap-4 mb-8 pt-2 px-1">
+    <div className="min-w-0 max-w-full p-4 sm:p-6 space-y-5">
+      <div className="flex flex-wrap items-center gap-4">
         <div>
           <Select value={disciplinaId} onValueChange={setDisciplinaId}>
             <SelectTrigger className="min-w-[220px]">
@@ -258,26 +300,7 @@ export default function FrequenciaPorAula({ turmaId, alunos, disciplinas, readOn
           </Select>
         </div>
 
-        <div className="flex items-center gap-2">
-          <Button variant="outline" size="icon" onClick={() => {
-            if (mes === 1) { setMes(12); setAno(a => a - 1) }
-            else setMes(m => m - 1)
-          }}>
-            <ChevronLeft className="h-4 w-4" />
-          </Button>
-          <span className="text-sm font-medium capitalize min-w-[140px] text-center tabular-nums">
-            {nomeMes} {ano}
-          </span>
-          <Button variant="outline" size="icon" onClick={() => {
-            if (mes === 12) { setMes(1); setAno(a => a + 1) }
-            else setMes(m => m + 1)
-          }}>
-            <ChevronRight className="h-4 w-4" />
-          </Button>
-          <Button variant="ghost" size="sm" onClick={() => { setAno(hoje.getFullYear()); setMes(hoje.getMonth() + 1) }}>
-            Hoje
-          </Button>
-        </div>
+        <SeletorMes ano={ano} mes={mes} onChange={(a, m) => { setAno(a); setMes(m) }} />
       </div>
 
       {!disciplinaId ? (
@@ -296,7 +319,7 @@ export default function FrequenciaPorAula({ turmaId, alunos, disciplinas, readOn
           {loadingStats ? (
             <div className="text-xs text-muted-foreground mb-4">Carregando indicadores...</div>
           ) : estatisticas && (
-            <div className="flex flex-wrap gap-3 mb-4">
+            <div className="flex flex-wrap gap-3">
               <div className="rounded-md border border-border bg-card px-3 py-2 text-center whitespace-nowrap">
                 <div className="text-base font-bold text-foreground tabular-nums">{estatisticas.diasDisciplina ?? '-'}</div>
                 <div className="text-[11px] text-muted-foreground mt-0.5">Dias da Disc.</div>
@@ -324,7 +347,7 @@ export default function FrequenciaPorAula({ turmaId, alunos, disciplinas, readOn
             </div>
           )}
 
-          <div className="flex flex-wrap items-center gap-x-6 gap-y-2 mb-4 rounded-lg bg-muted/40 border border-border px-4 py-2.5 text-xs text-muted-foreground">
+          <div className="hidden md:flex flex-wrap items-center gap-x-6 gap-y-2 rounded-lg bg-muted/40 border border-border px-4 py-2.5 text-xs text-muted-foreground">
             <span className="flex items-center gap-1.5">
               <span className="flex h-4 w-4 items-center justify-center rounded-sm bg-success"><Check className="h-2.5 w-2.5 text-white" /></span>
               Presente
@@ -349,7 +372,7 @@ export default function FrequenciaPorAula({ turmaId, alunos, disciplinas, readOn
             </span>
           </div>
 
-          <div className="overflow-auto border border-border rounded-lg" ref={tableRef}>
+          <div className="hidden md:block overflow-x-auto max-w-full border border-border rounded-lg" ref={tableRef}>
             <Table className="min-w-max text-xs">
               <TableHeader>
                 <TableRow className="bg-muted/50">
@@ -556,6 +579,39 @@ export default function FrequenciaPorAula({ turmaId, alunos, disciplinas, readOn
                 )}
               </TableBody>
             </Table>
+          </div>
+
+          <div className="md:hidden space-y-4">
+            <Select value={aulaSel ?? ''} onValueChange={setAulaSel}>
+              <SelectTrigger className="w-full h-11" aria-label="Selecionar aula">
+                <SelectValue placeholder="Selecione uma aula" />
+              </SelectTrigger>
+              <SelectContent>
+                {aulasFlat.map(a => (
+                  <SelectItem key={chaveAula(a)} value={chaveAula(a)}>
+                    {rotuloAula(a)}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+
+            {aulaAtual && (
+              <>
+                <Button
+                  className="w-full min-h-[44px] text-[14px] font-semibold"
+                  disabled={readOnly || aulaAtual.data > hojeStr}
+                  onClick={() => handleMarcarTodos(aulaAtual.horario_id, aulaAtual.data, mobileAllPresent ? null : 'P')}
+                >
+                  <Users className="h-4 w-4 mr-2" />
+                  {mobileAllPresent ? 'Limpar marcações' : 'Todos presentes'}
+                </Button>
+                <ListaPresencaMobile
+                  alunos={mobileRows}
+                  onChange={(alunoId, status) => handleRegistrar(alunoId, aulaAtual.horario_id, aulaAtual.data, status)}
+                  emptyMessage="Nenhum aluno ativo nesta turma."
+                />
+              </>
+            )}
           </div>
         </>
       )}

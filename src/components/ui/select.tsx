@@ -51,6 +51,7 @@ function SelectTrigger({
         "data-[placeholder]:text-muted-foreground",
         "disabled:cursor-not-allowed disabled:opacity-50",
         "data-[size=default]:h-10 data-[size=sm]:h-9",
+        "[&>span]:min-w-0 [&>span]:flex-1 [&>span]:truncate [&>span]:text-left",
         "[&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4 [&_svg]:text-muted-foreground [&_svg]:transition-transform [&_svg]:duration-200",
         "data-[state=open]:[&_svg]:rotate-180",
         className
@@ -83,17 +84,16 @@ function SelectContent({
         align={align}
         {...props}
       >
-        <SelectScrollUpButton />
         <SelectPrimitive.Viewport
           data-position={position}
           className={cn(
+            "overflow-y-auto scrollbar-thin",
             "data-[position=popper]:h-(--radix-select-trigger-height) data-[position=popper]:w-full data-[position=popper]:min-w-(--radix-select-trigger-width)",
             position === "popper" && ""
           )}
         >
           {children}
         </SelectPrimitive.Viewport>
-        <SelectScrollDownButton />
       </SelectPrimitive.Content>
     </SelectPrimitive.Portal>
   )

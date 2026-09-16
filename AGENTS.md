@@ -14,7 +14,7 @@ Sistema de Gestão Escolar completo: turmas, quadro de aulas, indicadores de ava
 - **Turmas**: Migration, CRUD, listagem/cadastro page
 - **Quadro de Aulas**: Migration, CRUD, grade editável dia×horário, validação conflitos
 - **Indicadores de Avaliação**: Migration, CRUD hierárquico, import BNCC (Infantil só), Níveis de Desenvolvimento (método + personalizado), migração `indicadores_niveis`
-- **Matrículas**: Migration (3 tabelas), CRUD, Transporte, Dispensas, Movimentações (Transferir/Reclassificar/Remanejar/Desistir)
+- **Matrículas**: Migration (2 tabelas — dispensas removidas na spec 034), CRUD, Transporte, Movimentações (Transferir/Reclassificar/Remanejar/Desistir)
 - **Perfis e Permissões**: Complete module — migrations (5), actions, components (PerfilFiltros, PerfilGrid, MatrizPermissoes, PerfilForm), list + detail pages, visual protection, server-side validation, audit logging
 - **Funções Profissionais**: CRUD page
 - **Login**: CPF ou Email; mensagem genérica "Usuário ou senha inválidos"
@@ -275,6 +275,32 @@ Sistema de Gestão Escolar completo: turmas, quadro de aulas, indicadores de ava
     na tela de Métodos (0–50); banda média = pp/100×escala, banda frequência = pp somado
   - Só turmas com avaliação numérica entram (mistas contam só o numérico); "Avaliado" = ≥1 nota no recorte
   - Notas: 2 migrations (aplicar via SQL Editor); 0 novas deps npm; `tsc` + `next build` verdes
+- **Turmas — Ajustes e Alinhamento Censo 2026 (spec 029)**:
+  - Spec + plan + data-model + quickstart + tasks em `specs/029-turmas-ajustes-censo-2026/` (fontes: `Tabela de Etapas 2026.xlsx` + `Tabela de Tipo de Atividade Complementar 2026.xlsx` em `documentacao_interna/.../Tabelas Auxiliares/`)
+  - **Catálogos**: `atividades-complementares.ts` (~150 itens, nomes vazios excluídos), `etapas-ensino.ts` corrigido (69=iniciais, 70=finais, 64→308, nomes oficiais; 30–34/"Escolarização" excluídos — só constam das colunas auxiliares), `tipo-turma-mediacao.ts` (+EAD/305, tipo 9 sem 56/305), novo `tipo-turma-codigos.ts` (mapa canônico rótulo→código, sem migração de dados)
+  - **Modal Turma**: filtros "Tipo" rotulados; tabela full-width (`bg-muted text-foreground` no header); "Turma de:" + "Educação Especial"; Multietapa alinhada; Etapa Agregada nula/bloqueada fora de Curricular/9 + só agregadas das etapas ativas + matriz oficial Tipo×Etapa no save e nos selects (client + server); Formas/Disciplinas em 4 cols + "Selecionar Todas"; card condicional Atividades Complementares (select Área/Subárea só-nomes + Adicionar, 6, dedupe)
+  - **Profissional**: Calendar padrão (início + término), swap Disciplinas→Atividades em turma complementar pura (`atividades_ids`), Inativar (`ativo=false`+`data_encerramento`, histórico preservado) + Reativar, lixeira via `ConfirmDialog` (zero `confirm()` nativo)
+  - **Modalidade removida**: coluna da tabela, `turmas.ts`, gráfico `alunos-por-modalidade-chart.tsx` (delete) + `dashboard.ts` + `(auth)/page.tsx`; migration `patch_turmas_remove_modalidade.sql`
+  - **Etapas**: 7 grupos oficiais em `TabEtapas.tsx` (novo tipo `tecnico` p/ 308 + labels no diário/comunicados)
+  - **Motor Censo**: `buildRegistro20` emite códigos (tipo/mediação/forma via mapa) + `atividade_complementar_1..6` em ordem (nulos nos excedentes); validação usa matriz oficial + etapa nula p/ 4/5; corrigidos `turmaHasTipo` (morto com rótulos), selects com coluna inexistente `tipo_turma`, regras 50 de função×tipo
+  - Notas: 3 migrations (**aplicar via SQL Editor**: M-01/M-02 obrigatórias antes de usar, M-03 após); 0 novas deps; `tsc` + `next build` verdes; lint só com achados pré-existentes
+- **Paleta Atlas v3 (2026-09-15)**:
+  - `globals.css` light migrado steel-blue → verde-bosque single-hue (`--primary #14532D` 9.11:1 AAA, `--secondary/--accent #2E7D4F`, `--ring` acompanha primary, sidebar `#13291D`, sombras retintadas); `.dark` preservado intacto
+  - `DESIGN.md` reescrito do zero como fonte canônica única (cores com contrastes medidos, tipografia 9 níveis, espaçamento 4pt + mínimo toque 44px, radius 6 níveis, regra minicard `<md`, changelog v3)
+  - `AGENTS.md` (tabela Regra #1 + Regra #4) e `catalog.md` (tokens v3) atualizados
+  - Correção incidental: `.badge-teal` usava texto `foreground` sobre fundo escuro → `primary-foreground`
+  - Notas: 0 migrations; 0 novas deps npm; `tsc` + `next build` verdes
+- **Atlas v4 — cores sistema todo + fontes (2026-09-15)**:
+  - Auditoria: 0 hex hardcoded em `src` (só `globals.css`, `preview-atlas` e literals dos PDFs); `button.tsx` 100% em tokens
+  - 6 PDFs oficiais alinhados aos literals Atlas (`#14532D`/`#4C6353`/`#13291D`)
+  - Fontes definidas: Spectral 500/600/700 p/ títulos (`--font-display`, `font-heading` aponta p/ ela; PageHeader/PageSection + títulos de Dialog/Sheet + wordmark), Jakarta segue no operável, numerais sempre sans+`tabular-nums`, mono p/ códigos, Helvetica nos PDFs
+  - `DESIGN.md` v4 + sidecar `.impeccable/design.json` regenerado; Regra #10 atualizada
+  - Notas: 0 migrations; 1 nova fonte via `next/font` (0 deps npm); `tsc` + `next build` verdes
+- **Atlas v5 — redefinição teal (2026-09-15)**:
+  - Âncora `#3f9ea8` (material do usuário); rampa própria: `--primary #1b4d52` (9.42:1 AAA), `--secondary/--accent #2c747c` (5.39:1), âncora só p/ fills/gráficos (3.15:1, NUNCA texto), sidebar `#0a292c`, sombras retintadas
+  - Skill `design-taste-frontend`: 1 acento travado, contraste de botão verificado, sem glow roxo, serifada já justificada (decisão do usuário)
+  - Tokens + 6 PDFs + `DESIGN.md` v5 + sidecar + `AGENTS.md` + `catalog.md` migrados em um passe; `.dark` preservado
+  - Notas: 0 migrations; 0 novas deps npm; `tsc` + `next build` verdes
 
 ## Known Issues
 - All server actions use `'use server'` + `getSupabaseAdmin()` (service_role, bypass RLS)
@@ -284,7 +310,7 @@ Sistema de Gestão Escolar completo: turmas, quadro de aulas, indicadores de ava
 
 ### Catálogo de Componentes Oficiais
 
-Referência canônica: `specs/002-design-system/catalog.md` (tokens v2 em `specs/005-design-system-v2/spec.md`)
+Referência canônica: `DESIGN.md` (v3 Atlas — vence em caso de divergência); contratos de componentes em `specs/002-design-system/catalog.md`
 
 **Layout**:
 - `PageContainer` — `src/components/layout/page-container.tsx` — Container de página com `maxWidth="default"|"dashboard"`
@@ -326,26 +352,27 @@ Use SEMPRE os tokens Tailwind v4 derivados das CSS variables do `globals.css`:
 
 | Uso | Token Tailwind | Hex (referência) |
 |-----|---------------|------------------|
-| Marca principal (steel blue) | `primary` / `bg-primary` / `text-primary` | #4682B4 |
-| Texto em primary | `primary-foreground` | #FFFFFF |
-| Texto em accent | `accent-foreground` | #192E40 |
-| Interação complementar (azul claro) | `accent` / `bg-accent` / `text-accent` | #59A5E3 |
-| Ação secundária (steel profundo) | `secondary` / `bg-secondary` / `text-secondary` | #396991 |
-| Fundo de página | `background` / `bg-background` | #EDF1F5 |
+| Marca principal (âncora teal; texto sempre tinta, 4.88:1) | `primary` / `bg-primary` / `text-primary` | #3f9ea8 |
+| Texto em primary (SEMPRE tinta, nunca branco) | `primary-foreground` | #0a292c |
+| Texto em accent | `accent-foreground` | #FFFFFF |
+| Interação complementar (= secondary) | `accent` / `bg-accent` / `text-accent` | #2c747c |
+| Ação secundária (teal apoio, 5.39:1) | `secondary` / `bg-secondary` / `text-secondary` | #2c747c |
+| Âncora da marca (só fills/gráficos, NUNCA texto) | — (uso direto em charts) | #3f9ea8 |
+| Fundo de página (papel frio) | `background` / `bg-background` | #eef4f4 |
 | Fundo de card | `card` / `bg-card` | #FFFFFF |
-| Texto principal (slate-800) | `foreground` / `text-foreground` | #1E293B |
-| Texto secundário (slate-600) | `muted-foreground` / `text-muted-foreground` | #52607A |
-| Bordas (slate-200) | `border` / `border-border` | #D7DEE8 |
-| Fundo muted (slate-100) | `muted` / `bg-muted` | #E4E9F0 |
-| Foco (dourado fixo) | `ring` / `bg-ring` / `text-ring` | #B8863B |
-| Destruição | `destructive` / `bg-destructive` | #C4453A |
-| Sucesso | `success` / `bg-success` / `text-success` | #16A34A |
+| Texto principal | `foreground` / `text-foreground` | #0a292c |
+| Texto secundário (6.69:1 no papel) | `muted-foreground` / `text-muted-foreground` | #3d5a5e |
+| Bordas | `border` / `border-border` | #c4d9db |
+| Fundo muted (névoa) | `muted` / `bg-muted` | #dce8e9 |
+| Foco (= Deep Teal, NUNCA a âncora) | `ring` / `bg-ring` / `text-ring` | #1b4d52 |
+| Destruição (6.54:1) | `destructive` / `bg-destructive` | #B3261E |
+| Sucesso (= secondary) | `success` / `bg-success` / `text-success` | #2c747c |
 | Aviso | `warning` / `bg-warning` / `text-warning` | #C2571C |
-| Info (= secondary) | `info` / `text-info` | #396991 |
-| Sidebar fundo (steel profundo) | `sidebar` / `bg-sidebar` | #294C69 |
-| Sidebar texto | `sidebar-foreground` | #FFFFFF |
-| Sidebar hover (branco translúcido) | `sidebar-accent` | rgba(255,255,255,0.12) |
-| Sidebar ativo (pílula branca) | `sidebar-primary` | #FFFFFF |
+| Info (= secondary) | `info` / `text-info` | #2c747c |
+| Sidebar fundo (âncora da marca) | `sidebar` / `bg-sidebar` | #3f9ea8 |
+| Sidebar texto (sempre tinta) | `sidebar-foreground` | #0a292c |
+| Sidebar hover (tinta translúcida) | `sidebar-accent` | rgba(10,41,44,0.12) |
+| Sidebar ativo (pastilha tinta) | `sidebar-primary` | #0a292c |
 
 ### Regra #2: Componentes de formulário
 - SEMPRE use componentes shadcn/ui: `<Select>`, `<Input>`, `<Textarea>`, `<Button>`, etc.
@@ -364,10 +391,10 @@ Use SEMPRE os tokens Tailwind v4 derivados das CSS variables do `globals.css`:
 
 ### Regra #4: Sidebar
 - SEMPRE use tokens `sidebar-*`: `bg-sidebar`, `text-sidebar-foreground`, `bg-sidebar-accent`, `border-sidebar-border`, `bg-sidebar-primary`.
-- NUNCA hardcode `#1D3557`, `#457B9D`, `#4FB3BF`, `#0F2B46` no sidebar.
-- Sidebar é **steel profundo** em light mode (`bg-sidebar` `#294C69`, texto branco) e slate-950 em dark mode.
-- Para ativo: pílula branca (`bg-sidebar-primary`) com texto steel (`text-sidebar-primary-foreground`).
-- Para hover: wash translúcido (`hover:bg-sidebar-accent`), texto sempre `text-sidebar-foreground` (nunca `text-accent-foreground` — contraste).
+- NUNCA hardcode `#1D3557`, `#457B9D`, `#4FB3BF`, `#0F2B46`, `#294C69`, `#4682B4`, `#14532D`, `#2E7D4F` no sidebar.
+- Sidebar é **a âncora da marca** em light mode (`bg-sidebar` `#3f9ea8`, texto sempre tinta) e slate-950 em dark mode.
+- Para ativo: pastilha tinta (`bg-sidebar-primary`) com glifo branco (`text-sidebar-primary-foreground`) — vale p/ módulo e p/ sub-item (tela interna, ex.: Unidade Escolar).
+- Para hover: wash de tinta (`hover:bg-sidebar-accent`), texto sempre `text-sidebar-foreground` (nunca branco — contraste).
 - Para sub-item ativo: `bg-sidebar-accent/80`.
 - Logo do sidebar usa gradiente `from-primary to-accent`.
 
@@ -383,7 +410,7 @@ Use SEMPRE os tokens Tailwind v4 derivados das CSS variables do `globals.css`:
 - Ao criar componentes, use tokens (nunca `bg-white`, `text-gray-900`, etc.) para garantir compatibilidade com dark mode.
 - Para testar dark mode, adicione `class="dark"` no `<html>`.
 - Dark mode usa paleta slate: background `#0F172A` (slate-950), card `#1E293B` (slate-800), border `#334155` (slate-700).
-- Primary permanece `#1F88EB` em dark mode (não é invertido).
+- Primary permanece `#1F88EB` em dark mode (não é invertido; `.dark` preservado da geração anterior, fora do escopo Atlas v3).
 - Sidebar em dark mode: `#0F172A` (slate-950).
 
 ### Regra #7: Gradientes
@@ -421,18 +448,21 @@ Use SEMPRE os tokens Tailwind v4 derivados das CSS variables do `globals.css`:
 - Contato: `telefone_celular`, `telefone_fixo`
 - Endereço: `logradouro`, `bairro`, `numero`, `complemento`
 
-### Regra #10: Escala Tipográfica (v2 — Visual Language)
+### Regra #10: Escala Tipográfica (v4 — Atlas)
 - Corpo padrão do sistema é **15px** — não `text-sm` (14px). Use `text-[15px]` para descrições, parágrafos e texto corrido.
-- Título de página (PageHeader): `text-[28px] font-bold leading-tight`
-- Título de seção (PageSection/FormCard): `text-[20px] font-semibold leading-snug`
-- Headline de card: `text-[16px] font-semibold`
-- Rótulos/botões: `text-[14px] font-medium`
-- KPI/display (StatCard value): `text-[36px] font-bold leading-none`
+- Título de página (PageHeader): Spectral `font-display text-[28px] font-bold leading-tight`
+- Título de seção (PageSection/FormCard): Spectral `font-display text-[20px] font-semibold leading-snug`
+- Títulos de Dialog/Sheet e wordmark do sidebar: serifada via `font-heading` (aponta p/ Spectral)
+- Headline de card e nomes em lista: sans `text-[16px] font-semibold` (serifada NÃO desce p/ lista — escaneabilidade)
+- Rótulos/botões: `text-[14px] font-medium` (sans)
+- KPI/display (StatCard value): sans `text-[36px] font-bold leading-none` + `tabular-nums` (numerais NUNCA em serifada)
+- Códigos/horários/INEP: `font-mono` + `tabular-nums`
 - **Proibido**: usar `text-sm` como corpo de descrição — use `text-[15px]`
 - **Proibido**: usar `text-base` como título de seção — use `text-[20px]`
 - **Proibido**: usar `text-2xl font-semibold` como título de página — use `text-[28px] font-bold`
-- Usar apenas pesos 400, 500, 600, 700 (Plus Jakarta Sans)
-- Fonte oficial: Plus Jakarta Sans (não usar `system-ui`, `Helvetica`, `Arial`, serifadas ou decorativas)
+- **Proibido**: serifada em botões, corpo, tabela ou numerais — só títulos
+- Pesos carregados: Spectral 500/600/700, Jakarta 400/500/600/700 (sem itálico, sem all-caps)
+- PDFs oficiais: Helvetica/Helvetica-Bold (builtins do react-pdf, nunca webfont)
 
 ### Regra #11: Escala de Radius (v2 — Visual Language)
 - 6 níveis oficiais: `rounded-sm` (6px), `rounded-md` (8px), `rounded-lg` (12px), `rounded-xl` (16px), `rounded-2xl` (24px), `rounded-full` (9999px)

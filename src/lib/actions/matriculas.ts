@@ -62,6 +62,7 @@ export type Matricula = {
   etapa_ensino_id: string
   subetapa_id: string | null
   data_matricula: string
+  codigo_matricula: number | null
   codigo_inep: string | null
   forma_ingresso: string
   escolarizacao_externa: string
@@ -94,16 +95,6 @@ export type Movimentacao = {
   profissional?: { nome: string }
 }
 
-export type Dispensa = {
-  id: string
-  matricula_id: string
-  disciplina_id: string
-  motivo: string
-  ativo: boolean
-  created_at: string
-  disciplina?: { nome: string }
-}
-
 export type FiltrosMatriculas = {
   ano_letivo_id?: string
   turma_id?: string
@@ -117,6 +108,7 @@ export async function getMatriculas(schoolId: string | null, filtros: FiltrosMat
     .from('academico_matriculas')
     .select('*, aluno:aluno_id(nome_completo, cpf), turma:turma_id(nome, codigo_inep), etapa:etapa_ensino_id(etapa_nome), subetapa:subetapa_id(nome)')
     .eq('ativo', true)
+    .order('codigo_matricula', { ascending: true })
     .order('created_at', { ascending: false })
 
   if (schoolId) query = query.eq('school_id', schoolId)
@@ -162,6 +154,16 @@ export async function createMatricula(data: {
 }, pessoaId?: string | null) {
   await garantirTurmaAberta(data.turma_id)
 
+  // Código sequencial de matrícula por escola (max+1; UNIQUE protege concorrência)
+  const { data: ultimo } = await supabase
+    .from('academico_matriculas')
+    .select('codigo_matricula')
+    .eq('school_id', data.school_id)
+    .order('codigo_matricula', { ascending: false })
+    .limit(1)
+    .maybeSingle()
+  const proximoCodigo = ((ultimo?.codigo_matricula as number) || 0) + 1
+
   const { data: matricula, error } = await supabase
     .from('academico_matriculas')
     .insert({
@@ -172,6 +174,7 @@ export async function createMatricula(data: {
       etapa_ensino_id: data.etapa_ensino_id,
       subetapa_id: data.subetapa_id || null,
       data_matricula: data.data_matricula,
+      codigo_matricula: proximoCodigo,
       forma_ingresso: data.forma_ingresso,
       escolarizacao_externa: data.escolarizacao_externa,
       observacoes: data.observacoes || null,
@@ -247,6 +250,35 @@ export async function updateMatricula(id: string, data: {
 
   const info = await dadosMatricula(id)
   await registrarMatricula('editar', 'academico_matriculas', id, pessoaId, info.school_id || anterior?.school_id, info.aluno_nome || null, anterior, final)
+}
+
+export async function deleteMatricula(id: string, pessoaId: string) {
+  const { validarPermissaoServer } = await import('./perfis')
+  await validarPermissaoServer(pessoaId, 'gestao-academica.matriculas', 'excluir')
+
+  const { data: anterior } = await supabase
+    .from('academico_matriculas')
+    .select('*')
+    .eq('id', id)
+    .maybeSingle()
+
+  if (!anterior) throw new Error('Matrícula não encontrada')
+
+  const { error } = await supabase
+    .from('academico_matriculas')
+    .delete()
+    .eq('id', id)
+
+  if (error) {
+    // 23503 = violação de chave estrangeira (lançamentos vinculados)
+    if ((error as any).code === '23503') {
+      throw new Error('Não é possível excluir: este vínculo possui lançamentos vinculados (frequência, avaliações ou pareceres)')
+    }
+    throw error
+  }
+
+  const info = await dadosMatricula(id).catch(() => ({ aluno_nome: null, school_id: null }))
+  await registrarMatricula('excluir', 'academico_matriculas', id, pessoaId, (anterior as any).school_id || info.school_id, info.aluno_nome || null, anterior, null)
 }
 
 // ------- Movimentações -------
@@ -398,86 +430,9 @@ export async function salvarMovimentacoes(
   }
 }
 
-// ------- Dispensas -------
-
-export async function getDispensas(matriculaId: string) {
-  const { data, error } = await supabase
-    .from('academico_matriculas_dispensas')
-    .select('*, disciplina:disciplina_id(nome)')
-    .eq('matricula_id', matriculaId)
-    .eq('ativo', true)
-
-  if (error) throw error
-  return data as Dispensa[]
-}
-
-export async function adicionarDispensa(matriculaId: string, disciplinaId: string, motivo: string, pessoaId?: string | null) {
-  const { data, error } = await supabase
-    .from('academico_matriculas_dispensas')
-    .insert({
-      matricula_id: matriculaId,
-      disciplina_id: disciplinaId,
-      motivo,
-    })
-    .select()
-    .single()
-
-  if (error) throw error
-
-  const info = await dadosMatricula(matriculaId)
-  const { data: disciplina } = await supabase
-    .from('academico_disciplinas')
-    .select('nome')
-    .eq('id', disciplinaId)
-    .maybeSingle()
-
-  await registrarAuditoria({
-    school_id: info.school_id || null,
-    pessoa_id: pessoaId || null,
-    modulo: 'Alunos Matriculados',
-    entidade: 'academico_matriculas_dispensas',
-    entidade_id: data.id,
-    registro_nome: info.aluno_nome || null,
-    acao: 'criar',
-    dados_novos: { ...data, disciplina_nome: disciplina?.nome || null },
-  })
-  return data
-}
-
-export async function removerDispensa(id: string, pessoaId?: string | null) {
-  const { data: anterior } = await supabase
-    .from('academico_matriculas_dispensas')
-    .select('*')
-    .eq('id', id)
-    .maybeSingle()
-
-  const { error } = await supabase
-    .from('academico_matriculas_dispensas')
-    .update({ ativo: false })
-    .eq('id', id)
-
-  if (error) throw error
-
-  if (anterior) {
-    const info = await dadosMatricula(anterior.matricula_id)
-    const { data: disciplina } = await supabase
-      .from('academico_disciplinas')
-      .select('nome')
-      .eq('id', anterior.disciplina_id)
-      .maybeSingle()
-
-    await registrarAuditoria({
-      school_id: info.school_id || null,
-      pessoa_id: pessoaId || null,
-      modulo: 'Alunos Matriculados',
-      entidade: 'academico_matriculas_dispensas',
-      entidade_id: id,
-      registro_nome: info.aluno_nome || null,
-      acao: 'excluir',
-      dados_anteriores: { ...anterior, disciplina_nome: disciplina?.nome || null },
-    })
-  }
-}
+// ------- Dispensas (removido — spec 034) -------
+// A funcionalidade de Dispensa de Disciplinas foi removida do sistema.
+// Tabela `academico_matriculas_dispensas` dropada via patch_remove_dispensas.sql.
 
 // ------- Queries auxiliares -------
 
@@ -545,62 +500,53 @@ export async function getSubetapasDaEtapa(etapaId: string) {
   return data as any[]
 }
 
-export async function getDisciplinasDaTurma(turmaId: string) {
-  // Buscar disciplinas via turmas_disciplinas → academico_matriz_disciplinas → academico_disciplinas
-  const { data: vinculadas } = await supabase
-    .from('turmas_disciplinas')
-    .select('id, academico_matriz_disciplinas(disciplina_id, academico_disciplinas(nome))')
-    .eq('turma_id', turmaId)
-
-  if (vinculadas && vinculadas.length > 0) {
-    return vinculadas.map(d => {
-      const md = (d as any).academico_matriz_disciplinas
-      return {
-        disciplina_id: md?.disciplina_id,
-        nome: md?.academico_disciplinas?.nome || 'Sem nome',
-      }
-    }).filter(d => d.disciplina_id) as any[]
-  }
-
-  // Fallback: buscar da matriz curricular da turma
-  const { data: turma } = await supabase
-    .from('turmas')
-    .select('ano_letivo_id, etapas_ensino_ids')
-    .eq('id', turmaId)
-    .single()
-
-  if (!turma) return []
-
-  const { data: matriz } = await supabase
-    .from('academico_matrizes_curriculares')
-    .select('id')
-    .eq('school_id', (await supabase.from('turmas').select('school_id').eq('id', turmaId).single()).data?.school_id)
-    .eq('ano_letivo_id', turma.ano_letivo_id)
-    .in('etapa_ensino_id', turma.etapas_ensino_ids || [])
-    .eq('ativa', true)
-    .limit(1)
+// Busca direta por id (garantia de exibição: valor gravado pode estar fora
+// da lista filtrada por turma/ativa, e o Select renderizaria em branco)
+export async function getEtapaById(etapaId: string) {
+  const { data } = await supabase
+    .from('academico_etapas_ensino')
+    .select('id, etapa_nome')
+    .eq('id', etapaId)
     .maybeSingle()
 
-  if (!matriz) return []
+  return data as any
+}
 
-  const { data: periodos } = await supabase
-    .from('academico_matriz_periodos')
-    .select('id')
-    .eq('matriz_id', matriz.id)
+export async function getSubetapaById(subetapaId: string) {
+  const { data } = await supabase
+    .from('academico_subetapas')
+    .select('id, nome')
+    .eq('id', subetapaId)
+    .maybeSingle()
 
-  if (!periodos || periodos.length === 0) return []
+  return data as any
+}
 
-  const { data: disciplinas } = await supabase
-    .from('academico_matriz_disciplinas')
-    .select('disciplina_id, academico_disciplinas(nome)')
-    .in('periodo_id', periodos.map(p => p.id))
+// Resolve em batch os nomes de etapas/turmas referenciados nas movimentações
+export async function getNomesReferenciaMovimentacoes(etapaIds: string[], turmaIds: string[]) {
+  const etapas: Record<string, string> = {}
+  const turmas: Record<string, string> = {}
 
-  const seen = new Set<string>()
-  return ((disciplinas || []).filter(d => {
-    if (seen.has(d.disciplina_id)) return false
-    seen.add(d.disciplina_id)
-    return true
-  })) as any[]
+  const idsEtapas = [...new Set((etapaIds || []).filter(Boolean))]
+  const idsTurmas = [...new Set((turmaIds || []).filter(Boolean))]
+
+  if (idsEtapas.length > 0) {
+    const { data } = await supabase
+      .from('academico_etapas_ensino')
+      .select('id, etapa_nome')
+      .in('id', idsEtapas)
+    for (const e of (data || []) as any[]) etapas[e.id] = e.etapa_nome
+  }
+
+  if (idsTurmas.length > 0) {
+    const { data } = await supabase
+      .from('turmas')
+      .select('id, nome')
+      .in('id', idsTurmas)
+    for (const t of (data || []) as any[]) turmas[t.id] = t.nome
+  }
+
+  return { etapas, turmas }
 }
 
 export async function getAnoLetivoAtivo(schoolId: string | null) {

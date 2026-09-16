@@ -44,58 +44,77 @@ const gruposEtapas: GrupoEtapas[] = [
   {
     titulo: 'Educação Infantil',
     etapas: [
-      { codigo: 1, nome: 'Creche (0 a 3 anos)', tipo: 'infantil', aceitaSubetapa: true },
-      { codigo: 2, nome: 'Pré-escola (4 e 5 anos)', tipo: 'infantil', aceitaSubetapa: true },
-      { codigo: 3, nome: 'Infantil Unificada (0 a 5 anos)', tipo: 'infantil', aceitaSubetapa: true },
+      { codigo: 1, nome: 'Educação infantil - creche (0 a 3 anos)', tipo: 'infantil', aceitaSubetapa: true },
+      { codigo: 2, nome: 'Educação infantil - pré-escola (4 e 5 anos)', tipo: 'infantil', aceitaSubetapa: true },
+      { codigo: 3, nome: 'Educação infantil - unificada (0 a 5 anos)', tipo: 'infantil', aceitaSubetapa: true },
     ]
   },
   {
     titulo: 'Ensino Fundamental - Anos Iniciais',
     etapas: [
-      { codigo: 14, nome: '1º Ano', tipo: 'fundamental_inicial', aceitaSubetapa: false },
-      { codigo: 15, nome: '2º Ano', tipo: 'fundamental_inicial', aceitaSubetapa: false },
-      { codigo: 16, nome: '3º Ano', tipo: 'fundamental_inicial', aceitaSubetapa: false },
-      { codigo: 17, nome: '4º Ano', tipo: 'fundamental_inicial', aceitaSubetapa: false },
-      { codigo: 18, nome: '5º Ano', tipo: 'fundamental_inicial', aceitaSubetapa: false },
+      { codigo: 14, nome: 'Ensino fundamental de 9 anos - 1º Ano', tipo: 'fundamental_inicial', aceitaSubetapa: false },
+      { codigo: 15, nome: 'Ensino fundamental de 9 anos - 2º Ano', tipo: 'fundamental_inicial', aceitaSubetapa: false },
+      { codigo: 16, nome: 'Ensino fundamental de 9 anos - 3º Ano', tipo: 'fundamental_inicial', aceitaSubetapa: false },
+      { codigo: 17, nome: 'Ensino fundamental de 9 anos - 4º Ano', tipo: 'fundamental_inicial', aceitaSubetapa: false },
+      { codigo: 18, nome: 'Ensino fundamental de 9 anos - 5º Ano', tipo: 'fundamental_inicial', aceitaSubetapa: false },
     ]
   },
   {
     titulo: 'Ensino Fundamental - Anos Finais',
     etapas: [
-      { codigo: 19, nome: '6º Ano', tipo: 'fundamental_final', aceitaSubetapa: false },
-      { codigo: 20, nome: '7º Ano', tipo: 'fundamental_final', aceitaSubetapa: false },
-      { codigo: 21, nome: '8º Ano', tipo: 'fundamental_final', aceitaSubetapa: false },
-      { codigo: 41, nome: '9º Ano', tipo: 'fundamental_final', aceitaSubetapa: false },
+      { codigo: 19, nome: 'Ensino fundamental de 9 anos - 6º Ano', tipo: 'fundamental_final', aceitaSubetapa: false },
+      { codigo: 20, nome: 'Ensino fundamental de 9 anos - 7º Ano', tipo: 'fundamental_final', aceitaSubetapa: false },
+      { codigo: 21, nome: 'Ensino fundamental de 9 anos - 8º Ano', tipo: 'fundamental_final', aceitaSubetapa: false },
+      { codigo: 41, nome: 'Ensino fundamental de 9 anos - 9º Ano', tipo: 'fundamental_final', aceitaSubetapa: false },
+    ]
+  },
+  {
+    titulo: 'Multi e Correção de Fluxo',
+    etapas: [
+      { codigo: 22, nome: 'Ensino fundamental de 9 anos - multi', tipo: 'fundamental_outros', aceitaSubetapa: false },
+      { codigo: 23, nome: 'Ensino fundamental de 9 anos - correção de fluxo', tipo: 'fundamental_outros', aceitaSubetapa: false },
+      { codigo: 56, nome: 'Educação infantil e ensino fundamental - multietapa', tipo: 'fundamental_outros', aceitaSubetapa: true },
     ]
   },
   {
     titulo: 'Ensino Médio',
     etapas: [
-      { codigo: 25, nome: '1ª Série', tipo: 'medio', aceitaSubetapa: false },
-      { codigo: 26, nome: '2ª Série', tipo: 'medio', aceitaSubetapa: false },
-      { codigo: 27, nome: '3ª Série', tipo: 'medio', aceitaSubetapa: false },
-      { codigo: 28, nome: '4ª Série', tipo: 'medio', aceitaSubetapa: false },
-      { codigo: 29, nome: 'Não Seriada', tipo: 'medio', aceitaSubetapa: false },
+      { codigo: 25, nome: 'Ensino médio - 1ª Série', tipo: 'medio', aceitaSubetapa: false },
+      { codigo: 26, nome: 'Ensino médio - 2ª Série', tipo: 'medio', aceitaSubetapa: false },
+      { codigo: 27, nome: 'Ensino médio - 3ª Série', tipo: 'medio', aceitaSubetapa: false },
+      { codigo: 28, nome: 'Ensino médio - 4ª Série', tipo: 'medio', aceitaSubetapa: false },
+      { codigo: 29, nome: 'Ensino médio - não seriada', tipo: 'medio', aceitaSubetapa: false },
     ]
   },
   {
-    titulo: 'Fundamental - Outros',
+    titulo: 'Ensino Médio - Normal/Magistério',
     etapas: [
-      { codigo: 22, nome: 'Multi', tipo: 'fundamental_outros', aceitaSubetapa: false },
-      { codigo: 23, nome: 'Correção de Fluxo', tipo: 'fundamental_outros', aceitaSubetapa: false },
-      { codigo: 56, nome: 'Multietapa', tipo: 'fundamental_outros', aceitaSubetapa: true },
+      { codigo: 35, nome: 'Ensino médio - normal/magistério - 1ª Série', tipo: 'medio', aceitaSubetapa: false },
+      { codigo: 36, nome: 'Ensino médio - normal/magistério - 2ª Série', tipo: 'medio', aceitaSubetapa: false },
+      { codigo: 37, nome: 'Ensino médio - normal/magistério - 3ª Série', tipo: 'medio', aceitaSubetapa: false },
+      { codigo: 38, nome: 'Ensino médio - normal/magistério - 4ª Série', tipo: 'medio', aceitaSubetapa: false },
     ]
   },
   {
-    titulo: 'EJA',
+    titulo: 'Educação de Jovens e Adultos (EJA)',
     etapas: [
-      { codigo: 69, nome: 'Anos Iniciais (1º segmento)', tipo: 'eja', aceitaSubetapa: true },
-      { codigo: 70, nome: 'Anos Finais (2º segmento)', tipo: 'eja', aceitaSubetapa: true },
-      { codigo: 72, nome: 'Anos Iniciais e Finais (Multietapas)', tipo: 'eja', aceitaSubetapa: true },
-      { codigo: 71, nome: 'Ensino Médio (3º segmento)', tipo: 'eja', aceitaSubetapa: true },
-      { codigo: 74, nome: 'Técnico Integrado', tipo: 'eja', aceitaSubetapa: true },
-      { codigo: 73, nome: 'FIC Integrado - Fundamental', tipo: 'eja', aceitaSubetapa: true },
-      { codigo: 67, nome: 'FIC Integrado - Médio', tipo: 'eja', aceitaSubetapa: true },
+      { codigo: 69, nome: 'EJA - Ensino fundamental - anos iniciais (1º segmento)', tipo: 'eja', aceitaSubetapa: true },
+      { codigo: 70, nome: 'EJA - Ensino fundamental - anos finais (2º segmento)', tipo: 'eja', aceitaSubetapa: true },
+      { codigo: 72, nome: 'EJA - Ensino fundamental - anos iniciais e anos finais (EJA Multietapas)', tipo: 'eja', aceitaSubetapa: true },
+      { codigo: 71, nome: 'EJA - Ensino médio (3º segmento)', tipo: 'eja', aceitaSubetapa: true },
+      { codigo: 74, nome: 'Curso técnico integrado na modalidade EJA', tipo: 'eja', aceitaSubetapa: true },
+      { codigo: 73, nome: 'Curso FIC integrado na modalidade EJA - nível fundamental', tipo: 'eja', aceitaSubetapa: true },
+      { codigo: 67, nome: 'Curso FIC integrado na modalidade EJA - nível médio', tipo: 'eja', aceitaSubetapa: true },
+    ]
+  },
+  {
+    titulo: 'Curso Técnico e Qualificação Profissional',
+    etapas: [
+      { codigo: 39, nome: 'Curso técnico - concomitante', tipo: 'tecnico', aceitaSubetapa: false },
+      { codigo: 40, nome: 'Curso técnico - subsequente', tipo: 'tecnico', aceitaSubetapa: false },
+      { codigo: 64, nome: 'Curso técnico misto', tipo: 'tecnico', aceitaSubetapa: false },
+      { codigo: 68, nome: 'Qualificação profissional (Curso FIC) - concomitante', tipo: 'tecnico', aceitaSubetapa: false },
+      { codigo: 75, nome: 'Qualificação profissional (Curso FIC) - não vinculada', tipo: 'tecnico', aceitaSubetapa: false },
     ]
   },
 ]

@@ -48,7 +48,11 @@ import TurmasPage from '@/app/(app)/gestao-turmas/turmas/page'
 import QuadroAulasPage from '@/app/(app)/gestao-turmas/quadro-aulas/page'
 import QuadroAulaCadastroPage from '@/app/(app)/gestao-turmas/quadro-aulas/cadastro/page'
 import EstruturaAcademicaPage from '@/app/(app)/gestao-academica/estrutura-academica/page'
+import MatrizNovoPage from '@/app/(app)/gestao-academica/estrutura-academica/matrizes/novo/page'
+import MatrizEditarPage from '@/app/(app)/gestao-academica/estrutura-academica/matrizes/[id]/page'
 import MetodosPage from '@/app/(app)/gestao-academica/metodos/page'
+import MetodoNovoPage from '@/app/(app)/gestao-academica/metodos/novo/page'
+import MetodoEditarPage from '@/app/(app)/gestao-academica/metodos/[id]/page'
 import MatriculasPage from '@/app/(app)/gestao-academica/matriculas/page'
 import MatriculaCadastroContent from '@/app/(app)/gestao-academica/matriculas/cadastro/content'
 import IndicadoresPage from '@/app/(app)/gestao-pedagogica/indicadores/page'
@@ -58,6 +62,7 @@ import TurmaDiarioPage from '@/app/(app)/gestao-pedagogica/diario-classe/[turmaI
 import FechamentoPage from '@/app/(app)/gestao-pedagogica/diario-classe/[turmaId]/fechamento/page'
 import PlanoEnsinoPage from '@/app/(app)/gestao-pedagogica/plano-ensino/page'
 import CriarPlanoEnsinoPage from '@/app/(app)/gestao-pedagogica/plano-ensino/criar/page'
+import TurmaPlanosPage from '@/app/(app)/gestao-pedagogica/plano-ensino/turma/[turmaId]/page'
 import PlanoEnsinoDetalhePage from '@/app/(app)/gestao-pedagogica/plano-ensino/[id]/page'
 import ConselhoClassePage from '@/app/(app)/gestao-pedagogica/conselho-classe/page'
 import RendimentoPage from '@/app/(app)/gestao-pedagogica/rendimento/page'
@@ -229,7 +234,29 @@ const ROUTES: TabRoute[] = [
     match: exact('/gestao-academica/estrutura-academica'),
     Component: EstruturaAcademicaPage,
   },
+  {
+    module: TAB_MODULES['estrutura-academica'],
+    match: exact('/gestao-academica/estrutura-academica/matrizes/novo'),
+    Component: MatrizNovoPage,
+  },
+  {
+    module: TAB_MODULES['estrutura-academica'],
+    match: (p) => {
+      const m = p.match(/^\/gestao-academica\/estrutura-academica\/matrizes\/([^/]+)$/)
+      return m ? { id: m[1] } : undefined
+    },
+    Component: MatrizEditarPage,
+  },
   { module: TAB_MODULES.metodos, match: exact('/gestao-academica/metodos'), Component: MetodosPage },
+  { module: TAB_MODULES.metodos, match: exact('/gestao-academica/metodos/novo'), Component: MetodoNovoPage },
+  {
+    module: TAB_MODULES.metodos,
+    match: (p) => {
+      const m = p.match(/^\/gestao-academica\/metodos\/([^/]+)$/)
+      return m ? { id: m[1] } : undefined
+    },
+    Component: MetodoEditarPage,
+  },
   { module: TAB_MODULES.matriculas, match: exact('/gestao-academica/matriculas'), Component: MatriculasPage },
   {
     module: TAB_MODULES.matriculas,
@@ -259,6 +286,14 @@ const ROUTES: TabRoute[] = [
   },
   { module: TAB_MODULES['plano-ensino'], match: exact('/gestao-pedagogica/plano-ensino'), Component: PlanoEnsinoPage },
   { module: TAB_MODULES['plano-ensino'], match: exact('/gestao-pedagogica/plano-ensino/criar'), Component: CriarPlanoEnsinoPage },
+  {
+    module: TAB_MODULES['plano-ensino'],
+    match: (p) => {
+      const m = p.match(/^\/gestao-pedagogica\/plano-ensino\/turma\/([^/]+)$/)
+      return m ? { turmaId: m[1] } : undefined
+    },
+    Component: TurmaPlanosPage,
+  },
   {
     module: TAB_MODULES['plano-ensino'],
     match: (p) => {

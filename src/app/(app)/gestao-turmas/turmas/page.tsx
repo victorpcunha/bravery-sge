@@ -195,17 +195,20 @@ export default function TurmasPage() {
                 </SelectContent>
               </Select>
             )}
-            <div className="flex gap-2 flex-wrap">
-              {TIPOS_TURMA_FILTRO.map(t => (
-                <Button
-                  key={t.value}
-                  variant={tipoTurmaFiltro === t.value ? 'default' : 'outline'}
-                  size="sm"
-                  onClick={() => setTipoTurmaFiltro(t.value)}
-                >
-                  {t.label}
-                </Button>
-              ))}
+            <div className="space-y-1.5">
+              <span className="text-[14px] font-medium text-foreground">Tipo</span>
+              <div className="flex gap-2 flex-wrap">
+                {TIPOS_TURMA_FILTRO.map(t => (
+                  <Button
+                    key={t.value}
+                    variant={tipoTurmaFiltro === t.value ? 'default' : 'outline'}
+                    size="sm"
+                    onClick={() => setTipoTurmaFiltro(t.value)}
+                  >
+                    {t.label}
+                  </Button>
+                ))}
+              </div>
             </div>
           </FilterBar>
         </PageSection>
@@ -237,25 +240,22 @@ export default function TurmasPage() {
               <Plus className="mr-2 h-4 w-4" /> Nova Turma
             </Button>
           }>
-            <div className="px-4">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Nome</TableHead>
-                    <TableHead>Modalidade</TableHead>
-                    <TableHead>Etapa</TableHead>
-                    <TableHead>Turno</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead className="w-[90px]">Ações</TableHead>
-                  </TableRow>
-                </TableHeader>
+            <Table>
+              <TableHeader className="bg-muted">
+                <TableRow className="hover:bg-muted">
+                  <TableHead className="bg-muted text-foreground">Nome</TableHead>
+                  <TableHead className="bg-muted text-foreground">Etapa</TableHead>
+                  <TableHead className="bg-muted text-foreground">Turno</TableHead>
+                  <TableHead className="bg-muted text-foreground">Status</TableHead>
+                  <TableHead className="w-[90px] bg-muted text-foreground">Ações</TableHead>
+                </TableRow>
+              </TableHeader>
                 <TableBody>
                   {turmas.map(t => (
                     <TableRow key={t.id}>
                       <TableCell>
                         <span className="font-medium text-foreground">{t.nome}</span>
                       </TableCell>
-                      <TableCell className="text-muted-foreground">{t.modalidade}</TableCell>
                       <TableCell className="text-muted-foreground">
                         {t.academico_etapas_ensino?.etapa_nome || '—'}
                       </TableCell>
@@ -285,7 +285,6 @@ export default function TurmasPage() {
                   ))}
                 </TableBody>
               </Table>
-            </div>
           </PageSection>
         )}
       </PageContainer>
@@ -293,7 +292,7 @@ export default function TurmasPage() {
       <Dialog open={dialogOpen} onOpenChange={(open) => { if (!open) { setDialogOpen(false); setEditId(null) }}}>
         <DialogContent className="max-w-4xl max-h-[90vh] flex flex-col p-0 gap-0">
           <DialogHeader className="px-6 pt-6 pb-0 shrink-0">
-            <DialogTitle>{editId ? 'Editar Turma' : 'Nova Turma'}</DialogTitle>
+            <DialogTitle className="font-display text-[20px] font-semibold">{editId ? 'Editar Turma' : 'Nova Turma'}</DialogTitle>
             <DialogDescription>
               {editId ? 'Edite os dados da turma.' : 'Preencha os dados da turma (Registro 20 INEP).'}
             </DialogDescription>

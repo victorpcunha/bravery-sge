@@ -8,7 +8,6 @@ import { Label } from '@/components/ui/label'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 import { DatePicker } from '@/components/ui/date-picker'
 import { Combobox } from '@/components/ui/combobox'
 import { ClickablePill } from '@/components/ui/clickable-pill'
@@ -124,12 +123,18 @@ const FORMACAO_CAMPOS = [
 ]
 
 const TIPOS_VINCULO = [
-  { value: '1', label: 'Pai' },
   { value: '2', label: 'Mãe' },
+  { value: '1', label: 'Pai' },
   { value: '3', label: 'Responsável Legal' },
-  { value: '4', label: 'Tutor' },
-  { value: '5', label: 'Outro' },
 ]
+
+const TIPOS_VINCULO_LEGADOS: Record<string, string> = {
+  '1': 'Pai',
+  '2': 'Mãe',
+  '3': 'Responsável Legal',
+  '4': 'Tutor',
+  '5': 'Outro',
+}
 
 function formatCPF(digits: string): string {
   const d = digits.replace(/\D/g, '').slice(0, 11)
@@ -307,8 +312,12 @@ export function PessoaForm({ schoolId: propSchoolId, person, onSaved, onCancel }
 
       if (person.perfil?.includes('responsavel')) {
         getVinculosResponsavel(person.id).then((vinculos: any[]) => {
-          setForm(prev => ({ ...prev, vinculos: vinculos || [] }))
-          setVinculosIniciais(vinculos || [])
+          const mapped = (vinculos || []).map((v: any) => ({
+            ...v,
+            aluno_nome: v.aluno_nome || v.aluno?.nome_completo || '',
+          }))
+          setForm(prev => ({ ...prev, vinculos: mapped }))
+          setVinculosIniciais(mapped)
         }).catch(() => {})
       }
 
@@ -348,7 +357,7 @@ export function PessoaForm({ schoolId: propSchoolId, person, onSaved, onCancel }
     if (!aluno) return
     setForm(prev => ({
       ...prev,
-      vinculos: [...prev.vinculos, { aluno_id: alunoId, aluno_nome: aluno.nome_completo, tipo_vinculo: '3', principal: false, autorizado_retirar: true, autorizado_boleto: true, _new: true }],
+      vinculos: [...prev.vinculos, { aluno_id: alunoId, aluno_nome: aluno.nome_completo, tipo_vinculo: '3', _new: true }],
     }))
     setAlunosSearch('')
     setAlunosOptions([])
@@ -581,10 +590,7 @@ export function PessoaForm({ schoolId: propSchoolId, person, onSaved, onCancel }
         personId = person.id
         // Sincronizar vínculos com alunos na edição (spec 022 — antes só persistia na criação)
         const mesmosVinculos = (a: any, b: any) =>
-          (a.tipo_vinculo || '3') === (b.tipo_vinculo || '3') &&
-          (a.principal || false) === (b.principal || false) &&
-          (a.autorizado_retirar ?? true) === (b.autorizado_retirar ?? true) &&
-          (a.autorizado_boleto ?? true) === (b.autorizado_boleto ?? true)
+          (a.tipo_vinculo || '3') === (b.tipo_vinculo || '3')
         for (const v of form.vinculos) {
           if (!v.aluno_id) continue
           if (v._new) {
@@ -845,14 +851,14 @@ export function PessoaForm({ schoolId: propSchoolId, person, onSaved, onCancel }
             <TabsList className="flex h-auto min-h-[48px] w-max sm:w-full gap-1 rounded-lg border border-border bg-card p-1 shadow-xs">
               <TabsTrigger
                 value="identificacao"
-                className="h-10 min-h-[40px] flex-1 rounded-md px-4 text-[14px] font-semibold text-foreground/80 transition-colors hover:bg-accent/10 hover:text-accent-foreground data-active:bg-primary data-active:text-primary-foreground data-active:shadow-sm data-active:hover:bg-primary data-active:hover:text-primary-foreground"
+                className="h-10 min-h-[40px] flex-1 rounded-md px-4 text-[14px] font-semibold text-muted-foreground transition-colors hover:bg-accent/15 hover:text-foreground data-active:bg-primary data-active:text-primary-foreground data-active:shadow-sm data-active:hover:bg-primary data-active:hover:text-primary-foreground"
               >
                 Identificação
               </TabsTrigger>
               {isAluno && (
                 <TabsTrigger
                   value="acessibilidade"
-                  className="h-10 min-h-[40px] flex-1 rounded-md px-4 text-[14px] font-semibold text-foreground/80 transition-colors hover:bg-accent/10 hover:text-accent-foreground data-active:bg-primary data-active:text-primary-foreground data-active:shadow-sm data-active:hover:bg-primary data-active:hover:text-primary-foreground"
+                  className="h-10 min-h-[40px] flex-1 rounded-md px-4 text-[14px] font-semibold text-muted-foreground transition-colors hover:bg-accent/15 hover:text-foreground data-active:bg-primary data-active:text-primary-foreground data-active:shadow-sm data-active:hover:bg-primary data-active:hover:text-primary-foreground"
                 >
                   Condições de Saúde
                 </TabsTrigger>
@@ -860,7 +866,7 @@ export function PessoaForm({ schoolId: propSchoolId, person, onSaved, onCancel }
               {!isResponsavel && (
                 <TabsTrigger
                   value="endereco"
-                  className="h-10 min-h-[40px] flex-1 rounded-md px-4 text-[14px] font-semibold text-foreground/80 transition-colors hover:bg-accent/10 hover:text-accent-foreground data-active:bg-primary data-active:text-primary-foreground data-active:shadow-sm data-active:hover:bg-primary data-active:hover:text-primary-foreground"
+                  className="h-10 min-h-[40px] flex-1 rounded-md px-4 text-[14px] font-semibold text-muted-foreground transition-colors hover:bg-accent/15 hover:text-foreground data-active:bg-primary data-active:text-primary-foreground data-active:shadow-sm data-active:hover:bg-primary data-active:hover:text-primary-foreground"
                 >
                   Endereço
                 </TabsTrigger>
@@ -868,7 +874,7 @@ export function PessoaForm({ schoolId: propSchoolId, person, onSaved, onCancel }
               {isProfissionalOuGestor && (
                 <TabsTrigger
                   value="escolaridade"
-                  className="h-10 min-h-[40px] flex-1 rounded-md px-4 text-[14px] font-semibold text-foreground/80 transition-colors hover:bg-accent/10 hover:text-accent-foreground data-active:bg-primary data-active:text-primary-foreground data-active:shadow-sm data-active:hover:bg-primary data-active:hover:text-primary-foreground"
+                  className="h-10 min-h-[40px] flex-1 rounded-md px-4 text-[14px] font-semibold text-muted-foreground transition-colors hover:bg-accent/15 hover:text-foreground data-active:bg-primary data-active:text-primary-foreground data-active:shadow-sm data-active:hover:bg-primary data-active:hover:text-primary-foreground"
                 >
                   Escolaridade
                 </TabsTrigger>
@@ -876,7 +882,7 @@ export function PessoaForm({ schoolId: propSchoolId, person, onSaved, onCancel }
               {isProfissionalOuGestor && (
                 <TabsTrigger
                   value="posgraduacao"
-                  className="h-10 min-h-[40px] flex-1 rounded-md px-4 text-[14px] font-semibold text-foreground/80 transition-colors hover:bg-accent/10 hover:text-accent-foreground data-active:bg-primary data-active:text-primary-foreground data-active:shadow-sm data-active:hover:bg-primary data-active:hover:text-primary-foreground"
+                  className="h-10 min-h-[40px] flex-1 rounded-md px-4 text-[14px] font-semibold text-muted-foreground transition-colors hover:bg-accent/15 hover:text-foreground data-active:bg-primary data-active:text-primary-foreground data-active:shadow-sm data-active:hover:bg-primary data-active:hover:text-primary-foreground"
                 >
                   Pós-Graduação
                 </TabsTrigger>
@@ -884,7 +890,7 @@ export function PessoaForm({ schoolId: propSchoolId, person, onSaved, onCancel }
               {isProfissionalOuGestor && (
                 <TabsTrigger
                   value="formacao"
-                  className="h-10 min-h-[40px] flex-1 rounded-md px-4 text-[14px] font-semibold text-foreground/80 transition-colors hover:bg-accent/10 hover:text-accent-foreground data-active:bg-primary data-active:text-primary-foreground data-active:shadow-sm data-active:hover:bg-primary data-active:hover:text-primary-foreground"
+                  className="h-10 min-h-[40px] flex-1 rounded-md px-4 text-[14px] font-semibold text-muted-foreground transition-colors hover:bg-accent/15 hover:text-foreground data-active:bg-primary data-active:text-primary-foreground data-active:shadow-sm data-active:hover:bg-primary data-active:hover:text-primary-foreground"
                 >
                   Formações
                 </TabsTrigger>
@@ -892,7 +898,7 @@ export function PessoaForm({ schoolId: propSchoolId, person, onSaved, onCancel }
               {isProfissionalOuGestor && (
                 <TabsTrigger
                   value="vinculo"
-                  className="h-10 min-h-[40px] flex-1 whitespace-normal leading-tight rounded-md px-4 text-[14px] font-semibold text-foreground/80 transition-colors hover:bg-accent/10 hover:text-accent-foreground data-active:bg-primary data-active:text-primary-foreground data-active:shadow-sm data-active:hover:bg-primary data-active:hover:text-primary-foreground"
+                  className="h-10 min-h-[40px] flex-1 whitespace-normal leading-tight rounded-md px-4 text-[14px] font-semibold text-muted-foreground transition-colors hover:bg-accent/15 hover:text-foreground data-active:bg-primary data-active:text-primary-foreground data-active:shadow-sm data-active:hover:bg-primary data-active:hover:text-primary-foreground"
                 >
                   Vínculo Profissional
                 </TabsTrigger>
@@ -900,9 +906,9 @@ export function PessoaForm({ schoolId: propSchoolId, person, onSaved, onCancel }
               {isResponsavel && (
                 <TabsTrigger
                   value="contato"
-                  className="h-10 min-h-[40px] flex-1 rounded-md px-4 text-[14px] font-semibold text-foreground/80 transition-colors hover:bg-accent/10 hover:text-accent-foreground data-active:bg-primary data-active:text-primary-foreground data-active:shadow-sm data-active:hover:bg-primary data-active:hover:text-primary-foreground"
+                  className="h-10 min-h-[40px] flex-1 rounded-md px-4 text-[14px] font-semibold text-muted-foreground transition-colors hover:bg-accent/15 hover:text-foreground data-active:bg-primary data-active:text-primary-foreground data-active:shadow-sm data-active:hover:bg-primary data-active:hover:text-primary-foreground"
                 >
-                  Contato/Vínculos
+                  Vínculos
                 </TabsTrigger>
               )}
             </TabsList>
@@ -915,7 +921,7 @@ export function PessoaForm({ schoolId: propSchoolId, person, onSaved, onCancel }
           <div className="space-y-2">
             <div className="flex items-start justify-between gap-4 flex-wrap">
               <div className="min-w-0 flex-1">
-                <Label>Tipo de Pessoa *</Label>
+                <Label>Tipo do Usuário *</Label>
                 <p className="text-[13px] text-muted-foreground">A pessoa pode ter múltiplos tipos (ex: Profissional e Responsável)</p>
                 <div className="flex flex-wrap gap-2 pt-2">
                   {perfis.map(p => {
@@ -939,7 +945,7 @@ export function PessoaForm({ schoolId: propSchoolId, person, onSaved, onCancel }
                 </div>
               </div>
               <div>
-                <Label>Código da Pessoa</Label>
+                <Label>Código do Usuário</Label>
                 <div className="w-[100px] pt-1">
                   <Input value={form.codigo_pessoa ?? ''} placeholder={person ? '' : 'Auto'} disabled className="bg-muted text-muted-foreground cursor-not-allowed" />
                 </div>
@@ -1066,13 +1072,16 @@ export function PessoaForm({ schoolId: propSchoolId, person, onSaved, onCancel }
           {!isResponsavel && (
             <div className="space-y-2">
               <Label>Filiação</Label>
-              <Select value={form.filiacao_declarada} onValueChange={(v) => set('filiacao_declarada', v)}>
-                <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="0">Não declarado/Ignorado</SelectItem>
-                  <SelectItem value="1">Filiação 1 e/ou Filiação 2</SelectItem>
-                </SelectContent>
-              </Select>
+              <div className="flex flex-wrap gap-2 pt-1">
+                <ClickablePill
+                  label="Filiação declarada"
+                  active={form.filiacao_declarada === '1'}
+                  onClick={() => set('filiacao_declarada', form.filiacao_declarada === '1' ? '0' : '1')}
+                />
+              </div>
+              {!form.filiacao_declarada || form.filiacao_declarada === '0' ? (
+                <p className="text-[13px] text-muted-foreground">Não declarado / Ignorado</p>
+              ) : null}
               {form.filiacao_declarada === '1' && (
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-2">
                   <div className="space-y-2">
@@ -1122,6 +1131,35 @@ export function PessoaForm({ schoolId: propSchoolId, person, onSaved, onCancel }
             </div>
           )}
 
+          {isResponsavel && (
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label>E-mail{form.portal_acesso_habilitado && <span className="text-destructive"> *</span>}</Label>
+                <Input
+                  type="email"
+                  value={form.email}
+                  onChange={(e) => set('email', e.target.value)}
+                  placeholder="email@exemplo.com"
+                  aria-required={form.portal_acesso_habilitado === true ? 'true' : undefined}
+                />
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>Telefone Celular *</Label>
+                  <Input value={form.telefone_celular} onChange={(e) => set('telefone_celular', e.target.value.replace(/\D/g, '').slice(0, 11))} placeholder="(00) 00000-0000" inputMode="numeric" maxLength={11} />
+                </div>
+                <div className="space-y-2">
+                  <Label>Telefone Fixo</Label>
+                  <Input value={form.telefone_fixo} onChange={(e) => set('telefone_fixo', e.target.value.replace(/\D/g, '').slice(0, 10))} placeholder="(00) 0000-0000" inputMode="numeric" maxLength={10} />
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label>WhatsApp</Label>
+                <Input value={form.whatsapp} onChange={(e) => set('whatsapp', e.target.value.replace(/\D/g, '').slice(0, 11))} placeholder="(00) 00000-0000" inputMode="numeric" maxLength={11} />
+              </div>
+            </div>
+          )}
+
           {!isAluno && !apenasResponsavel && (
             <>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -1160,13 +1198,12 @@ export function PessoaForm({ schoolId: propSchoolId, person, onSaved, onCancel }
           {!isAluno && !apenasResponsavel && (
             <>
               <div className="border-t pt-4 space-y-3">
-                <div className="flex items-center gap-2">
-                  <Checkbox
-                    id="permitir-acesso"
-                    checked={form.permitir_acesso}
-                    onCheckedChange={(v) => set('permitir_acesso', v === true)}
+                <div className="flex items-center gap-2 flex-wrap">
+                  <ClickablePill
+                    label="Permitir acesso ao sistema"
+                    active={form.permitir_acesso === true}
+                    onClick={() => set('permitir_acesso', !form.permitir_acesso)}
                   />
-                  <Label htmlFor="permitir-acesso" className="font-medium cursor-pointer">Permitir acesso ao sistema</Label>
                 </div>
                 <p className="text-[13px] text-muted-foreground ml-6">Cria um usuário para login no sistema</p>
               </div>
@@ -1178,7 +1215,7 @@ export function PessoaForm({ schoolId: propSchoolId, person, onSaved, onCancel }
                     <div className="space-y-2">
                       <Label>Senha</Label>
                       <Input type="password" value={form.senha} onChange={(e) => set('senha', e.target.value)} placeholder="Digite a senha" />
-                      <p className="text-[13px] text-muted-foreground mt-1">Mínimo 10 caracteres: 1 maiúscula, 1 minúscula, 1 número e 1 caractere especial.</p>
+                      <p className="text-[14px] font-medium mt-1 rounded-lg border border-primary/30 bg-primary/5 px-3 py-2">Mínimo 10 caracteres: 1 maiúscula, 1 minúscula, 1 número e 1 caractere especial.</p>
                     </div>
                     <div className="space-y-2">
                       <Label>Confirmação de senha</Label>
@@ -1188,21 +1225,23 @@ export function PessoaForm({ schoolId: propSchoolId, person, onSaved, onCancel }
                   <div className="space-y-2">
                     <Label>Perfil de acesso</Label>
                     <p className="text-[13px] text-muted-foreground">Define as permissões do usuário no sistema</p>
-                    <div className="flex flex-wrap gap-3 pt-1">
+                    <div className="flex flex-wrap gap-2 pt-1">
                       {perfisAcesso.map(p => {
                         const checked = form.perfis_acesso && (form.perfis_acesso as string[]).includes(p.id)
                         return (
-                          <div key={p.id} className="flex items-center gap-2 cursor-pointer" onClick={() => {
-                            const current = (form.perfis_acesso as string[]) || []
-                            if (checked) {
-                              set('perfis_acesso', current.filter(x => x !== p.id))
-                            } else {
-                              set('perfis_acesso', [...current, p.id])
-                            }
-                          }}>
-                            <Checkbox checked={checked || false} className="pointer-events-none" />
-                            <span className="text-sm">{p.nome}</span>
-                          </div>
+                          <ClickablePill
+                            key={p.id}
+                            label={p.nome}
+                            active={checked || false}
+                            onClick={() => {
+                              const current = (form.perfis_acesso as string[]) || []
+                              if (checked) {
+                                set('perfis_acesso', current.filter(x => x !== p.id))
+                              } else {
+                                set('perfis_acesso', [...current, p.id])
+                              }
+                            }}
+                          />
                         )
                       })}
                     </div>
@@ -1549,13 +1588,16 @@ export function PessoaForm({ schoolId: propSchoolId, person, onSaved, onCancel }
           <TabsContent value="posgraduacao" className="space-y-5 ">
             {form.escolaridade === '6' ? (
               <>
-                <div className="flex items-center gap-2 cursor-pointer" onClick={() => {
-                  const next = !form.sem_pos
-                  set('sem_pos', next)
-                  if (next) for (let i = 1; i <= 6; i++) { set(`pos_tipo_${i}`, ''); set(`pos_area_${i}`, ''); set(`pos_ano_${i}`, 0) }
-                }}>
-                  <Checkbox checked={form.sem_pos} className="pointer-events-none" />
-                  <Label className="cursor-pointer">Não tem pós-graduação concluída</Label>
+                <div className="flex flex-wrap gap-2">
+                  <ClickablePill
+                    label="Não tem pós-graduação concluída"
+                    active={form.sem_pos === true}
+                    onClick={() => {
+                      const next = !form.sem_pos
+                      set('sem_pos', next)
+                      if (next) for (let i = 1; i <= 6; i++) { set(`pos_tipo_${i}`, ''); set(`pos_area_${i}`, ''); set(`pos_ano_${i}`, 0) }
+                    }}
+                  />
                 </div>
 
                 {!form.sem_pos && Array.from({ length: posCount }, (_, i) => i + 1).map(i => (
@@ -1584,7 +1626,7 @@ export function PessoaForm({ schoolId: propSchoolId, person, onSaved, onCancel }
                             </SelectContent>
                           </Select>
                         </div>
-                        <div className="space-y-2"><Label>Ano Conclusão</Label><Input type="number" value={form[`pos_ano_${i}`] || ''} onChange={(e) => set(`pos_ano_${i}`, parseInt(e.target.value) || 0)} /></div>
+                        <div className="space-y-2"><Label>Ano Conclusão</Label><Input type="text" inputMode="numeric" value={form[`pos_ano_${i}`] || ''} onChange={(e) => set(`pos_ano_${i}`, parseInt(e.target.value.replace(/\D/g, '').slice(0, 4)) || 0)} placeholder="AAAA" maxLength={4} /></div>
                       </div>
                       <div className="space-y-2">
                         <Label>Área</Label>
@@ -1617,22 +1659,29 @@ export function PessoaForm({ schoolId: propSchoolId, person, onSaved, onCancel }
           <TabsContent value="formacao" className="space-y-5">
 
             <FormCard title="Formação Continuada" description="Cursos de formação continuada com mínimo de 80h">
-              <div className="flex items-center gap-2 pb-3 cursor-pointer" onClick={nenhumaFormacao}>
-                <Checkbox checked={form.sem_formacao} className="pointer-events-none" />
-                <Label className="cursor-pointer">Nenhum</Label>
-              </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                 {FORMACAO_CAMPOS.map(c => (
-                  <div key={c.key} className="flex items-center gap-2 cursor-pointer" onClick={() => marcaFormacao(c.key)}>
-                    <Checkbox checked={form[c.key]} className="pointer-events-none" />
-                    <span className="text-sm">{c.label}</span>
+                  <div key={c.key} className={form.sem_formacao ? 'opacity-50 pointer-events-none' : ''}>
+                    <ClickablePill
+                      label={c.label}
+                      active={form[c.key] === true}
+                      disabled={form.sem_formacao === true}
+                      onClick={() => marcaFormacao(c.key)}
+                    />
                   </div>
                 ))}
+              </div>
+              <div className="flex flex-wrap gap-2 pt-3">
+                <ClickablePill
+                  label="Nenhum"
+                  active={form.sem_formacao === true}
+                  onClick={nenhumaFormacao}
+                />
               </div>
             </FormCard>
 
             {form.escolaridade === '6' && (
-              <FormCard title="Formação Pedagógica" description="Censo 2026 — Campos 67 a 69">
+              <FormCard title="Formação Pedagógica">
                 <div className="space-y-4">
                   {(() => {
                     const grupos = [
@@ -1749,11 +1798,11 @@ export function PessoaForm({ schoolId: propSchoolId, person, onSaved, onCancel }
                     </div>
                     <div className="space-y-2">
                       <Label>Data de Início *</Label>
-                      <Input type="date" value={v.data_inicio || ''} onChange={(e) => updateVinculoProfissionalState(idx, 'data_inicio', e.target.value)} />
+                      <DatePicker value={v.data_inicio || ''} onChange={(val) => updateVinculoProfissionalState(idx, 'data_inicio', val || null)} />
                     </div>
                     <div className="space-y-2">
                       <Label>Carga Horária Semanal *</Label>
-                      <Input type="number" value={v.carga_horaria || ''} onChange={(e) => updateVinculoProfissionalState(idx, 'carga_horaria', e.target.value ? Number(e.target.value) : null)} min={0} max={60} />
+                      <Input type="text" inputMode="numeric" value={v.carga_horaria ?? ''} onChange={(e) => updateVinculoProfissionalState(idx, 'carga_horaria', e.target.value.replace(/\D/g, '').slice(0, 2) ? Number(e.target.value.replace(/\D/g, '').slice(0, 2)) : null)} placeholder="Ex.: 40" maxLength={2} />
                     </div>
                   </div>
 
@@ -1761,11 +1810,11 @@ export function PessoaForm({ schoolId: propSchoolId, person, onSaved, onCancel }
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div className="space-y-2">
                         <Label>Data de Início do Afastamento *</Label>
-                        <Input type="date" value={v.data_inicio_afastamento || ''} onChange={(e) => updateVinculoProfissionalState(idx, 'data_inicio_afastamento', e.target.value)} />
+                        <DatePicker value={v.data_inicio_afastamento || ''} onChange={(val) => updateVinculoProfissionalState(idx, 'data_inicio_afastamento', val || null)} />
                       </div>
                       <div className="space-y-2">
                         <Label>Data de Término do Afastamento</Label>
-                        <Input type="date" value={v.data_termino_afastamento || ''} onChange={(e) => updateVinculoProfissionalState(idx, 'data_termino_afastamento', e.target.value)} />
+                        <DatePicker value={v.data_termino_afastamento || ''} onChange={(val) => updateVinculoProfissionalState(idx, 'data_termino_afastamento', val || null)} />
                       </div>
                     </div>
                   )}
@@ -1773,7 +1822,7 @@ export function PessoaForm({ schoolId: propSchoolId, person, onSaved, onCancel }
                   {v.situacao === '3' && (
                     <div className="space-y-2">
                       <Label>Data de Término *</Label>
-                      <Input type="date" value={v.data_termino || ''} onChange={(e) => updateVinculoProfissionalState(idx, 'data_termino', e.target.value)} />
+                      <DatePicker value={v.data_termino || ''} onChange={(val) => updateVinculoProfissionalState(idx, 'data_termino', val || null)} />
                     </div>
                   )}
 
@@ -1791,34 +1840,9 @@ export function PessoaForm({ schoolId: propSchoolId, person, onSaved, onCancel }
           </TabsContent>
         )}
 
-        {/* ===== ABA CONTATO / VÍNCULOS (RESPONSÁVEL) ===== */}
+        {/* ===== ABA VÍNCULOS (RESPONSÁVEL) ===== */}
         {isResponsavel && (
           <TabsContent value="contato" className="space-y-5 ">
-            <div className="space-y-2">
-              <Label>E-mail{form.portal_acesso_habilitado && <span className="text-destructive"> *</span>}</Label>
-              <Input
-                type="email"
-                value={form.email}
-                onChange={(e) => set('email', e.target.value)}
-                placeholder="email@exemplo.com"
-                aria-required={form.portal_acesso_habilitado === true ? 'true' : undefined}
-              />
-            </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label>Telefone Celular *</Label>
-                <Input value={form.telefone_celular} onChange={(e) => set('telefone_celular', e.target.value)} placeholder="(00) 00000-0000" maxLength={11} />
-              </div>
-              <div className="space-y-2">
-                <Label>Telefone Fixo</Label>
-                <Input value={form.telefone_fixo} onChange={(e) => set('telefone_fixo', e.target.value)} placeholder="(00) 0000-0000" maxLength={10} />
-              </div>
-            </div>
-            <div className="space-y-2">
-              <Label>WhatsApp</Label>
-              <Input value={form.whatsapp} onChange={(e) => set('whatsapp', e.target.value)} placeholder="(00) 00000-0000" maxLength={11} />
-            </div>
-
             <FormCard title="Acesso ao Portal" description="Credencial para o responsável acessar o Portal do Responsável.">
               <div className="space-y-3">
                 <div className="flex items-center gap-2">
@@ -1883,46 +1907,27 @@ export function PessoaForm({ schoolId: propSchoolId, person, onSaved, onCancel }
               {form.vinculos.length > 0 && (
                 <div className="space-y-2">
                   {form.vinculos.map((v: any, idx: number) => (
-                    <div key={idx} className="flex items-center justify-between p-3 bg-muted/40 rounded-lg border border-border">
-                      <div className="flex-1 space-y-2">
-                        <span className="text-sm font-medium">{v.aluno_nome}</span>
+                    <div key={idx} className="flex items-center justify-between gap-2 p-3 bg-muted/40 rounded-lg border border-border">
+                      <div className="flex-1 min-w-0 space-y-2">
+                        <span className="text-sm font-medium">{v.aluno_nome || v.aluno?.nome_completo || 'Aluno sem nome'}</span>
                         <div className="flex flex-wrap gap-2">
-                          <Select value={v.tipo_vinculo} onValueChange={(val) => updateVinculo(idx, 'tipo_vinculo', val)}>
-                            <SelectTrigger className="w-36 h-7 text-[13px]"><SelectValue /></SelectTrigger>
-                            <SelectContent>
-                              {TIPOS_VINCULO.map(t => <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>)}
-                            </SelectContent>
-                          </Select>
-                          <TooltipProvider delayDuration={300}>
-                            <Tooltip>
-                              <TooltipTrigger asChild>
-                                <div className="flex items-center gap-1 text-[13px] cursor-pointer" onClick={() => updateVinculo(idx, 'principal', !v.principal)}>
-                                  <Checkbox checked={v.principal} className="size-3 pointer-events-none" />
-                                  Principal
-                                </div>
-                              </TooltipTrigger>
-                              <TooltipContent className="max-w-56">
-                                <p>Responsável principal do aluno</p>
-                              </TooltipContent>
-                            </Tooltip>
-                          </TooltipProvider>
-                          <TooltipProvider delayDuration={300}>
-                            <Tooltip>
-                              <TooltipTrigger asChild>
-                                <div className="flex items-center gap-1 text-[13px] cursor-pointer" onClick={() => updateVinculo(idx, 'autorizado_retirar', !v.autorizado_retirar)}>
-                                  <Checkbox checked={v.autorizado_retirar} className="size-3 pointer-events-none" />
-                                  Retirar
-                                </div>
-                              </TooltipTrigger>
-                              <TooltipContent className="max-w-56">
-                                <p>Autorizado a retirar o aluno da escola</p>
-                              </TooltipContent>
-                            </Tooltip>
-                          </TooltipProvider>
+                          {TIPOS_VINCULO.map(t => (
+                            <ClickablePill
+                              key={t.value}
+                              label={t.label}
+                              active={(v.tipo_vinculo || '3') === t.value}
+                              onClick={() => updateVinculo(idx, 'tipo_vinculo', t.value)}
+                            />
+                          ))}
+                          {!TIPOS_VINCULO.some(t => t.value === v.tipo_vinculo) && v.tipo_vinculo && (
+                            <span className="text-[13px] text-muted-foreground">
+                              Tipo atual: {TIPOS_VINCULO_LEGADOS[v.tipo_vinculo] || v.tipo_vinculo} — selecione uma opção acima
+                            </span>
+                          )}
                         </div>
                       </div>
-                      <Button type="button" variant="link" onClick={() => removerVinculo(idx)} className="text-destructive text-[13px] ml-2 h-auto p-0">
-                        Remover
+                      <Button type="button" variant="ghost" size="icon-sm" onClick={() => removerVinculo(idx)} aria-label={`Remover vínculo com ${v.aluno_nome || v.aluno?.nome_completo || 'aluno'}`}>
+                        <Trash2 className="h-4 w-4 text-destructive" />
                       </Button>
                     </div>
                   ))}

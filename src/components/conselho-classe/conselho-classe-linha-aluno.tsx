@@ -45,12 +45,12 @@ export default function ConselhoClasseLinhaAluno({ aluno, onSalvarNota, readonly
         <div className="border-t border-border bg-muted/30">
           <Table>
             <TableHeader>
-              <TableRow className="bg-muted text-xs text-muted-foreground hover:bg-muted">
-                <TableHead className="py-2.5 px-4 text-left font-semibold">Disciplina</TableHead>
-                <TableHead className="py-2.5 px-4 text-center font-semibold">Frequência</TableHead>
-                <TableHead className="py-2.5 px-4 text-center font-semibold">Faltas</TableHead>
-                <TableHead className="py-2.5 px-4 text-center font-semibold">Média Período</TableHead>
-                <TableHead className="py-2.5 px-4 text-center font-semibold">Nota Conselho</TableHead>
+              <TableRow className="bg-muted hover:bg-muted">
+                <TableHead className="py-2.5 px-4 text-left font-semibold text-[13px] text-foreground">Disciplina</TableHead>
+                <TableHead className="py-2.5 px-4 text-center font-semibold text-[13px] text-foreground">Frequência</TableHead>
+                <TableHead className="py-2.5 px-4 text-center font-semibold text-[13px] text-foreground">Faltas</TableHead>
+                <TableHead className="py-2.5 px-4 text-center font-semibold text-[13px] text-foreground">Média Período</TableHead>
+                <TableHead className="py-2.5 px-4 text-center font-semibold text-[13px] text-foreground">Nota Conselho</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>

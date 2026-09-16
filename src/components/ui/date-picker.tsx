@@ -158,10 +158,8 @@ export function DatePicker({
       days.push(i)
     }
 
-    // Pad to always render 6 rows (42 cells) so the popover height stays constant
-    while (days.length < 42) {
-      days.push(null)
-    }
+    // Sem preenchimento fixo: renderiza só as semanas do mês,
+    // sem linhas vazias abaixo do grid
 
     return days.map((day, index) => {
       if (day === null) {
@@ -248,10 +246,11 @@ export function DatePicker({
           </div>
         </PopoverTrigger>
         <PopoverContent 
-          className={cn("bg-card border-2 border-border rounded-xl shadow-xl", sizeCls.popover)} 
+          className={cn("bg-card border-2 border-border rounded-xl shadow-xl max-w-[calc(100vw-2rem)]", sizeCls.popover)} 
           align="start" 
           side="bottom"
           sideOffset={8}
+          collisionPadding={16}
         >
           {/* Header */}
           <div className="flex items-center justify-between mb-1">
@@ -317,7 +316,7 @@ export function DatePickerDual({
   disabled = false
 }: DatePickerDualProps) {
   return (
-    <div className={cn("grid grid-cols-2 gap-6", className)}>
+    <div className={cn("grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-6", className)}>
       <DatePicker
         value={valorInicio}
         onChange={onChangeInicio}

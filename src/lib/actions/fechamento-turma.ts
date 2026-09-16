@@ -13,6 +13,8 @@ export type DisciplinaFechamento = {
   matriz_disciplina_id: string
   disciplina_id: string
   nome: string
+  nao_reprova_nota: boolean
+  nao_reprova_frequencia: boolean
 }
 
 export type DisciplinaAlunoFechamento = {
@@ -70,7 +72,7 @@ export type DadosFechamentoTurma = {
 type NotaRow = { aluno_id: string; disciplina_id: string; periodo: number; valor: number | string | null; descricao: string | null }
 type RecRow = { aluno_id: string; disciplina_id: string; periodo: number | null; tipo: string; valor: number | string | null; descricao: string | null }
 type ConselhoRow = { aluno_id: string; matriz_disciplina_id: string; periodo: number; nota_conselho: number | null }
-type FrequenciaRow = { aluno_id: string; status: string | null }
+type FrequenciaRow = { aluno_id: string; status: string | null; disciplina_id?: string | null; horario_id?: string | null }
 
 // ------- Helpers -------
 
@@ -174,7 +176,8 @@ function calcularDisciplina(
   config: ConfigNumericaCompleta,
   notas: NotaRow[],
   recs: RecRow[],
-  conselhos: ConselhoRow[]
+  conselhos: ConselhoRow[],
+  naoReprovaNota = false
 ): DisciplinaAlunoFechamento {
   const periodos = Array.from({ length: qtdPeriodos }, (_, i) => i + 1)
   const notasDisc = notas.filter(n => n.aluno_id === alunoId && n.disciplina_id === discId)
@@ -311,6 +314,11 @@ function calcularDisciplina(
     status = 'em_andamento'
   }
 
+  // spec 032: disciplina com "Não reprova por nota" nunca reprova (nem cai em recuperação final)
+  if (naoReprovaNota && (status === 'reprovado' || status === 'recuperacao')) {
+    status = 'aprovado'
+  }
+
   const pendente = status === null || status === 'em_andamento' || status === 'recuperacao'
 
   return {
@@ -361,6 +369,11 @@ export async function getDadosFechamentoTurma(
   const fases = await resolverFasesTurma(turmaId)
   const metodo = await resolverMetodoFechamento(turmaId)
 
+  // spec 032: disciplinas "Não reprova por frequência" saem do cômputo geral (só por_aula tem vínculo)
+  const ignorarFreq = metodo.criterio === 'por_aula'
+    ? new Set(disciplinas.filter(d => d.nao_reprova_frequencia).map(d => d.matriz_disciplina_id))
+    : undefined
+
   const etapaPrincipal = await supabase
     .from('academico_etapas_ensino')
     .select('etapa_nome, etapa_tipo')
@@ -380,7 +393,7 @@ export async function getDadosFechamentoTurma(
       .from('conselho_classe_resultados')
       .select('aluno_id, matriz_disciplina_id, periodo, nota_conselho')
       .eq('turma_id', turmaId),
-    resolverFrequencias(turmaId, metodo.criterio),
+    resolverFrequencias(turmaId, metodo.criterio, ignorarFreq),
   ])
 
   const listaMatriculas = matriculas || []
@@ -393,6 +406,8 @@ export async function getDadosFechamentoTurma(
 
   const pessoaMap = new Map((pessoas || []).map(p => [p.id, p.nome_completo]))
   const discMap = new Map(disciplinas.map(d => [d.matriz_disciplina_id, d.nome]))
+  // spec 032: "Não reprova por nota" sai das médias gerais do fechamento
+  const semNota = new Set(disciplinas.filter(d => d.nao_reprova_nota).map(d => d.matriz_disciplina_id))
 
   const alunos: AlunoFechamento[] = listaMatriculas.map(m => {
     const computed = disciplinas.map(d =>
@@ -403,7 +418,8 @@ export async function getDadosFechamentoTurma(
         metodo.config,
         (notas || []) as NotaRow[],
         (recs || []) as RecRow[],
-        (conselhos || []) as ConselhoRow[]
+        (conselhos || []) as ConselhoRow[],
+        d.nao_reprova_nota
       )
     )
 
@@ -413,8 +429,9 @@ export async function getDadosFechamentoTurma(
     const pendente = disciplinasComNumerico.some(d => d.pendente)
 
     const frequencia = frequenciaMap.get(m.aluno_id) ?? null
-    const mediaAnual = mediaGeral(computed.map(c => c.media_anual))
-    const mediaFinal = mediaGeral(computed.map(c => c.media_final))
+    const comNota = computed.filter(c => !semNota.has(c.matriz_disciplina_id))
+    const mediaAnual = mediaGeral(comNota.map(c => c.media_anual))
+    const mediaFinal = mediaGeral(comNota.map(c => c.media_final))
 
     let resultado: string | null = null
     if (isSituacaoFinalOuSaida(m.situacao)) {
@@ -482,7 +499,7 @@ async function getDisciplinasDiarioFechamento(turmaId: string): Promise<Discipli
 
   const { data: matrizes } = await supabase
     .from('academico_matriz_disciplinas')
-    .select('id, disciplina_id')
+    .select('id, disciplina_id, nao_reprova_nota, nao_reprova_frequencia')
     .in('id', matrizIds)
 
   const matrizMap = new Map((matrizes || []).map(m => [m.id, m.disciplina_id]))
@@ -497,24 +514,35 @@ async function getDisciplinasDiarioFechamento(turmaId: string): Promise<Discipli
   const discMap = new Map((disciplinas || []).map(d => [d.id, d.nome]))
 
   return (turmasDisc || [])
-    .map(td => ({
-      matriz_disciplina_id: td.matriz_disciplina_id,
-      disciplina_id: matrizMap.get(td.matriz_disciplina_id) || '',
-      nome: discMap.get(matrizMap.get(td.matriz_disciplina_id) || '') || '',
-    }))
+    .map(td => {
+      const row = (matrizes || []).find(m => m.id === td.matriz_disciplina_id) as any
+      return {
+        matriz_disciplina_id: td.matriz_disciplina_id,
+        disciplina_id: matrizMap.get(td.matriz_disciplina_id) || '',
+        nome: discMap.get(matrizMap.get(td.matriz_disciplina_id) || '') || '',
+        // spec 032: pills (fallback p/ legado desconsidera via ?? nas actions de matriz; aqui default false)
+        nao_reprova_nota: row?.nao_reprova_nota === true,
+        nao_reprova_frequencia: row?.nao_reprova_frequencia === true,
+      }
+    })
     .sort((a, b) => a.nome.localeCompare(b.nome))
 }
 
-async function resolverFrequencias(turmaId: string, criterio: 'por_dia' | 'por_aula'): Promise<Map<string, number>> {
-  const table = criterio === 'por_aula' ? 'academico_frequencias_aula' : 'academico_frequencias_dia'
-  const { data } = await supabase
-    .from(table)
-    .select('aluno_id, status')
-    .eq('turma_id', turmaId)
+async function resolverFrequencias(
+  turmaId: string,
+  criterio: 'por_dia' | 'por_aula',
+  ignorarDiscIds?: Set<string>
+): Promise<Map<string, number>> {
+  // por_aula traz disciplina_id (vínculo p/ bypass); por_dia não tem o campo
+  const { data } = criterio === 'por_aula'
+    ? await supabase.from('academico_frequencias_aula').select('aluno_id, status, disciplina_id').eq('turma_id', turmaId)
+    : await supabase.from('academico_frequencias_dia').select('aluno_id, status').eq('turma_id', turmaId)
 
   const grupos = new Map<string, { presencas: number; total: number }>()
   for (const r of (data || []) as FrequenciaRow[]) {
     if (!r.status) continue
+    // spec 032: "Não reprova por frequência" exclui os registros da disciplina (só por_aula tem vínculo)
+    if (criterio === 'por_aula' && ignorarDiscIds && r.disciplina_id && ignorarDiscIds.has(r.disciplina_id)) continue
     const g = grupos.get(r.aluno_id) || { presencas: 0, total: 0 }
     g.total++
     if (r.status === 'P' || r.status === 'FJ') g.presencas++

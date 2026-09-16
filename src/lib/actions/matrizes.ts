@@ -46,6 +46,8 @@ export type DisciplinaMatriz = {
   periodo_id: string
   disciplina_id: string
   desconsidera_reprovacao: boolean
+  nao_reprova_nota: boolean
+  nao_reprova_frequencia: boolean
   carga_horaria_regular_minutos: number | null
   carga_horaria_integral_minutos: number | null
   tipo_disciplina: 'base_comum' | 'parte_diversificada'
@@ -74,6 +76,7 @@ export type Disciplina = {
   nome_abreviado: string | null
   componente: string
   tipo_ensino: string
+  diretriz_curricular: string | null
   carga_horaria_padrao: number | null
   ativo: boolean
 }
@@ -151,7 +154,7 @@ async function nomeMatriz(matrizId: string): Promise<string | null> {
 export async function getMatrizes(schoolId: string | null, anoLetivoId?: string, etapaId?: string) {
   let query = supabase
     .from('academico_matrizes_curriculares')
-    .select('*, academico_etapas_ensino(etapa_nome, etapa_tipo), academico_metodos_avaliacao(nome)')
+    .select('*, academico_etapas_ensino(etapa_nome, etapa_tipo), academico_metodos_avaliacao(nome), academico_anos_letivos(descricao)')
 
   if (schoolId) query = query.eq('school_id', schoolId)
 
@@ -305,6 +308,52 @@ export async function getPeriodos(matrizId: string) {
   return data as PeriodoMatriz[]
 }
 
+// Resumo batch p/ listagem: períodos por matriz + disciplinas (só nome) por
+// período + contagem por matriz. 2 queries, sem N+1 na expansão.
+export async function getResumoMatrizes(matrizIds: string[]): Promise<{
+  periodosPorMatriz: Record<string, { id: string; nome: string }[]>
+  disciplinasPorPeriodo: Record<string, { id: string; nome: string }[]>
+  contagemPorMatriz: Record<string, number>
+}> {
+  const vazio = { periodosPorMatriz: {}, disciplinasPorPeriodo: {}, contagemPorMatriz: {} }
+  if (!matrizIds.length) return vazio
+
+  const { data: periodos, error: errP } = await supabase
+    .from('academico_matriz_periodos')
+    .select('id, matriz_id, periodo_ordem, periodo_nome')
+    .in('matriz_id', matrizIds)
+    .order('periodo_ordem')
+  if (errP) throw errP
+
+  const periodosPorMatriz: Record<string, { id: string; nome: string }[]> = {}
+  for (const m of matrizIds) periodosPorMatriz[m] = []
+  for (const p of (periodos || []) as any[]) {
+    periodosPorMatriz[p.matriz_id]?.push({ id: p.id, nome: p.periodo_nome || `${p.periodo_ordem}º Período` })
+  }
+
+  const pids = ((periodos || []) as any[]).map(p => p.id)
+  const disciplinasPorPeriodo: Record<string, { id: string; nome: string }[]> = {}
+  const contagemPorMatriz: Record<string, number> = {}
+  for (const m of matrizIds) contagemPorMatriz[m] = 0
+  if (pids.length > 0) {
+    const { data: discs, error: errD } = await supabase
+      .from('academico_matriz_disciplinas')
+      .select('id, periodo_id, disciplina_id, academico_disciplinas(nome)')
+      .in('periodo_id', pids)
+      .order('created_at')
+    if (errD) throw errD
+    const periodoDeMatriz = new Map(((periodos || []) as any[]).map(p => [p.id, p.matriz_id]))
+    for (const d of (discs || []) as any[]) {
+      const nome = d.academico_disciplinas?.nome || d.disciplina_id
+      if (!disciplinasPorPeriodo[d.periodo_id]) disciplinasPorPeriodo[d.periodo_id] = []
+      disciplinasPorPeriodo[d.periodo_id].push({ id: d.id, nome })
+      const mid = periodoDeMatriz.get(d.periodo_id)
+      if (mid) contagemPorMatriz[mid] = (contagemPorMatriz[mid] || 0) + 1
+    }
+  }
+  return { periodosPorMatriz, disciplinasPorPeriodo, contagemPorMatriz }
+}
+
 export async function createPeriodos(matrizId: string, quantidade: number, nomes: string[], pessoaId?: string | null) {
   const periodos = Array.from({ length: quantidade }, (_, i) => ({
     matriz_id: matrizId,
@@ -341,12 +390,20 @@ export async function createPeriodos(matrizId: string, quantidade: number, nomes
 export async function getDisciplinasPorPeriodo(periodoId: string) {
   const { data, error } = await supabase
     .from('academico_matriz_disciplinas')
-    .select('*, academico_disciplinas(nome, nome_abreviado, componente)')
+    .select('*, academico_disciplinas(nome, nome_abreviado, componente), academico_matriz_habilidades_bncc(habilidade_codigo), academico_matriz_habilidades_manuais(codigo, descricao)')
     .eq('periodo_id', periodoId)
     .order('created_at')
 
   if (error) throw error
-  return data as any[]
+  // Aliases esperados pelo form de edição (openDiscModal): bncc_habilidades / habilidades_manuais
+  return (data || []).map((d: any) => ({
+    ...d,
+    bncc_habilidades: (d.academico_matriz_habilidades_bncc || []).map((h: any) => ({
+      codigo_bncc: h.habilidade_codigo,
+      habilidade_codigo: h.habilidade_codigo,
+    })),
+    habilidades_manuais: d.academico_matriz_habilidades_manuais || [],
+  })) as any[]
 }
 
 export async function createDisciplinaMatriz(disciplina: Partial<DisciplinaMatriz>, pessoaId?: string | null) {
@@ -433,11 +490,13 @@ export async function substituirHabilidades(
     supabase.from('academico_matriz_habilidades_manuais').delete().eq('matriz_disciplina_id', disciplinaId),
   ])
 
-  const { error: err1 } = await supabase
-    .from('academico_matriz_habilidades_bncc')
-    .insert(bnccCodigos.map(c => ({ matriz_disciplina_id: disciplinaId, habilidade_codigo: c })))
+  if (bnccCodigos.length > 0) {
+    const { error: err1 } = await supabase
+      .from('academico_matriz_habilidades_bncc')
+      .insert(bnccCodigos.map(c => ({ matriz_disciplina_id: disciplinaId, habilidade_codigo: c })))
 
-  if (err1) throw err1
+    if (err1) throw err1
+  }
 
   if (manuais.length > 0) {
     const { error: err2 } = await supabase
@@ -642,6 +701,8 @@ export async function replicarDisciplinas(
       periodo_id: periodoDestinoId,
       disciplina_id: d.disciplina_id,
       desconsidera_reprovacao: d.desconsidera_reprovacao,
+      nao_reprova_nota: d.nao_reprova_nota ?? d.desconsidera_reprovacao ?? false,
+      nao_reprova_frequencia: d.nao_reprova_frequencia ?? d.desconsidera_reprovacao ?? false,
       carga_horaria_regular_minutos: d.carga_horaria_regular_minutos,
       carga_horaria_integral_minutos: d.carga_horaria_integral_minutos,
       tipo_disciplina: d.tipo_disciplina

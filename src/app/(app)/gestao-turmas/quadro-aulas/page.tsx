@@ -15,8 +15,9 @@ import { FilterBar } from '@/components/layout/filter-bar'
 import { EmptyState } from '@/components/ui/empty-state'
 import { ConfirmDialog } from '@/components/feedback/confirm-dialog'
 import { StatusBadge } from '@/components/feedback/status-badge'
-import { Plus, GraduationCap, Calendar, Trash2, Eye } from 'lucide-react'
+import { Plus, GraduationCap, Calendar, Trash2, Pencil } from 'lucide-react'
 import { getQuadrosAulas, getAnosLetivosAtivos, deleteQuadroAula } from '@/lib/actions/quadro-aulas'
+import { resolverStatusQuadro } from '@/lib/quadro-status'
 import { toast } from 'sonner'
 
 const STATUS_MAP: Record<string, { label: string; status: 'success' | 'muted' | 'info' | 'destructive' }> = {
@@ -185,21 +186,21 @@ export default function QuadrosAulasPage() {
               <Plus className="mr-2 h-4 w-4" /> Novo Quadro de Aula
             </Button>
           }>
-            <div className="px-4">
-              <Table>
+            <Table>
                 <TableHeader>
-                  <TableRow>
-                    <TableHead>Turma</TableHead>
-                    <TableHead>Ano Letivo</TableHead>
-                    <TableHead>Vigência</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Última Alteração</TableHead>
-                    <TableHead className="w-[90px]">Ações</TableHead>
+                  <TableRow className="bg-muted">
+                    <TableHead className="text-foreground font-semibold uppercase text-[13px] tracking-wider">Turma</TableHead>
+                    <TableHead className="text-foreground font-semibold uppercase text-[13px] tracking-wider">Ano Letivo</TableHead>
+                    <TableHead className="text-foreground font-semibold uppercase text-[13px] tracking-wider">Vigência</TableHead>
+                    <TableHead className="text-foreground font-semibold uppercase text-[13px] tracking-wider">Status</TableHead>
+                    <TableHead className="text-foreground font-semibold uppercase text-[13px] tracking-wider">Última Alteração</TableHead>
+                    <TableHead className="w-[90px] text-foreground font-semibold uppercase text-[13px] tracking-wider">Ações</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {filteredQuadros.map((q: any) => {
-                    const st = STATUS_MAP[q.status] || STATUS_MAP.futuro
+                    const statusKey = resolverStatusQuadro(q)
+                    const st = STATUS_MAP[statusKey] || STATUS_MAP.futuro
                     return (
                       <TableRow key={q.id}>
                         <TableCell>
@@ -225,7 +226,7 @@ export default function QuadrosAulasPage() {
                             <Button variant="ghost" size="icon-sm"
                               onClick={() => router.push(`/gestao-turmas/quadro-aulas/cadastro?id=${q.id}`)}
                               title="Visualizar/Editar">
-                              <Eye className="h-4 w-4" />
+                              <Pencil className="h-4 w-4" />
                             </Button>
                             <Button variant="ghost" size="icon-sm"
                               onClick={() => setDeleteId(q.id)}
@@ -239,7 +240,6 @@ export default function QuadrosAulasPage() {
                   })}
                 </TableBody>
               </Table>
-            </div>
           </PageSection>
         )}
       </PageContainer>

@@ -380,17 +380,24 @@ export async function getDadosBoletim(
   const { data: relacoes } = await supabase
     .from('turmas_disciplinas')
     .select(
-      'matriz_disciplina_id, academico_matriz_disciplinas(disciplina_id, academico_disciplinas(nome))'
+      'matriz_disciplina_id, academico_matriz_disciplinas(disciplina_id, nao_reprova_nota, nao_reprova_frequencia, academico_disciplinas(nome))'
     )
     .eq('turma_id', turma.id)
 
   const mapaNomes = new Map<string, string>()
+  const semNota = new Set<string>()
+  const semFreq = new Set<string>()
   for (const r of relacoes || []) {
     const md = r.academico_matriz_disciplinas as unknown as {
       disciplina_id: string
+      nao_reprova_nota?: boolean | null
+      nao_reprova_frequencia?: boolean | null
       academico_disciplinas: { nome: string } | null
     } | null
     if (!md) continue
+    // spec 032: pills saem dos agregados do Resultado Geral (por disciplina continua exibido)
+    if (md.nao_reprova_nota === true) semNota.add(r.matriz_disciplina_id)
+    if (md.nao_reprova_frequencia === true) semFreq.add(r.matriz_disciplina_id)
     if (!mapaNomes.has(r.matriz_disciplina_id)) {
       mapaNomes.set(r.matriz_disciplina_id, md.academico_disciplinas?.nome || 'Disciplina')
     }
@@ -432,6 +439,7 @@ export async function getDadosBoletim(
   })
 
   const notasValidas = linhas
+    .filter(l => !semNota.has(l.matriz_disciplina_id))
     .map(l => l.nota_periodo)
     .filter((n): n is number => n !== null)
   const mediaPeriodo =
@@ -440,6 +448,7 @@ export async function getDadosBoletim(
       : null
 
   const faltasValidas = linhas
+    .filter(l => !semFreq.has(l.matriz_disciplina_id))
     .map(l => l.total_faltas)
     .filter((n): n is number => n !== null)
   const totalFaltas =

@@ -56,7 +56,7 @@ export function PageHeader({ title, description, icon: Icon, actions, breadcrumb
             </div>
           )}
           <div className="min-w-0">
-            <h1 className="text-[28px] font-bold leading-tight text-foreground tracking-tight truncate">
+            <h1 className="font-display text-[28px] font-bold leading-tight text-foreground tracking-tight truncate">
               {title}
             </h1>
             {description && (

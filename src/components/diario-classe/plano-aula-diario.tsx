@@ -29,7 +29,6 @@ import {
   CalendarClock,
   CalendarDays,
   CalendarX2,
-  ChevronLeft,
   ChevronRight,
   CheckCircle2,
   ClipboardList,
@@ -43,6 +42,7 @@ import {
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { toast } from 'sonner'
+import SeletorMes from './seletor-mes'
 
 type DisciplinaItem = {
   id: string
@@ -150,17 +150,6 @@ export default function PlanoAulaDiario({ turmaId, disciplinas, pessoaId, readOn
     setPlanosMes(agruparPorData(lista))
   }, [turmaId, disciplinaId, ano, mes, pessoaId])
 
-  const navegarMes = (delta: number) => {
-    setDrawerData(null)
-    setVisualizandoPlano(null)
-    let novoMes = mes + delta
-    let novoAno = ano
-    if (novoMes < 1) { novoMes = 12; novoAno-- }
-    if (novoMes > 12) { novoMes = 1; novoAno++ }
-    setMes(novoMes)
-    setAno(novoAno)
-  }
-
   const handleAplicar = async (planoAulaId: string) => {
     if (!drawerData || readOnly) return
     setAplicando(planoAulaId)
@@ -230,8 +219,8 @@ export default function PlanoAulaDiario({ turmaId, disciplinas, pessoaId, readOn
   const planosForaDoIntervalo = planosDisponiveis.some(p => !appliedIdsDia.has(p.id) && !planoCobreDia(p))
 
   return (
-    <div>
-      <div className="flex flex-wrap items-center gap-4 mb-8 pt-2 px-1">
+    <div className="min-w-0 max-w-full p-4 sm:p-6 space-y-5">
+      <div className="flex flex-wrap items-center gap-4">
         <div>
           <Select
             value={disciplinaId}
@@ -250,23 +239,10 @@ export default function PlanoAulaDiario({ turmaId, disciplinas, pessoaId, readOn
           </Select>
         </div>
 
-        <div className="flex items-center gap-2">
-          <Button variant="outline" size="icon" aria-label="Mês anterior" onClick={() => navegarMes(-1)}>
-            <ChevronLeft className="h-4 w-4" />
-          </Button>
-          <span className="min-w-[140px] text-center text-sm font-medium capitalize tabular-nums">
-            {nomeMes} {ano}
-          </span>
-          <Button variant="outline" size="icon" aria-label="Próximo mês" onClick={() => navegarMes(1)}>
-            <ChevronRight className="h-4 w-4" />
-          </Button>
-          <Button variant="ghost" size="sm" onClick={() => { setDrawerData(null); setMes(hoje.getMonth() + 1); setAno(hoje.getFullYear()) }}>
-            Hoje
-          </Button>
-        </div>
+        <SeletorMes ano={ano} mes={mes} onChange={(a, m) => { setDrawerData(null); setAno(a); setMes(m) }} />
       </div>
 
-      <div className="space-y-5 px-1 pb-2">
+      <div className="space-y-5">
         {!disciplinaId ? (
         <EmptyState
           icon={BookOpen}

@@ -12,6 +12,7 @@ import { ETAPAS_FORMAS_ORGANIZACAO } from '@/data/censo/etapas-formas-organizaca
 import { ETAPAS_ENSINO } from '@/data/censo/etapas-ensino'
 import { AREAS_CONHECIMENTO } from '@/data/censo/areas-conhecimento'
 import { COMPATIBILIDADE_MEDIACAO_TURMA_ETAPA } from '@/data/censo/tipo-turma-mediacao'
+import { codigoTipoTurma, codigoFormaOrganizacao } from '@/data/censo/tipo-turma-codigos'
 import { MUNICIPIOS_CEARA } from '@/data/censo/municipios-ceara'
 import { getCampoAmigavel, getDescricaoValor, getAbaEscola, gerarMensagemAmigavel } from '@/data/censo/rotulos-campos'
 
@@ -1574,7 +1575,8 @@ export async function validarRegistro20(schoolId: string): Promise<ErroValidacao
   for (const turma of turmas) {
     const nome = String(turma.nome ?? '')
     const tipoMediacao = String(turma.tipo_mediacao ?? '')
-    const tipoTurma = String(turma.tipo_turma ?? '')
+    // turmas armazena rótulos em `tipos_turma` (array) — converte p/ código INEP (spec 029 FR-020)
+    const tipoTurma = codigoTipoTurma(turma.tipos_turma)
     const etapaCodigoRaw = turma.etapa_codigo ? String(turma.etapa_codigo) : ''
     const etapaAgregada = turma.etapa_agregada ? String(turma.etapa_agregada) : ''
     const formaOrganizacao = turma.forma_organizacao ? String(turma.forma_organizacao) : ''
@@ -1688,7 +1690,15 @@ export async function validarRegistro20(schoolId: string): Promise<ErroValidacao
 
     // -------------------------------------------------------------------
     // 6. Etapa (when tipo_turma = '6' or '9')
+    //    Fora de Curricular/tipo 9 a etapa deve ser NULA (spec 029 FR-006)
     // -------------------------------------------------------------------
+    if (tipoTurma === '4' || tipoTurma === '5') {
+      if (etapaAgregada || etapaCodigoRaw) {
+        addErro(turma, 'etapa_agregada', 6, 'Etapa agregada',
+          'Etapa deve ser nula para turma de Atividade Complementar ou AEE.',
+          etapaAgregada || etapaCodigoRaw, 'organizacao', 'etapa_agregada')
+      }
+    }
     if (tipoTurma === '6' || tipoTurma === '9') {
       if (!etapaAgregada) {
         addErro(turma, 'etapa_agregada', 6, 'Etapa agregada',
@@ -1728,7 +1738,7 @@ export async function validarRegistro20(schoolId: string): Promise<ErroValidacao
       if (formaOrganizacao) {
         const etapaEntry = ETAPAS_FORMAS_ORGANIZACAO.find((e) => e.etapa_codigo === etapaNum)
         if (etapaEntry) {
-          const formaNum = parseInt(formaOrganizacao, 10)
+          const formaNum = parseInt(codigoFormaOrganizacao(formaOrganizacao), 10)
           if (isNaN(formaNum) || !etapaEntry.formas.includes(formaNum)) {
             addErro(turma, 'forma_organizacao', 8, 'Forma de organização × Etapa (Anexo 6)',
               `Forma de organização "${formaOrganizacao}" não é compatível com a etapa "${etapaEntry.etapa_nome}". Formas válidas: ${etapaEntry.formas.join(', ')}.`,
@@ -2562,6 +2572,13 @@ function tipoMediacaoCodigo(turma: Record<string, unknown>): string {
 }
 
 function turmaHasTipo(turma: Record<string, unknown>, tipo: string): boolean {
+  // turmas armazena rótulos em `tipos_turma` — compara via código INEP (spec 029 FR-020)
+  const cod = codigoTipoTurma(turma.tipos_turma as any)
+  if (tipo === cod) return true
+  const t = tipo.toLowerCase()
+  if (t === 'aee') return cod === '5'
+  if (t === 'complementar' || t === 'atividade_complementar') return cod === '4' || cod === '9'
+  if (t === 'curricular') return cod === '6' || cod === '9'
   const tt = turma.tipos_turma
   if (!tt) return false
   if (Array.isArray(tt)) return tt.includes(tipo)
@@ -2722,7 +2739,8 @@ export async function validarRegistro50(schoolId: string): Promise<ErroValidacao
 
       // 3. Função '2' (Auxiliar) apenas para turma curricular
       if (funcao === '2') {
-        if (turmaHasTipo(turma, 'aee') || turmaHasTipo(turma, 'complementar')) {
+        const tipoCod50 = codigoTipoTurma(turma.tipos_turma as any)
+        if (tipoCod50 === '5' || tipoCod50 === '4' || tipoCod50 === '9') {
           addErro('funcao_censo', 9, 'Função × Tipo de turma',
             'Função "2" (Auxiliar) não é permitida para turmas AEE ou de atividade complementar.',
             funcao)
@@ -2731,7 +2749,8 @@ export async function validarRegistro50(schoolId: string): Promise<ErroValidacao
 
       // 4. Função '3' (Monitor) apenas para turma com atividade complementar
       if (funcao === '3') {
-        if (!turmaHasTipo(turma, 'complementar') && !turmaHasTipo(turma, 'atividade_complementar')) {
+        const tipoCod50 = codigoTipoTurma(turma.tipos_turma as any)
+        if (tipoCod50 !== '4' && tipoCod50 !== '9') {
           addErro('funcao_censo', 9, 'Função × Tipo de turma',
             'Função "3" (Profissional/Monitor) só é permitida para turmas com atividade complementar.',
             funcao)
@@ -3082,7 +3101,7 @@ export async function validarVinculosAluno(schoolId: string): Promise<ErroValida
 
   const { data: matriculas, error } = await supabase
     .from('academico_matriculas')
-    .select('aluno_id, turma_id, turmas!inner(id, nome, tipo_turma, etapa_codigo, tipo_mediacao, iftp)')
+    .select('aluno_id, turma_id, turmas!inner(id, nome, tipos_turma, etapa_codigo, tipo_mediacao, iftp)')
     .eq('school_id', schoolId)
     .eq('ativo', true)
     .eq('turmas.ativo', true)
@@ -3106,8 +3125,8 @@ export async function validarVinculosAluno(schoolId: string): Promise<ErroValida
 
     // Total escolarizacao links (non-AEE): max 4
     const escolarizacao = links.filter((l) => {
-      const tt = ((l.turmas as any)?.tipo_turma || '').toString().toUpperCase()
-      return !tt.includes('AEE')
+      const cod = codigoTipoTurma((l.turmas as any)?.tipos_turma)
+      return cod !== '5'
     })
     if (escolarizacao.length > 4) {
       erros.push(criarErro(
@@ -3132,8 +3151,8 @@ export async function validarVinculosAluno(schoolId: string): Promise<ErroValida
 
     // AEE/Complementar: max 4
     const aee = links.filter((l) => {
-      const tt = ((l.turmas as any)?.tipo_turma || '').toString().toUpperCase()
-      return tt.includes('AEE') || tt.includes('COMPLEMENTAR')
+      const cod = codigoTipoTurma((l.turmas as any)?.tipos_turma)
+      return cod === '5' || cod === '4' || cod === '9'
     })
     if (aee.length > 4) {
       erros.push(criarErro(

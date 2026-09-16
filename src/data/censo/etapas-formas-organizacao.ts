@@ -71,8 +71,8 @@ export const ETAPAS_FORMAS_ORGANIZACAO: EtapaFormaOrganizacao[] = [
   // ---------------------------------------------------------------------------
   // Educação de Jovens e Adultos (EJA)
   // ---------------------------------------------------------------------------
-  { etapa_codigo: 69, etapa_nome: "EJA Ensino Fundamental Anos Finais", formas: [1, 2, 4, 5, 6] },
-  { etapa_codigo: 70, etapa_nome: "EJA Ensino Fundamental Anos Iniciais", formas: [1, 2, 4, 5, 6] },
+  { etapa_codigo: 69, etapa_nome: "EJA - Ensino fundamental - anos iniciais (1º segmento)", formas: [1, 2, 4, 5, 6] },
+  { etapa_codigo: 70, etapa_nome: "EJA - Ensino fundamental - anos finais (2º segmento)", formas: [1, 2, 4, 5, 6] },
   { etapa_codigo: 72, etapa_nome: "EJA Ensino Fundamental Multietapa", formas: [1, 2, 4, 5, 6] },
   { etapa_codigo: 71, etapa_nome: "EJA Ensino Médio", formas: [1, 2, 4, 5, 6] },
   { etapa_codigo: 74, etapa_nome: "Técnico Integrado EJA", formas: [1, 2, 4, 5, 6] },
@@ -84,7 +84,7 @@ export const ETAPAS_FORMAS_ORGANIZACAO: EtapaFormaOrganizacao[] = [
   // ---------------------------------------------------------------------------
   { etapa_codigo: 39, etapa_nome: "Técnico Concomitante", formas: [1, 2, 4, 5, 6] },
   { etapa_codigo: 40, etapa_nome: "Técnico Subsequente", formas: [1, 2, 4, 5, 6] },
-  { etapa_codigo: 64, etapa_nome: "Técnico Integrado Ensino Médio", formas: [1, 2, 4, 5, 6] },
+  { etapa_codigo: 64, etapa_nome: "Curso técnico misto", formas: [1, 2, 4, 5, 6] },
   { etapa_codigo: 68, etapa_nome: "FIC Concomitante", formas: [1, 2, 4, 5, 6] },
   { etapa_codigo: 75, etapa_nome: "FIC Não Vinculada", formas: [1, 2, 4, 5, 6] },
 ];

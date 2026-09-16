@@ -19,6 +19,7 @@ type ModernTabsProps = {
   defaultValue?: string
   urlSync?: boolean
   fullWidth?: boolean
+  listClassName?: string
   onValueChange?: (value: string) => void
 }
 
@@ -30,6 +31,7 @@ export function ModernTabs({
   defaultValue,
   urlSync = true,
   fullWidth = false,
+  listClassName,
   onValueChange,
 }: ModernTabsProps) {
   const router = useRouter()
@@ -70,9 +72,10 @@ export function ModernTabs({
         <TabsList
           variant="default"
           className={cn(
-            'mx-4 mb-6 flex h-auto min-w-max gap-1 rounded-lg border border-border bg-card p-1 shadow-xs sm:mx-0',
+            'mx-4 mb-6 flex h-12 min-w-max gap-1 rounded-lg border border-border bg-card p-1 shadow-xs sm:mx-0',
             scroll ? 'w-max justify-start flex-nowrap' : '',
-            !scroll && (fullWidth ? 'sm:w-full' : 'sm:w-1/2')
+            !scroll && (fullWidth ? 'sm:w-full' : 'sm:w-1/2'),
+            listClassName
           )}
         >
           {tabs.map((tab) => (
@@ -80,10 +83,10 @@ export function ModernTabs({
               key={tab.value}
               value={tab.value}
               className={cn(
-                'group/tab h-10 min-h-[40px] shrink-0 rounded-md px-4 whitespace-nowrap',
+                'group/tab h-full shrink-0 rounded-md px-4 whitespace-nowrap',
                 scroll ? 'flex-none' : 'flex-1',
-                'text-[14px] font-semibold text-foreground/80 transition-colors',
-                'hover:bg-accent/10 hover:text-accent-foreground',
+                'text-[14px] font-semibold text-muted-foreground transition-colors',
+                'hover:bg-accent/15 hover:text-foreground',
                 'data-active:bg-primary data-active:text-primary-foreground data-active:shadow-sm data-active:hover:bg-primary data-active:hover:text-primary-foreground',
                 'data-active:[&_span.badge]:bg-primary-foreground/20 data-active:[&_span.badge]:text-primary-foreground'
               )}

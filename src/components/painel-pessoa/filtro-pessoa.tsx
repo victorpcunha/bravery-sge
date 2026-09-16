@@ -21,6 +21,7 @@ type Props = {
   pessoaLogadaId: string | null
   onSelect: (pessoa: PessoaResumida) => void
   selectedId?: string
+  disabled?: boolean
 }
 
 function formatarCpf(cpf: string | null | undefined): string {
@@ -38,7 +39,7 @@ function iniciais(nome: string): string {
   return (primeira + ultima).toUpperCase()
 }
 
-export default function FiltroPessoa({ schoolId, pessoaLogadaId, onSelect, selectedId }: Props) {
+export default function FiltroPessoa({ schoolId, pessoaLogadaId, onSelect, selectedId, disabled }: Props) {
   const [open, setOpen] = useState(false)
   const [termo, setTermo] = useState('')
   const [resultados, setResultados] = useState<PessoaResumida[]>([])
@@ -79,6 +80,7 @@ export default function FiltroPessoa({ schoolId, pessoaLogadaId, onSelect, selec
           role="combobox"
           aria-expanded={open}
           aria-label="Buscar aluno por nome ou CPF"
+          disabled={disabled}
           className="relative w-full h-9 justify-start rounded-md border-border bg-card pl-10 pr-3 text-[14px] font-normal shadow-xs hover:bg-card"
         >
           <Search

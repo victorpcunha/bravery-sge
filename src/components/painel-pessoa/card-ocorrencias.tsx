@@ -13,12 +13,14 @@ type Props = {
   pessoaLogadaId: string | null
 }
 
-const STATUS_TIPO: Record<string, 'destructive' | 'warning'> = {
+const STATUS_TIPO: Record<string, 'success' | 'destructive' | 'warning'> = {
+  positiva: 'success',
+  negativa: 'destructive',
   disciplinar: 'destructive',
   pedagogica: 'warning',
 }
 
-function statusTipo(tipo: string): 'destructive' | 'warning' | 'muted' {
+function statusTipo(tipo: string): 'success' | 'destructive' | 'warning' | 'muted' {
   return STATUS_TIPO[tipo] || 'muted'
 }
 
@@ -74,6 +76,9 @@ export default function CardOcorrencias({ pessoaId, schoolId, pessoaLogadaId }: 
                       {new Date(o.data_ocorrencia).toLocaleDateString('pt-BR')}
                     </span>
                   </div>
+                  {o.titulo && (
+                    <p className="text-[14px] font-semibold text-foreground">{o.titulo}</p>
+                  )}
                   <p className="text-[14px]">{o.descricao}</p>
                   {o.turma_nome && (
                     <p className="text-[13px] text-muted-foreground">Turma: {o.turma_nome}</p>

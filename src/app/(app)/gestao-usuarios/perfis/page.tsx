@@ -8,7 +8,7 @@ import { Card } from '@/components/ui/card'
 import { EmptyState } from '@/components/ui/empty-state'
 import { Pagination } from '@/components/ui/pagination'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Plus, Shield } from 'lucide-react'
+import { Plus, School, Shield } from 'lucide-react'
 import { listarPerfis, type Perfil } from '@/lib/actions/perfis'
 import { PerfilFiltros } from '@/components/perfis/perfil-filtros'
 import { PerfilGrid } from '@/components/perfis/perfil-grid'
@@ -56,6 +56,11 @@ export default function PerfisPage() {
   }, [permLoaded, effectiveId, isSetup])
 
   const loadPerfis = async () => {
+    if (isSuperAdmin && !selectedSchoolId) {
+      setPerfis([])
+      setLoading(false)
+      return
+    }
     setLoading(true)
     try {
       const ativo = situacao === 'todas' ? undefined : situacao === 'ativas'
@@ -123,30 +128,40 @@ export default function PerfisPage() {
         />
 
         <PageSection variant="compact" title="Filtros" className="mb-6">
-          {isSuperAdmin && allSchools.length > 0 && (
-            <Select
-              value={selectedSchoolId ?? '__all__'}
-              onValueChange={(v) => setSelectedSchoolId(v === '__all__' ? null : v)}
-            >
-              <SelectTrigger className="w-auto min-w-[180px] h-9">
-                <SelectValue placeholder="Todas as escolas" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="__all__">Todas as escolas</SelectItem>
-                {allSchools.map(s => (
-                  <SelectItem key={s.id} value={s.id}>{s.nome_escola}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          )}
           <PerfilFiltros
             search={search}
             onSearchChange={setSearch}
             situacao={situacao}
             onSituacaoChange={setSituacao}
+            escolaFiltro={
+              isSuperAdmin && allSchools.length > 0 ? (
+                <Select
+                  value={selectedSchoolId ?? ''}
+                  onValueChange={(v) => setSelectedSchoolId(v || null)}
+                >
+                  <SelectTrigger className="w-auto min-w-[180px] h-9">
+                    <SelectValue placeholder="Selecione uma escola" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {allSchools.map(s => (
+                      <SelectItem key={s.id} value={s.id}>{s.nome_escola}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              ) : undefined
+            }
           />
         </PageSection>
 
+        {isSuperAdmin && !selectedSchoolId ? (
+          <Card className="shadow-sm">
+            <EmptyState
+              icon={School}
+              title="Selecione uma escola"
+              description="Escolha uma unidade escolar no filtro acima para listar os perfis."
+            />
+          </Card>
+        ) : (
         <PageSection
           title="Perfis cadastrados"
           variant="flush"
@@ -198,16 +213,14 @@ export default function PerfisPage() {
             </Card>
           ) : (
             <>
-              <div className="px-4">
-                <PerfilGrid
-                  perfis={perfisPaginados}
-                  loading={loading}
-                  onEdit={handleEdit}
-                  onDelete={(id) => setDeleteTarget(id)}
-                  podeEditar={pode.editar('gestao-usuarios.perfis')}
-                  podeExcluir={pode.excluir('gestao-usuarios.perfis')}
-                />
-              </div>
+              <PerfilGrid
+                perfis={perfisPaginados}
+                loading={loading}
+                onEdit={handleEdit}
+                onDelete={(id) => setDeleteTarget(id)}
+                podeEditar={pode.editar('gestao-usuarios.perfis')}
+                podeExcluir={pode.excluir('gestao-usuarios.perfis')}
+              />
               {totalPages > 1 && (
                 <div className="px-6 py-4 border-t border-border">
                   <Pagination
@@ -222,6 +235,7 @@ export default function PerfisPage() {
             </>
           )}
         </PageSection>
+        )}
       </PageContainer>
 
       <ConfirmDialog

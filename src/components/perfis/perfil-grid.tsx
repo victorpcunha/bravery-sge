@@ -109,12 +109,12 @@ export function PerfilGrid({ perfis, onEdit, onDelete, podeEditar = true, podeEx
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Nome</TableHead>
-              <TableHead>Descrição</TableHead>
-              <TableHead>Tipo</TableHead>
-              <TableHead>Situação</TableHead>
-              <TableHead>Data Cadastro</TableHead>
-              {temAcoes && <TableHead className="text-right">Ações</TableHead>}
+              <TableHead className="bg-muted text-foreground">Nome</TableHead>
+              <TableHead className="bg-muted text-foreground">Descrição</TableHead>
+              <TableHead className="bg-muted text-foreground">Tipo</TableHead>
+              <TableHead className="bg-muted text-foreground">Situação</TableHead>
+              <TableHead className="bg-muted text-foreground">Data Cadastro</TableHead>
+              {temAcoes && <TableHead className="bg-muted text-foreground text-right">Ações</TableHead>}
             </TableRow>
           </TableHeader>
           <TableBody>

@@ -4,8 +4,9 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useTabParams } from '@/lib/tab-params'
 import { useAuth } from '@/components/providers/auth-provider'
-import { ChevronLeft, Shield } from 'lucide-react'
+import { ChevronLeft, Shield, Trash2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { ConfirmDialog } from '@/components/feedback/confirm-dialog'
 import { PageContainer } from '@/components/layout/page-container'
 import { PageHeader } from '@/components/layout/page-header'
 import { PageSection } from '@/components/layout/page-section'
@@ -13,6 +14,7 @@ import {
   buscarPerfil,
   criarPerfil,
   editarPerfil,
+  excluirPerfil,
   listarPermissoes,
   salvarPermissoes,
   type Perfil,
@@ -32,6 +34,8 @@ export default function PerfilCadastroPage() {
   const [recursos, setRecursos] = useState<RecursoComPermissao[]>([])
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
+  const [deleteOpen, setDeleteOpen] = useState(false)
+  const [deleting, setDeleting] = useState(false)
   const { loaded: permLoaded, pode, isSetup, pessoaId } = usePermissoes(schoolId)
 
   useEffect(() => {
@@ -128,6 +132,21 @@ export default function PerfilCadastroPage() {
     )
   }
 
+  const podeExcluir = !isNew && !isSetup && pode.excluir('gestao-usuarios.perfis')
+
+  const handleDelete = async () => {
+    setDeleting(true)
+    try {
+      await excluirPerfil(id, pessoaId || undefined)
+      toast.success('Perfil excluído')
+      router.push('/gestao-usuarios/perfis')
+    } catch (e: any) {
+      toast.error('Erro ao excluir perfil: ' + (e?.message || 'desconhecido'))
+    } finally {
+      setDeleting(false)
+    }
+  }
+
   return (
       <PageContainer className="max-w-5xl">
         <PageHeader
@@ -135,9 +154,16 @@ export default function PerfilCadastroPage() {
           description={isNew ? 'Crie um novo perfil de acesso' : `Editando: ${perfil?.nome || ''}`}
           icon={Shield}
           actions={
-            <Button variant="outline" size="sm" onClick={() => router.push('/gestao-usuarios/perfis')}>
-              <ChevronLeft className="mr-2 h-4 w-4" /> Voltar
-            </Button>
+            <div className="flex items-center gap-2">
+              <Button variant="outline" size="sm" onClick={() => router.push('/gestao-usuarios/perfis')}>
+                <ChevronLeft className="mr-2 h-4 w-4" /> Voltar
+              </Button>
+              {podeExcluir && (
+                <Button variant="destructive" size="sm" onClick={() => setDeleteOpen(true)}>
+                  <Trash2 className="mr-2 h-4 w-4" /> Excluir
+                </Button>
+              )}
+            </div>
           }
         />
 
@@ -153,6 +179,17 @@ export default function PerfilCadastroPage() {
             saving={saving}
           />
         </PageSection>
+
+        <ConfirmDialog
+          open={deleteOpen}
+          onOpenChange={(open) => { if (!open) setDeleteOpen(false) }}
+          title="Excluir perfil"
+          description={`Tem certeza que deseja excluir "${perfil?.nome || ''}"? Esta ação não pode ser desfeita.`}
+          confirmLabel="Excluir"
+          variant="destructive"
+          onConfirm={handleDelete}
+          loading={deleting}
+        />
       </PageContainer>
   )
 }

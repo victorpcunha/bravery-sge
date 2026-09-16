@@ -7,9 +7,7 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Label } from '@/components/ui/label'
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
-import { ScrollArea } from '@/components/ui/scroll-area'
 import { PageContainer } from '@/components/layout/page-container'
 import { PageHeader } from '@/components/layout/page-header'
 import { PageSection } from '@/components/layout/page-section'
@@ -19,7 +17,6 @@ import { StatusBadge } from '@/components/feedback/status-badge'
 import { ConfirmDialog } from '@/components/feedback/confirm-dialog'
 import { Plus, Pencil, Trash2, ClipboardList } from 'lucide-react'
 import { getMetodos, deleteMetodo, type MetodoAvaliacao } from '@/lib/actions/metodos'
-import { MetodosForm } from './MetodosForm'
 import { toast } from 'sonner'
 
 const tipoLabels: Record<string, string> = {
@@ -34,8 +31,6 @@ export default function MetodosAvaliacaoPage() {
   const router = useRouter()
   const [metodos, setMetodos] = useState<MetodoAvaliacao[]>([])
   const [loading, setLoading] = useState(true)
-  const [modalOpen, setModalOpen] = useState(false)
-  const [editId, setEditId] = useState<string | null>(null)
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null)
   const [selectedSchoolId, setSelectedSchoolId] = useState<string | null>(null)
   const [search, setSearch] = useState('')
@@ -76,7 +71,9 @@ export default function MetodosAvaliacaoPage() {
     } catch { toast.error('Erro ao excluir método') }
   }
 
-  const handleSaved = () => { setModalOpen(false); setEditId(null); loadMetodos() }
+  const escolaQuery = isSuperAdmin && selectedSchoolId ? `?escola=${selectedSchoolId}` : ''
+  const goNovo = () => router.push(`/gestao-academica/metodos/novo${escolaQuery}`)
+  const goEditar = (id: string) => router.push(`/gestao-academica/metodos/${id}${escolaQuery}`)
 
   const filtered = metodos
     .filter(m => statusFilter === 'ativos' ? m.ativo : !m.ativo)
@@ -96,7 +93,7 @@ export default function MetodosAvaliacaoPage() {
         />
 
         <PageSection variant="compact" title="Filtros" className="mb-6">
-        <FilterBar searchValue={search} onSearchChange={setSearch} searchPlaceholder="Buscar por nome...">
+        <FilterBar searchValue={search} onSearchChange={setSearch} searchPlaceholder="Buscar por nome..." searchClassName="flex-none w-1/3 min-w-[220px]">
           {isSuperAdmin && allSchools.length > 0 && (
             <Select value={selectedSchoolId ?? ''} onValueChange={(v) => setSelectedSchoolId(v || null)}>
               <SelectTrigger className="w-auto min-w-[200px] h-9 border-border">
@@ -124,21 +121,20 @@ export default function MetodosAvaliacaoPage() {
         ) : loading ? (
           <Card className="shadow-sm"><CardContent className="p-6 space-y-3">{[1,2,3].map(i => <div key={i} className="h-10 bg-muted rounded-lg animate-pulse" />)}</CardContent></Card>
         ) : filtered.length === 0 ? (
-          <Card className="shadow-sm"><CardContent className="py-16"><EmptyState icon={ClipboardList} title={search ? 'Nenhum método encontrado' : 'Nenhum método cadastrado'} description={search ? 'Tente outro nome.' : 'Crie um método de avaliação.'} action={<Button onClick={() => { setEditId(null); setModalOpen(true) }}><Plus className="mr-2 h-4 w-4" />Novo Método</Button>} /></CardContent></Card>
+          <Card className="shadow-sm"><CardContent className="py-16"><EmptyState icon={ClipboardList} title={search ? 'Nenhum método encontrado' : 'Nenhum método cadastrado'} description={search ? 'Tente outro nome.' : 'Crie um método de avaliação.'} action={<Button onClick={goNovo}><Plus className="mr-2 h-4 w-4" />Novo Método</Button>} /></CardContent></Card>
         ) : (
-          <PageSection variant="flush" title={`${filtered.length} método(s)`} actions={<Button size="sm" onClick={() => { setEditId(null); setModalOpen(true) }}><Plus className="mr-2 h-4 w-4" />Novo Método</Button>}>
-            <div className="px-4">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Descrição</TableHead>
-                    <TableHead>Critério Frequência</TableHead>
-                    <TableHead>Freq. Mínima</TableHead>
-                    <TableHead>Tipos de Avaliação</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead className="w-[90px]">Ações</TableHead>
-                  </TableRow>
-                </TableHeader>
+          <PageSection variant="flush" title={`${filtered.length} método(s)`} actions={<Button size="sm" onClick={goNovo}><Plus className="mr-2 h-4 w-4" />Novo Método</Button>}>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="bg-muted text-[13px] uppercase tracking-wider">Descrição</TableHead>
+                  <TableHead className="bg-muted text-[13px] uppercase tracking-wider">Critério Frequência</TableHead>
+                  <TableHead className="bg-muted text-[13px] uppercase tracking-wider">Freq. Mínima</TableHead>
+                  <TableHead className="bg-muted text-[13px] uppercase tracking-wider">Tipos de Avaliação</TableHead>
+                  <TableHead className="bg-muted text-[13px] uppercase tracking-wider">Status</TableHead>
+                  <TableHead className="w-[90px] bg-muted text-[13px] uppercase tracking-wider">Ações</TableHead>
+                </TableRow>
+              </TableHeader>
                 <TableBody>
                   {filtered.map(m => (
                     <TableRow key={m.id}>
@@ -155,7 +151,7 @@ export default function MetodosAvaliacaoPage() {
                       <TableCell><StatusBadge status={m.ativo ? 'success' : 'muted'}>{m.ativo ? 'Ativo' : 'Inativo'}</StatusBadge></TableCell>
                       <TableCell>
                         <div className="flex items-center gap-0.5">
-                          <Button variant="ghost" size="icon-sm" onClick={() => { setEditId(m.id); setModalOpen(true) }}><Pencil className="h-4 w-4" /></Button>
+                          <Button variant="ghost" size="icon-sm" onClick={() => goEditar(m.id)}><Pencil className="h-4 w-4" /></Button>
                           <Button variant="ghost" size="icon-sm" onClick={() => setDeleteTarget(m.id)}><Trash2 className="h-4 w-4 text-destructive" /></Button>
                         </div>
                       </TableCell>
@@ -163,20 +159,9 @@ export default function MetodosAvaliacaoPage() {
                   ))}
                 </TableBody>
               </Table>
-            </div>
           </PageSection>
         )}
       </PageContainer>
-
-      <Dialog open={modalOpen} onOpenChange={(open) => { if (!open) { setModalOpen(false); setEditId(null) } }}>
-        <DialogContent className="max-w-4xl max-h-[90vh] flex flex-col p-0 gap-0">
-          <DialogHeader className="px-6 pt-6 pb-0 shrink-0">
-            <DialogTitle>{editId ? 'Editar Método de Avaliação' : 'Novo Método de Avaliação'}</DialogTitle>
-            <DialogDescription>Configure todos os critérios e regras para este método de avaliação.</DialogDescription>
-          </DialogHeader>
-          <MetodosForm schoolId={effectiveSchoolId} editId={editId} onSaved={handleSaved} onCancel={() => setModalOpen(false)} />
-        </DialogContent>
-      </Dialog>
 
       <ConfirmDialog open={!!deleteTarget} onOpenChange={(open) => { if (!open) setDeleteTarget(null) }} title="Excluir método de avaliação" description="Tem certeza que deseja excluir este método permanentemente?" confirmLabel="Excluir" variant="destructive" onConfirm={handleDelete} />
     </>

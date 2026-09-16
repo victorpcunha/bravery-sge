@@ -75,5 +75,32 @@ export function isSituacaoSaida(situacao?: string | null): boolean {
   return (SITUACOES_SAIDA as readonly string[]).includes(situacao)
 }
 
+// Tipos de movimentação → rótulo + situação correspondente (p/ badge)
+export const TIPO_MOVIMENTACAO_LABEL: Record<string, string> = {
+  Transferencia: 'Transferência',
+  Reclassificacao: 'Reclassificação',
+  Remanejamento: 'Remanejamento',
+  Desistencia: 'Desistência',
+  Obito: 'Óbito',
+}
+
+const TIPO_MOVIMENTACAO_SITUACAO: Record<string, string> = {
+  Transferencia: 'Transferido',
+  Reclassificacao: 'Reclassificado',
+  Remanejamento: 'Remanejado',
+  Desistencia: 'Desistente',
+  Obito: 'Óbito',
+}
+
+export function labelTipoMovimentacao(tipo?: string | null): string {
+  if (!tipo) return '—'
+  return TIPO_MOVIMENTACAO_LABEL[tipo] || tipo
+}
+
+export function variantTipoMovimentacao(tipo?: string | null): VariantSituacao {
+  if (!tipo) return 'muted'
+  return variantSituacaoMatricula(TIPO_MOVIMENTACAO_SITUACAO[tipo])
+}
+
 // Códigos INEP das etapas finais (geram "Aprovado concluinte")
 export const ETAPAS_FINAIS_INEP = [18, 41, 27]

@@ -16,7 +16,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/ui/table'
 import { toast } from 'sonner'
-import { Plus, Pencil, BookOpen, Ban } from 'lucide-react'
+import { Plus, Pencil, BookOpen, Ban, CheckCircle2 } from 'lucide-react'
+import { AREAS_CONHECIMENTO } from '@/data/censo/areas-conhecimento'
 import {
   listarDisciplinas,
   getAreasConhecimento,
@@ -47,6 +48,8 @@ export default function DisciplinasPage() {
   const [diretrizFilter, setDiretrizFilter] = useState('__all__')
   const [selectedSchoolId, setSelectedSchoolId] = useState<string | null>(null)
   const [deleteTarget, setDeleteTarget] = useState<Disciplina | null>(null)
+  const [toggleTarget, setToggleTarget] = useState<Disciplina | null>(null)
+  const [toggling, setToggling] = useState(false)
 
   const [formData, setFormData] = useState({
     nome: '',
@@ -89,10 +92,20 @@ export default function DisciplinasPage() {
       nome: disciplina.nome,
       sigla: disciplina.sigla || '',
       area_codigo: disciplina.area_codigo?.toString() || '',
-      codigo_inep: disciplina.codigo_inep?.toString() || '',
+      codigo_inep: disciplina.codigo_inep != null ? String(disciplina.codigo_inep).padStart(2, '0') : '',
       diretriz_curricular: disciplina.diretriz_curricular || '',
     })
     setShowModal(true)
+  }
+
+  function formatCodigoInep(codigo: number | null) {
+    if (codigo == null) return '-'
+    return String(codigo).padStart(2, '0')
+  }
+
+  function nomeCodigoInep(codigo: number | null) {
+    if (codigo == null) return null
+    return AREAS_CONHECIMENTO.find(a => parseInt(a.codigo, 10) === codigo)?.nome || null
   }
 
   async function handleSave() {
@@ -107,8 +120,8 @@ export default function DisciplinasPage() {
         nome: formData.nome,
         nome_abreviado: formData.sigla || null,
         sigla: formData.sigla || null,
-        area_codigo: formData.area_codigo ? parseInt(formData.area_codigo) : null,
-        codigo_inep: formData.codigo_inep ? parseInt(formData.codigo_inep) : null,
+        area_codigo: formData.area_codigo ? parseInt(formData.area_codigo, 10) : null,
+        codigo_inep: formData.codigo_inep ? parseInt(formData.codigo_inep, 10) : null,
         diretriz_curricular: formData.diretriz_curricular || null,
         is_padrao_mec: false,
         ativo: true,
@@ -130,20 +143,20 @@ export default function DisciplinasPage() {
     }
   }
 
-  async function handleInativar(disciplina: Disciplina) {
+  async function handleConfirmToggle() {
+    if (!toggleTarget) return
+    const reativar = !toggleTarget.ativo
     try {
-      await toggleDisciplinaAtiva(disciplina.id, false, pessoaId)
-      toast.success('Disciplina inativada')
+      setToggling(true)
+      await toggleDisciplinaAtiva(toggleTarget.id, reativar, pessoaId)
+      toast.success(reativar ? 'Disciplina ativada' : 'Disciplina inativada')
+      setToggleTarget(null)
       loadData()
-    } catch { toast.error('Erro ao inativar disciplina') }
-  }
-
-  async function handleAtivar(disciplina: Disciplina) {
-    try {
-      await toggleDisciplinaAtiva(disciplina.id, true, pessoaId)
-      toast.success('Disciplina ativada')
-      loadData()
-    } catch { toast.error('Erro ao ativar disciplina') }
+    } catch {
+      toast.error(reativar ? 'Erro ao ativar disciplina' : 'Erro ao inativar disciplina')
+    } finally {
+      setToggling(false)
+    }
   }
 
   async function handleDelete() {
@@ -243,62 +256,129 @@ export default function DisciplinasPage() {
         title={`${filteredDisciplinas.length} disciplina${filteredDisciplinas.length !== 1 ? 's' : ''}`}
         actions={<Button size="sm" onClick={openCreateModal}><Plus className="mr-2 h-4 w-4" />Nova Disciplina</Button>}
       >
-        <div className="px-4">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Nome</TableHead>
-              <TableHead>Sigla</TableHead>
-              <TableHead>Área</TableHead>
-              <TableHead>Código INEP</TableHead>
-              <TableHead>Diretriz</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead className="w-[90px]">Ações</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {filteredDisciplinas.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={7}>
-                  <EmptyState icon={BookOpen} title="Nenhuma disciplina encontrada" description="Crie uma nova disciplina ou ajuste os filtros." />
-                </TableCell>
-              </TableRow>
-            ) : (
-              filteredDisciplinas.map(disciplina => (
-                <TableRow key={disciplina.id}>
-                  <TableCell>
-                    <div className="flex items-center gap-2">
-                      {disciplina.is_padrao_mec && <StatusBadge status="info">MEC</StatusBadge>}
-                      <span className="font-medium text-foreground">{disciplina.nome}</span>
+        {filteredDisciplinas.length === 0 ? (
+          <EmptyState icon={BookOpen} title="Nenhuma disciplina encontrada" description="Crie uma nova disciplina ou ajuste os filtros." />
+        ) : (
+          <>
+            {/* Mobile: lista de cards */}
+            <ul className="block md:hidden space-y-3 p-4">
+              {filteredDisciplinas.map(disciplina => (
+                <li
+                  key={disciplina.id}
+                  className="rounded-lg border border-border bg-card p-4 shadow-xs"
+                >
+                  <div className="flex items-start justify-between gap-3 mb-2">
+                    <div className="min-w-0 flex-1">
+                      <p className="text-[15px] font-semibold text-foreground truncate">
+                        {disciplina.nome}
+                      </p>
+                      <p className="text-[13px] text-muted-foreground tabular-nums mt-0.5">
+                        {disciplina.sigla ? `${disciplina.sigla} • ` : ''}INEP {formatCodigoInep(disciplina.codigo_inep)}
+                      </p>
                     </div>
-                  </TableCell>
-                  <TableCell className="text-muted-foreground">{disciplina.sigla || '-'}</TableCell>
-                  <TableCell className="text-muted-foreground">{areas.find(a => a.id === Number(disciplina.area_codigo))?.nome || '-'}</TableCell>
-                  <TableCell className="text-muted-foreground">{disciplina.codigo_inep || '-'}</TableCell>
-                  <TableCell className="text-muted-foreground">
-                    {disciplina.diretriz_curricular === 'bncc' && 'BNCC'}
-                    {disciplina.diretriz_curricular === 'parte_diversificada' && 'Parte Diversificada'}
-                    {!disciplina.diretriz_curricular && '-'}
-                  </TableCell>
-                  <TableCell><StatusBadge status={disciplina.ativo ? 'success' : 'muted'}>{disciplina.ativo ? 'Ativa' : 'Inativa'}</StatusBadge></TableCell>
-                  <TableCell>
-                    <div className="flex items-center gap-0.5">
-                      <Button variant="ghost" size="icon-sm" onClick={() => openEditModal(disciplina)} title="Editar"><Pencil className="h-4 w-4" /></Button>
-                      {!disciplina.is_padrao_mec && (
-                        disciplina.ativo ? (
-                          <Button variant="ghost" size="icon-sm" onClick={() => handleInativar(disciplina)} title="Inativar"><Ban className="h-4 w-4 text-destructive" /></Button>
-                        ) : (
-                          <Button variant="ghost" size="icon-sm" onClick={() => handleAtivar(disciplina)} title="Ativar"><BookOpen className="h-4 w-4" /></Button>
-                        )
-                      )}
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ))
-            )}
-          </TableBody>
-        </Table>
-        </div>
+                    <StatusBadge status={disciplina.ativo ? 'success' : 'muted'} className="shrink-0">
+                      {disciplina.ativo ? 'Ativa' : 'Inativa'}
+                    </StatusBadge>
+                  </div>
+                  <div className="flex flex-wrap gap-1.5 mb-3">
+                    {disciplina.is_padrao_mec && <StatusBadge status="info">MEC</StatusBadge>}
+                    <span className="inline-flex items-center text-[13px] text-muted-foreground">
+                      {areas.find(a => a.id === Number(disciplina.area_codigo))?.nome || 'Sem área'}
+                    </span>
+                    <span className="inline-flex items-center text-[13px] text-muted-foreground">
+                      • {disciplina.diretriz_curricular === 'bncc' ? 'BNCC' : disciplina.diretriz_curricular === 'parte_diversificada' ? 'Parte Diversificada' : 'Sem diretriz'}
+                    </span>
+                  </div>
+                  <div className="flex gap-2 pt-3 border-t border-border">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => openEditModal(disciplina)}
+                      className="flex-1 min-h-[44px]"
+                    >
+                      <Pencil className="mr-1.5 h-4 w-4" />
+                      Editar
+                    </Button>
+                    {disciplina.ativo ? (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setToggleTarget(disciplina)}
+                        className="flex-1 min-h-[44px] text-destructive hover:text-destructive"
+                      >
+                        <Ban className="mr-1.5 h-4 w-4" />
+                        Inativar
+                      </Button>
+                    ) : (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setToggleTarget(disciplina)}
+                        className="flex-1 min-h-[44px]"
+                      >
+                        <CheckCircle2 className="mr-1.5 h-4 w-4" />
+                        Ativar
+                      </Button>
+                    )}
+                  </div>
+                </li>
+              ))}
+            </ul>
+
+            {/* Desktop: tabela */}
+            <div className="hidden md:block">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="bg-muted text-foreground">Nome</TableHead>
+                    <TableHead className="bg-muted text-foreground">Sigla</TableHead>
+                    <TableHead className="bg-muted text-foreground">Área</TableHead>
+                    <TableHead className="bg-muted text-foreground">Código INEP</TableHead>
+                    <TableHead className="bg-muted text-foreground">Diretriz</TableHead>
+                    <TableHead className="bg-muted text-foreground">Status</TableHead>
+                    <TableHead className="bg-muted text-foreground w-[90px]">Ações</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {filteredDisciplinas.map(disciplina => (
+                    <TableRow key={disciplina.id}>
+                      <TableCell>
+                        <div className="flex items-center gap-2">
+                          {disciplina.is_padrao_mec && <StatusBadge status="info">MEC</StatusBadge>}
+                          <span className="font-medium text-foreground">{disciplina.nome}</span>
+                        </div>
+                      </TableCell>
+                      <TableCell className="text-muted-foreground">{disciplina.sigla || '-'}</TableCell>
+                      <TableCell className="text-muted-foreground">{areas.find(a => a.id === Number(disciplina.area_codigo))?.nome || '-'}</TableCell>
+                      <TableCell
+                        className="text-muted-foreground tabular-nums"
+                        title={nomeCodigoInep(disciplina.codigo_inep) || undefined}
+                      >
+                        {formatCodigoInep(disciplina.codigo_inep)}
+                      </TableCell>
+                      <TableCell className="text-muted-foreground">
+                        {disciplina.diretriz_curricular === 'bncc' && 'BNCC'}
+                        {disciplina.diretriz_curricular === 'parte_diversificada' && 'Parte Diversificada'}
+                        {!disciplina.diretriz_curricular && '-'}
+                      </TableCell>
+                      <TableCell><StatusBadge status={disciplina.ativo ? 'success' : 'muted'}>{disciplina.ativo ? 'Ativa' : 'Inativa'}</StatusBadge></TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-0.5">
+                          <Button variant="ghost" size="icon-sm" onClick={() => openEditModal(disciplina)} title="Editar" aria-label={`Editar ${disciplina.nome}`}><Pencil className="h-4 w-4" /></Button>
+                          {disciplina.ativo ? (
+                            <Button variant="ghost" size="icon-sm" onClick={() => setToggleTarget(disciplina)} title="Inativar" aria-label={`Inativar ${disciplina.nome}`}><Ban className="h-4 w-4 text-destructive" /></Button>
+                          ) : (
+                            <Button variant="ghost" size="icon-sm" onClick={() => setToggleTarget(disciplina)} title="Ativar" aria-label={`Ativar ${disciplina.nome}`}><CheckCircle2 className="h-4 w-4 text-success" /></Button>
+                          )}
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          </>
+        )}
       </PageSection>
 
       <Dialog open={showModal} onOpenChange={open => !open && setShowModal(false)}>
@@ -316,7 +396,7 @@ export default function DisciplinasPage() {
               </div>
               <div>
                 <Label className="font-medium block mb-2">Área do Conhecimento</Label>
-                <Select value={formData.area_codigo} onValueChange={v => setFormData(prev => ({ ...prev, area_codigo: v, codigo_inep: '' }))}>
+                <Select value={formData.area_codigo} onValueChange={v => setFormData(prev => ({ ...prev, area_codigo: v }))}>
                   <SelectTrigger className="[&>span]:truncate"><SelectValue placeholder="Selecione a área" /></SelectTrigger>
                   <SelectContent position="popper" sideOffset={5} className="max-h-80 overflow-y-auto">
                     {areas.map(area => <SelectItem key={area.id} value={area.id.toString()}>{area.nome}</SelectItem>)}
@@ -327,7 +407,17 @@ export default function DisciplinasPage() {
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <Label className="font-medium block mb-2">Código INEP</Label>
-                <Input type="number" className="border-border" placeholder="Ex: 1, 2, 3..." value={formData.codigo_inep} onChange={e => setFormData(prev => ({ ...prev, codigo_inep: e.target.value.replace(/\D/g, '') }))} />
+                <Select value={formData.codigo_inep} onValueChange={v => setFormData(prev => ({ ...prev, codigo_inep: v }))}>
+                  <SelectTrigger className="[&>span]:truncate"><SelectValue placeholder="Selecione o código INEP" /></SelectTrigger>
+                  <SelectContent position="popper" sideOffset={5} className="max-h-80 overflow-y-auto">
+                    {AREAS_CONHECIMENTO.map(item => (
+                      <SelectItem key={item.codigo} value={item.codigo}>
+                        {item.codigo} — {item.nome}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <p className="text-[13px] text-muted-foreground mt-1.5">Tabela oficial INEP 2026 (Censo Escolar).</p>
               </div>
               <div>
                 <Label className="font-medium block mb-2">Diretriz Curricular</Label>
@@ -359,6 +449,21 @@ export default function DisciplinasPage() {
         confirmLabel="Sim, Excluir"
         variant="destructive"
         onConfirm={handleDelete}
+      />
+
+      <ConfirmDialog
+        open={!!toggleTarget}
+        onOpenChange={open => { if (!open) setToggleTarget(null) }}
+        title={toggleTarget?.ativo ? 'Inativar Disciplina' : 'Ativar Disciplina'}
+        description={
+          toggleTarget?.ativo
+            ? `Deseja realmente inativar "${toggleTarget?.nome}" para esta escola? Ela deixará de ficar disponível para novos vínculos, mas o histórico será preservado.`
+            : `Deseja realmente reativar "${toggleTarget?.nome}" para esta escola?`
+        }
+        confirmLabel={toggleTarget?.ativo ? 'Sim, Inativar' : 'Sim, Ativar'}
+        variant={toggleTarget?.ativo ? 'destructive' : 'warning'}
+        onConfirm={handleConfirmToggle}
+        loading={toggling}
       />
     </PageContainer>
   )

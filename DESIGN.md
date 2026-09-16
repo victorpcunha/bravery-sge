@@ -1,46 +1,80 @@
 ---
 name: Bravery SGE
-description: Census-compliant school management SaaS with a restrained steel-blue operational UI
+description: Census-compliant school management SaaS with a teal institutional operational UI
 colors:
-  primary: "#4682B4"
-  primary-foreground: "#FFFFFF"
-  accent-cyan: "#59A5E3"
-  deep-blue: "#396991"
-  page-bg: "#EDF1F5"
+  primary: "#3f9ea8"
+  primary-foreground: "#0a292c"
+  secondary: "#2c747c"
+  secondary-foreground: "#FFFFFF"
+  accent: "#2c747c"
+  accent-foreground: "#FFFFFF"
+  base-teal: "#3f9ea8"
+  page-bg: "#eef4f4"
   card-bg: "#FFFFFF"
-  ink: "#1E293B"
-  muted-ink: "#52607A"
-  muted-bg: "#E4E9F0"
-  border-line: "#D7DEE8"
-  danger: "#C4453A"
-  ok-green: "#16A34A"
+  ink: "#0a292c"
+  muted-ink: "#3d5a5e"
+  muted-bg: "#dce8e9"
+  border-line: "#c4d9db"
+  ring-focus: "#1b4d52"
+  danger: "#B3261E"
+  danger-light: "#F9E9E7"
+  ok-green: "#2c747c"
+  ok-light: "#dbebed"
   warn-amber: "#C2571C"
-  sidebar-bg: "#294C69"
+  warn-light: "#FBEFE2"
+  info: "#2c747c"
+  info-light: "#dbebed"
+  sidebar-bg: "#3f9ea8"
+  chart-1: "#3f9ea8"
+  chart-2: "#1b4d52"
+  chart-3: "#0a292c"
+  chart-4: "#7fbbc2"
+  chart-5: "#C2571C"
 typography:
   display:
-    fontFamily: "Plus Jakarta Sans, system-ui, sans-serif"
-    fontSize: "36px"
-    fontWeight: 700
-    lineHeight: 1.2
-  title:
-    fontFamily: "Plus Jakarta Sans, system-ui, sans-serif"
+    fontFamily: "Spectral, Georgia, serif"
     fontSize: "28px"
     fontWeight: 700
     lineHeight: 1.2
   heading:
-    fontFamily: "Plus Jakarta Sans, system-ui, sans-serif"
+    fontFamily: "Spectral, Georgia, serif"
     fontSize: "20px"
     fontWeight: 600
     lineHeight: 1.3
+  subheading:
+    fontFamily: "Plus Jakarta Sans, system-ui, sans-serif"
+    fontSize: "16px"
+    fontWeight: 600
+    lineHeight: 1.4
   body:
     fontFamily: "Plus Jakarta Sans, system-ui, sans-serif"
     fontSize: "15px"
     fontWeight: 400
     lineHeight: 1.5
+  body-strong:
+    fontFamily: "Plus Jakarta Sans, system-ui, sans-serif"
+    fontSize: "15px"
+    fontWeight: 500
+    lineHeight: 1.5
   label:
     fontFamily: "Plus Jakarta Sans, system-ui, sans-serif"
     fontSize: "14px"
     fontWeight: 500
+    lineHeight: 1.4
+  small:
+    fontFamily: "Plus Jakarta Sans, system-ui, sans-serif"
+    fontSize: "13px"
+    fontWeight: 400
+    lineHeight: 1.4
+  caption:
+    fontFamily: "Plus Jakarta Sans, system-ui, sans-serif"
+    fontSize: "12px"
+    fontWeight: 400
+    lineHeight: 1.3
+  data-mono:
+    fontFamily: "Geist Mono, ui-monospace, monospace"
+    fontSize: "13px"
+    fontWeight: 400
     lineHeight: 1.4
 rounded:
   sm: "6px"
@@ -50,22 +84,26 @@ rounded:
   2xl: "24px"
   full: "9999px"
 spacing:
+  base: "4px"
+  xs: "4px"
   sm: "8px"
   md: "16px"
   lg: "24px"
+  xl: "32px"
+  section: "40px"
 components:
   button-primary:
     backgroundColor: "{colors.primary}"
     textColor: "{colors.primary-foreground}"
     rounded: "{rounded.md}"
-    padding: "0 16px"
-    height: "40px"
+    padding: "0 20px"
+    height: "44px"
   button-secondary:
-    backgroundColor: "{colors.deep-blue}"
-    textColor: "{colors.primary-foreground}"
+    backgroundColor: "{colors.ok-light}"
+    textColor: "{colors.primary}"
     rounded: "{rounded.md}"
-    padding: "0 16px"
-    height: "40px"
+    padding: "0 20px"
+    height: "44px"
   card-resting:
     backgroundColor: "{colors.card-bg}"
     rounded: "{rounded.lg}"
@@ -74,124 +112,217 @@ components:
     backgroundColor: "{colors.card-bg}"
     textColor: "{colors.ink}"
     rounded: "{rounded.sm}"
-    height: "36px"
+    height: "44px"
   status-badge:
-    rounded: "{rounded.sm}"
-    padding: "2px 8px"
+    rounded: "{rounded.full}"
+    padding: "4px 12px"
+  page-title:
+    typography: "{typography.display}"
+    textColor: "{colors.ink}"
+  section-title:
+    typography: "{typography.heading}"
+    textColor: "{colors.ink}"
 ---
 
-# Design System: Bravery SGE
+# Design System: Bravery SGE (Atlas v5)
+
+> Fonte canônica única de verdade visual. `specs/002-design-system/catalog.md` detalha contratos de
+> componentes; `AGENTS.md` traz as regras operacionais. Em caso de divergência, este arquivo vence.
+> Tokens reais vivem em `src/app/globals.css` (`:root` = light; `.dark` preservado de geração
+> anterior, fora do escopo). Auditoria de sistema todo em 2026-09-15: zero hex hardcoded em
+> `src/**/*.tsx|ts` fora de `globals.css`, `preview-atlas` e dos estilos react-pdf (que usam os
+> mesmos valores Atlas como literais, sem acesso a tokens).
 
 ## Overview
 
-**Creative North Star: "The Calm Registrar"**
+**Creative North Star: "Atlas Escolar"**
 
-Bravery SGE is an Operate-mode workspace: secretaries, principals, and teachers complete structured tasks all day, so the interface disappears into the job. One sans family, one steel-blue brand, tonal surfaces instead of shadows, and the same five page compositions everywhere. Density is welcome (wide tables, information-rich cards); decoration is not.
+Bravery SGE is an Operate-mode workspace: secretaries, principals, and teachers complete structured
+tasks all day, so the interface disappears into the job. Titles speak with a screen-cut serif voice,
+like the heading of an official school record; everything operable stays in a quiet sans. One
+teal voice, tonal surfaces instead of shadows, and the same five page compositions
+everywhere. Density is welcome (wide tables, information-rich cards); decoration is not.
 
 **Key Characteristics:**
 
-- Restrained single-accent system: steel blue does the talking, gold accents focus, deep steel supports.
-- Composition over invention: PageContainer, PageHeader, PageSection, FilterBar, FormCard, StatusBadge, ConfirmDialog, EmptyState, StatCard.
+- Single-hue system: deep teal carries action, selection, and focus; tints carry calm.
+- Two type voices with strict jobs: Spectral for titles, Plus Jakarta Sans for everything operable.
+- Composition over invention: PageContainer, PageHeader, PageSection, FilterBar, FormCard,
+  StatusBadge, ConfirmDialog, EmptyState, StatCard.
 - Flat by default with a 5-level elevation reserve for overlays only.
-- 15 px body copy with a tight 9-step type scale and fixed rem sizes (no fluid display type in product UI).
-- Light-first SaaS surfaces with a true slate dark mode, never inverted brand blue.
+- 15 px body copy with a fixed role scale; tabular numerals for every number that counts.
+- Light-first surfaces with the previous slate dark mode preserved untouched.
+- Touch-first: every tappable element is at least 44 px; tables become minicards below `md`.
+- Print parity: official PDF documents use the same Atlas ink, muted, and teal values.
 
 ## Colors
 
-A cool institutional palette: steel blue leads, golden bronze assists interaction, deep steel backs it up, bluish-slate neutrals carry content.
+A cool teal palette built from the brand anchor `#3f9ea8`, measured end to end: app tokens, charts,
+sidebar, document PDFs, and states. One accent, locked everywhere. The anchor itself is reserved
+for fills and large graphics (3.15:1 with white, so never text); text roles use its darkened shades.
 
 ### Primary
 
-- **Steel Blue** (#4682B4): brand, primary buttons, links, active sidebar accents, chart-1. Contrast on white 4.11:1 (AA-large; documented tradeoff — `--secondary` is the AA-normal fill).
-- **White on Blue** (#FFFFFF): text on primary and secondary actions (`--primary-foreground`, `--secondary-foreground` light).
-- **Light Accent** (#59A5E3): realces claros — seleção, hovers, complementos (`--accent`). Texto sobre accent é Deep Navy (#192E40, 5.26:1).
-- **Focus Gold** (#B8863B): anel de foco fixo (`--ring`), desacoplado do accent por contraste.
-- **Deep Steel** (#396991): secondary buttons, informative text, charts (`--secondary`, `--info` light; chart-3). 5.83:1 on white.
+- **Brand Anchor** (#3f9ea8): THE primary. Buttons, fills, chart series, large graphic areas.
+  Teal Ink on Anchor **4.88:1 (AA)**, so text on primary is always ink, never white (white on
+  Anchor is 3.15:1, large text only).
+- **Teal Ink on Primary** (#0a292c): text on primary buttons, active pills, badges.
+- **Deep Teal** (#1b4d52): focus ring, PDF highlights and rule lines, chart-1 depth. White on Deep
+  Teal **9.42:1 (AAA)**.
+- **Support Teal** (#2c747c): secondary buttons, interaction highlight (`--secondary`, `--accent`,
+  `--info`, `--success` light roles). White on Support **5.39:1 (AA)**; Support on paper
+  **4.85:1 (AA)**, so body links use `text-secondary`, never `text-primary`.
+- **Tonal Tint** (#dbebed): quiet fills for secondary buttons, active pills, success/info lights.
+  Deep Teal on Tint **7.68:1**.
+- **Focus Teal** (#1b4d52): `--ring` stays deep (a ring in Anchor would clear only 3.15:1 on
+  white). A 2 px ring clears 9:1.
 
 ### Neutral
 
-- **Slate Page Wash** (#EDF1F5): page background light (`--background`).
+- **Cool Paper** (#eef4f4): page background light (`--background`).
 - **Surface White** (#FFFFFF): cards, popovers, inputs light (`--card`, `--popover`, `--input`).
-- **Slate Ink** (#1E293B): primary text light (`--foreground`, `--card-foreground`).
-- **Muted Zone** (#E4E9F0): section/panel fills light (`--muted`); sidebar hover is a white/12 wash (`--sidebar-accent`).
-- **Secondary Ink** (#52607A): secondary text light (`--muted-foreground`, 5.58:1 on page wash).
-- **Hairline** (#D7DEE8): default 1 px borders light (`--border`).
-- **Deep Sidebar** (#294C69): sidebar background light (`--sidebar`, 9:1 with white text); dark mode stays slate-950 with its own tokens.
-- **Focus Gold** (#B8863B): ring equals accent in light mode (`--ring`); dark keeps its own ring.
+- **Teal Ink** (#0a292c): primary text light (`--foreground`). Ink on Paper **13.82:1**.
+- **Mist Zone** (#dce8e9): section/panel fills light (`--muted`).
+- **Secondary Ink** (#3d5a5e): secondary text light (`--muted-foreground`). **6.69:1** on paper,
+  **7.44:1** on white.
+- **Hairline** (#c4d9db): default 1 px borders light (`--border`).
+- **Brand Sidebar** (#3f9ea8): sidebar background light (`--sidebar`); ink text (4.88:1),
+  ink active tile and indicator bar, ink/12 hover wash.
+
+### Semantic
+
+Success Leaf = Support Teal (#2c747c / light #dbebed). Warning Amber (#C2571C / light #FBEFE2;
+4.49:1, pre-existing boundary — do not expand amber usage to compensate). Danger Red (#B3261E /
+light #F9E9E7, **6.54:1**). Info Teal (= secondary). Tinted fills use `/10` backgrounds with
+`/20` borders (`bg-success/10 text-success border-success/20`).
+
+### Charts
+
+Five persistent series colors, always in order: Anchor `#3f9ea8`, Deep Teal `#1b4d52`, Ink
+`#0a292c`, Mist `#7fbbc2`, Amber `#C2571C`. Single-series charts use the Anchor. Frequency/occupancy
+charts override with semantic color (success/warning/destructive) plus a `SemanticLegend` — the only place
+where status color, not series color, leads.
+
+### Print (document PDFs)
+
+react-pdf stylesheets cannot read CSS tokens, so the six document stylesheets
+(`boletim-escolar`, `declaracao-matricula`, `ficha-individual-aluno`, `historico-escolar`,
+`relatorio-desempenho-pdf`, `relatorio-matriculas-pdf`) carry Atlas as literals: body Ink
+`#0a292c`, secondary `#3d5a5e`, highlights and rule lines Deep Teal `#1b4d52`. Any Atlas change must
+update these six files in the same pass (audited together; zero drift allowed).
 
 ### Named Rules
 
-- **The Token-Only Rule.** No hex in components or pages; every color resolves to a `globals.css` token (`bg-primary`, `text-muted-foreground`, `border-border`).
-- **The One-Voice Rule.** Primary blue marks the primary action, current selection, and state indicators only — never decoration or large fills.
-- **The Sidebar-Is-Deep-Steel Rule.** Light-mode sidebar is deep steel, never white; hover is a white/12 wash with white text (`text-sidebar-foreground`, never `text-accent-foreground` — contrast).
-
-Semantic colors: Success Leaf (#16A34A), Warning Amber (#C2571C), Danger Red (#C4453A), Info Steel (= secondary). Tinted fills use `/10` backgrounds with `/20` borders (`bg-success/10 text-success border-success/20`). Charts: `#4682B4`, `#B8863B`, `#396991`, `#294C69`, `#16A34A`.
+- **The Token-Only Rule.** No hex in components or pages; every on-screen color resolves to a
+  `globals.css` token (`bg-primary`, `text-muted-foreground`, `border-border`). The only literals
+  allowed in `src` are the six PDF stylesheets above.
+- **The One-Voice Rule.** The Anchor marks the primary action, current selection, and state
+  indicators only — never decoration or large fills. Secondary actions use the tonal tint with
+  teal text, never a second saturated solid.
+- **The Anchor-Text Rule.** `text-primary` on light surfaces clears only non-text and large-text
+  contrast — use it for icons and graphics, never body copy. Body links use `text-secondary`.
+  Text on primary fills is always Teal Ink.
+- **The Sidebar-Is-Anchor Rule.** Light-mode sidebar is the brand anchor, never white and
+  never ink; text is always ink (`text-sidebar-foreground`), hover is an ink/12 wash, the active
+  tile and indicator bar are ink with white glyphs.
 
 ## Typography
 
-**Display Font:** Plus Jakarta Sans (with system-ui fallback)
-**Body Font:** Plus Jakarta Sans (with system-ui fallback)
-**Label/Mono Font:** Plus Jakarta Sans for labels; system mono only for code, data, or time badges
+**Display Font:** Spectral, Georgia serif fallback (titles only — page 28px, section 20px, dialog
+and sheet titles via `font-heading`, sidebar wordmark).
+**Body Font:** Plus Jakarta Sans (system-ui fallback), weights 400/500/600/700 — everything
+operable: copy, labels, buttons, table data.
+**Data Font:** system mono stack (`font-mono`) — BNCC codes, times, INEP numbers, code-like badges.
+**Print Font:** Helvetica / Helvetica-Bold (react-pdf built-ins — PDFs never load webfonts).
 
-**Character:** One well-tuned sans carries everything from KPI numerals (`tabular-nums`) to form labels; hierarchy comes from size/weight steps (ratio ~1.125–1.2), never from a second family.
+**Character:** The serif speaks like a record-book heading — institutional, calm, editorial. The
+sans does the work without calling attention. Mono appears only where characters must line up
+(codes, times, identifiers), never as decoration.
 
 ### Hierarchy
 
-- **Display** (700, 36px, 1.2): KPI numerals only — StatCard value (`text-[36px] font-bold leading-none`).
-- **Title** (700, 28px, 1.2): page titles — PageHeader (`text-[28px] font-bold leading-tight`).
-- **Heading** (600, 20px, 1.3): section titles — PageSection/FormCard (`text-[20px] font-semibold leading-snug`).
-- **Subheading** (600, 16px, 1.4): card headlines, names in lists.
-- **Body** (400, 15px, 1.5): running copy and descriptions (`text-[15px]`); measure 65–75ch for prose, denser tables allowed.
-- **Label** (500, 14px, 1.4): labels, buttons, table data.
-- **Small** (400, 13px, 1.4): hints, timestamps, legends (never body copy).
-- **Caption** (400, 12px, 1.3): lowest-priority annotations.
+- **Title** (Spectral 700, 28px, 1.2): page titles — PageHeader (`font-display text-[28px]
+  font-bold leading-tight`).
+- **Heading** (Spectral 600, 20px, 1.3): section titles — PageSection/FormCard
+  (`font-display text-[20px] font-semibold leading-snug`).
+- **Subheading** (sans 600, 16px, 1.4): card headlines, names in lists — stays sans for scanning.
+- **Body** (sans 400, 15px, 1.5): running copy and descriptions (`text-[15px]`); measure 65–75ch.
+  15px is the established dense-Operate justification against the 16px web floor.
+- **Body-strong** (sans 500, 15px, 1.5): emphasized running copy.
+- **Label** (sans 500, 14px, 1.4): labels, buttons, table data.
+- **Small** (sans 400, 13px, 1.4): hints, timestamps, legends (never body copy).
+- **Caption** (sans 400, 12px, 1.3): lowest-priority annotations.
+- **Data** (mono 400, 11–13px, 1.4 + `tabular-nums`): codes, times, identifiers.
+- **KPI numerals stay sans** (`tabular-nums`): Spectral's proportional old-style figures would
+  wobble in dashboards — StatCard values never take the serif.
 
 ### Named Rules
 
-- **The Fifteen-Pixel Body Rule.** Body copy is 15px; `text-sm` (14px) as a description default and `text-base` (16px) as a section title are both violations.
-- **The Weight-Ceiling Rule.** Only weights 400/500/600/700; no italics, no all-caps, no serif or decorative faces.
+- **The Two-Voice Rule.** Spectral voices titles (28/20 + dialog/sheet titles + wordmark).
+  Everything else — body, labels, buttons, table data, numerals — is Plus Jakarta Sans. No third
+  family without a job only it can do.
+- **The Fifteen-Pixel Body Rule.** Body copy is 15px; `text-sm` (14px) as a description default and
+  `text-base` (16px) as a section title are both violations.
+- **Responsive Display.** Titles step down on small screens so headings never dominate the viewport.
+- Only weights the files load: Spectral 500/600/700, Jakarta 400/500/600/700 — no italics,
+  no all-caps, no unloaded weights.
 
 ## Layout
 
-Container-driven pages with responsive collapse, not fluid type: `PageContainer` (default uncapped; `maxWidth="dashboard"` for dashboards) → `PageHeader` (icon tile `bg-primary/10`, breadcrumbs, actions) → `PageSection` (`default` card, `flush` for tables with `p-0` body, `compact` for filters) → content. Five official compositions: Listing (Header + compact Filters/FilterBar + flush table section with the "Nova" button in section `actions`), Listing-with-Modal, Create/Edit (Header with breadcrumbs + FormCards + end-aligned actions), Detail (Header + sections), Dashboard (Header + StatCard grid + sections). FilterBar wraps SearchInput (leading icon, `pl-10`, optional debounce) plus Selects and quick-filter buttons. Mobile lists switch to card `<ul>` under `md` with 44px action targets; tables keep a sticky first column (`sticky left-0`) inside `overflow-x-auto`. Tab bars and modal footers follow the dashboard pattern (`bg-card border shadow-xs`; active tab `bg-primary text-primary-foreground`; dialog body `flex-1 overflow-y-auto`, footer `shrink-0 border-t bg-muted/30`).
+Container-driven pages with responsive collapse: `PageContainer` (default; `maxWidth="dashboard"`)
+→ `PageHeader` → `PageSection` (`default` card, `flush` for tables with `p-0` body, `compact` for
+filters). Five official compositions: Listing (Header + compact Filters/FilterBar + flush table
+section with the "Nova" button in section `actions`), Listing-with-Modal, Create/Edit (Header with
+breadcrumbs + FormCards + end-aligned actions), Detail (Header + sections), Dashboard (Header +
+StatCard grid + sections). FilterBar wraps SearchInput (leading icon, `pl-10`) plus Selects and
+quick-filter buttons. **Below `md`, tables become minicard `<ul>`** (name + key data + status +
+44 px actions); tables keep a sticky first column inside `overflow-x-auto` on `≥md`.
 
 ## Elevation & Depth
 
-Flat by default with tonal layering; shadows appear only as a response to state or overlay.
+Flat by default with tonal layering; shadows tinted to the teal ink `rgba(10,41,44,…)`:
 
-### Shadow Vocabulary
+- **Resting** (`shadow-sm`): cards at rest — the maximum for resting surfaces.
+- **Floating** (`shadow-md`): card hover, dropdowns, popovers.
+- **Overlay** (`shadow-lg`): dialogs, sheets, tooltips (`shadow-lg bg-popover`).
+- **High** (`shadow-xl`): command palette, dialog-over-dialog.
+- Dark mode re-issues the same ramp in black (0.3–0.7 alpha).
 
-- **Resting** (`shadow-sm`: `0 1px 3px rgba(13,17,23,0.04), 0 1px 2px rgba(13,17,23,0.06)`): cards at rest — the maximum for resting surfaces.
-- **Floating** (`shadow-md`: `0 6px 16px rgba(13,17,23,0.08), 0 3px 6px rgba(13,17,23,0.04)`): card hover, dropdowns, popovers.
-- **Overlay** (`shadow-lg`: `0 12px 28px rgba(13,17,23,0.12), 0 4px 10px rgba(13,17,23,0.04)`): dialogs, sheets, tooltips (`shadow-lg bg-popover`).
-- **High** (`shadow-xl`: `0 20px 40px rgba(13,17,23,0.16), 0 8px 16px rgba(13,17,23,0.06)`): command palette, dialog-over-dialog.
-- Dark mode re-issues the same ramp in black (`0.3–0.7` alpha).
-
-### Named Rules
-
-- **The Flat-By-Default Rule.** Resting cards use at most `shadow-sm`; `shadow-md` only on hover; `shadow-lg/xl` reserved for overlays. Declare elevation once — border or shadow, never a 1px border under a wide soft shadow.
+Motion uses three durations on one easing (`150ms` hover/focus, `200ms` popover/section, `300ms`
+dialog/drawer/tabs; `cubic-bezier(0.4, 0, 0.2, 1)`), with `prefers-reduced-motion` respected. Animate
+only `transform` and `opacity`; tactile press is `active:scale-[0.98]`.
 
 ## Shapes
 
-Quiet rectangles with an explicit 6-step radius scale and 1px hairlines; pills only for small controls.
-
-Corners: inputs, badges, chips, and tags `rounded-sm` (6px); buttons, menu items, and tabs `rounded-md` (8px); cards, modals, popovers, and dropdowns `rounded-lg` (12px, the `--radius` alias); hero/feature cards `rounded-xl` (16px); decorative containers, avatars-as-panels, and banners `rounded-2xl` (24px); pills, avatars, and circular overlays `rounded-full` (9999px). Borders are 1px `border-border`; icon tiles are `rounded-xl bg-primary/10`. Motion uses three durations on one easing (`150ms` hover/focus, `200ms` popover/section, `300ms` dialog/drawer/tabs; `cubic-bezier(0.4, 0, 0.2, 1)`), with `prefers-reduced-motion` respected and no orchestrated page-load sequences.
+One radius system, six steps, documented rule: inputs/badges `rounded-sm` (6px); buttons/tabs
+`rounded-md` (8px); cards/modals `rounded-lg` (12px); hero/feature cards `rounded-xl` (16px);
+decorative panels `rounded-2xl` (24px); status pills and avatars `rounded-full`. Borders are 1 px
+`border-border`. Declare elevation once — border or shadow, never both. No `calc()` for radius;
+no `rounded-3xl/4xl`.
 
 ## Components
 
-Buttons lead with a single confident voice, then echo it everywhere; cards stay flat; inputs stay calm until focus.
+Buttons lead with a single confident voice; cards stay flat; inputs stay calm until focus.
+Variants below are token-bound (`button.tsx` cva): default/secondary/outline/ghost/destructive/
+link/accent — all resolve to Atlas tokens, zero literals.
 
 ### Buttons
 
-- **Shape:** `rounded-md` (8px), height 40px (dialog footer 40px, touch targets ≥36px, hero actions 44px).
-- **Primary:** `bg-primary text-primary-foreground`, hover `bg-primary/90`, tactile `active:scale-[0.98]`.
-- **Hover / Focus:** `focus-visible:ring-2 ring-ring/30`; focus borders shift to gold (`focus:border-accent focus:ring-accent/20`).
-- **Secondary / Ghost / Tertiary:** secondary is deep steel (`bg-secondary`); list actions use `variant="ghost" size="icon-sm"` with destructive icons in `text-destructive`; gradients only as `from-primary to-accent` for logo/avatar/hero marks.
+- **Shape:** `rounded-md` (8px), `min-h-[44px]`, `px-5`.
+- **Primary:** `bg-primary text-primary-foreground`, hover `bg-primary/80`, press
+  `active:scale-[0.98]`.
+- **Secondary (tonal):** tint fill with `text-primary` and matching border — colored, but quieter
+  than primary.
+- **Focus:** `focus-visible` ring + border in teal (`ring-ring/50`, `border-ring`). List actions
+  use `variant="ghost" size="icon-sm"` with destructive icons in `text-destructive`; gradients only
+  as `from-primary to-accent` for logo/avatar/hero marks.
 
 ### Chips
 
-- **Style:** `StatusBadge` over shadcn Badge — `bg-{semantic}/10 text-{semantic} border-{semantic}/20` for `success|warning|destructive|info|primary`; `bg-muted text-muted-foreground border-border` for `muted`.
-- **State:** filter pills toggle `default`/`outline`; selected "Tipo de Pessoa" pills are buttons with `aria-pressed` and a Check icon.
+- **Style:** `StatusBadge` over shadcn Badge — `bg-{semantic}/10 text-{semantic}
+  border-{semantic}/20` for `success|warning|destructive|info|primary`; `bg-muted
+  text-muted-foreground border-border` for `muted`.
+- **State:** filter pills toggle `default`/`outline`; selected pills are buttons with `aria-pressed`.
 
 ### Cards / Containers
 
@@ -199,41 +330,77 @@ Buttons lead with a single confident voice, then echo it everywhere; cards stay 
 - **Background:** `bg-card` on `bg-background` page; muted zones `bg-muted`.
 - **Shadow Strategy:** resting `shadow-sm` max; see Elevation & Depth.
 - **Border:** 1px `border-border`.
-- **Internal Padding:** sections `px-6 py-4` header + `p-6` body (`compact`: `px-4 py-3` + `p-4`; `flush` tables: `p-0`).
+- **Internal Padding:** sections `px-6 py-4` header + `p-6` body (`compact`: `px-4 py-3` + `p-4`;
+  `flush` tables: `p-0`).
 
 ### Inputs / Fields
 
-- **Style:** `bg-card` (`--input` white light / slate dark), 1px `border-border`, `rounded-sm` (6px), `h-9`-class height.
-- **Focus:** gold border + gold/20 ring (`focus:border-accent focus:ring-accent/20`).
-- **Error / Disabled:** inline message with `role="alert"`; required fields carry `aria-required="true"`; disabled fieldsets use `className="contents"` so tabs stay navigable.
+- **Style:** `bg-card`, 1px `border-border`, `rounded-sm` (6px), `min-h-[44px]`.
+- **Focus:** teal border + ring (both teal since v3).
+- **Error / Disabled:** inline message with `role="alert"`; required fields carry
+  `aria-required="true"`; disabled fieldsets use `className="contents"` so tabs stay navigable.
+- Label above input, helper optional, error below. Never placeholder-as-label.
 
 ### Navigation
 
-- **Style:** white (light) / slate-950 (dark) sidebar on `bg-sidebar text-sidebar-foreground`; top-level items with icon + label, collapsible groups, mobile header with `SidebarTrigger`.
-- **States:** active `bg-primary/10 text-primary` with luminous bar; hover `hover:bg-muted hover:text-foreground`; sub-item active `bg-sidebar-accent/80`.
-- **Mobile:** sidebar collapses to drawer; tab bars use the card container pattern above.
+- **Style:** brand anchor (`bg-sidebar text-sidebar-foreground`) in light; slate-950 in dark;
+  wordmark in Spectral; top-level items with icon + label, collapsible groups, mobile header with
+  `SidebarTrigger`.
+- **States:** active ink tile (`bg-sidebar-primary`) with white glyphs
+  (`text-sidebar-primary-foreground`) at module and sub-item level; hover `hover:bg-sidebar-accent`;
+  collapsed groups keep the wash treatment.
+- **Mobile:** sidebar collapses to drawer; max 6 internal module tabs (tab system, spec 016).
 
 ### Pagination
 
-- **Style:** shared `<Pagination>` — prev/next, `Mostrando X a Y de Z` counter (`text-[14px] tabular-nums`), `role="navigation"`, 10/page client-side (server-side for audit).
+- Shared `<Pagination>` — prev/next, `Mostrando X a Y de Z` counter (`text-[14px] tabular-nums`),
+  `role="navigation"`, 10/page client-side (server-side for audit).
 
 ## Do's and Don'ts
 
-Concrete guardrails from the implemented system. Tokens resolve via Tailwind v4 (`bg-primary`, `text-muted-foreground`, `border-border`, `from-primary to-accent`).
+### Do
 
-### Do:
+- Start every page with `<PageContainer>` and every header with `<PageHeader>` (serif title comes
+  free).
+- Put the "Nova" button in the flush table section's `actions`.
+- Use `<StatusBadge>` for every status and `<EmptyState>` for every empty/denied state.
+- Ship minicard lists below `md` with 44 px actions.
+- Use `font-mono` + `tabular-nums` for codes, times, and identifiers.
+- Keep PDF stylesheets on the Atlas literals when any color changes.
+- Spell the census truth exactly: `nome_completo`, `cpf`, `email`, `telefone_celular`,
+  `telefone_fixo`, `logradouro`, `bairro`, `numero`, `complemento`.
 
-- **Do** start every page with `<PageContainer>` and every header with `<PageHeader>`.
-- **Do** put the "Nova" button in the flush table section's `actions`, with table names in `font-medium text-foreground` and secondary columns in `text-muted-foreground`.
-- **Do** use `<StatusBadge>` for every status and `<EmptyState>` for every empty/denied state (`ShieldAlert` + "Sem permissão").
-- **Do** spell the census truth exactly: `nome_completo`, `cpf`, `email`, `telefone_celular`, `telefone_fixo`, `logradouro`, `bairro`, `numero`, `complemento`.
-- **Do** use tabular numerals for KPIs and counters (`tabular-nums`).
+### Don't
 
-### Don't:
+- Don't use hex, `rgb()`, or arbitrary color values on screen (`bg-[#...]`, `text-slate-*`,
+  `bg-white`, `text-white` on primary). PDFs are the sole literal exception.
+- Don't use native `<button>`, `<table>`, `<select>`, or styled `<input>` — use shadcn.
+- Don't hand-roll headings, containers, or confirm flows — no `<h1>` with classes, no `container
+  mx-auto py-8 px-4`, no `card-glass`, no `shadow-[rgba]`, no `if (confirm())`.
+- Don't use `text-sm` for body copy, `text-base` for section titles, or unscaled 40px display type
+  on mobile.
+- Don't put the serif on numerals, buttons, body copy, or table data — titles only.
+- Don't load font weights the files don't declare; don't use italics or all-caps.
+- Don't compute radius with `calc()` or reach for `rounded-3xl/4xl`.
+- Don't hardcode sidebar colors or ship a second saturated solid next to primary.
+- Don't put an eyebrow label above a heading; the heading carries its own weight.
+- Don't rely on hover-only or gesture-only interactions; every action has a visible, tappable
+  control.
 
-- **Don't** use hex, `rgb()`, or arbitrary color values in components or pages (`bg-[#...]`, `text-slate-*`, `border-slate-*`, `bg-white`, `text-white` on primary).
-- **Don't** use native `<button>`, `<table>`, `<select>`, or `<input type="text">` with inline styling — use shadcn `<Button>`, `<Table>`, `<Select>`, `<Input>`.
-- **Don't** hand-roll headings, containers, or confirm flows — no `<h1>` with classes, no `container mx-auto py-8 px-4`, no `card-glass`, no `shadow-[rgba]`, no `if (confirm())`.
-- **Don't** use `text-sm` for body copy, `text-base` for section titles, or `text-2xl font-semibold` for page titles.
-- **Don't** compute radius with `calc()` or reach for `rounded-3xl/4xl` — only the six official steps.
-- **Don't** hardcode sidebar colors (`#0F2B46`, `#1D3557`, navy fills) or colored hard-offset shadows, gradient text, kickers/eyebrows, or glass-as-decoration.
+## Changelog
+
+- **v5 (2026-09-15):** redefined around the teal anchor `#3f9ea8` (single-hue ramp from the
+  provided tints and shades). Primary IS the anchor (ink text 4.88:1 AA; white would be 3.15:1, so
+  `text-primary` is icons and large text only, body links use secondary); ring stays Deep Teal
+  `#1b4d52` for focus visibility; sidebar teal ink `#0a292c`; shadows retinted;
+  tokens + 6 PDFs + docs migrated in one pass; `.dark` preserved.
+- **v4 (2026-09-15):** full-system color pass + font definition. Six PDF stylesheets aligned to
+  Atlas literals; Spectral 500/600/700 defined for titles with Jakarta kept for all
+  operable text and numerals kept sans-tabular; button variants audited token-clean; frontmatter
+  extended (`page-title`, `section-title`, `data-mono`). Superseded by v5 teal.
+- **v3 Atlas (2026-09-15):** steel-blue → forest-green single-hue system. Primary `#14532D`
+  (9.11:1, ends the 4.11:1 tradeoff); accent reunified with secondary `#2E7D4F`; ring follows
+  primary; sidebar deep forest `#13291D`; shadows retinted to forest hue; `.dark` preserved
+  untouched; touch minimum 44px and minicard rule codified; this file promoted to canonical source.
+- **v2 (2026-07-11):** steel-blue repalette, slate dark mode, 9-step type, explicit radius.
+- **v1 (2026-07-10):** initial catalog in `specs/002-design-system/catalog.md`.

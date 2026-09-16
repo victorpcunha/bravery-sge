@@ -6,7 +6,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { cn } from '@/lib/utils'
 
 const HORAS = Array.from({ length: 24 }, (_, i) => String(i).padStart(2, '0'))
-const MINUTOS = Array.from({ length: 6 }, (_, i) => String(i * 10).padStart(2, '0'))
+const MINUTOS = Array.from({ length: 12 }, (_, i) => String(i * 5).padStart(2, '0'))
 
 function parseValor(value: string): { hora: string; minuto: string } {
   const m = value.match(/^(\d{2}):(\d{2})/)

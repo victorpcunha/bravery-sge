@@ -12,8 +12,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { ConfirmDialog } from '@/components/feedback/confirm-dialog'
 import { EmptyState } from '@/components/ui/empty-state'
 import { StatusBadge } from '@/components/feedback/status-badge'
+import { StatCard } from '@/components/ui/stat-card'
+import { ClickablePill } from '@/components/ui/clickable-pill'
 import { toast } from 'sonner'
-import { Plus, Trash2, Calendar, ShieldAlert, Pencil } from 'lucide-react'
+import { Plus, Trash2, Calendar, ShieldAlert, Pencil, CalendarCheck, ClipboardList } from 'lucide-react'
 import { usePermissoes } from '@/hooks/use-permissoes'
 import {
   getAnosLetivos,
@@ -34,8 +36,21 @@ import {
   EventoCalendario,
 } from '@/lib/actions/calendarios'
 import { getDiasLetivosPorMes } from '@/lib/calendario-utils'
+import { getEtapasEnsino, type EtapaEnsino } from '@/lib/actions/etapas-ensino'
 
 const monthNames = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro']
+
+// Grupos de Etapas para o vínculo do calendário (códigos INEP explícitos —
+// Médio e Normal/Magistério compartilham etapa_tipo, só o código os separa)
+const GRUPOS_CALENDARIO: Array<{ titulo: string; codigos: number[] }> = [
+  { titulo: 'Infantil', codigos: [1, 2, 3] },
+  { titulo: 'Anos Iniciais', codigos: [14, 15, 16, 17, 18] },
+  { titulo: 'Anos Finais', codigos: [19, 20, 21, 41, 22, 23, 56] },
+  { titulo: 'Ensino Médio', codigos: [25, 26, 27, 28, 29] },
+  { titulo: 'Ensino Médio Normal/Magistério', codigos: [35, 36, 37, 38] },
+  { titulo: 'EJA', codigos: [69, 70, 72, 71, 74, 73, 67] },
+  { titulo: 'Curso Técnico e Qualificação Profissional', codigos: [39, 40, 64, 68, 75] },
+]
 
 function gerarDiasCalendario(inicio: string, termino: string) {
   const dias = []
@@ -116,6 +131,8 @@ export function TabCalendarios({ schoolId }: TabCalendariosProps) {
 
   const [anoForm, setAnoForm] = useState({ descricao: '', data_inicio: '', data_termino: '', status: 'planejamento' as string })
   const [calendarioForm, setCalendarioForm] = useState({ descricao: '', data_inicio: '', data_termino: '', etapas: [] as string[] })
+  const [etapasDisponiveis, setEtapasDisponiveis] = useState<EtapaEnsino[]>([])
+  const [loadingEtapas, setLoadingEtapas] = useState(false)
   const [eventoForm, setEventoForm] = useState({
     descricao: '',
     tipo: 'recesso' as 'dia_letivo' | 'recesso' | 'nao_letivo' | 'periodo_avaliativo',
@@ -132,6 +149,38 @@ export function TabCalendarios({ schoolId }: TabCalendariosProps) {
     if (!effectiveSchoolId) { setLoadingData(false); return }
     loadData()
   }, [effectiveSchoolId, isSuperAdmin, allSchools, selectedSchoolId])
+
+  useEffect(() => {
+    if (!showCalendarioModal) return
+    if (!effectiveSchoolId || !selectedAno) { setEtapasDisponiveis([]); return }
+    setLoadingEtapas(true)
+    getEtapasEnsino(effectiveSchoolId, selectedAno.id)
+      .then(setEtapasDisponiveis)
+      .catch(() => toast.error('Erro ao carregar etapas de ensino.'))
+      .finally(() => setLoadingEtapas(false))
+  }, [showCalendarioModal, effectiveSchoolId, selectedAno?.id])
+
+  const gruposComEtapas = GRUPOS_CALENDARIO
+    .map(g => ({ titulo: g.titulo, itens: etapasDisponiveis.filter(e => g.codigos.includes(e.etapa_codigo)) }))
+    .filter(g => g.itens.length > 0)
+
+  function toggleEtapaCalendario(codigo: string) {
+    setCalendarioForm(prev => ({
+      ...prev,
+      etapas: prev.etapas.includes(codigo) ? prev.etapas.filter(e => e !== codigo) : [...prev.etapas, codigo]
+    }))
+  }
+
+  function toggleGrupoCalendario(itens: EtapaEnsino[]) {
+    const codigos = itens.map(e => String(e.etapa_codigo))
+    setCalendarioForm(prev => {
+      const todasMarcadas = codigos.every(c => prev.etapas.includes(c))
+      return {
+        ...prev,
+        etapas: todasMarcadas ? prev.etapas.filter(e => !codigos.includes(e)) : [...prev.etapas, ...codigos.filter(c => !prev.etapas.includes(c))]
+      }
+    })
+  }
 
   async function loadData() {
     if (!effectiveSchoolId) return
@@ -253,6 +302,7 @@ export function TabCalendarios({ schoolId }: TabCalendariosProps) {
     if (!calendarioForm.data_inicio) { toast.error('O campo Início é obrigatório.'); return }
     if (!calendarioForm.data_termino) { toast.error('O campo Término é obrigatório.'); return }
     if (new Date(calendarioForm.data_termino) < new Date(calendarioForm.data_inicio)) { toast.error('A data de término não pode ser anterior à data de início.'); return }
+    if (calendarioForm.etapas.length === 0) { toast.error('Selecione ao menos uma Etapa de Ensino.'); return }
 
     try {
       const novo = await createCalendario({
@@ -280,6 +330,7 @@ export function TabCalendarios({ schoolId }: TabCalendariosProps) {
     if (!calendarioForm.data_inicio) { toast.error('O campo Início é obrigatório.'); return }
     if (!calendarioForm.data_termino) { toast.error('O campo Término é obrigatório.'); return }
     if (new Date(calendarioForm.data_termino) < new Date(calendarioForm.data_inicio)) { toast.error('A data de término não pode ser anterior à data de início.'); return }
+    if (calendarioForm.etapas.length === 0) { toast.error('Selecione ao menos uma Etapa de Ensino.'); return }
 
     try {
       const atualizado = await updateCalendario(calendarioEditId, {
@@ -642,10 +693,12 @@ export function TabCalendarios({ schoolId }: TabCalendariosProps) {
     )
   }
 
-  function renderPeriodosKpis() {
+  function renderKpis() {
     if (!selectedCalendario) return null
+    const dias = gerarDiasCalendario(selectedCalendario.data_inicio, selectedCalendario.data_termino)
+    const meses = getDiasLetivosPorMes(dias, eventos)
+    const total = Object.values(meses).reduce((sum, m) => sum + m.totalLetivos, 0)
     const periodos = eventos.filter(e => e.tipo === 'periodo_avaliativo').sort((a, b) => a.data_inicio.localeCompare(b.data_inicio))
-    if (periodos.length === 0) return null
 
     function openEditPeriodo(p: EventoCalendario) {
       setEventoEditId(p.id)
@@ -669,37 +722,39 @@ export function TabCalendarios({ schoolId }: TabCalendariosProps) {
     }
 
     return (
-      <div className="mt-6">
-        <div className="text-[14px] font-medium text-foreground mb-3">Períodos Avaliativos</div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-          {periodos.map((p, i) => {
-            const diasLetivos = contarDiasLetivosNoIntervalo(p.data_inicio, p.data_termino, eventos)
-            return (
-              <Card key={p.id} className="shadow-sm">
-                <CardContent className="p-4">
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1">
-                      <div className="text-xs text-muted-foreground mb-1">{p.descricao || `Período ${i + 1}`}</div>
-                      <div className="text-xl font-bold text-foreground">{diasLetivos}</div>
-                      <div className="text-xs text-muted-foreground">dias letivos</div>
-                      <div className="mt-2 text-[11px] text-muted-foreground">
-                        {formatarData(p.data_inicio)} → {formatarData(p.data_termino)}
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-0.5 ml-2">
-                      <Button variant="ghost" size="icon-sm" onClick={() => openEditPeriodo(p)} title="Editar período">
-                        <Pencil className="h-4 w-4" />
-                      </Button>
-                      <Button variant="ghost" size="icon-sm" onClick={() => deletePeriodo(p)} title="Excluir período">
-                        <Trash2 className="h-4 w-4 text-destructive" />
-                      </Button>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            )
-          })}
-        </div>
+      <div className="mb-4 grid grid-cols-2 lg:grid-cols-4 gap-3">
+        <StatCard icon={CalendarCheck} value={total} label="Dias Letivos" />
+        {periodos.map((p, i) => {
+          const diasLetivos = contarDiasLetivosNoIntervalo(p.data_inicio, p.data_termino, eventos)
+          return (
+            <div key={p.id} className="rounded-xl border border-border bg-card shadow-xs p-5 transition-all duration-200 hover:shadow-md hover:-translate-y-0.5">
+              <div className="flex items-start justify-between">
+                <div className="p-2.5 rounded-xl bg-primary/10 text-primary">
+                  <ClipboardList className="h-5 w-5" />
+                </div>
+                <div className="flex items-center gap-0.5">
+                  <Button variant="ghost" size="icon-sm" onClick={() => openEditPeriodo(p)} title="Editar período">
+                    <Pencil className="h-4 w-4" />
+                  </Button>
+                  <Button variant="ghost" size="icon-sm" onClick={() => deletePeriodo(p)} title="Excluir período">
+                    <Trash2 className="h-4 w-4 text-destructive" />
+                  </Button>
+                </div>
+              </div>
+              <div className="mt-3">
+                <p className="font-bold leading-none text-foreground tracking-tight tabular-nums text-[36px]">
+                  {diasLetivos}
+                </p>
+                <p className="font-medium text-muted-foreground text-[14px] mt-1.5">
+                  {p.descricao || `Período ${i + 1}`} · dias letivos
+                </p>
+                <p className="mt-1 text-[11px] text-muted-foreground">
+                  {formatarData(p.data_inicio)} → {formatarData(p.data_termino)}
+                </p>
+              </div>
+            </div>
+          )
+        })}
       </div>
     )
   }
@@ -776,8 +831,17 @@ export function TabCalendarios({ schoolId }: TabCalendariosProps) {
                           {selectedAno.status === 'ativo' ? 'Ativo' : selectedAno.status === 'planejamento' ? 'Em Planejamento' : 'Encerrado'}
                         </StatusBadge>
                       </div>
-                      <div className="text-sm text-muted-foreground">
-                        {formatarData(selectedAno.data_inicio)} — {formatarData(selectedAno.data_termino)}
+                      <div className="text-[15px]">
+                        <span className="text-muted-foreground">Ano Letivo: </span>
+                        <span className="font-medium text-foreground">{selectedAno.descricao}</span>
+                      </div>
+                      <div className="text-[15px]">
+                        <span className="text-muted-foreground">Início: </span>
+                        <span className="font-medium text-foreground">{formatarData(selectedAno.data_inicio)}</span>
+                      </div>
+                      <div className="text-[15px]">
+                        <span className="text-muted-foreground">Término: </span>
+                        <span className="font-medium text-foreground">{formatarData(selectedAno.data_termino)}</span>
                       </div>
 
                       <div className="flex gap-2 pt-1">
@@ -792,8 +856,8 @@ export function TabCalendarios({ schoolId }: TabCalendariosProps) {
                         {selectedAno.status === 'encerrado' && (
                           <Button size="sm" className="flex-1" onClick={() => handleReativarAno(selectedAno.id)}>Reativar Ano</Button>
                         )}
-                        <Button variant="ghost" size="icon-sm" onClick={(e) => handleDeleteAnoClick(selectedAno, e)} title="Excluir">
-                          <Trash2 className="h-4 w-4 text-destructive" />
+                        <Button size="sm" variant="destructive" className="flex-1" onClick={(e) => handleDeleteAnoClick(selectedAno, e)} title="Excluir">
+                          <Trash2 className="h-4 w-4 mr-1.5" />Excluir
                         </Button>
                       </div>
                     </div>
@@ -855,31 +919,19 @@ export function TabCalendarios({ schoolId }: TabCalendariosProps) {
               <CardTitle className="text-[16px] font-semibold text-foreground">
                 Visualização{selectedAno ? ` — ${selectedAno.descricao}` : ''}
               </CardTitle>
-              <div className="flex items-center gap-3">
-                {selectedCalendario && (
-                  <StatusBadge status="info">
-                    {(() => {
-                      const dias = gerarDiasCalendario(selectedCalendario.data_inicio, selectedCalendario.data_termino)
-                      const meses = getDiasLetivosPorMes(dias, eventos)
-                      const total = Object.values(meses).reduce((sum, m) => sum + m.totalLetivos, 0)
-                      return `${total} dias letivos`
-                    })()}
-                  </StatusBadge>
-                )}
-                <Button
+              <Button
                 size="lg"
                 disabled={!selectedCalendario}
                 onClick={() => { setEventoDiaUnico(false); setDiaLetivoPadrao(false); setEventoEditId(null); setEventoForm({ descricao: '', tipo: 'recesso', data_inicio: '', data_termino: '', recorrencia_tipo: 'nao_repete', recorrencia_dias: [] }); setShowEventoModal(true) }}
               >
                 <Plus className="h-4 w-4 mr-2" />Novo Evento
               </Button>
-              </div>
             </CardHeader>
             <CardContent>
               {selectedCalendario ? (
                 <>
+                  {renderKpis()}
                   {renderCalendarGrid()}
-                  {renderPeriodosKpis()}
                 </>
               ) : (
                 <div className="text-center py-16">
@@ -896,7 +948,7 @@ export function TabCalendarios({ schoolId }: TabCalendariosProps) {
 
       {/* Modal: Ano Letivo */}
       <Dialog open={showAnoModal} onOpenChange={setShowAnoModal}>
-        <DialogContent className="max-w-2xl max-h-[90vh]">
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Novo Ano Letivo</DialogTitle>
           </DialogHeader>
@@ -932,7 +984,7 @@ export function TabCalendarios({ schoolId }: TabCalendariosProps) {
 
       {/* Modal: Calendário (criar/editar) */}
       <Dialog open={showCalendarioModal} onOpenChange={(open) => { setShowCalendarioModal(open); if (!open) setCalendarioEditId(null) }}>
-        <DialogContent className="max-w-lg max-h-[90vh]">
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>{calendarioEditId ? 'Editar Calendário' : 'Novo Calendário'}</DialogTitle>
           </DialogHeader>
@@ -947,6 +999,38 @@ export function TabCalendarios({ schoolId }: TabCalendariosProps) {
               onChangeInicio={(v) => setCalendarioForm({ ...calendarioForm, data_inicio: v })}
               onChangeTermino={(v) => setCalendarioForm({ ...calendarioForm, data_termino: v })}
             />
+            <div>
+              <Label className="text-foreground font-medium block mb-2">Etapas de Ensino <span className="text-destructive">*</span></Label>
+              {loadingEtapas ? (
+                <div className="flex items-center gap-2 py-4">
+                  <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-primary" />
+                  <span className="text-sm text-muted-foreground">Carregando etapas...</span>
+                </div>
+              ) : gruposComEtapas.length === 0 ? (
+                <p className="text-[15px] text-muted-foreground">Nenhuma etapa ativa para esta escola e ano letivo. Ative as etapas na aba Etapas.</p>
+              ) : (
+                <div className="space-y-3">
+                  {gruposComEtapas.map(grupo => (
+                    <div key={grupo.titulo}>
+                      <div className="flex items-center justify-between gap-2 mb-1.5">
+                        <p className="text-[13px] font-semibold text-foreground">{grupo.titulo}</p>
+                        <Button variant="outline" size="sm" onClick={() => toggleGrupoCalendario(grupo.itens)}>Selecionar Todas</Button>
+                      </div>
+                      <div className="flex flex-wrap gap-2">
+                        {grupo.itens.map(etapa => (
+                          <ClickablePill
+                            key={etapa.etapa_codigo}
+                            label={etapa.etapa_nome}
+                            active={calendarioForm.etapas.includes(String(etapa.etapa_codigo))}
+                            onClick={() => toggleEtapaCalendario(String(etapa.etapa_codigo))}
+                          />
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
           <DialogFooter className="shrink-0 border-t border-border px-6 py-3 gap-2 bg-muted/30">
             <Button variant="outline" onClick={() => { setShowCalendarioModal(false); setCalendarioEditId(null) }} className="min-h-[40px] sm:min-h-[44px]">Cancelar</Button>
@@ -959,7 +1043,7 @@ export function TabCalendarios({ schoolId }: TabCalendariosProps) {
 
       {/* Modal: Evento */}
       <Dialog open={showEventoModal} onOpenChange={(open) => { setShowEventoModal(open); if (!open) { setEventoDiaUnico(false); setDiaLetivoPadrao(false); setEventoEditId(null) } }}>
-        <DialogContent className="max-w-lg max-h-[90vh]">
+        <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>{diaLetivoPadrao ? 'Excluir Dia Letivo' : eventoEditId ? 'Editar Evento' : 'Novo Evento'}</DialogTitle>
           </DialogHeader>
@@ -981,23 +1065,18 @@ export function TabCalendarios({ schoolId }: TabCalendariosProps) {
             </div>
             <div>
               <Label className="text-foreground font-medium block mb-2">Tipo</Label>
-              <div className="flex flex-wrap gap-4 mt-2">
+              <div className="flex flex-wrap gap-2 mt-2">
                 {[
                   { value: 'recesso', label: 'Recesso' },
                   { value: 'dia_letivo', label: 'Dia Letivo' },
                   { value: 'periodo_avaliativo', label: 'Período Avaliativo' },
                 ].map(opt => (
-                  <label key={opt.value} className="flex items-center gap-2 cursor-pointer">
-                    <input
-                      type="radio"
-                      name="tipo"
-                      value={opt.value}
-                      checked={eventoForm.tipo === opt.value}
-                      onChange={() => setEventoForm({ ...eventoForm, tipo: opt.value as any })}
-                      className="w-4 h-4 accent-primary"
-                    />
-                    <span className="text-sm text-foreground">{opt.label}</span>
-                  </label>
+                  <ClickablePill
+                    key={opt.value}
+                    label={opt.label}
+                    active={eventoForm.tipo === opt.value}
+                    onClick={() => setEventoForm({ ...eventoForm, tipo: opt.value as typeof eventoForm.tipo })}
+                  />
                 ))}
               </div>
             </div>

@@ -26,7 +26,7 @@ export function ClickablePill({ label, active, onClick, disabled, title, classNa
         'disabled:opacity-50 disabled:pointer-events-none',
         active
           ? 'bg-primary text-primary-foreground border-primary shadow-sm hover:bg-primary hover:text-primary-foreground'
-          : 'bg-muted/40 text-foreground border-border hover:bg-accent/10 hover:text-accent-foreground',
+          : 'bg-muted/40 text-foreground border-border hover:bg-accent/15 hover:text-foreground',
         className
       )}
     >

@@ -29,6 +29,7 @@ const etapaTipoLabels: Record<string, string> = {
   fundamental_outros: 'Fundamental (Outros)',
   medio: 'Ensino Médio',
   eja: 'EJA',
+  tecnico: 'Curso Técnico e Qualificação Profissional',
 }
 
 const turnoBadgeStyles: Record<string, string> = {
@@ -264,8 +265,28 @@ export default function DiarioClassePage() {
 
                     <div className="flex items-center gap-1.5 text-sm text-muted-foreground mb-4">
                       <Users className="h-4 w-4" />
-                      <span className="tabular-nums font-medium">{turma.total_alunos}</span>
-                      <span>aluno(s) matriculado(s)</span>
+                      {turma.capacidade > 0 ? (
+                        <>
+                          <span className="tabular-nums font-medium">
+                            {turma.total_alunos}/{turma.capacidade}
+                          </span>
+                          <span>alunos</span>
+                          {turma.total_alunos >= turma.capacidade ? (
+                            <Badge variant="outline" className="ml-1 text-[11px] font-semibold bg-destructive/10 text-destructive border-destructive/20">
+                              Lotada
+                            </Badge>
+                          ) : (
+                            <span className="text-[12px] text-success font-medium tabular-nums">
+                              ({turma.capacidade - turma.total_alunos} {turma.capacidade - turma.total_alunos === 1 ? 'vaga' : 'vagas'})
+                            </span>
+                          )}
+                        </>
+                      ) : (
+                        <>
+                          <span className="tabular-nums font-medium">{turma.total_alunos}</span>
+                          <span>aluno(s) matriculado(s)</span>
+                        </>
+                      )}
                     </div>
 
                     <div className="mt-auto">

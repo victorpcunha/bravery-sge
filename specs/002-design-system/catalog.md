@@ -1,8 +1,8 @@
 # Design System Catalog — Componentes Oficiais
 
 **Feature**: 002-design-system
-**Date**: 2026-07-10 (v2 — codifica Visual Language v1.0.0)
-**Status**: Referência canônica para implementações futuras
+**Date**: 2026-09-15 (v5 — redefinição teal da âncora `#3f9ea8`; fonte canônica: `DESIGN.md`)
+**Status**: Referência de contratos; tokens em `DESIGN.md` (vence em divergência)
 
 ## Layouts Oficiais
 
@@ -320,44 +320,47 @@ Use `text-primary-foreground` (ou variante padrão do Button que já usa a cor c
 
 **Proibido**: `text-white` em botões sobre fundo primary
 
-## Design Tokens v2 (Visual Language v2.0.0)
+## Design Tokens v5 (Atlas teal — rampa da âncora `#3f9ea8`)
 
 ### Tokens de Cor (Light Mode)
 
-| Token | Valor | Uso |
-|-------|-------|-----|
-| `--primary` | `#4682B4` | Marca, botão primário, logo, ring |
-| `--primary-foreground` | `#FFFFFF` | Texto sobre primary |
-| `--accent` | `#59A5E3` | Realces e seleção (azul claro da rampa) |
-| `--accent-foreground` | `#192E40` | Texto sobre accent |
-| `--secondary` | `#396991` | Botão secundário, charts (deep blue) |
-| `--secondary-foreground` | `#FFFFFF` | Texto sobre secondary |
-| `--background` | `#EDF1F5` | Fundo da página (slate-50) |
-| `--card` | `#FFFFFF` | Fundo de card/superfície |
-| `--foreground` | `#1E293B` | Texto principal (slate-800) |
-| `--muted` | `#E4E9F0` | Fundo de seções/zonas (slate-100) |
-| `--muted-foreground` | `#52607A` | Texto secundário (slate-500) |
-| `--border` | `#D7DEE8` | Bordas padrão (slate-200) |
-| `--ring` | `#B8863B` | Cor de foco (= accent) |
-| `--destructive` | `#C4453A` | Erro/destruição |
-| `--success` | `#16A34A` | Sucesso |
-| `--warning` | `#C2571C` | Atenção |
-| `--info` | `#396991` | Informação (= secondary) |
-| `--sidebar` | `#294C69` | Fundo da sidebar (steel profundo) |
-| `--sidebar-foreground` | `#FFFFFF` | Texto da sidebar |
-| `--sidebar-primary` | `#FFFFFF` | Item ativo da sidebar (pílula branca) |
-| `--sidebar-accent` | `rgba(255,255,255,0.12)` | Hover da sidebar (wash translúcido) |
+| Token | Valor | Contraste | Uso |
+|-------|-------|-----------|-----|
+| `--primary` | `#3f9ea8` | Tinta 4.88:1 (AA); branco só 3.15:1 | Marca, botão primário (texto sempre tinta), logo |
+| `--primary-foreground` | `#0a292c` | — | Texto sobre primary (SEMPRE tinta) |
+| `--accent` | `#2c747c` | 5.39:1 c/ branco (AA) | Interação, seleção, foco (acompanha secondary) |
+| `--accent-foreground` | `#FFFFFF` | — | Texto sobre accent |
+| `--secondary` | `#2c747c` | 5.39:1 c/ branco (AA) | Botão secundário, charts |
+| `--secondary-foreground` | `#FFFFFF` | — | Texto sobre secondary |
+| `--background` | `#eef4f4` | — | Fundo da página (papel frio) |
+| `--card` | `#FFFFFF` | — | Fundo de card/superfície |
+| `--foreground` | `#0a292c` | 13.82:1 no papel | Texto principal |
+| `--muted` | `#dce8e9` | — | Fundo de seções/zonas (névoa) |
+| `--muted-foreground` | `#3d5a5e` | 6.69:1 no papel (AA) | Texto secundário |
+| `--border` | `#c4d9db` | — | Bordas padrão |
+| `--ring` | `#1b4d52` | 9.42:1 c/ branco | Cor de foco (= primary) |
+| `--destructive` | `#B3261E` | 6.54:1 c/ branco | Erro/destruição |
+| `--success` | `#2c747c` | (= secondary) | Sucesso |
+| `--warning` | `#C2571C` | 4.49:1 c/ branco (limite) | Atenção |
+| `--info` | `#2c747c` | (= secondary) | Informação |
+| `--sidebar` | `#3f9ea8` | Tinta 4.88:1 (AA) | Fundo da sidebar (âncora da marca) |
+| `--sidebar-foreground` | `#0a292c` | — | Texto da sidebar (sempre tinta) |
+| `--sidebar-primary` | `#0a292c` | — | Item ativo da sidebar (pastilha tinta, glifo branco) |
+| `--sidebar-accent` | `rgba(10,41,44,0.12)` | — | Hover da sidebar (wash de tinta) |
+
+**Âncora `#3f9ea8` = `--primary`**: texto sobre ela é sempre tinta (`4.88:1`); `text-primary`
+sobre fundo claro vale só p/ ícones e texto grande — links de corpo usam `text-secondary`.
+`--ring` fica no Deep Teal (`#1b4d52`) por visibilidade do foco.
 
 **Regras**:
-- `--primary` (`#4682B4`) é a cor de marca — botão primário, logo, links.
-- `--accent` (`#59A5E3`) é a cor de realce — seleção, hovers e complementos claros.
-- `--ring` é dourado fixo (`#B8863B`), desacoplado do accent: o accent claro não atinge 3:1 como anel sobre branco.
-- `--secondary` (`#396991`) é a cor de apoio — botão secundário, charts.
-- `--info` acompanha `--secondary` (steel profundo).
-- `--ring` acompanha `--accent` (dourado).
-- Sidebar é **branca** em light mode, **slate-950** em dark mode.
+- `--primary` (`#1b4d52`) é a cor de marca — botão primário, logo, links, ring.
+- `--accent` acompanha `--secondary` (teal apoio) — secundários tonais usam fills `/10` com texto
+  teal, nunca um segundo sólido saturado ao lado do primário.
+- `--ring` acompanha `--primary`.
+- `--success`/`--info` acompanham `--secondary` (mesma família do acento único).
+- Sidebar é **tinta teal** em light mode, **slate-950** em dark mode.
 
-### Tokens de Cor (Dark Mode)
+### Tokens de Cor (Dark Mode — preservado, fora do escopo Atlas v3)
 
 | Token | Valor |
 |-------|-------|
@@ -415,11 +418,13 @@ Use `text-primary-foreground` (ou variante padrão do Button que já usa a cor c
 - `text-base` (16px) como título de seção — usar `text-[20px]`
 - `text-2xl font-semibold` (24px/600) como título de página — usar `text-[28px] font-bold`
 
-### Fonte Oficial
+### Fonte Oficial (v4)
 
-**Plus Jakarta Sans** — única família tipográfica do sistema.
-- Pesos: 400 (corpo), 500 (rótulos), 600 (subtítulos), 700 (títulos)
-- Proibido: itálico, all-caps, fontes serifadas, `system-ui`
+**Spectral** (títulos: PageHeader 28/700, PageSection/FormCard 20/600, Dialog/Sheet titles, wordmark)
++ **Plus Jakarta Sans** (todo o operável: corpo 15px, rótulos, botões, tabelas, numerais com
+`tabular-nums`) + **mono do sistema** (códigos BNCC, horários, INEP) + **Helvetica** nos PDFs
+(react-pdf built-in). Pesos carregados: Spectral 500/600/700, Jakarta 400/500/600/700.
+Proibido: serifada fora de títulos; numeral em serifada; itálico/all-caps.
 
 ### Movimento (3 durações)
 

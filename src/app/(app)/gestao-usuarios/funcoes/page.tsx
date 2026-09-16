@@ -119,11 +119,6 @@ export default function FuncoesPage() {
           title="Funções"
           description="Cadastro de funções profissionais vinculadas ao Censo INEP"
           icon={Building2}
-          breadcrumbs={[
-            { label: 'Gestão de Usuários', href: '/gestao-usuarios/usuarios' },
-            { label: 'Funções' }
-          ]}
-          actions={<Button onClick={handleOpenNew}><Plus className="mr-2 h-4 w-4" /> Nova Função</Button>}
         />
 
         {loading ? (
@@ -138,61 +133,70 @@ export default function FuncoesPage() {
             action={<Button onClick={handleOpenNew}><Plus className="mr-2 h-4 w-4" /> Nova Função</Button>}
           />
         ) : (
-          <PageSection variant="flush" title={`Funções cadastradas (${funcoes.length})`}>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead className="text-xs uppercase tracking-wider">Nome</TableHead>
-                  <TableHead className="text-xs uppercase tracking-wider">Tipo Censo INEP</TableHead>
-                  <TableHead className="text-xs uppercase tracking-wider">Status</TableHead>
-                  <TableHead className="text-xs uppercase tracking-wider text-right">Ações</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {funcoes.map(f => {
-                  const censo = CENSO_FUNCOES.find(c => c.codigo === f.tipo_censo)
-                  return (
-                    <TableRow key={f.id}>
-                      <TableCell className="font-medium">{f.nome}</TableCell>
-                      <TableCell className="text-muted-foreground">
-                        {censo ? `Campo ${censo.codigo} - ${censo.nome}` : f.tipo_censo || '-'}
-                      </TableCell>
-                      <TableCell>
-                        <StatusBadge status={f.ativo ? 'success' : 'muted'}>
-                          {f.ativo ? 'Ativa' : 'Inativa'}
-                        </StatusBadge>
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <Button variant="ghost" size="icon-sm" onClick={() => handleOpenEdit(f)}>
-                          <Pencil className="h-4 w-4" />
-                        </Button>
-                        <Button variant="ghost" size="icon-sm" onClick={() => setDeleteId(f.id)}>
-                          <Trash2 className="h-4 w-4 text-destructive" />
-                        </Button>
-                      </TableCell>
-                    </TableRow>
-                  )
-                })}
-              </TableBody>
-            </Table>
+          <PageSection
+            variant="flush"
+            title={`Funções cadastradas (${funcoes.length})`}
+            actions={<Button size="sm" onClick={handleOpenNew}><Plus className="mr-2 h-4 w-4" /> Nova Função</Button>}
+            className="overflow-hidden"
+          >
+            <div className="px-4">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Nome</TableHead>
+                    <TableHead>Tipo Censo INEP</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead className="w-[90px]">Ações</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {funcoes.map(f => {
+                    const censo = CENSO_FUNCOES.find(c => c.codigo === f.tipo_censo)
+                    return (
+                      <TableRow key={f.id}>
+                        <TableCell className="font-medium text-foreground whitespace-normal break-words min-w-0">{f.nome}</TableCell>
+                        <TableCell className="text-muted-foreground whitespace-normal break-words min-w-0">
+                          {censo ? `Campo ${censo.codigo} - ${censo.nome}` : f.tipo_censo || '-'}
+                        </TableCell>
+                        <TableCell className="whitespace-nowrap">
+                          <StatusBadge status={f.ativo ? 'success' : 'muted'}>
+                            {f.ativo ? 'Ativa' : 'Inativa'}
+                          </StatusBadge>
+                        </TableCell>
+                        <TableCell className="whitespace-nowrap">
+                          <div className="flex items-center gap-0.5 justify-end">
+                            <Button variant="ghost" size="icon-sm" onClick={() => handleOpenEdit(f)}>
+                              <Pencil className="h-4 w-4" />
+                            </Button>
+                            <Button variant="ghost" size="icon-sm" onClick={() => setDeleteId(f.id)}>
+                              <Trash2 className="h-4 w-4 text-destructive" />
+                            </Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    )
+                  })}
+                </TableBody>
+              </Table>
+            </div>
           </PageSection>
         )}
       </PageContainer>
 
       <Dialog open={modalOpen} onOpenChange={setModalOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>{editItem ? 'Editar Função' : 'Nova Função'}</DialogTitle>
+        <DialogContent className="max-w-5xl max-h-[90vh] flex flex-col p-0 gap-0">
+          <DialogHeader className="shrink-0 px-6 pt-6 pb-4 border-b border-border">
+            <DialogTitle className="text-[20px] font-semibold">{editItem ? 'Editar Função' : 'Nova Função'}</DialogTitle>
           </DialogHeader>
-          <div className="space-y-4 py-2">
-            <div className="space-y-2">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 px-6 py-4">
+            <div className="space-y-2 min-w-0">
               <Label>Nome da Função *</Label>
-              <Input value={formNome} onChange={e => setFormNome(e.target.value)} placeholder="Ex: Porteiro" />
+              <Input value={formNome} onChange={e => setFormNome(e.target.value)} placeholder="Ex: Porteiro" className="border-border" />
             </div>
-            <div className="space-y-2">
-              <Label>Tipo Censo INEP (Registro 10)</Label>
+            <div className="space-y-2 min-w-0">
+              <Label>Tipo Censo INEP</Label>
               <Select value={formTipoCenso} onValueChange={setFormTipoCenso}>
-                <SelectTrigger><SelectValue placeholder="Selecione o tipo censo (opcional)" /></SelectTrigger>
+                <SelectTrigger><SelectValue placeholder="Selecione (opcional)" /></SelectTrigger>
                 <SelectContent>
                   {CENSO_FUNCOES.map(c => (
                     <SelectItem key={c.codigo} value={c.codigo}>
@@ -201,10 +205,10 @@ export default function FuncoesPage() {
                   ))}
                 </SelectContent>
               </Select>
-              <p className="text-xs text-muted-foreground">
-                Opcional. Vincule esta função ao campo do Censo INEP para contabilização automática.
-              </p>
             </div>
+            <p className="text-[13px] text-muted-foreground sm:col-span-2">
+              Opcional. Vincule esta função ao campo do Censo INEP para contabilização automática.
+            </p>
           </div>
           <DialogFooter className="shrink-0 border-t border-border px-6 py-3 gap-2 bg-muted/30">
             <Button variant="outline" onClick={() => setModalOpen(false)} className="min-h-[40px] sm:min-h-[44px]">Cancelar</Button>

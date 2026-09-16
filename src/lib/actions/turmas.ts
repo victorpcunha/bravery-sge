@@ -3,6 +3,9 @@
 import { getSupabaseAdmin } from '@/lib/auth'
 import { registrarAuditoria } from '@/lib/auditoria'
 import { garantirTurmaAberta } from './garantir-turma-aberta'
+import { COMPATIBILIDADE_MEDIACAO_TURMA_ETAPA } from '@/data/censo/tipo-turma-mediacao'
+import { codigoTipoTurma } from '@/data/censo/tipo-turma-codigos'
+import { MAX_ATIVIDADES_POR_TURMA } from '@/data/censo/atividades-complementares'
 
 const supabase = getSupabaseAdmin()
 
@@ -62,8 +65,7 @@ export type Turma = {
   ciclo_inicio: string | null
   educacao_bilingue_surdos: boolean
   formacao_alternancia: boolean
-  modalidade: string
-  etapa_ensino_id: string
+  etapa_ensino_id: string | null
   multietapa: boolean
   turnos: Turno[]
   dias_funcionamento: string[]
@@ -73,6 +75,12 @@ export type Turma = {
   tipo_curso: string | null
   curso_tecnico_id: string | null
   forma_organizacao: string | null
+  atividade_complementar_1: string | null
+  atividade_complementar_2: string | null
+  atividade_complementar_3: string | null
+  atividade_complementar_4: string | null
+  atividade_complementar_5: string | null
+  atividade_complementar_6: string | null
   ativo: boolean
   created_at: string
   updated_at: string
@@ -101,6 +109,7 @@ export type TurmaProfissional = {
   data_encerramento: string | null
   ativo: boolean
   disciplinas_ids: string[]
+  atividades_ids: string[]
   person_nome?: string
 }
 
@@ -109,6 +118,63 @@ export type TurmaMultietapa = {
   turma_id: string
   etapa_ensino_id: string
   etapa_nome?: string
+}
+
+const TIPOS_COM_ETAPA = ['Curricular', 'Curricular com Atividade Complementar']
+const TIPOS_COM_ATIVIDADES = ['Atividade Complementar', 'Curricular com Atividade Complementar']
+
+function codigoMediacao(mediacao: string): string {
+  if (mediacao === 'Presencial') return '1'
+  if (mediacao === 'Semipresencial') return '2'
+  if (mediacao === 'Educação a Distância - EAD') return '3'
+  return String(mediacao ?? '')
+}
+
+// Validação server-side espelho da matriz oficial Tipo x Etapa (Tabela de Etapas 2026)
+function validarMatrizTipoEtapa(t: {
+  tipo_mediacao?: string | null
+  tipos_turma?: string[] | null
+  etapa_agregada?: string | null
+  etapa_codigo?: string | null
+}) {
+  const tipos = t.tipos_turma || []
+  if (tipos.length === 0) throw new Error('Selecione ao menos um tipo de turma')
+  if (!TIPOS_COM_ETAPA.includes(tipos[0])) return
+  const med = codigoMediacao(t.tipo_mediacao || '')
+  const tipoCod = codigoTipoTurma(tipos)
+  const entradas = COMPATIBILIDADE_MEDIACAO_TURMA_ETAPA.filter(c => c.tipo_mediacao === med && c.tipo_turma === tipoCod)
+  if (entradas.some(c => c.etapa_agregada === '-')) return
+  const agreg = t.etapa_agregada ? String(t.etapa_agregada) : ''
+  const etapaNum = t.etapa_codigo && /^\d+$/.test(String(t.etapa_codigo)) ? parseInt(String(t.etapa_codigo), 10) : null
+  if (!agreg || etapaNum == null) {
+    throw new Error('Selecione a Etapa Agregada e a Etapa de Ensino compatíveis com o Tipo de Turma.')
+  }
+  const ok = entradas.some(c =>
+    c.etapa_agregada === agreg &&
+    (c.etapas_ensino.length === 0 || c.etapas_ensino.includes(etapaNum))
+  )
+  if (!ok) {
+    throw new Error('A combinação de Tipo de Mediação, Tipo de Turma e Etapa não é compatível (Tabela de Etapas 2026).')
+  }
+}
+
+function validarAtividadesTurma(t: { tipos_turma?: string[] | null } & Record<string, unknown>) {
+  const tipos = t.tipos_turma || []
+  const exige = tipos.some(tipo => TIPOS_COM_ATIVIDADES.includes(tipo))
+  const codigos = [1, 2, 3, 4, 5, 6]
+    .map(i => t[`atividade_complementar_${i}`])
+    .filter(c => c && String(c).trim() !== '')
+    .map(c => String(c).trim())
+  if (!exige) return
+  if (codigos.length === 0) {
+    throw new Error('Turma com atividade complementar deve ter ao menos uma atividade')
+  }
+  if (codigos.length > MAX_ATIVIDADES_POR_TURMA) {
+    throw new Error(`Turma admite no máximo ${MAX_ATIVIDADES_POR_TURMA} atividades complementares`)
+  }
+  if (new Set(codigos).size !== codigos.length) {
+    throw new Error('As atividades complementares não podem se repetir na mesma turma')
+  }
 }
 
 export async function getAnoLetivoAtivo(schoolId: string | null | null) {
@@ -141,7 +207,7 @@ export async function getTurmas(
   if (search) query = query.ilike('nome', `%${search}%`)
   if (etapaId) query = query.eq('etapa_ensino_id', etapaId)
   if (anoLetivoId) query = query.eq('ano_letivo_id', anoLetivoId)
-  if (tipoTurma) query = query.contains('tipos_turma', [tipoTurma])
+  if (tipoTurma) query = query.contains('tipos_turma', JSON.stringify([tipoTurma]))
 
   const { data, error } = await query.order('created_at', { ascending: false })
   if (error) throw error
@@ -180,8 +246,7 @@ export async function createTurma(data: {
   ciclo_inicio?: string | null
   educacao_bilingue_surdos?: boolean
   formacao_alternancia?: boolean
-  modalidade: string
-  etapa_ensino_id: string
+  etapa_ensino_id: string | null
   multietapa?: boolean
   turnos?: Turno[]
   dias_funcionamento?: string[]
@@ -198,8 +263,16 @@ export async function createTurma(data: {
   etapa_codigo?: string | null
   turma_especial?: string | null
   eixo_qualificacao?: string | null
+  atividade_complementar_1?: string | null
+  atividade_complementar_2?: string | null
+  atividade_complementar_3?: string | null
+  atividade_complementar_4?: string | null
+  atividade_complementar_5?: string | null
+  atividade_complementar_6?: string | null
 }, pessoaId?: string | null) {
   await validarPermWrite('gestao-turmas.turmas', 'criar', pessoaId)
+  validarMatrizTipoEtapa(data as any)
+  validarAtividadesTurma(data as any)
   const { disciplinas, multietapa_etapas, multietapa_subetapas_ids, ...turmaData } = data
 
   const { data: turma, error } = await supabase
@@ -255,8 +328,7 @@ export async function updateTurma(id: string, data: {
   ciclo_inicio?: string | null
   educacao_bilingue_surdos?: boolean
   formacao_alternancia?: boolean
-  modalidade?: string
-  etapa_ensino_id?: string
+  etapa_ensino_id?: string | null
   multietapa?: boolean
   turnos?: Turno[]
   dias_funcionamento?: string[]
@@ -273,6 +345,12 @@ export async function updateTurma(id: string, data: {
   etapa_codigo?: string | null
   turma_especial?: string | null
   eixo_qualificacao?: string | null
+  atividade_complementar_1?: string | null
+  atividade_complementar_2?: string | null
+  atividade_complementar_3?: string | null
+  atividade_complementar_4?: string | null
+  atividade_complementar_5?: string | null
+  atividade_complementar_6?: string | null
 }, pessoaId?: string | null) {
   await validarPermWrite('gestao-turmas.turmas', 'editar', pessoaId)
   await garantirTurmaAberta(id)
@@ -283,6 +361,10 @@ export async function updateTurma(id: string, data: {
     .select('*')
     .eq('id', id)
     .maybeSingle()
+
+  // Valida o estado final (atual + anterior) contra a matriz oficial e atividades
+  validarMatrizTipoEtapa({ ...(anterior as any), ...updateData } as any)
+  validarAtividadesTurma({ ...(anterior as any), ...updateData } as any)
 
   if (updateData.turnos) {
     updateData.turnos = JSON.parse(JSON.stringify(updateData.turnos)) as any
@@ -376,6 +458,7 @@ export async function addProfissionalTurma(data: {
   vinculo_profissional_id?: string | null
   data_inicio: string
   disciplinas_ids?: string[]
+  atividades_ids?: string[]
 }, pessoaId?: string | null) {
   await validarPermWrite('gestao-turmas.turmas', 'editar', pessoaId)
   const { data: criado, error } = await supabase.from('turmas_profissionais').insert({
@@ -384,6 +467,7 @@ export async function addProfissionalTurma(data: {
     vinculo_profissional_id: data.vinculo_profissional_id || null,
     data_inicio: data.data_inicio,
     disciplinas_ids: data.disciplinas_ids || [],
+    atividades_ids: data.atividades_ids || [],
   }).select().single()
   if (error) throw error
 
@@ -421,8 +505,18 @@ export async function updateProfissionalTurma(id: string, data: {
   data_encerramento?: string | null
   ativo?: boolean
   disciplinas_ids?: string[]
+  atividades_ids?: string[]
 }, pessoaId?: string | null) {
   await validarPermWrite('gestao-turmas.turmas', 'editar', pessoaId)
+
+  // Data de término (inativação) não pode ser futura
+  if (data.data_encerramento) {
+    const hoje = new Date()
+    const hojeISO = `${hoje.getFullYear()}-${String(hoje.getMonth() + 1).padStart(2, '0')}-${String(hoje.getDate()).padStart(2, '0')}`
+    if (String(data.data_encerramento).slice(0, 10) > hojeISO) {
+      throw new Error('A Data de Término do vínculo não pode ser posterior à data atual')
+    }
+  }
 
   const { data: anterior } = await supabase
     .from('turmas_profissionais')

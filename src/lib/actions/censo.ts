@@ -2,8 +2,12 @@
 
 import { getSupabaseAdmin } from '@/lib/auth'
 import { getFuncaoCenso50 } from '@/data/censo/funcoes-registro-50'
+import { codigoTipoTurma, codigoFormaOrganizacao } from '@/data/censo/tipo-turma-codigos'
 import { validarCenso as validarCensoInternal } from './censo-regras'
 import { ResultadoValidacao, ResultadoExportacao } from './censo-types'
+
+// Tipos que possuem Etapa (demais exportam etapa nula) — espelho de TurmaForm/turmas.ts
+const TIPOS_COM_ETAPA_CENSO = ['Curricular', 'Curricular com Atividade Complementar']
 
 export { validarCensoInternal as validarCenso }
 
@@ -587,22 +591,37 @@ function buildRegistro20(turma: any, horariosPorTurma?: Map<string, Record<strin
   const hasInatureza = itinAreas.some((a: string) => /natureza/i.test(a)) || !!turma.ifa_natureza
   const hasIhumanas = itinAreas.some((a: string) => /humanas/i.test(a)) || !!turma.ifa_humanas
 
+  // Códigos INEP a partir dos rótulos gravados no modal (spec 029 FR-020)
+  const tiposLista = Array.isArray(turma.tipos_turma) ? turma.tipos_turma as string[] : []
+  const tipoTurmaCodigo = codigoTipoTurma(tiposLista)
+  const mediacaoCodigo = turma.tipo_mediacao === 'Presencial' ? '1'
+    : turma.tipo_mediacao === 'Semipresencial' ? '2'
+    : turma.tipo_mediacao === 'Educação a Distância - EAD' ? '3'
+    : s('tipo_mediacao')
+  // Etapa só é exportada p/ Curricular / Curricular+Complementar (demais = nulo)
+  const comEtapa = tiposLista.some(t => TIPOS_COM_ETAPA_CENSO.includes(t))
+  const atv = (i: number) => {
+    const v = turma[`atividade_complementar_${i}`]
+    return v && String(v).trim() !== '' ? String(v).trim() : ''
+  }
+
   const fields = [
     '20',
     turma.codigo_inep || s('id'),
 
     // Identificação
     s('nome'),
-    s('tipo_mediacao'),
-    s('tipos_turma'),
-    s('etapa_codigo'),
-    s('etapa_agregada'),
+    mediacaoCodigo,
+    tipoTurmaCodigo,
+    atv(1), atv(2), atv(3), atv(4), atv(5), atv(6),
+    comEtapa ? s('etapa_agregada') : '',
+    comEtapa ? s('etapa_codigo') : '',
 
     // Horários (derivados do Quadro de Aulas)
     h(0), h(1), h(2), h(3), h(4), h(5), h(6),
 
     // Organização
-    s('forma_organizacao'),
+    comEtapa ? codigoFormaOrganizacao(turma.forma_organizacao) : '',
     s('turma_especial'),
     b('formacao_alternancia'),
     s('eixo_qualificacao'),

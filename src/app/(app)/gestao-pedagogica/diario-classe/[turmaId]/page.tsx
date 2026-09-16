@@ -1,11 +1,11 @@
 'use client'
 
-import { useState, useEffect, useMemo, useCallback } from 'react'
+import { useState, useEffect, useMemo, useCallback, Fragment } from 'react'
 import { useRouter } from 'next/navigation'
 import { useTabParams } from '@/lib/tab-params'
 import { useAuth } from '@/components/providers/auth-provider'
 import { usePermissoes } from '@/hooks/use-permissoes'
-import { getAlunosDaTurmaComPeriodo, getDisciplinasDiario, gerarNumeroChamada, getMetodoAvaliacaoDaTurma, getTurmaDiarioInfo, getFrequenciasAlunosTurma, type AlunoMatriculado, type TurmaDiarioInfo } from '@/lib/actions/diario-classe'
+import { getAlunosDaTurmaComPeriodo, getDisciplinasDiario, gerarNumeroChamada, bloquearNumeracaoChamada, getMetodoAvaliacaoDaTurma, getTurmaDiarioInfo, getFrequenciasAlunosTurma, getProfissionaisDaTurma, type AlunoMatriculado, type TurmaDiarioInfo, type ProfissionalTurma } from '@/lib/actions/diario-classe'
 import FrequenciaPorDia from '@/components/diario-classe/frequencia-por-dia'
 import FrequenciaPorAula from '@/components/diario-classe/frequencia-por-aula'
 import ParecerDescritivo from '@/components/diario-classe/parecer-descritivo'
@@ -19,12 +19,12 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent } from '@/components/ui/card'
 import { ConfirmDialog } from '@/components/feedback/confirm-dialog'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { ModernTabs } from '@/components/ui/modern-tabs'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 import { cn } from '@/lib/utils'
-import { Search, Users, BookOpen, GraduationCap, Hash, Calendar, ClipboardCheck, FileText, BarChart3, Calculator, Info, Lock, LockOpen } from 'lucide-react'
+import { Search, GraduationCap, Hash, Calendar, ClipboardCheck, Info, Lock, LockOpen, ArrowLeft } from 'lucide-react'
 import { toast } from 'sonner'
 import { StatusBadge } from '@/components/feedback/status-badge'
 import { labelSituacaoMatricula, variantSituacaoMatricula } from '@/lib/situacoes-matricula'
@@ -44,13 +44,15 @@ export default function TurmaDiarioPage() {
   const [turmaInfo, setTurmaInfo] = useState<TurmaDiarioInfo | null>(null)
   const [alunos, setAlunos] = useState<AlunoMatriculado[]>([])
   const [disciplinas, setDisciplinas] = useState<any[]>([])
+  const [profissionais, setProfissionais] = useState<ProfissionalTurma[]>([])
   const [metodo, setMetodo] = useState<any>(null)
   const [loading, setLoading] = useState(true)
   const [gerando, setGerando] = useState(false)
+  const [bloqueando, setBloqueando] = useState(false)
   const [confirmChamadaOpen, setConfirmChamadaOpen] = useState(false)
+  const [confirmBloqueioOpen, setConfirmBloqueioOpen] = useState(false)
   const [confirmDesfazerOpen, setConfirmDesfazerOpen] = useState(false)
   const [desfazendo, setDesfazendo] = useState(false)
-  const [abaAtiva, setAbaAtiva] = useState('alunos')
   const [alunosSearch, setAlunosSearch] = useState('')
   const [alunosPage, setAlunosPage] = useState(1)
   const ITENS_POR_PAGINA = 10
@@ -73,14 +75,16 @@ export default function TurmaDiarioPage() {
 
     const carregar = async () => {
       try {
-        const [info, disciplinasData, metodoData] = await Promise.all([
+        const [info, disciplinasData, metodoData, profissionaisData] = await Promise.all([
           getTurmaDiarioInfo(turmaId, pessoaId).catch(() => null),
           getDisciplinasDiario(turmaId, pessoaId).catch(() => []),
           getMetodoAvaliacaoDaTurma(turmaId).catch(() => null),
+          getProfissionaisDaTurma(turmaId, pessoaId).catch(() => []),
         ])
         setTurmaInfo(info)
         setAlunos(await carregarAlunosComFrequencia(metodoData?.criterio_frequencia))
         setDisciplinas(disciplinasData)
+        setProfissionais(profissionaisData)
         setMetodo(metodoData)
       } catch {
         toast.error('Erro ao carregar dados da turma')
@@ -96,13 +100,37 @@ export default function TurmaDiarioPage() {
     setGerando(true)
     try {
       const total = await gerarNumeroChamada(turmaId, pessoaId)
-      toast.success(`Numeração de chamada gerada para ${total} ${total === 1 ? 'aluno' : 'alunos'}`)
+      const bloqueada = turmaInfo?.chamada_bloqueada === true
+      if (bloqueada) {
+        if (total === 0) {
+          toast.info('Numeração bloqueada: todos os alunos já possuem número')
+        } else {
+          toast.success(`${total} ${total === 1 ? 'novo aluno numerado' : 'novos alunos numerados'} ao final da sequência`)
+        }
+      } else {
+        toast.success(`Numeração de chamada gerada para ${total} ${total === 1 ? 'aluno' : 'alunos'}`)
+      }
       setAlunos(await carregarAlunosComFrequencia(metodo?.criterio_frequencia))
     } catch {
-      toast.error('Erro ao gerar chamada')
+      toast.error('Erro ao gerar número de chamada')
     } finally {
       setGerando(false)
       setConfirmChamadaOpen(false)
+    }
+  }
+
+  const handleBloquearNumeracao = async () => {
+    setBloqueando(true)
+    try {
+      await bloquearNumeracaoChamada(turmaId, pessoaId)
+      toast.success('Numeração de chamada bloqueada')
+      const info = await getTurmaDiarioInfo(turmaId, pessoaId).catch(() => null)
+      setTurmaInfo(info)
+    } catch (e: any) {
+      toast.error(e?.message || 'Erro ao bloquear numeração')
+    } finally {
+      setBloqueando(false)
+      setConfirmBloqueioOpen(false)
     }
   }
 
@@ -142,6 +170,18 @@ export default function TurmaDiarioPage() {
   const readOnly = turmaFechada
   const podeFechar = pode.editar('gestao-pedagogica.fechamento.fechar')
   const podeDesfazer = pode.editar('gestao-pedagogica.fechamento.desfazer')
+  const podeBloquear = pode.editar('gestao-pedagogica.diario-classe.chamada')
+  const chamadaBloqueada = turmaInfo?.chamada_bloqueada === true
+
+  const abas = [
+    { value: 'alunos', label: 'Alunos' },
+    ...(criterioFrequencia === 'por_dia' ? [{ value: 'frequencia', label: 'Frequência por Dia' }] : []),
+    ...(criterioFrequencia === 'por_aula' ? [{ value: 'frequencia', label: 'Frequência por Aula' }] : []),
+    ...(temParecer ? [{ value: 'parecer', label: 'Parecer' }] : []),
+    ...(temIndicador ? [{ value: 'indicadores', label: 'Indicadores' }] : []),
+    ...(temNota ? [{ value: 'notas', label: 'Notas' }] : []),
+    { value: 'plano-aula', label: 'Plano de Aula' },
+  ]
 
   const alunosFiltrados = useMemo(() => {
     if (!alunosSearch.trim()) return alunos.filter(a => !a.data_saida)
@@ -189,24 +229,16 @@ export default function TurmaDiarioPage() {
             description={turmaInfo?.ano_letivo_descricao ? `Ano Letivo: ${turmaInfo.ano_letivo_descricao}` : undefined}
             icon={GraduationCap}
             actions={
-              <div className="flex flex-col gap-2 sm:flex-row">
-                <Button variant="outline" size="sm" onClick={() => setConfirmChamadaOpen(true)} disabled={gerando || turmaFechada}>
-                  <Hash className="h-4 w-4 mr-1.5" />
-                  {gerando ? 'Gerando...' : 'Gerar Chamada'}
-                </Button>
-                {turmaInfo?.quadro_aula_id && (
-                  <Button variant="outline" size="sm" onClick={() => router.push(`/gestao-turmas/quadro-aulas/cadastro?id=${turmaInfo.quadro_aula_id}`)}>
-                    <Calendar className="h-4 w-4 mr-1.5" />
-                    Ver Quadro de Horários
-                  </Button>
-                )}
-              </div>
+              <Button variant="outline" size="sm" onClick={() => router.push('/gestao-pedagogica/diario-classe')}>
+                <ArrowLeft className="mr-2 h-4 w-4" />
+                Voltar
+              </Button>
             }
           />
 
           <Card className="mb-6 overflow-hidden">
             <CardContent className="p-5 space-y-4">
-              <div className="flex items-start justify-between gap-4">
+              <div className="flex items-start justify-between gap-4 flex-wrap">
                 <div className="flex items-center gap-3 min-w-0">
                   <div className="p-2.5 rounded-xl bg-primary/10 shrink-0">
                     <GraduationCap className="h-5 w-5 text-primary" />
@@ -240,7 +272,7 @@ export default function TurmaDiarioPage() {
                 </Badge>
               </div>
 
-              <div className="flex items-center justify-between gap-3 flex-wrap">
+              <div className="flex items-center gap-2 flex-wrap">
                 <div className="flex items-center gap-2 flex-wrap">
                   {metodo?.nome && (
                     <Badge variant="outline" className="text-[12px] font-medium text-muted-foreground">
@@ -252,21 +284,6 @@ export default function TurmaDiarioPage() {
                       <Lock className="h-3 w-3 mr-1" />
                       Fechada em {turmaInfo?.data_fechamento ? formatarData(turmaInfo.data_fechamento) : ''}
                     </Badge>
-                  )}
-                </div>
-
-                <div className="flex items-center gap-2">
-                  {!turmaFechada && podeFechar && (
-                    <Button size="sm" onClick={() => router.push(`/gestao-pedagogica/diario-classe/${turmaId}/fechamento`)}>
-                      <ClipboardCheck className="h-4 w-4 mr-1.5" />
-                      Fechar Turma
-                    </Button>
-                  )}
-                  {turmaFechada && podeDesfazer && (
-                    <Button size="sm" variant="outline" className="text-destructive hover:text-destructive" onClick={() => setConfirmDesfazerOpen(true)}>
-                      <LockOpen className="h-4 w-4 mr-1.5" />
-                      Desfazer Fechamento
-                    </Button>
                   )}
                 </div>
               </div>
@@ -286,80 +303,83 @@ export default function TurmaDiarioPage() {
                   </div>
                 </>
               )}
+
+              <hr className="border-border" />
+              <div>
+                <p className="text-[13px] font-medium text-foreground mb-2">Profissionais</p>
+                {profissionais.length === 0 ? (
+                  <p className="text-[13px] text-muted-foreground">Nenhum profissional vinculado a esta turma.</p>
+                ) : (
+                  <ul className="space-y-1.5">
+                    {profissionais.map(p => (
+                      <li key={p.nome} className="text-[13px] text-muted-foreground">
+                        <span className="font-medium text-foreground">{p.nome}</span>
+                        {p.disciplinas.length > 0 && (
+                          <span> — {p.disciplinas.join(', ')}</span>
+                        )}
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+
+              <hr className="border-border" />
+              <div className="flex items-center gap-2 flex-wrap">
+                <Button variant="outline" size="sm" onClick={() => setConfirmChamadaOpen(true)} disabled={gerando || turmaFechada}>
+                  <Hash className="h-4 w-4 mr-1.5" />
+                  {gerando ? 'Gerando...' : 'Gerar Número de Chamada'}
+                </Button>
+                {!chamadaBloqueada && podeBloquear && !turmaFechada && (
+                  <Button variant="outline" size="sm" onClick={() => setConfirmBloqueioOpen(true)} disabled={bloqueando}>
+                    <Lock className="h-4 w-4 mr-1.5" />
+                    {bloqueando ? 'Bloqueando...' : 'Bloquear Numeração'}
+                  </Button>
+                )}
+                {chamadaBloqueada && (
+                  <Badge variant="outline" className="text-[12px] font-semibold bg-muted text-muted-foreground border-border">
+                    <Lock className="h-3 w-3 mr-1" />
+                    Numeração bloqueada
+                  </Badge>
+                )}
+                {turmaInfo?.quadro_aula_id && (
+                  <Button variant="outline" size="sm" onClick={() => router.push(`/gestao-turmas/quadro-aulas/cadastro?id=${turmaInfo.quadro_aula_id}`)}>
+                    <Calendar className="h-4 w-4 mr-1.5" />
+                    Ver Quadro de Horários
+                  </Button>
+                )}
+                {!turmaFechada && podeFechar && (
+                  <Button size="sm" onClick={() => router.push(`/gestao-pedagogica/diario-classe/${turmaId}/fechamento`)}>
+                    <ClipboardCheck className="h-4 w-4 mr-1.5" />
+                    Fechar Turma
+                  </Button>
+                )}
+                {turmaFechada && podeDesfazer && (
+                  <Button size="sm" variant="outline" className="text-destructive hover:text-destructive" onClick={() => setConfirmDesfazerOpen(true)}>
+                    <LockOpen className="h-4 w-4 mr-1.5" />
+                    Desfazer Fechamento
+                  </Button>
+                )}
+              </div>
             </CardContent>
           </Card>
 
-          <Tabs value={abaAtiva} onValueChange={setAbaAtiva}>
-            <TabsList className="mb-6 flex h-auto w-full min-h-[48px] gap-1 rounded-lg border border-border bg-card p-1 shadow-xs">
-              <TabsTrigger value="alunos" className="group/tab h-10 min-h-[40px] flex-1 rounded-md px-4 text-[14px] font-semibold text-foreground/80 transition-colors hover:bg-accent/10 data-active:bg-primary data-active:text-primary-foreground data-active:shadow-sm">
-                <span className="flex items-center gap-2">
-                  <Users className="h-4 w-4" />
-                  Alunos
-                </span>
-              </TabsTrigger>
-              {criterioFrequencia === 'por_dia' && (
-                <TabsTrigger value="frequencia" className="group/tab h-10 min-h-[40px] flex-1 rounded-md px-4 text-[14px] font-semibold text-foreground/80 transition-colors hover:bg-accent/10 data-active:bg-primary data-active:text-primary-foreground data-active:shadow-sm">
-                  <span className="flex items-center gap-2">
-                    <ClipboardCheck className="h-4 w-4" />
-                    Frequência por Dia
-                  </span>
-                </TabsTrigger>
-              )}
-              {criterioFrequencia === 'por_aula' && (
-                <TabsTrigger value="frequencia" className="group/tab h-10 min-h-[40px] flex-1 rounded-md px-4 text-[14px] font-semibold text-foreground/80 transition-colors hover:bg-accent/10 data-active:bg-primary data-active:text-primary-foreground data-active:shadow-sm">
-                  <span className="flex items-center gap-2">
-                    <ClipboardCheck className="h-4 w-4" />
-                    Frequência por Aula
-                  </span>
-                </TabsTrigger>
-              )}
-              {temParecer && (
-                <TabsTrigger value="parecer" className="group/tab h-10 min-h-[40px] flex-1 rounded-md px-4 text-[14px] font-semibold text-foreground/80 transition-colors hover:bg-accent/10 data-active:bg-primary data-active:text-primary-foreground data-active:shadow-sm">
-                  <span className="flex items-center gap-2">
-                    <FileText className="h-4 w-4" />
-                    Parecer
-                  </span>
-                </TabsTrigger>
-              )}
-              {temIndicador && (
-                <TabsTrigger value="indicadores" className="group/tab h-10 min-h-[40px] flex-1 rounded-md px-4 text-[14px] font-semibold text-foreground/80 transition-colors hover:bg-accent/10 data-active:bg-primary data-active:text-primary-foreground data-active:shadow-sm">
-                  <span className="flex items-center gap-2">
-                    <BarChart3 className="h-4 w-4" />
-                    Indicadores
-                  </span>
-                </TabsTrigger>
-              )}
-              {temNota && (
-                <TabsTrigger value="notas" className="group/tab h-10 min-h-[40px] flex-1 rounded-md px-4 text-[14px] font-semibold text-foreground/80 transition-colors hover:bg-accent/10 data-active:bg-primary data-active:text-primary-foreground data-active:shadow-sm">
-                  <span className="flex items-center gap-2">
-                    <Calculator className="h-4 w-4" />
-                    Notas
-                  </span>
-                </TabsTrigger>
-              )}
-              <TabsTrigger value="plano-aula" className="group/tab h-10 min-h-[40px] flex-1 rounded-md px-4 text-[14px] font-semibold text-foreground/80 transition-colors hover:bg-accent/10 data-active:bg-primary data-active:text-primary-foreground data-active:shadow-sm">
-                <span className="flex items-center gap-2">
-                  <BookOpen className="h-4 w-4" />
-                  Plano de Aula
-                </span>
-              </TabsTrigger>
-            </TabsList>
-
-            <TabsContent value="alunos">
-              <Card className="shadow-sm">
-                <CardContent className="p-0">
-                  <div className="p-4 pb-0">
-                    <div className="relative max-w-xs">
-                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
-                      <input
-                        type="text"
-                        value={alunosSearch}
-                        onChange={(e) => setAlunosSearch(e.target.value)}
-                        placeholder="Buscar aluno por nome..."
-                        className="h-9 w-full rounded-md border border-border bg-transparent pl-10 pr-3 py-1 text-sm shadow-xs transition-[color,box-shadow] outline-none placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
-                      />
-                    </div>
+          <ModernTabs tabs={abas} scroll urlSync={false} defaultValue="alunos">
+            {abas.map(aba => {
+              if (aba.value === 'alunos') return (
+                <Fragment key="alunos">
+              <PageSection title="Alunos Matriculados" variant="flush">
+                <div className="p-4 sm:p-6 sm:pb-4">
+                  <div className="relative max-w-xs">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
+                    <input
+                      type="text"
+                      value={alunosSearch}
+                      onChange={(e) => setAlunosSearch(e.target.value)}
+                      placeholder="Buscar aluno por nome..."
+                      className="h-9 w-full rounded-md border border-border bg-transparent pl-10 pr-3 py-1 text-sm shadow-xs transition-[color,box-shadow] outline-none placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
+                    />
                   </div>
+                </div>
 
                   <div className="overflow-x-auto">
                     <Table>
@@ -478,11 +498,11 @@ export default function TurmaDiarioPage() {
                       </div>
                     )}
                   </div>
-                </CardContent>
-              </Card>
-            </TabsContent>
-
-            <TabsContent value="frequencia">
+              </PageSection>
+                </Fragment>
+              )
+              if (aba.value === 'frequencia') return (
+                <Fragment key="frequencia">
               <PageSection
                 title={criterioFrequencia === 'por_aula' ? 'Frequência por Aula' : 'Frequência por Dia'}
                 variant="flush"
@@ -493,8 +513,10 @@ export default function TurmaDiarioPage() {
                   <FrequenciaPorDia turmaId={turmaId} alunos={alunos} disciplinas={disciplinas} readOnly={readOnly} />
                 )}
               </PageSection>
-            </TabsContent>
-            <TabsContent value="parecer">
+                </Fragment>
+              )
+              if (aba.value === 'parecer') return (
+                <Fragment key="parecer">
               <PageSection title="Parecer Descritivo" variant="flush">
                 <ParecerDescritivo
                   turmaId={turmaId}
@@ -505,8 +527,10 @@ export default function TurmaDiarioPage() {
                   readOnly={readOnly}
                 />
               </PageSection>
-            </TabsContent>
-            <TabsContent value="indicadores">
+                </Fragment>
+              )
+              if (aba.value === 'indicadores') return (
+                <Fragment key="indicadores">
               <PageSection title="Avaliação por Indicadores" variant="flush">
                 <AvaliacaoIndicadores
                   turmaId={turmaId}
@@ -516,8 +540,10 @@ export default function TurmaDiarioPage() {
                   readOnly={readOnly}
                 />
               </PageSection>
-            </TabsContent>
-            <TabsContent value="notas">
+                </Fragment>
+              )
+              if (aba.value === 'notas') return (
+                <Fragment key="notas">
               <PageSection title="Avaliações Numéricas" variant="flush">
                 <AvaliacoesNumericas
                   turmaId={turmaId}
@@ -528,26 +554,45 @@ export default function TurmaDiarioPage() {
                   readOnly={readOnly}
                 />
               </PageSection>
-            </TabsContent>
-            <TabsContent value="plano-aula">
+                </Fragment>
+              )
+              if (aba.value === 'plano-aula') return (
+                <Fragment key="plano-aula">
               <PageSection title="Plano de Aula" variant="flush">
                 <PlanoAulaDiario turmaId={turmaId} disciplinas={disciplinas} pessoaId={pessoaId} readOnly={readOnly} />
               </PageSection>
-            </TabsContent>
-          </Tabs>
+                </Fragment>
+              )
+              return null
+            })}
+          </ModernTabs>
         </>
       )}
 
       <ConfirmDialog
         open={confirmChamadaOpen}
         onOpenChange={v => { if (!v) setConfirmChamadaOpen(false) }}
-        title="Gerar numeração de chamada?"
-        description="Os alunos serão reorganizados em ordem alfabética e cada um receberá um número de chamada em sequência (1, 2, 3...). Atenção: alunos que entrarem na turma durante o ano letivo podem ficar com números que antes pertenciam a outros alunos."
-        confirmLabel="Gerar chamada"
+        title="Gerar número de chamada?"
+        description={chamadaBloqueada
+          ? 'A numeração está bloqueada: apenas os alunos ainda sem número serão numerados ao final da sequência (ex.: se o maior número é 30, o próximo será 31). A numeração dos demais alunos não será alterada.'
+          : 'Os alunos serão reorganizados em ordem alfabética e cada um receberá um número de chamada em sequência (1, 2, 3...). Atenção: alunos que entrarem na turma durante o ano letivo podem ficar com números que antes pertenciam a outros alunos.'}
+        confirmLabel="Gerar número de chamada"
         cancelLabel="Cancelar"
         variant="warning"
         loading={gerando}
         onConfirm={handleGerarChamada}
+      />
+
+      <ConfirmDialog
+        open={confirmBloqueioOpen}
+        onOpenChange={v => { if (!v) setConfirmBloqueioOpen(false) }}
+        title="Bloquear numeração de chamada?"
+        description="A ordem de chamada atual será travada e esta ação não pode ser desfeita. A partir do bloqueio, novos alunos matriculados serão adicionados ao final da numeração, sem alterar os números dos demais alunos."
+        confirmLabel="Bloquear numeração"
+        cancelLabel="Cancelar"
+        variant="warning"
+        loading={bloqueando}
+        onConfirm={handleBloquearNumeracao}
       />
 
       <ConfirmDialog

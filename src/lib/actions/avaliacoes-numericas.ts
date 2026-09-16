@@ -501,7 +501,7 @@ export async function calcularDesempenhoAluno(
     ? await getConfigNumerica(metodoId, quantidadePeriodos)
     : configNumericaPadrao(quantidadePeriodos)
 
-  const [notasData, recuperacoesData, conselhoData] = await Promise.all([
+  const [notasData, recuperacoesData, conselhoData, flags] = await Promise.all([
     supabase
       .from('academico_notas')
       .select('periodo, valor, descricao')
@@ -520,6 +520,13 @@ export async function calcularDesempenhoAluno(
       .eq('aluno_id', alunoId)
       .eq('matriz_disciplina_id', disciplinaId)
       .then(r => (r.data || []) as { periodo: number; nota_conselho: number | null }[]),
+    // spec 032: pills "Não reprova por nota" (disciplina_id aqui = matriz_disciplina_id)
+    supabase
+      .from('academico_matriz_disciplinas')
+      .select('nao_reprova_nota')
+      .eq('id', disciplinaId)
+      .maybeSingle()
+      .then(r => (r.data as { nao_reprova_nota?: boolean | null } | null)),
   ])
 
   const { medias: mediasPeriodo, conselho: conselhoPeriodos } = computarMediasPeriodo(
@@ -604,6 +611,11 @@ export async function calcularDesempenhoAluno(
   const avaliacaoCompleta = mediasPeriodo.every(m => m !== null)
   if (mediaAnual !== null && status !== null && !avaliacaoCompleta) {
     status = 'em_andamento'
+  }
+
+  // spec 032: disciplina com "Não reprova por nota" nunca reprova (nem cai em recuperação final)
+  if (flags?.nao_reprova_nota === true && (status === 'reprovado' || status === 'recuperacao')) {
+    status = 'aprovado'
   }
 
   return {

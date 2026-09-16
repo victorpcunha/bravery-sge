@@ -21,15 +21,16 @@ export const COMPATIBILIDADE_MEDIACAO_TURMA_ETAPA: CompatibilidadeMediaçãoTurm
   { tipo_mediacao: '1', tipo_turma: '6', etapa_agregada: '305', etapas_ensino: [35, 36, 37, 38], descricao: 'Presencial / Curricular / Normal/Magistério' },
   { tipo_mediacao: '1', tipo_turma: '6', etapa_agregada: '306', etapas_ensino: [69, 70, 72, 71, 74, 73, 67], descricao: 'Presencial / Curricular / EJA' },
   { tipo_mediacao: '1', tipo_turma: '6', etapa_agregada: '308', etapas_ensino: [39, 40, 64, 68, 75], descricao: 'Presencial / Curricular / Técnico e FIC' },
-  // Presencial — Curricular + Atividade complementar
+  // Presencial — Curricular + Atividade complementar (tipo 9)
+  // Oficial: 302 [14..41], 303 [22,23] (SEM 56), 304 [25..29], 305 SEM habilitadas (= bloqueado)
   { tipo_mediacao: '1', tipo_turma: '9', etapa_agregada: '302', etapas_ensino: [14, 15, 16, 17, 18, 19, 20, 21, 41], descricao: 'Presencial / Curricular+Complementar / EF 9 anos' },
   { tipo_mediacao: '1', tipo_turma: '9', etapa_agregada: '303', etapas_ensino: [22, 23], descricao: 'Presencial / Curricular+Complementar / Multi e correção' },
   { tipo_mediacao: '1', tipo_turma: '9', etapa_agregada: '304', etapas_ensino: [25, 26, 27, 28, 29], descricao: 'Presencial / Curricular+Complementar / Ensino Médio' },
-  { tipo_mediacao: '1', tipo_turma: '9', etapa_agregada: '305', etapas_ensino: [35, 36, 37, 38], descricao: 'Presencial / Curricular+Complementar / Normal/Magistério' },
   // Semipresencial — apenas EJA
   { tipo_mediacao: '2', tipo_turma: '6', etapa_agregada: '306', etapas_ensino: [69, 70, 71, 72], descricao: 'Semipresencial / Curricular / EJA' },
   // EAD — Curricular
   { tipo_mediacao: '3', tipo_turma: '6', etapa_agregada: '304', etapas_ensino: [], descricao: 'EAD / Curricular / Ensino Médio (sem FGB)' },
+  { tipo_mediacao: '3', tipo_turma: '6', etapa_agregada: '305', etapas_ensino: [35, 36, 37, 38], descricao: 'EAD / Curricular / Normal/Magistério' },
   { tipo_mediacao: '3', tipo_turma: '6', etapa_agregada: '306', etapas_ensino: [71, 74, 67], descricao: 'EAD / Curricular / EJA' },
   { tipo_mediacao: '3', tipo_turma: '6', etapa_agregada: '308', etapas_ensino: [39, 40, 64, 68, 75], descricao: 'EAD / Curricular / Técnico e FIC' },
 ]

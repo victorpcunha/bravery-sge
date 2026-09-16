@@ -6,15 +6,16 @@ type FilterBarProps = {
   searchValue?: string
   onSearchChange?: (value: string) => void
   searchPlaceholder?: string
+  searchClassName?: string
   children?: React.ReactNode
   className?: string
 }
 
-export function FilterBar({ searchValue, onSearchChange, searchPlaceholder, children, className }: FilterBarProps) {
+export function FilterBar({ searchValue, onSearchChange, searchPlaceholder, searchClassName, children, className }: FilterBarProps) {
   return (
     <div className={cn('flex items-center gap-4 flex-wrap', className)}>
       {searchValue !== undefined && onSearchChange && (
-        <div className="relative flex-1 min-w-[200px]">
+        <div className={cn('relative flex-1 min-w-[200px]', searchClassName)}>
           {/* SearchInput is inlined here for simplicity; import SearchInput separately for standalone use */}
           <svg
             className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none"

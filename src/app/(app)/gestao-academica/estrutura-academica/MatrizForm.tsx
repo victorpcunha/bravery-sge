@@ -5,20 +5,20 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Switch } from '@/components/ui/switch'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog'
-import { ScrollArea } from '@/components/ui/scroll-area'
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion'
 import { Separator } from '@/components/ui/separator'
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
-import { DatePickerDual } from '@/components/ui/date-picker'
+import { DatePicker } from '@/components/ui/date-picker'
 import { PillToggleGroup } from '@/components/ui/pill-toggle'
+import { ClickablePill } from '@/components/ui/clickable-pill'
 import { StatusBadge } from '@/components/feedback/status-badge'
 import { EmptyState } from '@/components/ui/empty-state'
 import { ConfirmDialog } from '@/components/feedback/confirm-dialog'
 import { toast } from 'sonner'
-import { Plus, Pencil, Trash2, ShieldAlert, Info, ChevronDown, ChevronRight, Search, X } from 'lucide-react'
+import { Plus, Pencil, Trash2, ShieldAlert, ChevronDown, ChevronRight } from 'lucide-react'
 import { usePermissoes } from '@/hooks/use-permissoes'
 import { getEtapasEnsino } from '@/lib/actions/etapas-ensino'
 import {
@@ -60,6 +60,7 @@ type FormData = {
   data_final: string
   turnos: string[]
   tipo_turma: string[]
+  ativa: boolean
   carga_regular_aulas_dia: number
   carga_regular_aulas_semana: number
   carga_regular_duracao: number
@@ -71,21 +72,9 @@ type FormData = {
 const defaultForm: FormData = {
   descricao: '', ano_letivo_id: '', etapa_ensino_id: '', subetapa_id: '', metodo_avaliacao_id: '',
   data_inicio: '', data_final: '',
-  turnos: [], tipo_turma: [],
+  turnos: [], tipo_turma: [], ativa: true,
   carga_regular_aulas_dia: 0, carga_regular_aulas_semana: 0, carga_regular_duracao: 50,
   carga_integral_aulas_dia: 0, carga_integral_aulas_semana: 0, carga_integral_duracao: 50,
-}
-
-function LabelWithTooltip({ label, tooltip }: { label: string; tooltip: string }) {
-  return (
-    <div className="flex items-center gap-1">
-      <Label className="text-foreground font-medium">{label}</Label>
-      <Tooltip>
-        <TooltipTrigger asChild><Info className="h-3.5 w-3.5 text-muted-foreground cursor-help" /></TooltipTrigger>
-        <TooltipContent>{tooltip}</TooltipContent>
-      </Tooltip>
-    </div>
-  )
 }
 
 interface MatrizFormProps {
@@ -93,9 +82,10 @@ interface MatrizFormProps {
   matrizId: string | null
   onSaved: () => void
   onCancel: () => void
+  onCreated?: (id: string) => void
 }
 
-export function MatrizForm({ schoolId, matrizId, onSaved, onCancel }: MatrizFormProps) {
+export function MatrizForm({ schoolId, matrizId, onSaved, onCancel, onCreated }: MatrizFormProps) {
   const { pode, loaded: permLoaded, pessoaId } = usePermissoes(schoolId)
   const [form, setForm] = useState<FormData>(defaultForm)
   const [saving, setSaving] = useState(false)
@@ -113,7 +103,8 @@ export function MatrizForm({ schoolId, matrizId, onSaved, onCancel }: MatrizForm
   const [discForm, setDiscForm] = useState({
     disciplina_id: '',
     tipo_disciplina: 'base_comum' as string,
-    desconsidera_reprovacao: false,
+    nao_reprova_nota: false,
+    nao_reprova_frequencia: false,
     carga_horaria_regular: 0,
     carga_horaria_integral: 0,
     carga_horaria_regular_habilitada: false,
@@ -131,6 +122,8 @@ export function MatrizForm({ schoolId, matrizId, onSaved, onCancel }: MatrizForm
   const [replicarOrigemId, setReplicarOrigemId] = useState('')
   const [replicarOrigemNome, setReplicarOrigemNome] = useState('')
   const [deleteDiscTarget, setDeleteDiscTarget] = useState<any>(null)
+  // Grupos BNCC expandidos (Accordion múltiplo; vazio = todos recolhidos)
+  const [bnccExpandidos, setBnccExpandidos] = useState<string[]>([])
 
   useEffect(() => { loadInitial() }, [schoolId])
   useEffect(() => { if (matrizId) loadMatriz() }, [matrizId])
@@ -191,6 +184,7 @@ export function MatrizForm({ schoolId, matrizId, onSaved, onCancel }: MatrizForm
         data_final: m.data_final?.split('T')[0] || '',
         turnos: m.turnos || [],
         tipo_turma: m.tipo_turma || [],
+        ativa: m.ativa ?? true,
         carga_regular_aulas_dia: m.aulas_diarias_regular || 0,
         carga_regular_aulas_semana: m.aulas_semanais_regular || 0,
         carga_regular_duracao: m.duracao_aula_regular || 50,
@@ -198,6 +192,12 @@ export function MatrizForm({ schoolId, matrizId, onSaved, onCancel }: MatrizForm
         carga_integral_aulas_semana: m.aulas_semanais_integral || 0,
         carga_integral_duracao: m.duracao_aula_integral || 50,
       })
+      if (m.etapa_ensino_id) {
+        try {
+          const { getSubetapas } = await import('@/lib/actions/etapas-ensino')
+          setSubetapas(await getSubetapas(m.etapa_ensino_id))
+        } catch { setSubetapas([]) }
+      }
       const per = await getPeriodos(matrizId)
       setPeriodos(per)
       const map: Record<string, any[]> = {}
@@ -235,6 +235,7 @@ export function MatrizForm({ schoolId, matrizId, onSaved, onCancel }: MatrizForm
         data_final: form.data_final,
         turnos: form.turnos,
         tipo_turma: form.tipo_turma,
+        ativa: form.ativa,
         aulas_diarias_regular: form.carga_regular_aulas_dia,
         aulas_semanais_regular: form.carga_regular_aulas_semana,
         duracao_aula_regular: form.carga_regular_duracao,
@@ -245,13 +246,15 @@ export function MatrizForm({ schoolId, matrizId, onSaved, onCancel }: MatrizForm
       if (matrizId) {
         await updateMatriz(matrizId, payload as any, pessoaId)
         toast.success('Matriz atualizada!')
+        onSaved()
       } else {
         const nova = await createMatriz(payload as any, pessoaId) as any
         const qtdPeriodos = form.tipo_turma.includes('Regular') ? 4 : form.tipo_turma.includes('Integral') ? 2 : 4
         await createPeriodos(nova.id, qtdPeriodos, Array.from({ length: qtdPeriodos }, (_, i) => `${i + 1}º Período`), pessoaId)
-        toast.success('Matriz criada!')
+        toast.success('Matriz criada! Continue o preenchimento dos períodos abaixo.')
+        if (onCreated) onCreated(nova.id)
+        else onSaved()
       }
-      onSaved()
     } catch (e: any) { toast.error(e?.message || 'Erro ao salvar') }
     finally { setSaving(false) }
   }
@@ -271,7 +274,8 @@ export function MatrizForm({ schoolId, matrizId, onSaved, onCancel }: MatrizForm
       setDiscForm({
         disciplina_id: editDisc.disciplina_id || '',
         tipo_disciplina: editDisc.tipo_disciplina || 'base_comum',
-        desconsidera_reprovacao: editDisc.desconsidera_reprovacao || false,
+        nao_reprova_nota: editDisc.nao_reprova_nota ?? editDisc.desconsidera_reprovacao ?? false,
+        nao_reprova_frequencia: editDisc.nao_reprova_frequencia ?? editDisc.desconsidera_reprovacao ?? false,
         carga_horaria_regular: editDisc.carga_horaria_regular_minutos || 0,
         carga_horaria_integral: editDisc.carga_horaria_integral_minutos || 0,
         carga_horaria_regular_habilitada: !!editDisc.carga_horaria_regular_minutos,
@@ -282,7 +286,7 @@ export function MatrizForm({ schoolId, matrizId, onSaved, onCancel }: MatrizForm
     } else {
       setDiscEditId(null)
       setDiscForm({
-        disciplina_id: '', tipo_disciplina: 'base_comum', desconsidera_reprovacao: false,
+        disciplina_id: '', tipo_disciplina: 'base_comum', nao_reprova_nota: false, nao_reprova_frequencia: false,
         carga_horaria_regular: 0, carga_horaria_integral: 0,
         carga_horaria_regular_habilitada: false, carga_horaria_integral_habilitada: false,
       })
@@ -333,7 +337,9 @@ export function MatrizForm({ schoolId, matrizId, onSaved, onCancel }: MatrizForm
         periodo_id: discPeriodoId,
         disciplina_id: discForm.disciplina_id,
         tipo_disciplina: discForm.tipo_disciplina,
-        desconsidera_reprovacao: discForm.desconsidera_reprovacao,
+        nao_reprova_nota: discForm.nao_reprova_nota,
+        nao_reprova_frequencia: discForm.nao_reprova_frequencia,
+        desconsidera_reprovacao: discForm.nao_reprova_nota || discForm.nao_reprova_frequencia,
         carga_horaria_regular_minutos: discForm.carga_horaria_regular_habilitada ? discForm.carga_horaria_regular : 0,
         carga_horaria_integral_minutos: discForm.carga_horaria_integral_habilitada ? discForm.carga_horaria_integral : 0,
       }
@@ -405,6 +411,25 @@ export function MatrizForm({ schoolId, matrizId, onSaved, onCancel }: MatrizForm
     (h.descricao || '').toLowerCase().includes(bnccSearch.toLowerCase())
   ) : null
 
+  // Disciplinas ativas da escola compatíveis com a etapa da matriz
+  const tipoEnsinoFiltro = etapaTipoAtual.startsWith('fundamental') ? 'fundamental'
+    : ['infantil', 'medio', 'eja'].includes(etapaTipoAtual) ? etapaTipoAtual
+    : undefined
+  const disciplinasFiltradas = tipoEnsinoFiltro
+    ? disciplinasSistema.filter((d: any) => d.tipo_ensino === tipoEnsinoFiltro || d.tipo_ensino === 'todos')
+    : disciplinasSistema
+
+  // Tipo travado: derivado do cadastro da disciplina (diretriz_curricular)
+  function tipoDaDisciplina(disciplinaId: string): string {
+    const d = disciplinasSistema.find((x: any) => x.id === disciplinaId) as any
+    return d?.diretriz_curricular === 'parte_diversificada' ? 'parte_diversificada' : 'base_comum'
+  }
+
+  function handleDiscChange(v: string) {
+    setDiscForm({ ...discForm, disciplina_id: v, tipo_disciplina: tipoDaDisciplina(v) })
+    setBnccExpandidos([])
+  }
+
   if (!permLoaded) return <div className="flex items-center justify-center py-8"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" /></div>
   if (!pode.visualizar('gestao-academica.estrutura-academica.matrizes')) return <EmptyState icon={ShieldAlert} title="Sem permissão" description="Você não tem permissão para acessar Matrizes." />
 
@@ -412,60 +437,70 @@ export function MatrizForm({ schoolId, matrizId, onSaved, onCancel }: MatrizForm
     <div className="space-y-6">
       {/* Card: Identificação */}
       <Card className="shadow-sm">
-        <CardHeader className="pb-3"><CardTitle className="text-[16px] font-semibold">Identificação</CardTitle></CardHeader>
+        <CardHeader className="pb-3">
+          <div className="flex items-center justify-between gap-4 flex-wrap">
+            <CardTitle className="font-display text-[20px] font-semibold">Identificação</CardTitle>
+            {matrizId && (
+              <div className="flex items-center gap-2">
+                <Label className="text-[14px] font-medium">Matriz ativa</Label>
+                <Switch checked={form.ativa} onCheckedChange={v => setForm({ ...form, ativa: v })} aria-label="Matriz ativa" />
+              </div>
+            )}
+          </div>
+        </CardHeader>
         <CardContent className="space-y-4">
           <div>
             <Label className="text-foreground font-medium block mb-1.5">Descrição <span className="text-destructive">*</span></Label>
             <Input className="border-border" placeholder="Ex: Matriz Ensino Fundamental 2026" value={form.descricao} onChange={e => setForm({ ...form, descricao: e.target.value })} />
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
               <Label className="text-foreground font-medium block mb-1.5">Ano Letivo <span className="text-destructive">*</span></Label>
               <Select value={form.ano_letivo_id} onValueChange={v => setForm({ ...form, ano_letivo_id: v })}>
-                <SelectTrigger className="border-border [&_svg]:!rotate-0"><SelectValue placeholder="Selecione" /></SelectTrigger>
+                <SelectTrigger className="border-border"><SelectValue placeholder="Selecione" /></SelectTrigger>
                 <SelectContent>{anosLetivos.map((a: any) => <SelectItem key={a.id} value={a.id}>{a.descricao}</SelectItem>)}</SelectContent>
               </Select>
             </div>
             <div>
               <Label className="text-foreground font-medium block mb-1.5">Etapa de Ensino <span className="text-destructive">*</span></Label>
               <Select value={form.etapa_ensino_id} onValueChange={handleStepChange}>
-                <SelectTrigger className="border-border [&_svg]:!rotate-0"><SelectValue placeholder="Selecione" /></SelectTrigger>
+                <SelectTrigger className="border-border"><SelectValue placeholder="Selecione" /></SelectTrigger>
                 <SelectContent>
                   {Object.entries(etapasAgrupadas).map(([tipo, lista]) => (
-                    <div key={tipo}>
-                      <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground">{gruposEtapaLabels[tipo] || tipo}</div>
+                    <SelectGroup key={tipo}>
+                      <SelectLabel>{gruposEtapaLabels[tipo] || tipo}</SelectLabel>
                       {lista.map((e: any) => <SelectItem key={e.id} value={e.id}>{e.etapa_nome}</SelectItem>)}
-                    </div>
+                    </SelectGroup>
                   ))}
                 </SelectContent>
-              </Select>
-            </div>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <Label className="text-foreground font-medium block mb-1.5">Método de Avaliação</Label>
-              <Select value={form.metodo_avaliacao_id} onValueChange={v => setForm({ ...form, metodo_avaliacao_id: v })}>
-                <SelectTrigger className="border-border [&_svg]:!rotate-0"><SelectValue placeholder="Selecione" /></SelectTrigger>
-                <SelectContent>{metodos.map((m: any) => <SelectItem key={m.id} value={m.id}>{m.nome}</SelectItem>)}</SelectContent>
               </Select>
             </div>
             <div>
               <Label className="text-foreground font-medium block mb-1.5">Subetapa</Label>
               <Select value={form.subetapa_id} onValueChange={v => setForm({ ...form, subetapa_id: v })} disabled={subetapas.length === 0}>
-                <SelectTrigger className="border-border [&_svg]:!rotate-0"><SelectValue placeholder={subetapas.length === 0 ? 'Sem subetapas' : 'Selecione'} /></SelectTrigger>
+                <SelectTrigger className="border-border"><SelectValue placeholder={subetapas.length === 0 ? 'Sem subetapas' : 'Selecione'} /></SelectTrigger>
                 <SelectContent>{subetapas.map((s: any) => <SelectItem key={s.id} value={s.id}>{s.nome}</SelectItem>)}</SelectContent>
               </Select>
             </div>
           </div>
-          <DatePickerDual
-            labelInicio="Data Inicial" labelTermino="Data Final"
-            valorInicio={form.data_inicio} valorTermino={form.data_final}
-            onChangeInicio={v => setForm({ ...form, data_inicio: v })}
-            onChangeTermino={v => setForm({ ...form, data_final: v })}
-          />
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div>
+              <Label className="text-foreground font-medium block mb-1.5">Método de Avaliação</Label>
+              <Select value={form.metodo_avaliacao_id} onValueChange={v => setForm({ ...form, metodo_avaliacao_id: v })}>
+                <SelectTrigger className="border-border"><SelectValue placeholder="Selecione" /></SelectTrigger>
+                <SelectContent>{metodos.map((m: any) => <SelectItem key={m.id} value={m.id}>{m.nome}</SelectItem>)}</SelectContent>
+              </Select>
+            </div>
+            <div>
+              <DatePicker label="Data Inicial *" value={form.data_inicio} onChange={v => setForm({ ...form, data_inicio: v })} placeholder="dd/mm/aaaa" />
+            </div>
+            <div>
+              <DatePicker label="Data Final *" value={form.data_final} onChange={v => setForm({ ...form, data_final: v })} placeholder="dd/mm/aaaa" minDate={form.data_inicio || undefined} />
+            </div>
+          </div>
 
           {/* Turnos e Tipo de Turma como Pills */}
-          <div className="space-y-3 pt-2">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
             <div>
               <Label className="text-foreground font-medium block mb-1.5">Turnos</Label>
               <PillToggleGroup
@@ -491,13 +526,13 @@ export function MatrizForm({ schoolId, matrizId, onSaved, onCancel }: MatrizForm
       {/* Card: Configuração de Carga Horária (unificado) */}
       {form.tipo_turma.length > 0 && (
         <Card className="shadow-sm">
-        <CardHeader className="pb-3"><CardTitle className="text-[16px] font-semibold">Configuração de Carga Horária</CardTitle></CardHeader>
+        <CardHeader className="pb-3"><CardTitle className="font-display text-[20px] font-semibold">Configuração de Carga Horária</CardTitle></CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {/* Subcard: Regular */}
             <div className="rounded-lg border border-border p-4">
               <div className="text-[15px] font-semibold text-foreground mb-3">Turno Regular</div>
-              <div className="grid grid-cols-3 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <div>
                   <Label className="text-xs text-muted-foreground block mb-1">Aulas/Dia</Label>
                   <Input type="number" className="border-border" value={form.carga_regular_aulas_dia || ''} onChange={e => setForm({ ...form, carga_regular_aulas_dia: Number(e.target.value) })} />
@@ -517,7 +552,7 @@ export function MatrizForm({ schoolId, matrizId, onSaved, onCancel }: MatrizForm
             {/* Subcard: Integral */}
             <div className="rounded-lg border border-border p-4">
               <div className="text-[15px] font-semibold text-foreground mb-3">Turno Integral</div>
-              <div className="grid grid-cols-3 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <div>
                   <Label className="text-xs text-muted-foreground block mb-1">Aulas/Dia</Label>
                   <Input type="number" className="border-border" value={form.carga_integral_aulas_dia || ''} onChange={e => setForm({ ...form, carga_integral_aulas_dia: Number(e.target.value) })} />
@@ -541,10 +576,10 @@ export function MatrizForm({ schoolId, matrizId, onSaved, onCancel }: MatrizForm
       {/* Card: Períodos */}
       {matrizId && (
         <Card className="shadow-sm">
-          <CardHeader className="pb-3"><CardTitle className="text-[16px] font-semibold">Períodos</CardTitle></CardHeader>
+          <CardHeader className="pb-3"><CardTitle className="font-display text-[20px] font-semibold">Períodos</CardTitle></CardHeader>
           <CardContent>
             {periodos.length === 0 ? (
-              <p className="text-muted-foreground text-sm">Nenhum período configurado. Salve a matriz primeiro.</p>
+              <p className="text-muted-foreground text-[15px]">Nenhum período configurado. Salve a matriz primeiro.</p>
             ) : (
               <div className="space-y-3">
                 {periodos.map((p, idx) => {
@@ -554,26 +589,36 @@ export function MatrizForm({ schoolId, matrizId, onSaved, onCancel }: MatrizForm
                     <div key={p.id} className="rounded-lg border border-border overflow-hidden">
                       <div onClick={() => toggleExpandPeriodo(p.id)} className="w-full flex items-center gap-3 px-4 py-3 hover:bg-muted/50 transition-colors text-left cursor-pointer">
                         {isExpanded ? <ChevronDown className="h-5 w-5 text-muted-foreground" /> : <ChevronRight className="h-5 w-5 text-muted-foreground" />}
-                        <span className="text-[15px] font-semibold text-foreground flex-1">{p.nome || `${idx + 1}º Período`}</span>
+                        <span className="text-[15px] font-semibold text-foreground flex-1">{p.periodo_nome || `${idx + 1}º Período`}</span>
                         {discs.length > 0 && <StatusBadge status="info">{discs.length} disciplina{discs.length > 1 ? 's' : ''}</StatusBadge>}
                         {/* Replicar button only in 1st period */}
                         {idx === 0 && periodos.length > 1 && (
-                          <Button variant="outline" size="xs" onClick={(e) => { e.stopPropagation(); setReplicarOrigemId(p.id); setReplicarOrigemNome(p.nome || `${idx + 1}º Período`); setShowReplicarDialog(true) }}>
-                            Replicar para demais
+                          <Button variant="outline" size="xs" onClick={(e) => { e.stopPropagation(); setReplicarOrigemId(p.id); setReplicarOrigemNome(p.periodo_nome || `${idx + 1}º Período`); setShowReplicarDialog(true) }}>
+                            Replicar para os demais períodos
                           </Button>
                         )}
                       </div>
                       {isExpanded && (
                         <div className="border-t border-border px-4 py-3 bg-muted/20 space-y-2">
+                          <div className="flex justify-end">
+                            <Button size="sm" onClick={() => openDiscModal(p.id)}>
+                              <Plus className="h-4 w-4 mr-2" />Adicionar Disciplina
+                            </Button>
+                          </div>
                           {discs.map((d: any) => (
                             <div key={d.id} className="flex items-center justify-between p-2 rounded border border-border bg-card">
                               <div className="flex-1">
-                                <span className="text-sm font-medium text-foreground">{d.academico_disciplinas?.nome || d.disciplina_id}</span>
-                                <div className="flex items-center gap-2 mt-0.5">
-                                  <span className="text-xs text-muted-foreground">{d.tipo_disciplina === 'base_comum' ? 'Base Comum' : 'Parte Diversificada'}</span>
-                                  {d.desconsidera_reprovacao && <span className="text-xs text-warning">Não reprova</span>}
-                                  {d.carga_horaria_regular > 0 && <span className="text-xs text-muted-foreground">Reg: {d.carga_horaria_regular}h</span>}
-                                  {d.carga_horaria_integral > 0 && <span className="text-xs text-muted-foreground">Int: {d.carga_horaria_integral}h</span>}
+                                <span className="text-[14px] font-medium text-foreground">{d.academico_disciplinas?.nome || d.disciplina_id}</span>
+                                <div className="flex items-center gap-2 mt-0.5 flex-wrap">
+                                  <span className="text-[13px] text-muted-foreground">{d.tipo_disciplina === 'base_comum' ? 'Base Comum' : 'Parte Diversificada'}</span>
+                                  {(d.nao_reprova_nota || d.nao_reprova_frequencia || d.desconsidera_reprovacao) && (
+                                    <span className="text-[13px] text-warning">
+                                      {[d.nao_reprova_nota && 'Não reprova por nota', d.nao_reprova_frequencia && 'Não reprova por frequência'].filter(Boolean).join(' · ')
+                                        || 'Não reprova'}
+                                    </span>
+                                  )}
+                                  {(d.carga_horaria_regular_minutos || 0) > 0 && <span className="text-[13px] text-muted-foreground">Reg: {d.carga_horaria_regular_minutos}h</span>}
+                                  {(d.carga_horaria_integral_minutos || 0) > 0 && <span className="text-[13px] text-muted-foreground">Int: {d.carga_horaria_integral_minutos}h</span>}
                                 </div>
                               </div>
                               <div className="flex items-center gap-0.5 ml-2">
@@ -582,9 +627,6 @@ export function MatrizForm({ schoolId, matrizId, onSaved, onCancel }: MatrizForm
                               </div>
                             </div>
                           ))}
-                          <Button size="lg" className="w-full mt-2" onClick={() => openDiscModal(p.id)}>
-                            <Plus className="h-4 w-4 mr-2" />Adicionar Disciplina
-                          </Button>
                         </div>
                       )}
                     </div>
@@ -596,53 +638,67 @@ export function MatrizForm({ schoolId, matrizId, onSaved, onCancel }: MatrizForm
         </Card>
       )}
 
-      <div className="shrink-0 border-t border-border px-6 py-3 flex justify-end gap-2 bg-muted/30">
+      <div className="flex justify-end gap-2 pt-1">
         <Button variant="outline" onClick={onCancel} className="min-h-[40px] sm:min-h-[44px]">Cancelar</Button>
-        <Button onClick={handleSave} disabled={saving} className="min-h-[40px] sm:min-h-[44px]">{matrizId ? 'Salvar Alterações' : 'Criar Matriz'}</Button>
+        <Button onClick={handleSave} disabled={saving} className="min-h-[40px] sm:min-h-[44px]">{matrizId ? 'Salvar Alterações' : 'Criar Matriz e Continuar'}</Button>
       </div>
 
       {/* Modal: Disciplina */}
       <Dialog open={showDiscModal} onOpenChange={setShowDiscModal}>
         <DialogContent className="max-w-3xl max-h-[90vh] flex flex-col p-0 gap-0">
           <DialogHeader className="px-6 pt-6 pb-0 shrink-0">
-            <DialogTitle>{discEditId ? 'Editar Disciplina' : 'Adicionar Disciplina'}</DialogTitle>
+            <DialogTitle className="font-display text-[20px] font-semibold">{discEditId ? 'Editar Disciplina' : 'Adicionar Disciplina'}</DialogTitle>
           </DialogHeader>
           <div className="flex-1 overflow-y-auto px-6 py-4 space-y-5">
             {/* Disciplina + Tipo */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <Label className="text-foreground font-medium block mb-1.5">Disciplina <span className="text-destructive">*</span></Label>
-                <Select value={discForm.disciplina_id} onValueChange={v => setDiscForm({ ...discForm, disciplina_id: v })}>
-                  <SelectTrigger className="border-border [&_svg]:!rotate-0">
+                <Select value={discForm.disciplina_id} onValueChange={handleDiscChange}>
+                  <SelectTrigger className="border-border">
                     <SelectValue placeholder="Selecione" />
                   </SelectTrigger>
                   <SelectContent>
-                    {disciplinasSistema.map((d: any) => (
+                    {disciplinasFiltradas.map((d: any) => (
                       <SelectItem key={d.id} value={d.id}>{d.nome}</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
+                {disciplinasFiltradas.length === 0 && (
+                  <p className="text-[13px] text-muted-foreground mt-1.5">Nenhuma disciplina ativa compatível com esta etapa. Cadastre em Disciplinas.</p>
+                )}
               </div>
               <div>
                 <Label className="text-foreground font-medium block mb-1.5">Tipo</Label>
-                <PillToggleGroup
-                  options={[
-                    { value: 'base_comum', label: 'Base Comum' },
-                    { value: 'parte_diversificada', label: 'Parte Diversificada' },
-                  ]}
-                  value={discForm.tipo_disciplina}
-                  onValueChange={(v) => setDiscForm({ ...discForm, tipo_disciplina: v })}
-                />
+                <div className="flex flex-wrap gap-2">
+                  <ClickablePill
+                    label={discForm.tipo_disciplina === 'base_comum' ? 'Base Comum' : 'Parte Diversificada'}
+                    active
+                    disabled
+                    onClick={() => {}}
+                    title="Tipo definido pelo cadastro da disciplina"
+                  />
+                </div>
+                <p className="text-[13px] text-muted-foreground mt-1.5">Definido automaticamente pelo cadastro da disciplina.</p>
               </div>
             </div>
 
-            {/* Desconsidera reprovação - Toggle card-row */}
-            <div className="flex items-center justify-between p-4 rounded-lg border border-border bg-muted/50">
-              <div>
-                <span className="text-[14px] font-medium text-foreground">Desconsiderar para reprovação</span>
-                <p className="text-xs text-muted-foreground mt-0.5">Aluno não será reprovado por esta disciplina</p>
+            {/* Não reprova: 2 pills clicáveis */}
+            <div className="p-4 rounded-lg border border-border bg-muted/50">
+              <span className="text-[14px] font-medium text-foreground">Desconsiderar para reprovação</span>
+              <p className="text-[13px] text-muted-foreground mt-0.5 mb-2.5">Marque como esta disciplina trata aprovação; vale no Diário de Classe</p>
+              <div className="flex flex-wrap gap-2">
+                <ClickablePill
+                  label="Não reprova por nota"
+                  active={discForm.nao_reprova_nota}
+                  onClick={() => setDiscForm({ ...discForm, nao_reprova_nota: !discForm.nao_reprova_nota })}
+                />
+                <ClickablePill
+                  label="Não reprova por frequência"
+                  active={discForm.nao_reprova_frequencia}
+                  onClick={() => setDiscForm({ ...discForm, nao_reprova_frequencia: !discForm.nao_reprova_frequencia })}
+                />
               </div>
-              <Switch checked={discForm.desconsidera_reprovacao} onCheckedChange={v => setDiscForm({ ...discForm, desconsidera_reprovacao: v })} className="data-[state=unchecked]:bg-muted-foreground/25" />
             </div>
 
             {/* Carga Horária - cards with checkbox + hours inline */}
@@ -690,21 +746,21 @@ export function MatrizForm({ schoolId, matrizId, onSaved, onCancel }: MatrizForm
 
             {/* BNCC Habilidades */}
             <div>
-              <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center justify-between mb-3 flex-wrap gap-2">
                 <Label className="text-foreground font-medium">Habilidades BNCC</Label>
                 <div className="flex items-center gap-2">
-                  <Input className="border-border h-8 w-48 text-xs" placeholder="Buscar..." value={bnccSearch} onChange={e => setBnccSearch(e.target.value)} />
+                  <Input className="border-border h-8 w-48 text-[13px]" placeholder="Buscar..." value={bnccSearch} onChange={e => setBnccSearch(e.target.value)} />
                   <Button variant="outline" size="xs" onClick={selectAllBncc}>Selecionar todos</Button>
-                  <Button variant="outline" size="xs" onClick={clearAllBncc}>Limpar</Button>
+                  <Button variant="outline" size="xs" onClick={clearAllBncc} className="text-destructive border-destructive/40 hover:bg-destructive/10 hover:text-destructive">Limpar</Button>
                 </div>
               </div>
               {bnccHabilidades.length === 0 ? (
-                <p className="text-sm text-muted-foreground">{discForm.disciplina_id ? 'Nenhuma habilidade BNCC encontrada para esta disciplina.' : 'Selecione uma disciplina primeiro.'}</p>
+                <p className="text-[15px] text-muted-foreground">{discForm.disciplina_id ? 'Nenhuma habilidade BNCC encontrada para esta disciplina.' : 'Selecione uma disciplina primeiro.'}</p>
               ) : filteredBnccSearch ? (
                 <div className="space-y-1 border border-border rounded-lg p-3">
                   {filteredBnccSearch.map((h: any) => (
                     <label key={h.codigo_bncc || h.codigo} className="flex items-start gap-3 py-1.5 cursor-pointer hover:bg-muted/30 px-2 rounded">
-                      <Checkbox checked={selectedBncc.has(h.codigo_bncc || h.codigo)} onCheckedChange={() => toggleBncc(h.codigo_bncc || h.codigo)} className="mt-0.5" />
+                      <Checkbox checked={selectedBncc.has(h.codigo_bncc || h.codigo)} onCheckedChange={() => toggleBncc(h.codigo_bncc || h.codigo)} className="mt-0.5 border-primary/40 bg-card" />
                       <div className="flex-1">
                         <StatusBadge status="info">{h.codigo_bncc || h.codigo}</StatusBadge>
                         <p className="text-[13px] text-foreground mt-0.5">{h.descricao}</p>
@@ -713,31 +769,35 @@ export function MatrizForm({ schoolId, matrizId, onSaved, onCancel }: MatrizForm
                   ))}
                 </div>
               ) : (
-                <div className="space-y-4">
+                <Accordion type="multiple" value={bnccExpandidos} onValueChange={setBnccExpandidos} className="space-y-2">
                   {Object.entries(bnccAgrupado).map(([ut, objetos]) => (
-                    <div key={ut}>
-                      <div className="text-[14px] font-semibold text-foreground border-b border-border pb-1.5 mb-2">{ut}</div>
-                      <div className="space-y-2 ml-2">
-                        {Object.entries(objetos).map(([oc, habs]) => (
-                          <div key={oc}>
-                            <div className="text-xs font-medium text-muted-foreground mb-1">{oc}</div>
-                            <div className="space-y-0.5 ml-2">
-                              {habs.map((h: any) => (
-                                <label key={h.codigo_bncc || h.codigo} className="flex items-start gap-3 py-1 cursor-pointer hover:bg-muted/30 px-1.5 rounded">
-                                  <Checkbox checked={selectedBncc.has(h.codigo_bncc || h.codigo)} onCheckedChange={() => toggleBncc(h.codigo_bncc || h.codigo)} className="mt-0.5" />
-                                  <div className="flex-1">
-                                    <StatusBadge status="info">{h.codigo_bncc || h.codigo}</StatusBadge>
-                                    <p className="text-[13px] text-foreground mt-0.5">{h.descricao}</p>
-                                  </div>
-                                </label>
-                              ))}
+                    <AccordionItem key={ut} value={ut} className="rounded-lg border border-border px-3">
+                      <AccordionTrigger className="text-[14px] font-semibold text-foreground py-2.5 hover:no-underline">
+                        {ut}
+                      </AccordionTrigger>
+                      <AccordionContent className="pb-3">
+                        <div className="space-y-2">
+                          {Object.entries(objetos).map(([oc, habs]) => (
+                            <div key={oc}>
+                              <div className="text-[13px] font-medium text-muted-foreground mb-1">{oc}</div>
+                              <div className="space-y-0.5 ml-2">
+                                {habs.map((h: any) => (
+                                  <label key={h.codigo_bncc || h.codigo} className="flex items-start gap-3 py-1 cursor-pointer hover:bg-muted/30 px-1.5 rounded">
+                                    <Checkbox checked={selectedBncc.has(h.codigo_bncc || h.codigo)} onCheckedChange={() => toggleBncc(h.codigo_bncc || h.codigo)} className="mt-0.5 border-primary/40 bg-card" />
+                                    <div className="flex-1">
+                                      <StatusBadge status="info">{h.codigo_bncc || h.codigo}</StatusBadge>
+                                      <p className="text-[13px] text-foreground mt-0.5">{h.descricao}</p>
+                                    </div>
+                                  </label>
+                                ))}
+                              </div>
                             </div>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
+                          ))}
+                        </div>
+                      </AccordionContent>
+                    </AccordionItem>
                   ))}
-                </div>
+                </Accordion>
               )}
             </div>
 
@@ -794,8 +854,8 @@ export function MatrizForm({ schoolId, matrizId, onSaved, onCancel }: MatrizForm
       <ConfirmDialog
         open={showReplicarDialog}
         onOpenChange={setShowReplicarDialog}
-        title="Replicar Disciplinas"
-        description={`As disciplinas do período "${replicarOrigemNome}" serão copiadas para todos os outros períodos. Continuar?`}
+        title="Replicar para os demais períodos"
+        description={`Todas as disciplinas do período "${replicarOrigemNome}" — com a configuração de "Não reprova por nota/frequência", a carga horária e as habilidades marcadas de cada disciplina — serão copiadas para os demais períodos da matriz, substituindo o que houver neles. Continuar?`}
         confirmLabel="Sim, Replicar"
         variant="warning"
         onConfirm={handleReplicar}

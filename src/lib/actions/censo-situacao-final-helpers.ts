@@ -6,6 +6,7 @@ import { getSupabaseAdmin } from '@/lib/auth'
 import type { ErroValidacao } from './censo-types'
 import { getCampoAmigavel, getDescricaoValor, gerarMensagemAmigavel } from '@/data/censo/rotulos-campos'
 import { ETAPAS_ENSINO } from '@/data/censo/etapas-ensino'
+import { codigoTipoTurma } from '@/data/censo/tipo-turma-codigos'
 import { DATA_REFERENCIA_CENSO } from '@/data/censo/referencias'
 
 // ---------------------------------------------------------------------------
@@ -45,6 +46,13 @@ export function cpfValido(cpf: string | null | undefined): boolean {
 // ---------------------------------------------------------------------------
 
 export function turmaHasTipo(turma: Record<string, any>, tipo: string): boolean {
+  // turmas armazena rótulos em `tipos_turma` — compara via código INEP (spec 029 FR-020)
+  const cod = codigoTipoTurma(turma.tipos_turma)
+  if (tipo === cod) return true
+  const t = String(tipo).toLowerCase()
+  if (t === 'aee') return cod === '5'
+  if (t === 'complementar' || t === 'atividade_complementar') return cod === '4' || cod === '9'
+  if (t === 'curricular') return cod === '6' || cod === '9'
   const tt = turma.tipos_turma
   if (!tt) return false
   if (Array.isArray(tt)) return tt.includes(tipo)

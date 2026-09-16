@@ -5,8 +5,7 @@ import { useRouter } from 'next/navigation'
 import { useAuth } from '@/components/providers/auth-provider'
 import { PageContainer } from '@/components/layout/page-container'
 import { PageHeader } from '@/components/layout/page-header'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { CalendarDays, GraduationCap, BookOpen } from 'lucide-react'
+import { ModernTabs } from '@/components/ui/modern-tabs'
 import { TabCalendarios } from './TabCalendarios'
 import { TabEtapas } from './TabEtapas'
 import { TabMatrizes } from './TabMatrizes'
@@ -39,34 +38,21 @@ export default function GestaoAcademicaPage() {
           description="Configure a estrutura acadêmica da escola"
         />
 
-        <Tabs defaultValue="calendarios" className="w-full">
-          <TabsList className="inline-flex h-auto rounded-xl bg-muted border border-border p-1 mb-8">
-            <TabsTrigger value="calendarios" className="gap-2 px-5 py-2.5 text-[15px] font-medium rounded-lg text-foreground data-active:bg-primary data-active:text-primary-foreground data-active:shadow-sm">
-              <CalendarDays className="w-5 h-5" />
-              Calendários
-            </TabsTrigger>
-            <TabsTrigger value="etapas" className="gap-2 px-5 py-2.5 text-[15px] font-medium rounded-lg text-foreground data-active:bg-primary data-active:text-primary-foreground data-active:shadow-sm">
-              <GraduationCap className="w-5 h-5" />
-              Etapas
-            </TabsTrigger>
-            <TabsTrigger value="matrizes" className="gap-2 px-5 py-2.5 text-[15px] font-medium rounded-lg text-foreground data-active:bg-primary data-active:text-primary-foreground data-active:shadow-sm">
-              <BookOpen className="w-5 h-5" />
-              Matrizes
-            </TabsTrigger>
-          </TabsList>
-
-          <TabsContent value="calendarios">
-            <TabCalendarios schoolId={schoolId} />
-          </TabsContent>
-
-          <TabsContent value="etapas">
-            <TabEtapas schoolId={schoolId} />
-          </TabsContent>
-
-          <TabsContent value="matrizes">
-            <TabMatrizes schoolId={schoolId} />
-          </TabsContent>
-        </Tabs>
+        <ModernTabs
+          tabs={[
+            { value: 'calendarios', label: 'Calendários' },
+            { value: 'etapas', label: 'Etapas' },
+            { value: 'matrizes', label: 'Matrizes' },
+          ]}
+          defaultValue="calendarios"
+          urlSync={false}
+          fullWidth
+          listClassName="sm:w-1/2"
+        >
+          <TabCalendarios schoolId={schoolId} />
+          <TabEtapas schoolId={schoolId} />
+          <TabMatrizes schoolId={schoolId} />
+        </ModernTabs>
       </PageContainer>
   )
 }

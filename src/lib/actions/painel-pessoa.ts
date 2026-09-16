@@ -133,6 +133,7 @@ export type HistoricoAno = {
 
 export type Ocorrencia = {
   id: string
+  titulo: string | null
   tipo: string
   descricao: string
   data_ocorrencia: string
@@ -1164,34 +1165,83 @@ export async function getOcorrencias(
 ): Promise<Ocorrencia[]> {
   await validarPermRead(pessoaLogadaId)
 
-  let ocoQuery = supabase
-    .from('ocorrencias')
-    .select('id, tipo, descricao, data_ocorrencia, turma_id')
-    .eq('person_id', pessoaId)
-    .order('data_ocorrencia', { ascending: false })
-    .limit(50)
+  // Schema canônico (spec 026): vínculo N:N via ocorrencias_alunos
+  const { data: vinc } = await supabase
+    .from('ocorrencias_alunos')
+    .select('ocorrencia_id')
+    .eq('aluno_id', pessoaId)
 
-  if (schoolId) ocoQuery = ocoQuery.eq('school_id', schoolId)
+  const idsJunction = [...new Set(((vinc ?? []) as Array<{ ocorrencia_id: string }>).map(v => v.ocorrencia_id))]
 
-  const { data } = await ocoQuery
+  let novas: Array<{ id: string; titulo: string | null; tipo: string; detalhes: string | null; data_ocorrencia: string }> = []
+  if (idsJunction.length > 0) {
+    let novasQuery = supabase
+      .from('ocorrencias')
+      .select('id, titulo, tipo, detalhes, data_ocorrencia')
+      .in('id', idsJunction)
+      .order('data_ocorrencia', { ascending: false })
+      .limit(50)
 
-  if (!data) return []
+    if (schoolId) novasQuery = novasQuery.eq('school_id', schoolId)
 
-  const turmaIds = [...new Set(data.filter(d => d.turma_id).map(d => d.turma_id!))]
+    const { data } = await novasQuery
+    novas = (data ?? []) as typeof novas
+  }
 
-  const { data: turmas } = turmaIds.length
-    ? await supabase.from('turmas').select('id, nome').in('id', turmaIds)
-    : { data: [] }
+  // Compatibilidade legada: registros antigos com person_id direto.
+  // Colunas legadas podem não existir em todos os ambientes — falha silenciosa.
+  let legadas: Ocorrencia[] = []
+  try {
+    let legQuery = supabase
+      .from('ocorrencias')
+      .select('id, tipo, descricao, data_ocorrencia, turma_id')
+      .eq('person_id', pessoaId)
+      .order('data_ocorrencia', { ascending: false })
+      .limit(50)
 
-  const mapaTurmas = new Map((turmas || []).map(t => [t.id, t.nome]))
+    if (schoolId) legQuery = legQuery.eq('school_id', schoolId)
+    if (idsJunction.length > 0) legQuery = legQuery.not('id', 'in', `(${idsJunction.join(',')})`)
 
-  return data.map(d => ({
-    id: d.id,
-    tipo: d.tipo,
-    descricao: d.descricao,
-    data_ocorrencia: d.data_ocorrencia,
-    turma_nome: d.turma_id ? mapaTurmas.get(d.turma_id) || null : null,
-  }))
+    const { data, error } = await legQuery
+    if (error) throw error
+
+    const linhas = (data ?? []) as Array<{ id: string; tipo: string; descricao: string; data_ocorrencia: string; turma_id: string | null }>
+
+    const turmaIds = [...new Set(linhas.filter(d => d.turma_id).map(d => d.turma_id!))]
+
+    const { data: turmas } = turmaIds.length
+      ? await supabase.from('turmas').select('id, nome').in('id', turmaIds)
+      : { data: [] }
+
+    const mapaTurmas = new Map(((turmas ?? []) as Array<{ id: string; nome: string }>).map(t => [t.id, t.nome]))
+
+    legadas = linhas.map(d => ({
+      id: d.id,
+      titulo: null,
+      tipo: d.tipo,
+      descricao: d.descricao,
+      data_ocorrencia: d.data_ocorrencia,
+      turma_nome: d.turma_id ? mapaTurmas.get(d.turma_id) || null : null,
+    }))
+  } catch {
+    legadas = []
+  }
+
+  const todas: Ocorrencia[] = [
+    ...novas.map(d => ({
+      id: d.id,
+      titulo: d.titulo,
+      tipo: d.tipo,
+      descricao: d.detalhes ?? '',
+      data_ocorrencia: d.data_ocorrencia,
+      turma_nome: null as string | null,
+    })),
+    ...legadas,
+  ]
+
+  return todas
+    .sort((a, b) => (b.data_ocorrencia || '').localeCompare(a.data_ocorrencia || ''))
+    .slice(0, 50)
 }
 
 export async function getCriterioFrequenciaTurma(
@@ -1319,14 +1369,46 @@ export async function getResumoAluno(
     .select('id', { count: 'exact', head: true })
     .eq('turma_id', turmaId)
 
-  let ocoQuery = supabase
-    .from('ocorrencias')
-    .select('id', { count: 'exact', head: true })
-    .eq('person_id', pessoaId)
+  // Schema canônico (spec 026): vínculo N:N via ocorrencias_alunos (sem turma vinculada)
+  const { data: vincOco } = await supabase
+    .from('ocorrencias_alunos')
+    .select('ocorrencia_id')
+    .eq('aluno_id', pessoaId)
 
-  if (schoolId) ocoQuery = ocoQuery.eq('school_id', schoolId)
+  const idsOco = [...new Set(((vincOco ?? []) as Array<{ ocorrencia_id: string }>).map(v => v.ocorrencia_id))]
 
-  const { count: totalOcorrencias } = await ocoQuery.eq('turma_id', turmaId)
+  let totalNovas = 0
+  if (idsOco.length > 0) {
+    let novasCountQuery = supabase
+      .from('ocorrencias')
+      .select('id', { count: 'exact', head: true })
+      .in('id', idsOco)
+
+    if (schoolId) novasCountQuery = novasCountQuery.eq('school_id', schoolId)
+
+    const { count } = await novasCountQuery
+    totalNovas = count || 0
+  }
+
+  // Compatibilidade legada: registros antigos com person_id/turma_id diretos
+  let totalLegadas = 0
+  try {
+    let legCountQuery = supabase
+      .from('ocorrencias')
+      .select('id', { count: 'exact', head: true })
+      .eq('person_id', pessoaId)
+
+    if (schoolId) legCountQuery = legCountQuery.eq('school_id', schoolId)
+    if (idsOco.length > 0) legCountQuery = legCountQuery.not('id', 'in', `(${idsOco.join(',')})`)
+
+    const { count, error } = await legCountQuery.eq('turma_id', turmaId)
+    if (error) throw error
+    totalLegadas = count || 0
+  } catch {
+    totalLegadas = 0
+  }
+
+  const totalOcorrencias = totalNovas + totalLegadas
 
   const { data: notasAluno } = await supabase
     .from('academico_notas')
