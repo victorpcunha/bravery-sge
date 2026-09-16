@@ -7,6 +7,7 @@ import type { DadosFichaIndividual, SaudeFicha } from '@/lib/actions/documentos'
 import { getMunicipioByCodigo } from '@/data/municipios'
 import { VALOR_DESCRICOES } from '@/data/censo/rotulos-campos'
 import { formatarCpf, formatarCep, formatarData, nomeTitulo, enderecoCompleto } from '@/lib/documentos-pdf'
+import { PDF_PALETTE as PDF } from '@/lib/pdf-palette'
 
 const styles = StyleSheet.create({
   page: {
@@ -16,19 +17,19 @@ const styles = StyleSheet.create({
     paddingHorizontal: 48,
     fontSize: 11,
     fontFamily: 'Helvetica',
-    color: '#0a292c',
+    color: PDF.ink,
   },
   topo: {
     borderBottomWidth: 2,
-    borderBottomColor: '#1b4d52',
+    borderBottomColor: PDF.accent,
     paddingBottom: 12,
     marginBottom: 14,
   },
   header: { flexDirection: 'row', alignItems: 'center' },
   logo: { width: 56, height: 56, objectFit: 'contain', marginRight: 14 },
   headerTexts: { flex: 1 },
-  nomeDestaque: { fontSize: 15, fontFamily: 'Helvetica-Bold', color: '#1b4d52' },
-  cabecalho: { fontSize: 9, color: '#3d5a5e', marginTop: 6, lineHeight: 1.5 },
+  nomeDestaque: { fontSize: 15, fontFamily: 'Helvetica-Bold', color: PDF.accent },
+  cabecalho: { fontSize: 9, color: PDF.muted, marginTop: 6, lineHeight: 1.5 },
   conteudo: { flexGrow: 1 },
   title: {
     fontSize: 15,
@@ -39,7 +40,7 @@ const styles = StyleSheet.create({
   },
   subtitle: {
     fontSize: 9,
-    color: '#64748B',
+    color: PDF.muted,
     textAlign: 'center',
     marginBottom: 18,
   },
@@ -48,9 +49,9 @@ const styles = StyleSheet.create({
     fontSize: 11,
     fontFamily: 'Helvetica-Bold',
     textTransform: 'uppercase',
-    color: '#1b4d52',
+    color: PDF.accent,
     borderBottomWidth: 1,
-    borderBottomColor: '#CBD5E1',
+    borderBottomColor: PDF.border,
     paddingBottom: 3,
     marginBottom: 8,
   },
@@ -67,14 +68,14 @@ const styles = StyleSheet.create({
   campoLabel: {
     fontSize: 10.5,
     fontFamily: 'Helvetica-Bold',
-    color: '#3d5a5e',
+    color: PDF.muted,
     marginRight: 4,
     lineHeight: 1.4,
   },
   campoValue: {
     flex: 1,
     fontSize: 10.5,
-    color: '#0a292c',
+    color: PDF.ink,
     lineHeight: 1.4,
   },
   healthAnswer: {
@@ -86,41 +87,41 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: 10,
     fontFamily: 'Helvetica-Bold',
-    color: '#0a292c',
+    color: PDF.ink,
     lineHeight: 1.4,
   },
   healthValue: {
     width: 34,
     fontSize: 10,
     fontFamily: 'Helvetica-Bold',
-    color: '#0a292c',
+    color: PDF.ink,
   },
   bullet: {
     flexDirection: 'row',
     marginLeft: 4,
     marginBottom: 1.5,
   },
-  bulletMarker: { width: 10, fontSize: 9.5, color: '#64748B' },
-  bulletText: { flex: 1, fontSize: 10, color: '#0a292c', lineHeight: 1.4 },
-  semInformacao: { fontSize: 10, color: '#64748B', fontStyle: 'italic', marginTop: 2 },
+  bulletMarker: { width: 10, fontSize: 9.5, color: PDF.muted },
+  bulletText: { flex: 1, fontSize: 10, color: PDF.ink, lineHeight: 1.4 },
+  semInformacao: { fontSize: 10, color: PDF.muted, fontStyle: 'italic', marginTop: 2 },
   assinaturaBloco: { marginTop: 36, flexDirection: 'column' },
   localData: { fontSize: 10, marginBottom: 14 },
   assinatura: { alignItems: 'center' },
   assinaturaNome: { fontSize: 11, fontFamily: 'Helvetica-Bold' },
-  assinaturaCargo: { fontSize: 9, color: '#3d5a5e', marginTop: 2 },
+  assinaturaCargo: { fontSize: 9, color: PDF.muted, marginTop: 2 },
   base: {
     borderTopWidth: 1,
-    borderTopColor: '#CBD5E1',
+    borderTopColor: PDF.border,
     paddingTop: 8,
     marginTop: 14,
   },
   rodapeDados: {
     fontSize: 7.5,
-    color: '#64748B',
+    color: PDF.muted,
     lineHeight: 1.4,
     textAlign: 'center',
   },
-  rodape: { fontSize: 8, color: '#64748B', lineHeight: 1.4, marginTop: 3, textAlign: 'center' },
+  rodape: { fontSize: 8, color: PDF.muted, lineHeight: 1.4, marginTop: 3, textAlign: 'center' },
 })
 
 const DEFICIENCIAS_TEA: Record<string, string> = {

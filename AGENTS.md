@@ -301,6 +301,11 @@ Sistema de Gestão Escolar completo: turmas, quadro de aulas, indicadores de ava
   - Skill `design-taste-frontend`: 1 acento travado, contraste de botão verificado, sem glow roxo, serifada já justificada (decisão do usuário)
   - Tokens + 6 PDFs + `DESIGN.md` v5 + sidecar + `AGENTS.md` + `catalog.md` migrados em um passe; `.dark` preservado
   - Notas: 0 migrations; 0 novas deps npm; `tsc` + `next build` verdes
+- **Atlas v6 — paleta índigo do usuário (2026-09-15, só light)**:
+  - Tokens exatos do material: primary `#4F46E5` (6.02:1), secondary/muted `#F1F2F9`, accent âmbar `#F59E0B`, semânticos c/ fills claros, sidebar `#1E1B4B` + pastilha `#4F46E5`, sombras índigo; `.dark` preservado
+  - `DESIGN.md` v6 + sidecar + `AGENTS.md` + `catalog.md`; 6 PDFs nos literals novos
+  - Limite honesto: success/info como texto pequeno ficam abaixo de AA — badges usam fills claros, nunca corpo
+  - Notas: 0 migrations; 0 novas deps npm; `tsc` + `next build` verdes
 
 ## Known Issues
 - All server actions use `'use server'` + `getSupabaseAdmin()` (service_role, bypass RLS)
@@ -348,31 +353,33 @@ Referência canônica: `DESIGN.md` (v3 Atlas — vence em caso de divergência);
 - **Empty**: `<EmptyState icon={...} title="..." description="..." action={<Button>...</Button>} />`
 
 ### Regra #1: NUNCA use cores hexadecimais (#XXXXXX) em componentes ou páginas
-Use SEMPRE os tokens Tailwind v4 derivados das CSS variables do `globals.css`:
+Use SEMPRE os tokens Tailwind v4 derivados das CSS variables do `globals.css`.
+Nos PDFs react-pdf (sem acesso a tokens CSS), use SEMPRE `src/lib/pdf-palette.ts` — zero hex solto nos 6 stylesheets.
 
 | Uso | Token Tailwind | Hex (referência) |
 |-----|---------------|------------------|
-| Marca principal (âncora teal; texto sempre tinta, 4.88:1) | `primary` / `bg-primary` / `text-primary` | #3f9ea8 |
-| Texto em primary (SEMPRE tinta, nunca branco) | `primary-foreground` | #0a292c |
-| Texto em accent | `accent-foreground` | #FFFFFF |
-| Interação complementar (= secondary) | `accent` / `bg-accent` / `text-accent` | #2c747c |
-| Ação secundária (teal apoio, 5.39:1) | `secondary` / `bg-secondary` / `text-secondary` | #2c747c |
-| Âncora da marca (só fills/gráficos, NUNCA texto) | — (uso direto em charts) | #3f9ea8 |
-| Fundo de página (papel frio) | `background` / `bg-background` | #eef4f4 |
+| Marca principal (índigo, 6.02:1) | `primary` / `bg-primary` / `text-primary` | #4F46E5 |
+| Texto em primary | `primary-foreground` | #FAFAFA |
+| Texto em secondary (14.32:1) | `secondary-foreground` | #1E1B4B |
+| Botão secundário / chip (lavanda) | `secondary` / `bg-secondary` | #F1F2F9 |
+| Destaque pontual (âmbar, 8.14:1) | `accent` / `bg-accent` | #F59E0B |
+| Texto em accent | `accent-foreground` | #1C1917 |
+| Fundo de página (névoa, distingue do card) | `background` / `bg-background` | #F8F9FC |
+| Fundo de seção (névoa fria) | `surface` / `bg-surface` | #F8F9FC |
 | Fundo de card | `card` / `bg-card` | #FFFFFF |
-| Texto principal | `foreground` / `text-foreground` | #0a292c |
-| Texto secundário (6.69:1 no papel) | `muted-foreground` / `text-muted-foreground` | #3d5a5e |
-| Bordas | `border` / `border-border` | #c4d9db |
-| Fundo muted (névoa) | `muted` / `bg-muted` | #dce8e9 |
-| Foco (= Deep Teal, NUNCA a âncora) | `ring` / `bg-ring` / `text-ring` | #1b4d52 |
-| Destruição (6.54:1) | `destructive` / `bg-destructive` | #B3261E |
-| Sucesso (= secondary) | `success` / `bg-success` / `text-success` | #2c747c |
-| Aviso | `warning` / `bg-warning` / `text-warning` | #C2571C |
-| Info (= secondary) | `info` / `text-info` | #2c747c |
-| Sidebar fundo (âncora da marca) | `sidebar` / `bg-sidebar` | #3f9ea8 |
-| Sidebar texto (sempre tinta) | `sidebar-foreground` | #0a292c |
-| Sidebar hover (tinta translúcida) | `sidebar-accent` | rgba(10,41,44,0.12) |
-| Sidebar ativo (pastilha tinta) | `sidebar-primary` | #0a292c |
+| Texto principal (15.99:1) | `foreground` / `text-foreground` | #1E1B4B |
+| Texto secundário (4.76:1) | `muted-foreground` / `text-muted-foreground` | #64748B |
+| Bordas / borda de input | `border` / `border-border` | #E2E5F0 |
+| Fundo muted (neutro) | `muted` / `bg-muted` | #F1F2F9 |
+| Foco (= primary) | `ring` / `bg-ring` / `text-ring` | #4F46E5 |
+| Destruição (4.83:1) | `destructive` / `bg-destructive` | #DC2626 |
+| Sucesso (só c/ fill claro) | `success` / `bg-success` / `text-success` | #22C55E |
+| Aviso | `warning` / `bg-warning` / `text-warning` | #F59E0B |
+| Info (só c/ fill claro) | `info` / `text-info` | #3B82F6 |
+| Sidebar fundo (índigo profundo) | `sidebar` / `bg-sidebar` | #1E1B4B |
+| Sidebar texto (12.98:1) | `sidebar-foreground` | #E0E7FF |
+| Sidebar hover (índigo fundo) | `sidebar-accent` | #312E81 |
+| Sidebar ativo (pastilha índigo, 6.29:1) | `sidebar-primary` | #4F46E5 |
 
 ### Regra #2: Componentes de formulário
 - SEMPRE use componentes shadcn/ui: `<Select>`, `<Input>`, `<Textarea>`, `<Button>`, etc.
@@ -391,10 +398,10 @@ Use SEMPRE os tokens Tailwind v4 derivados das CSS variables do `globals.css`:
 
 ### Regra #4: Sidebar
 - SEMPRE use tokens `sidebar-*`: `bg-sidebar`, `text-sidebar-foreground`, `bg-sidebar-accent`, `border-sidebar-border`, `bg-sidebar-primary`.
-- NUNCA hardcode `#1D3557`, `#457B9D`, `#4FB3BF`, `#0F2B46`, `#294C69`, `#4682B4`, `#14532D`, `#2E7D4F` no sidebar.
-- Sidebar é **a âncora da marca** em light mode (`bg-sidebar` `#3f9ea8`, texto sempre tinta) e slate-950 em dark mode.
-- Para ativo: pastilha tinta (`bg-sidebar-primary`) com glifo branco (`text-sidebar-primary-foreground`) — vale p/ módulo e p/ sub-item (tela interna, ex.: Unidade Escolar).
-- Para hover: wash de tinta (`hover:bg-sidebar-accent`), texto sempre `text-sidebar-foreground` (nunca branco — contraste).
+- NUNCA hardcode `#1D3557`, `#457B9D`, `#4FB3BF`, `#0F2B46`, `#294C69`, `#4682B4`, `#14532D`, `#2E7D4F`, `#3f9ea8` no sidebar.
+- Sidebar é **índigo profundo** em light mode (`bg-sidebar` `#1E1B4B`, texto lavanda `#E0E7FF`) e slate-950 em dark mode.
+- Para ativo: pastilha índigo (`bg-sidebar-primary`) com glifo branco (`text-sidebar-primary-foreground`) — vale p/ módulo e p/ sub-item (tela interna, ex.: Unidade Escolar).
+- Para hover: índigo fundo (`hover:bg-sidebar-accent`), texto sempre `text-sidebar-foreground` (nunca branco puro sem fill — contraste).
 - Para sub-item ativo: `bg-sidebar-accent/80`.
 - Logo do sidebar usa gradiente `from-primary to-accent`.
 

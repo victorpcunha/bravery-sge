@@ -1,7 +1,7 @@
 # Design System Catalog — Componentes Oficiais
 
 **Feature**: 002-design-system
-**Date**: 2026-09-15 (v5 — redefinição teal da âncora `#3f9ea8`; fonte canônica: `DESIGN.md`)
+**Date**: 2026-09-15 (v6 — paleta índigo do usuário; fonte canônica: `DESIGN.md`)
 **Status**: Referência de contratos; tokens em `DESIGN.md` (vence em divergência)
 
 ## Layouts Oficiais
@@ -320,45 +320,40 @@ Use `text-primary-foreground` (ou variante padrão do Button que já usa a cor c
 
 **Proibido**: `text-white` em botões sobre fundo primary
 
-## Design Tokens v5 (Atlas teal — rampa da âncora `#3f9ea8`)
+## Design Tokens v6 (Atlas índigo — material do usuário)
 
 ### Tokens de Cor (Light Mode)
 
 | Token | Valor | Contraste | Uso |
 |-------|-------|-----------|-----|
-| `--primary` | `#3f9ea8` | Tinta 4.88:1 (AA); branco só 3.15:1 | Marca, botão primário (texto sempre tinta), logo |
-| `--primary-foreground` | `#0a292c` | — | Texto sobre primary (SEMPRE tinta) |
-| `--accent` | `#2c747c` | 5.39:1 c/ branco (AA) | Interação, seleção, foco (acompanha secondary) |
-| `--accent-foreground` | `#FFFFFF` | — | Texto sobre accent |
-| `--secondary` | `#2c747c` | 5.39:1 c/ branco (AA) | Botão secundário, charts |
-| `--secondary-foreground` | `#FFFFFF` | — | Texto sobre secondary |
-| `--background` | `#eef4f4` | — | Fundo da página (papel frio) |
+| `--primary` | `#4F46E5` | 6.02:1 c/ `#FAFAFA` (AA) | Marca, botão primário, logo, ring |
+| `--primary-foreground` | `#FAFAFA` | — | Texto sobre primary |
+| `--accent` | `#F59E0B` | 8.14:1 c/ `#1C1917` | Destaques pontuais (nunca fill grande, nunca corpo) |
+| `--accent-foreground` | `#1C1917` | — | Texto sobre accent |
+| `--secondary` | `#F1F2F9` | 14.32:1 c/ ink | Botão secundário, chips, fills neutros |
+| `--secondary-foreground` | `#1E1B4B` | — | Texto sobre secondary |
+| `--background` | `#F8F9FC` | — | Fundo da página (névoa; distingue do card branco) |
+| `--surface` | `#F8F9FC` | — | Fundo de seções (névoa fria) |
 | `--card` | `#FFFFFF` | — | Fundo de card/superfície |
-| `--foreground` | `#0a292c` | 13.82:1 no papel | Texto principal |
-| `--muted` | `#dce8e9` | — | Fundo de seções/zonas (névoa) |
-| `--muted-foreground` | `#3d5a5e` | 6.69:1 no papel (AA) | Texto secundário |
-| `--border` | `#c4d9db` | — | Bordas padrão |
-| `--ring` | `#1b4d52` | 9.42:1 c/ branco | Cor de foco (= primary) |
-| `--destructive` | `#B3261E` | 6.54:1 c/ branco | Erro/destruição |
-| `--success` | `#2c747c` | (= secondary) | Sucesso |
-| `--warning` | `#C2571C` | 4.49:1 c/ branco (limite) | Atenção |
-| `--info` | `#2c747c` | (= secondary) | Informação |
-| `--sidebar` | `#3f9ea8` | Tinta 4.88:1 (AA) | Fundo da sidebar (âncora da marca) |
-| `--sidebar-foreground` | `#0a292c` | — | Texto da sidebar (sempre tinta) |
-| `--sidebar-primary` | `#0a292c` | — | Item ativo da sidebar (pastilha tinta, glifo branco) |
-| `--sidebar-accent` | `rgba(10,41,44,0.12)` | — | Hover da sidebar (wash de tinta) |
-
-**Âncora `#3f9ea8` = `--primary`**: texto sobre ela é sempre tinta (`4.88:1`); `text-primary`
-sobre fundo claro vale só p/ ícones e texto grande — links de corpo usam `text-secondary`.
-`--ring` fica no Deep Teal (`#1b4d52`) por visibilidade do foco.
+| `--foreground` | `#1E1B4B` | 15.99:1 c/ branco | Texto principal |
+| `--muted` | `#F1F2F9` | — | Fundos neutros |
+| `--muted-foreground` | `#64748B` | 4.76:1 c/ branco (AA) | Texto secundário |
+| `--border` / `--input` | `#E2E5F0` | — | Bordas e borda de inputs |
+| `--ring` | `#4F46E5` | (= primary) | Cor de foco |
+| `--destructive` | `#DC2626` | 4.83:1 c/ branco | Erro/destruição |
+| `--success` | `#22C55E` | só c/ fill `#DCFCE7` | Sucesso (texto puro abaixo de AA) |
+| `--warning` | `#F59E0B` | (= accent) | Atenção |
+| `--info` | `#3B82F6` | só c/ fill `#DBEAFE` | Informação (texto puro abaixo de AA) |
+| `--sidebar` | `#1E1B4B` | 12.98:1 c/ lavanda | Fundo da sidebar (índigo profundo) |
+| `--sidebar-foreground` | `#E0E7FF` | — | Texto da sidebar |
+| `--sidebar-primary` | `#4F46E5` | 6.29:1 c/ branco | Item ativo da sidebar (pastilha índigo) |
+| `--sidebar-accent` | `#312E81` | — | Hover da sidebar (índigo fundo) |
 
 **Regras**:
-- `--primary` (`#1b4d52`) é a cor de marca — botão primário, logo, links, ring.
-- `--accent` acompanha `--secondary` (teal apoio) — secundários tonais usam fills `/10` com texto
-  teal, nunca um segundo sólido saturado ao lado do primário.
-- `--ring` acompanha `--primary`.
-- `--success`/`--info` acompanham `--secondary` (mesma família do acento único).
-- Sidebar é **tinta teal** em light mode, **slate-950** em dark mode.
+- `--primary` (`#4F46E5`) é a cor de marca — botão primário, logo, links, ring.
+- `--accent` âmbar é destaque pontual — nunca fill grande, nunca corpo de texto.
+- `--success`/`--info` sempre pareados aos fills claros; nunca corpo corrido.
+- Sidebar é **índigo profundo** em light mode, **slate-950** em dark mode.
 
 ### Tokens de Cor (Dark Mode — preservado, fora do escopo Atlas v3)
 

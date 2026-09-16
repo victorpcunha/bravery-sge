@@ -3,6 +3,7 @@
 import Link from 'next/link'
 import { Calendar, UserPlus, BookOpen, Users } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 
 type QuickAction = {
   label: string
@@ -14,6 +15,10 @@ type DashboardHeroProps = {
   userName: string
   schoolName: string
   anoLetivoDescricao: string | null
+  showSchoolSelect?: boolean
+  selectedSchoolId?: string | null
+  allSchools?: { id: string; nome_escola: string }[]
+  onSelectSchool?: (v: string) => void
 }
 
 const QUICK_ACTIONS: QuickAction[] = [
@@ -32,26 +37,25 @@ function formatDatePtBr(): string {
   }).format(new Date())
 }
 
-export function DashboardHero({ userName, schoolName, anoLetivoDescricao }: DashboardHeroProps) {
+export function DashboardHero({
+  userName,
+  schoolName,
+  anoLetivoDescricao,
+  showSchoolSelect = false,
+  selectedSchoolId = null,
+  allSchools = [],
+  onSelectSchool,
+}: DashboardHeroProps) {
   const today = formatDatePtBr()
   const capitalizedToday = today.charAt(0).toUpperCase() + today.slice(1)
 
   return (
     <section
       aria-label="Boas-vindas"
-      className="relative overflow-hidden rounded-2xl border border-border bg-gradient-to-br from-primary/8 via-background to-accent/10 shadow-sm mb-8"
+      className="rounded-2xl border border-border bg-secondary shadow-sm mb-8"
     >
-      <div
-        aria-hidden="true"
-        className="pointer-events-none absolute -right-16 -top-16 h-48 w-48 rounded-full bg-primary/10 blur-3xl"
-      />
-      <div
-        aria-hidden="true"
-        className="pointer-events-none absolute -left-12 -bottom-12 h-40 w-40 rounded-full bg-accent/20 blur-3xl"
-      />
-
       <div className="relative px-6 py-7 sm:px-8 sm:py-9">
-        <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
           <div className="min-w-0 flex-1">
             <p className="text-[13px] font-medium uppercase tracking-wider text-muted-foreground">
               {capitalizedToday}
@@ -59,25 +63,47 @@ export function DashboardHero({ userName, schoolName, anoLetivoDescricao }: Dash
             <h1 className="mt-2 text-[26px] font-bold leading-tight tracking-tight text-foreground sm:text-[30px]">
               Olá, <span className="text-primary">{userName}</span>
             </h1>
-            <p className="mt-1.5 text-[15px] leading-normal text-muted-foreground">
-              {schoolName}
-              {anoLetivoDescricao ? (
-                <>
-                  <span className="mx-2 text-border">•</span>
-                  <span>Ano letivo {anoLetivoDescricao}</span>
-                </>
-              ) : (
-                <>
-                  <span className="mx-2 text-border">•</span>
-                  <span className="text-warning">Nenhum ano letivo ativo</span>
-                </>
-              )}
-            </p>
+            {schoolName ? (
+              <p className="mt-1.5 text-[15px] leading-normal text-muted-foreground">
+                {schoolName}
+                {anoLetivoDescricao ? (
+                  <>
+                    <span className="mx-2 text-border">•</span>
+                    <span>Ano letivo {anoLetivoDescricao}</span>
+                  </>
+                ) : (
+                  <>
+                    <span className="mx-2 text-border">•</span>
+                    <span className="text-warning">Nenhum ano letivo ativo</span>
+                  </>
+                )}
+              </p>
+            ) : (
+              <p className="mt-1.5 text-[15px] leading-normal text-muted-foreground">
+                Selecione uma escola para visualizar os dados
+              </p>
+            )}
           </div>
 
-          <p className="hidden text-[13px] text-muted-foreground lg:block">
-            Ações rápidas
-          </p>
+          {showSchoolSelect && (
+            <div className="w-full shrink-0 sm:w-64">
+              <Select
+                value={selectedSchoolId ?? undefined}
+                onValueChange={onSelectSchool}
+              >
+                <SelectTrigger className="bg-card">
+                  <SelectValue placeholder="Selecione uma escola" />
+                </SelectTrigger>
+                <SelectContent>
+                  {allSchools.map((s) => (
+                    <SelectItem key={s.id} value={s.id}>
+                      {s.nome_escola}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
         </div>
 
         <div
@@ -95,7 +121,7 @@ export function DashboardHero({ userName, schoolName, anoLetivoDescricao }: Dash
                 href={action.href}
                 className="
                   group inline-flex items-center gap-2
-                  rounded-lg border border-border bg-card/80 backdrop-blur
+                  rounded-lg border border-border bg-card
                   px-3 py-2.5 text-[13px] font-medium leading-tight text-foreground
                   sm:px-4 sm:py-3 sm:text-[14px]
                   shadow-xs transition-all duration-200

@@ -9,10 +9,11 @@ import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog'
 import { Table, TableHeader, TableBody, TableHead, TableRow, TableCell } from '@/components/ui/table'
-import { Plus, Pencil, Trash2, Building2 } from 'lucide-react'
+import { Plus, Pencil, Trash2, Building2, School } from 'lucide-react'
 import { getFuncoes, createFuncao, updateFuncao, deleteFuncao, inicializarFuncoesPadrao, type FuncaoProfissional } from '@/lib/actions/funcoes-profissionais'
 import { CENSO_FUNCOES } from '@/data/funcoes-censo'
 import { toast } from 'sonner'
+import { Card, CardContent } from '@/components/ui/card'
 import { PageContainer } from '@/components/layout/page-container'
 import { PageHeader } from '@/components/layout/page-header'
 import { PageSection } from '@/components/layout/page-section'
@@ -21,7 +22,7 @@ import { ConfirmDialog } from '@/components/feedback/confirm-dialog'
 import { EmptyState } from '@/components/ui/empty-state'
 
 export default function FuncoesPage() {
-  const { user, loading: authLoading, schoolId, pessoaId } = useAuth()
+  const { user, loading: authLoading, schoolId, pessoaId, isSuperAdmin, allSchools } = useAuth()
   const router = useRouter()
   const [funcoes, setFuncoes] = useState<FuncaoProfissional[]>([])
   const [loading, setLoading] = useState(true)
@@ -30,23 +31,32 @@ export default function FuncoesPage() {
   const [formNome, setFormNome] = useState('')
   const [formTipoCenso, setFormTipoCenso] = useState('')
   const [deleteId, setDeleteId] = useState<string | null>(null)
+  const [selectedSchoolId, setSelectedSchoolId] = useState<string | null>(null)
+
+  const effectiveSchoolId = selectedSchoolId || schoolId
 
   useEffect(() => {
     if (!authLoading && !user) router.push('/login')
   }, [user, authLoading, router])
 
   useEffect(() => {
-    inicializarFuncoesPadrao(schoolId, pessoaId).catch(() => { /* já existem */ })
-  }, [schoolId])
+    if (!effectiveSchoolId) return
+    inicializarFuncoesPadrao(effectiveSchoolId, pessoaId).catch(() => { /* já existem */ })
+  }, [effectiveSchoolId])
 
   useEffect(() => {
     loadFuncoes()
-  }, [schoolId])
+  }, [effectiveSchoolId])
 
   const loadFuncoes = async () => {
+    if (!effectiveSchoolId) {
+      setFuncoes([])
+      setLoading(false)
+      return
+    }
     setLoading(true)
     try {
-      const data = await getFuncoes(schoolId, false)
+      const data = await getFuncoes(effectiveSchoolId, false)
       setFuncoes(data)
     } catch {
       toast.error('Erro ao carregar funções')
@@ -71,12 +81,13 @@ export default function FuncoesPage() {
 
   const handleSave = async () => {
     if (!formNome.trim()) { toast.error('Nome é obrigatório'); return }
+    if (!editItem && !effectiveSchoolId) { toast.error('Selecione uma Unidade Escolar'); return }
     try {
       if (editItem) {
         await updateFuncao(editItem.id, { nome: formNome.trim(), tipo_censo: formTipoCenso || null }, pessoaId)
         toast.success('Função atualizada!')
       } else {
-        await createFuncao({ nome: formNome.trim(), tipo_censo: formTipoCenso || null, school_id: schoolId! }, pessoaId)
+        await createFuncao({ nome: formNome.trim(), tipo_censo: formTipoCenso || null, school_id: effectiveSchoolId! }, pessoaId)
         toast.success('Função criada!')
       }
       setModalOpen(false)
@@ -121,7 +132,29 @@ export default function FuncoesPage() {
           icon={Building2}
         />
 
-        {loading ? (
+        {isSuperAdmin && allSchools.length > 0 && (
+          <PageSection variant="compact" title="Filtros" className="mb-6">
+            <div>
+              <Label className="text-[13px] text-muted-foreground mb-1 block">Unidade Escolar</Label>
+              <Select value={selectedSchoolId ?? ''} onValueChange={(v) => setSelectedSchoolId(v || null)}>
+                <SelectTrigger className="w-auto min-w-[200px] h-9 border-border">
+                  <SelectValue placeholder="Selecione uma Unidade Escolar" />
+                </SelectTrigger>
+                <SelectContent>
+                  {allSchools.map((s: any) => <SelectItem key={s.id} value={s.id}>{s.nome_escola}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
+          </PageSection>
+        )}
+
+        {isSuperAdmin && !selectedSchoolId ? (
+          <Card className="shadow-sm">
+            <CardContent className="py-16">
+              <EmptyState icon={School} title="Selecione uma Unidade Escolar" description="Escolha uma unidade escolar para gerenciar as funções." />
+            </CardContent>
+          </Card>
+        ) : loading ? (
           <div className="flex items-center justify-center py-12">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
           </div>

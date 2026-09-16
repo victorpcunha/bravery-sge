@@ -65,55 +65,52 @@ input[type="number"] {
 }
 
 :root {
-  /* Bravery SGE — v9.1: primary = ancora da marca (light only; .dark intocado) */
-  --primary: #3f9ea8;
-  /* ancora teal — botoes e destaques (tinta sobre ancora 4.88:1, AA) */
-  --primary-foreground: #0a292c;
-  /* tinta sobre primary — branco sobre a ancora so atinge 3.15:1 */
+  /* Bravery SGE — v10: paleta índigo institucional (light only; .dark intocado) */
+  --primary: #4F46E5;
+  /* índigo — botões, links, foco (6.02:1 com #FAFAFA, AA) */
+  --primary-foreground: #FAFAFA;
 
-  --secondary: #2c747c;
-  /* teal de apoio — acoes secundarias e realces (5.39:1 sobre branco, AA) */
-  --secondary-foreground: #FFFFFF;
+  --secondary: #F1F2F9;
+  /* lavanda clara — botões secundários, chips (14.32:1 com #1E1B4B) */
+  --secondary-foreground: #1E1B4B;
 
-  --accent: #2c747c;
-  /* acompanha secondary — interacao, selecao e foco visivel */
-  --accent-foreground: #FFFFFF;
+  --accent: #F59E0B;
+  /* âmbar — destaques pontuais (8.14:1 com #1C1917) */
+  --accent-foreground: #1C1917;
 
-  --background: #eef4f4;
-  /* papel frio esverdeado — distingue do card branco */
-  --foreground: #0a292c;
-  --surface: #FFFFFF;
+  --background: #F8F9FC;
+  /* nevoa fria — pagina distingue do card branco */
+  --foreground: #1E1B4B;
+  --surface: #F8F9FC;
   --card: #FFFFFF;
-  --card-foreground: #0a292c;
+  --card-foreground: #1E1B4B;
   --popover: #FFFFFF;
-  --popover-foreground: #0a292c;
+  --popover-foreground: #1E1B4B;
 
-  --muted: #dce8e9;
-  --muted-foreground: #3d5a5e;
-  --border: #c4d9db;
-  --input: #FFFFFF;
-  --ring: #1b4d52;
-  /* foco acompanha primary — 9.42:1 como anel sobre branco */
+  --muted: #F1F2F9;
+  --muted-foreground: #64748B;
+  --border: #E2E5F0;
+  --input: #E2E5F0;
+  --ring: #4F46E5;
+  /* foco acompanha primary */
 
-  --destructive: #B3261E;
+  --destructive: #DC2626;
   --destructive-foreground: #FFFFFF;
-  --destructive-light: #F9E9E7;
-  --calendar-letivo: #2c747c;
-  --calendar-recesso: #B3261E;
-  --success: #2c747c;
-  /* acompanha secondary — mesma familia do acento unico */
-  --success-light: #dbebed;
-  --warning: #C2571C;
-  --warning-light: #FBEFE2;
-  --info: #2c747c;
-  /* acompanha secondary */
-  --info-light: #dbebed;
+  --destructive-light: #FEE2E2;
+  --calendar-letivo: #22C55E;
+  --calendar-recesso: #F59E0B;
+  --success: #22C55E;
+  --success-light: #DCFCE7;
+  --warning: #F59E0B;
+  --warning-light: #FEF3C7;
+  --info: #3B82F6;
+  --info-light: #DBEAFE;
 
-  --chart-1: #3f9ea8;
-  --chart-2: #1b4d52;
-  --chart-3: #0a292c;
-  --chart-4: #7fbbc2;
-  --chart-5: #C2571C;
+  --chart-1: #4F46E5;
+  --chart-2: #3B82F6;
+  --chart-3: #312E81;
+  --chart-4: #22C55E;
+  --chart-5: #F59E0B;
 
   --radius-sm: 6px;
   --radius: 12px;
@@ -123,21 +120,21 @@ input[type="number"] {
   --radius-2xl: 24px;
   --radius-full: 9999px;
 
-  /* Sidebar na ancora da marca — texto sempre tinta (4.88:1) */
-  --sidebar: #3f9ea8;
-  --sidebar-foreground: #0a292c;
-  --sidebar-primary: #0a292c;
+  /* Sidebar índigo profundo — texto lavanda */
+  --sidebar: #1E1B4B;
+  --sidebar-foreground: #E0E7FF;
+  --sidebar-primary: #4F46E5;
   --sidebar-primary-foreground: #FFFFFF;
-  --sidebar-accent: rgba(10, 41, 44, 0.12);
-  --sidebar-accent-foreground: #0a292c;
-  --sidebar-border: rgba(10, 41, 44, 0.2);
-  --sidebar-ring: #0a292c;
+  --sidebar-accent: #312E81;
+  --sidebar-accent-foreground: #E0E7FF;
+  --sidebar-border: #312E81;
+  --sidebar-ring: #4F46E5;
 
-  --shadow-sm: 0 1px 3px rgba(10, 41, 44, 0.06), 0 1px 2px rgba(10, 41, 44, 0.08);
-  --shadow: 0 3px 8px rgba(10, 41, 44, 0.08), 0 1px 3px rgba(10, 41, 44, 0.10);
-  --shadow-md: 0 6px 16px rgba(10, 41, 44, 0.10), 0 3px 6px rgba(10, 41, 44, 0.06);
-  --shadow-lg: 0 12px 28px rgba(10, 41, 44, 0.14), 0 4px 10px rgba(10, 41, 44, 0.06);
-  --shadow-xl: 0 20px 40px rgba(10, 41, 44, 0.18), 0 8px 16px rgba(10, 41, 44, 0.08);
+  --shadow-sm: 0 1px 3px rgba(30, 27, 75, 0.06), 0 1px 2px rgba(30, 27, 75, 0.08);
+  --shadow: 0 3px 8px rgba(30, 27, 75, 0.08), 0 1px 3px rgba(30, 27, 75, 0.10);
+  --shadow-md: 0 6px 16px rgba(30, 27, 75, 0.10), 0 3px 6px rgba(30, 27, 75, 0.06);
+  --shadow-lg: 0 12px 28px rgba(30, 27, 75, 0.14), 0 4px 10px rgba(30, 27, 75, 0.06);
+  --shadow-xl: 0 20px 40px rgba(30, 27, 75, 0.18), 0 8px 16px rgba(30, 27, 75, 0.08);
 
   --transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
   --transition: 200ms cubic-bezier(0.4, 0, 0.2, 1);

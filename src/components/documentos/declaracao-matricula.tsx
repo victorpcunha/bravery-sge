@@ -5,6 +5,7 @@ import { format } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
 import type { DadosDeclaracaoMatricula } from '@/lib/actions/documentos'
 import { dataNascimentoExtenso, formatarCpf, nomeTitulo, enderecoCompleto } from '@/lib/documentos-pdf'
+import { PDF_PALETTE as PDF } from '@/lib/pdf-palette'
 
 const styles = StyleSheet.create({
   page: {
@@ -14,11 +15,11 @@ const styles = StyleSheet.create({
     paddingHorizontal: 48,
     fontSize: 11,
     fontFamily: 'Helvetica',
-    color: '#0a292c',
+    color: PDF.ink,
   },
   topo: {
     borderBottomWidth: 2,
-    borderBottomColor: '#1b4d52',
+    borderBottomColor: PDF.accent,
     paddingBottom: 12,
     marginBottom: 18,
   },
@@ -36,13 +37,13 @@ const styles = StyleSheet.create({
   nomeDestaque: {
     fontSize: 15,
     fontFamily: 'Helvetica-Bold',
-    color: '#1b4d52',
+    color: PDF.accent,
   },
-  endereco: { fontSize: 9, color: '#3d5a5e', marginTop: 5, lineHeight: 1.45 },
-  contato: { fontSize: 9, color: '#3d5a5e', marginTop: 2, lineHeight: 1.45 },
+  endereco: { fontSize: 9, color: PDF.muted, marginTop: 5, lineHeight: 1.45 },
+  contato: { fontSize: 9, color: PDF.muted, marginTop: 2, lineHeight: 1.45 },
   cabecalho: {
     fontSize: 9,
-    color: '#3d5a5e',
+    color: PDF.muted,
     marginTop: 10,
     lineHeight: 1.5,
   },
@@ -66,20 +67,20 @@ const styles = StyleSheet.create({
   localData: { fontSize: 10, marginBottom: 18 },
   assinatura: { alignItems: 'center' },
   assinaturaNome: { fontSize: 11, fontFamily: 'Helvetica-Bold' },
-  assinaturaCargo: { fontSize: 9, color: '#3d5a5e', marginTop: 2 },
+  assinaturaCargo: { fontSize: 9, color: PDF.muted, marginTop: 2 },
   base: {
     borderTopWidth: 1,
-    borderTopColor: '#CBD5E1',
+    borderTopColor: PDF.border,
     paddingTop: 8,
     marginTop: 18,
   },
   rodapeDados: {
     fontSize: 7.5,
-    color: '#64748B',
+    color: PDF.muted,
     lineHeight: 1.4,
     textAlign: 'center',
   },
-  rodape: { fontSize: 8, color: '#64748B', lineHeight: 1.4, marginTop: 3, textAlign: 'center' },
+  rodape: { fontSize: 8, color: PDF.muted, lineHeight: 1.4, marginTop: 3, textAlign: 'center' },
 })
 
 export function DeclaracaoMatricula({
