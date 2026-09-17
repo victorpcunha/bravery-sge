@@ -31,7 +31,10 @@ export default function NovaEscolaPage() {
     if (!podeCriar) return
     setIsSubmitting(true)
     try {
-      await createSchool({ ...data, tipo_registro: '00' }, pessoaId || undefined)
+      // Espelha a canônica `cnpj_escola` na legada `cnpj` (leitores legados).
+      const payload = { ...data, tipo_registro: '00' } as Record<string, any>
+      if ('cnpj_escola' in payload) payload.cnpj = payload.cnpj_escola || null
+      await createSchool(payload, pessoaId || undefined)
       toast.success('Escola criada com sucesso!')
       router.push('/escolas')
     } catch (err: any) {

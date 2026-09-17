@@ -2,7 +2,8 @@
 
 import { ErroValidacao } from '@/lib/actions/censo-types'
 import { Button } from '@/components/ui/button'
-import { ExternalLink, School } from 'lucide-react'
+import { Pencil, School } from 'lucide-react'
+import Link from 'next/link'
 import { getAbaEscola, SECAO_AMIGAVEL } from '@/data/censo/rotulos-campos'
 
 interface Props {
@@ -43,12 +44,12 @@ export function ValidacaoErroItem({ erro }: Props) {
           )}
         </div>
       </div>
-      <a href={erro.url_correcao} target="_blank" rel="noopener noreferrer">
+      <Link href={erro.url_correcao}>
         <Button variant="outline" size="sm" className="shrink-0 gap-1 text-xs">
-          <ExternalLink className="size-3" />
+          <Pencil className="size-3" />
           Corrigir
         </Button>
-      </a>
+      </Link>
     </div>
   )
 }

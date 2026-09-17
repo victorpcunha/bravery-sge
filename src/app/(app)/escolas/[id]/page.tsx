@@ -92,7 +92,10 @@ export default function UnidadeEscolarPage() {
     Promise.all([getSchool(id, pessoaId || undefined), getConfigDocumentos(id)])
       .then(([s, config]) => {
         setSchool(s)
-        setDefaultValues({ ...(s as any), documentos: combinarConfigDocumentos(s, config) } as any)
+        // Transição CNPJ: form lê `cnpj_escola`; espelha a legada `cnpj`
+        // até o backfill (patch_censo_cnpj_escola_backfill.sql) rodar.
+        const sAny = s as any
+        setDefaultValues({ ...sAny, cnpj_escola: sAny.cnpj_escola || sAny.cnpj || '', documentos: combinarConfigDocumentos(s, config) } as any)
         setLoading(false)
       })
       .catch(() => {
@@ -106,6 +109,8 @@ export default function UnidadeEscolarPage() {
     setIsSubmitting(true)
     try {
       const { documentos, ...censo } = data
+      // Espelha a canônica `cnpj_escola` na legada `cnpj` (leitores legados).
+      if ('cnpj_escola' in censo) (censo as any).cnpj = (censo as any).cnpj_escola || null
       await updateSchool(id, censo, pessoaId || undefined)
       if (documentos) {
         await salvarConfigDocumentos(id, documentos as ConfigDocumentosForm, pessoaId || undefined)
@@ -236,6 +241,7 @@ export default function UnidadeEscolarPage() {
         readOnly={!podeEditar}
         title=""
         schoolId={id}
+        pessoaId={pessoaId}
         onCancel={() => router.push('/escolas')}
         submitLabel="Salvar Alterações"
       />

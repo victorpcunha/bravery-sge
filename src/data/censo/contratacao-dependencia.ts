@@ -41,8 +41,8 @@ export const FORMAS_CONTRATACAO: FormaContratacao[] = [
     campo_estadual: 38,
     campo_municipal: 44,
     dependencias_permitidas: [
-      "Municipal",
       "Privada (Particular)",
+      "Privada (não Particular)",
     ],
   },
   {

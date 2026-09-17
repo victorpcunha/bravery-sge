@@ -155,7 +155,7 @@ export async function montarEscola(schoolId: string): Promise<IdentidadeEscola> 
 
   const { data: school } = await supabase
     .from('schools')
-    .select('nome_escola, cnpj, endereco, numero, bairro, municipio, cep, email')
+    .select('nome_escola, cnpj, cnpj_escola, endereco, numero, bairro, municipio, cep, email')
     .eq('id', schoolId)
     .maybeSingle()
 
@@ -165,7 +165,7 @@ export async function montarEscola(schoolId: string): Promise<IdentidadeEscola> 
   return {
     nome_escola: (config?.nome_escola_doc || school?.nome_escola || '').trim(),
     nome_fantasia: (config?.nome_fantasia || '').trim(),
-    cnpj: formatCnpj((config?.cnpj_doc || school?.cnpj || '').trim()),
+    cnpj: formatCnpj((config?.cnpj_doc || (school as any)?.cnpj_escola || school?.cnpj || '').trim()),
     logradouro: (config?.logradouro_doc || school?.endereco || '').trim(),
     numero: (config?.numero_doc || school?.numero || '').trim(),
     bairro: (config?.bairro_doc || school?.bairro || '').trim(),

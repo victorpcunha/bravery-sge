@@ -11,6 +11,7 @@ const LABELS: Record<string, string> = {
   sigla: 'Sigla',
   cpf: 'CPF',
   cnpj: 'CNPJ',
+  cnpj_escola: 'CNPJ da Escola',
   email: 'E-mail',
   status: 'Status',
   ativo: 'Ativo',

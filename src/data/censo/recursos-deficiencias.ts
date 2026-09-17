@@ -1,5 +1,13 @@
-// INEP Censo Escolar 2026 — Anexo 4: Recursos de Acessibilidade × Deficiências/Transtornos
-// Fonte: Portaria Inep nº 291/2025 — Tabela de Compatibilidade de Recursos
+// INEP Censo Escolar 2026 (Matricula Inicial v4) — Anexo 4:
+// Recursos de Acessibilidade x Deficiencias/Transtornos
+//
+// Legenda v4:
+//   X  = Recurso permitido para a deficiencia
+//   N  = Recurso nao permitido mesmo quando as outras deficiencias sao compativeis
+//   (vazio) = incompatibilidade do recurso para a deficiencia
+//
+// Chaves de deficiencia usam os nomes das colunas de `people` (mais `tea`),
+// para bater com a leitura da validacao sem conversao.
 
 type Compatibilidade = "X" | "N" | null;
 
@@ -16,30 +24,24 @@ export interface RecursoTranstorno {
 }
 
 // -----------------------------------------------------------------------------
-// Tabela 1: Recursos × Deficiências (13 recursos × 9 deficiências = 117 células)
+// Tabela 1: Recursos x Deficiencias (v4)
+// Colunas: baixa_visao, cegueira, visao_monocular, deficiencia_auditiva,
+// surdez, surdocegueira, deficiencia_fisica, deficiencia_intelectual, tea
 // -----------------------------------------------------------------------------
-// Legenda:
-//   X  = Recurso compatível com a deficiência
-//   N  = Recurso explicitamente NÃO aplicável (restrição INEP)
-// null = Recurso não se aplica / sem relação direta
-//
-// Regras "N" (INEP):
-//   • Tradutor Libras (39)      NUNCA para cegueira
-//   • Leitura labial (40)       NUNCA para cegueira
-//   • Prova em Libras (44)      NUNCA para cegueira
-//   • Prova vídeo Libras (45)   NUNCA para cegueira
-//   • Auxílio ledor (36)        NUNCA para surdez
-//   • CD áudio (43)             NUNCA para surdez
+// Regras "N" (v4):
+//   • Auxilio ledor (36) e CD audio (43): NUNCA para surdez
+//   • Tradutor Libras (39), Leitura labial (40), Prova LP 2a lingua (44),
+//     Prova video Libras (45): NUNCA para cegueira
 
 const DEFICIENCIAS = [
   "baixa_visao",
   "cegueira",
   "visao_monocular",
-  "def_auditiva",
+  "deficiencia_auditiva",
   "surdez",
   "surdocegueira",
-  "def_fisica",
-  "def_intelectual",
+  "deficiencia_fisica",
+  "deficiencia_intelectual",
   "tea",
 ] as const;
 
@@ -62,7 +64,9 @@ export const RECURSOS_DEFICIENCIAS: RecursoDeficiencia[] = [
       cegueira: "X",
       visao_monocular: "X",
       surdez: "N",
-      def_intelectual: "X",
+      surdocegueira: "X",
+      deficiencia_fisica: "X",
+      deficiencia_intelectual: "X",
       tea: "X",
     }),
   },
@@ -73,8 +77,9 @@ export const RECURSOS_DEFICIENCIAS: RecursoDeficiencia[] = [
       baixa_visao: "X",
       cegueira: "X",
       visao_monocular: "X",
-      def_fisica: "X",
-      def_intelectual: "X",
+      surdocegueira: "X",
+      deficiencia_fisica: "X",
+      deficiencia_intelectual: "X",
       tea: "X",
     }),
   },
@@ -90,7 +95,7 @@ export const RECURSOS_DEFICIENCIAS: RecursoDeficiencia[] = [
     recurso_nome: "Tradutor intérprete de Libras",
     compatibilidade: buildCompatibilidade({
       cegueira: "N",
-      def_auditiva: "X",
+      deficiencia_auditiva: "X",
       surdez: "X",
       surdocegueira: "X",
     }),
@@ -100,9 +105,9 @@ export const RECURSOS_DEFICIENCIAS: RecursoDeficiencia[] = [
     recurso_nome: "Leitura labial",
     compatibilidade: buildCompatibilidade({
       cegueira: "N",
-      def_auditiva: "X",
-      def_intelectual: "X",
-      tea: "X",
+      deficiencia_auditiva: "X",
+      surdez: "X",
+      surdocegueira: "X",
     }),
   },
   {
@@ -111,8 +116,7 @@ export const RECURSOS_DEFICIENCIAS: RecursoDeficiencia[] = [
     compatibilidade: buildCompatibilidade({
       baixa_visao: "X",
       visao_monocular: "X",
-      def_intelectual: "X",
-      tea: "X",
+      surdocegueira: "X",
     }),
   },
   {
@@ -120,6 +124,8 @@ export const RECURSOS_DEFICIENCIAS: RecursoDeficiencia[] = [
     recurso_nome: "Prova superampliada (fonte 24)",
     compatibilidade: buildCompatibilidade({
       baixa_visao: "X",
+      visao_monocular: "X",
+      surdocegueira: "X",
     }),
   },
   {
@@ -130,13 +136,18 @@ export const RECURSOS_DEFICIENCIAS: RecursoDeficiencia[] = [
       cegueira: "X",
       visao_monocular: "X",
       surdez: "N",
+      surdocegueira: "X",
+      deficiencia_fisica: "X",
+      deficiencia_intelectual: "X",
+      tea: "X",
     }),
   },
   {
     recurso_campo: 44,
-    recurso_nome: "Prova em Libras",
+    recurso_nome: "Prova de Língua Portuguesa como Segunda Língua",
     compatibilidade: buildCompatibilidade({
       cegueira: "N",
+      deficiencia_auditiva: "X",
       surdez: "X",
       surdocegueira: "X",
     }),
@@ -146,22 +157,24 @@ export const RECURSOS_DEFICIENCIAS: RecursoDeficiencia[] = [
     recurso_nome: "Prova em vídeo em Libras",
     compatibilidade: buildCompatibilidade({
       cegueira: "N",
+      deficiencia_auditiva: "X",
       surdez: "X",
+      surdocegueira: "X",
     }),
   },
   {
     recurso_campo: 46,
-    recurso_nome: "Material didático adaptado",
+    recurso_nome: "Material didático em Braille",
     compatibilidade: buildCompatibilidade({
-      def_intelectual: "X",
-      tea: "X",
+      cegueira: "X",
+      surdocegueira: "X",
     }),
   },
   {
     recurso_campo: 47,
-    recurso_nome: "Mobiliário adaptado",
+    recurso_nome: "Prova em Braille",
     compatibilidade: buildCompatibilidade({
-      def_fisica: "X",
+      cegueira: "X",
       surdocegueira: "X",
     }),
   },
@@ -171,21 +184,21 @@ export const RECURSOS_DEFICIENCIAS: RecursoDeficiencia[] = [
     compatibilidade: buildCompatibilidade({
       baixa_visao: "X",
       cegueira: "X",
-      def_auditiva: "X",
+      visao_monocular: "X",
+      deficiencia_auditiva: "X",
       surdez: "X",
       surdocegueira: "X",
-      def_fisica: "X",
-      def_intelectual: "X",
+      deficiencia_fisica: "X",
+      deficiencia_intelectual: "X",
       tea: "X",
     }),
   },
 ];
 
 // -----------------------------------------------------------------------------
-// Tabela 2: Recursos × Transtornos (13 recursos × 6 transtornos)
+// Tabela 2: Recursos x Transtornos (v4 — secao "Compatibilidade de recursos
+// para transtornos"). Apenas 36, 37 e 48 tem X para os 6 transtornos.
 // -----------------------------------------------------------------------------
-// Apenas os recursos 36, 37 e 48 são compatíveis com TODOS os transtornos.
-// Todos os demais recursos são nulos (não se aplicam).
 
 const TRANSTORNOS = [
   "discalculia",
@@ -249,7 +262,7 @@ export const RECURSOS_TRANSTORNOS: RecursoTranstorno[] = [
   },
   {
     recurso_campo: 44,
-    recurso_nome: "Prova em Libras",
+    recurso_nome: "Prova de Língua Portuguesa como Segunda Língua",
     compatibilidade: buildCompatibilidadeTranstorno(null),
   },
   {
@@ -259,12 +272,12 @@ export const RECURSOS_TRANSTORNOS: RecursoTranstorno[] = [
   },
   {
     recurso_campo: 46,
-    recurso_nome: "Material didático adaptado",
+    recurso_nome: "Material didático em Braille",
     compatibilidade: buildCompatibilidadeTranstorno(null),
   },
   {
     recurso_campo: 47,
-    recurso_nome: "Mobiliário adaptado",
+    recurso_nome: "Prova em Braille",
     compatibilidade: buildCompatibilidadeTranstorno(null),
   },
   {

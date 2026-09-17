@@ -30,14 +30,12 @@ const ITEMS_PER_PAGE = 10
 const perfilLabels: Record<string, string> = {
   aluno: 'Aluno',
   profissional: 'Profissional',
-  gestor: 'Gestor',
   responsavel: 'Responsável',
 }
 
 const perfilStatusMap: Record<string, 'warning' | 'primary' | 'info' | 'success'> = {
   aluno: 'warning',
   profissional: 'primary',
-  gestor: 'info',
   responsavel: 'success',
 }
 
@@ -53,7 +51,6 @@ const PERFIS = [
   { value: '', label: 'Todos' },
   { value: 'aluno', label: 'Aluno' },
   { value: 'profissional', label: 'Profissional' },
-  { value: 'gestor', label: 'Gestor' },
   { value: 'responsavel', label: 'Responsável' },
 ]
 
@@ -156,7 +153,7 @@ export default function UsuariosPage() {
     return {
       total: ativos.length,
       alunos: ativos.filter(p => temPerfil(p, ['aluno'])).length,
-      profissionais: ativos.filter(p => temPerfil(p, ['profissional', 'gestor'])).length,
+      profissionais: ativos.filter(p => temPerfil(p, ['profissional'])).length,
       responsaveis: ativos.filter(p => temPerfil(p, ['responsavel'])).length,
     }
   }, [basePessoas])
@@ -266,7 +263,7 @@ export default function UsuariosPage() {
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
           <StatCard icon={Users} value={kpis.total} label="Usuários Ativos" />
           <StatCard icon={GraduationCap} value={kpis.alunos} label="Alunos Ativos" variant="warning" />
-          <StatCard icon={Briefcase} value={kpis.profissionais} label="Profissionais / Gestores Ativos" variant="success" />
+          <StatCard icon={Briefcase} value={kpis.profissionais} label="Profissionais Ativos" variant="success" />
           <StatCard icon={HeartHandshake} value={kpis.responsaveis} label="Responsáveis Ativos" variant="default" />
         </div>
 
@@ -399,7 +396,7 @@ export default function UsuariosPage() {
                   </div>
                   {(pessoa.perfil || []).length > 0 && (
                     <div className="flex gap-1 flex-wrap mb-4">
-                      {(pessoa.perfil || []).map(p => (
+                      {(pessoa.perfil || []).filter(p => p !== 'gestor').map(p => (
                         <StatusBadge key={p} status={perfilStatusMap[p] || 'muted'}>
                           {perfilLabels[p] || p}
                         </StatusBadge>
@@ -458,7 +455,7 @@ export default function UsuariosPage() {
                       <TableCell><CopyChip raw={pessoa.inep_id} display={pessoa.inep_id || '—'} /></TableCell>
                       <TableCell>
                         <div className="flex gap-1 flex-wrap">
-                          {(pessoa.perfil || []).map(p => (
+                          {(pessoa.perfil || []).filter(p => p !== 'gestor').map(p => (
                             <StatusBadge key={p} status={perfilStatusMap[p] || 'muted'}>
                               {perfilLabels[p] || p}
                             </StatusBadge>

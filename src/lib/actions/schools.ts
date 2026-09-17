@@ -11,6 +11,7 @@ export type School = {
   codigo_inep: string | null
   nome_escola: string
   cnpj: string | null
+  cnpj_escola: string | null
   cpf_gestor: string | null
   nome_gestor: string | null
   cpf_secretario: string | null

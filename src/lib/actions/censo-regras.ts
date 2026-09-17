@@ -13,6 +13,16 @@ import { ETAPAS_ENSINO } from '@/data/censo/etapas-ensino'
 import { AREAS_CONHECIMENTO } from '@/data/censo/areas-conhecimento'
 import { COMPATIBILIDADE_MEDIACAO_TURMA_ETAPA } from '@/data/censo/tipo-turma-mediacao'
 import { codigoTipoTurma, codigoFormaOrganizacao } from '@/data/censo/tipo-turma-codigos'
+import { derivarAreasDeDisciplinas } from '@/data/censo/areas-turma'
+import { getNomeCursoSuperior } from '@/data/censo/cursos-superiores'
+import { ATIVIDADES_COMPLEMENTARES as CATALOGO_ATIVIDADES } from '@/data/censo/atividades-complementares'
+import { EIXOS_EP, getCursoEP } from '@/data/censo/cursos-ep'
+import { AREA_KEY_POR_NUMERO, AREAS_DESABILITADAS_POR_ETAPA } from '@/data/censo/regras-areas'
+import { mapearAreasPorMatriz } from '@/lib/censo-areas-prof'
+import { LINGUAS_INDIGENAS } from '@/data/censo/linguas-indigenas'
+import { POVOS_INDIGENAS } from '@/data/censo/povos-indigenas'
+import { PAISES_CODIGOS } from '@/data/censo/paises'
+import { AREAS_POS_GRADUACAO } from '@/data/censo/areas-pos-graduacao'
 import { MUNICIPIOS_CEARA } from '@/data/censo/municipios-ceara'
 import { getCampoAmigavel, getDescricaoValor, getAbaEscola, gerarMensagemAmigavel } from '@/data/censo/rotulos-campos'
 
@@ -296,7 +306,7 @@ export async function validarRegistro00(schoolId: string, anoLetivoId?: string):
     )
   }
 
-  // 2d. endereco — até 100 caracteres permitidos
+  // 2d. endereco — até 100; número/complemento/bairro (v4 c10-13)
   const endereco = school.endereco
   if (endereco && endereco.length > 100) {
     addErro(
@@ -306,6 +316,39 @@ export async function validarRegistro00(schoolId: string, anoLetivoId?: string):
       endereco.substring(0, 100) + '...',
       'endereco',
       'endereco',
+    )
+  }
+  const numeroEnd = school.numero ? String(school.numero) : ''
+  if (numeroEnd && numeroEnd.length > 10) {
+    addErro(
+      'numero', 11,
+      'Número do endereço',
+      'Deve ter até 10 caracteres.',
+      numeroEnd,
+      'endereco',
+      'numero',
+    )
+  }
+  const complementoEnd = school.complemento ? String(school.complemento) : ''
+  if (complementoEnd && complementoEnd.length > 20) {
+    addErro(
+      'complemento', 12,
+      'Complemento',
+      'Deve ter até 20 caracteres.',
+      complementoEnd,
+      'endereco',
+      'complemento',
+    )
+  }
+  const bairroEnd = school.bairro ? String(school.bairro) : ''
+  if (bairroEnd && bairroEnd.length > 50) {
+    addErro(
+      'bairro', 13,
+      'Bairro',
+      'Deve ter até 50 caracteres.',
+      bairroEnd,
+      'endereco',
+      'bairro',
     )
   }
 
@@ -534,6 +577,22 @@ export async function validarRegistro00(schoolId: string, anoLetivoId?: string):
         'mant_empresa',
       )
     }
+  } else {
+    // v4 c26-31: nulas fora de privada ativa
+    const mantCols = ['mant_empresa', 'mant_sindicatos', 'mant_ong', 'mant_sem_fins_lucrativos', 'mant_sistema_s', 'mant_oscip'] as const
+    const mantNums = [22, 23, 24, 25, 26, 27]
+    mantCols.forEach((col, idx) => {
+      if ((school as any)[col]) {
+        addErro(
+          col, mantNums[idx],
+          'Mantenedora deve ser nula',
+          'Mantenedora só pode ser informada para escola privada em atividade.',
+          'Sim',
+          'mantenedora',
+          col,
+        )
+      }
+    })
   }
 
   // -----------------------------------------------------------------------
@@ -557,6 +616,46 @@ export async function validarRegistro00(schoolId: string, anoLetivoId?: string):
         'orgao_secretaria_educacao',
       )
     }
+  } else if (situacaoValida) {
+    // v4 c22-25: 0/1 quando dep 1/2/3, senão nulos
+    const orgaoCols = ['orgao_secretaria_educacao', 'orgao_seguranca', 'orgao_saude', 'orgao_outro'] as const
+    const orgaoNums = [22, 23, 24, 25]
+    orgaoCols.forEach((col, idx) => {
+      if ((school as any)[col]) {
+        addErro(
+          col, orgaoNums[idx],
+          'Órgão deve ser nulo',
+          'Órgão vinculado só pode ser informado para escola pública (dependência 1, 2 ou 3).',
+          'Sim',
+          'administrativo',
+          col,
+        )
+      }
+    })
+  }
+
+  // v4 c32: 1-4 quando dep=4, senão nulo
+  const categoria = school.categoria_escola_privada ? String(school.categoria_escola_privada) : ''
+  if (dependencia === '4') {
+    if (categoria && !['1', '2', '3', '4'].includes(categoria)) {
+      addErro(
+        'categoria_escola_privada', 32,
+        'Categoria da escola privada',
+        'Categoria deve ser 1, 2, 3 ou 4.',
+        categoria,
+        'administrativo',
+        'categoria_escola_privada',
+      )
+    }
+  } else if (categoria) {
+    addErro(
+      'categoria_escola_privada', 32,
+      'Categoria deve ser nula',
+      'Categoria só pode ser informada para escola privada.',
+      categoria,
+      'administrativo',
+      'categoria_escola_privada',
+    )
   }
 
   // -----------------------------------------------------------------------
@@ -676,6 +775,29 @@ export async function validarRegistro00(schoolId: string, anoLetivoId?: string):
     }
   }
 
+  // v4 c33-46: parcerias e contratações nulas fora de atividade
+  if (!isAtiva) {
+    const parcCols = [
+      'parceria_estadual', 'parceria_municipal',
+      'contr_est_colaboracao', 'contr_est_fomento', 'contr_est_cooperacao',
+      'contr_est_prestacao', 'contr_est_coop_tecnica', 'contr_est_consorcio',
+      'contr_mun_colaboracao', 'contr_mun_fomento', 'contr_mun_cooperacao',
+      'contr_mun_prestacao', 'contr_mun_coop_tecnica', 'contr_mun_consorcio',
+    ] as const
+    for (const col of parcCols) {
+      if ((school as any)[col]) {
+        addErro(
+          col, 33,
+          'Parceria deve ser nula',
+          'Parcerias e contratações devem ser nulas quando a escola não está em atividade.',
+          'Sim',
+          'parcerias',
+          col,
+        )
+      }
+    }
+  }
+
   // -----------------------------------------------------------------------
   // 9. CNPJ
   // -----------------------------------------------------------------------
@@ -737,8 +859,11 @@ export async function validarRegistro00(schoolId: string, anoLetivoId?: string):
   }
 
   // 9b. cnpj_escola (quando situacao='1' E dependencia='4')
+  // Coluna canônica: `cnpj_escola` (backfill em patch_censo_cnpj_escola_backfill.sql).
+  // Mantido fallback para a legada `cnpj` em bases ainda não migradas.
+  // campo_inep = nome oficial; campo_destino = campo real do form.
   if (isAtiva && dependencia === '4') {
-    const cnpjEscola = school.cnpj_escola
+    const cnpjEscola = school.cnpj_escola || school.cnpj
     if (!cnpjEscola) {
       addErro(
         'cnpj_escola', 48,
@@ -845,23 +970,50 @@ export async function validarRegistro00(schoolId: string, anoLetivoId?: string):
           'vinculo',
           'codigo_escola_sede',
         )
+      } else if (school.codigo_inep && codSede === school.codigo_inep) {
+        // v4 00.c52.n3: sede deve ser outra escola
+        addErro(
+          'codigo_escola_sede', 45,
+          'Código da escola sede',
+          'Deve ser o código de outra escola (diferente da própria).',
+          codSede,
+          'vinculo',
+          'codigo_escola_sede',
+        )
       }
     }
 
-    // codigo_ies quando unidade_vinculada = '2'
+    // codigo_ies quando unidade_vinculada = '2' (v4: 9 numéricos)
     if (unidadeVinculada === '2') {
-      const codIes = school.codigo_ies
-      if (!codIes || codIes.length !== 9) {
+      const codIes = school.codigo_ies ? String(school.codigo_ies) : ''
+      if (!codIes || !/^\d{9}$/.test(codIes)) {
         addErro(
           'codigo_ies', 46,
           'Código IES',
-          'Deve ter 9 caracteres quando a unidade é vinculada a IES.',
+          'Deve ter 9 caracteres numéricos quando a unidade é vinculada a IES.',
           codIes || '(vazio)',
           'vinculo',
           'codigo_ies',
         )
       }
     }
+  } else {
+    // v4 c49/c51: regulamentação e vínculo nulos fora de atividade
+    const nulosFora = ['regulamentacao', 'esfera_regulamentacao', 'unidade_vinculada', 'codigo_escola_sede', 'codigo_ies'] as const
+    const nulosNums = [42, 43, 44, 45, 46]
+    nulosFora.forEach((col, idx) => {
+      const val = (school as any)[col]
+      if (val !== null && val !== undefined && String(val).trim() !== '') {
+        addErro(
+          col, nulosNums[idx],
+          'Deve ser nulo fora de atividade',
+          'Deve ser nulo quando a escola não está em atividade.',
+          String(val),
+          col === 'regulamentacao' || col === 'esfera_regulamentacao' ? 'regulamentacao' : 'vinculo',
+          col,
+        )
+      }
+    })
   }
 
   // -----------------------------------------------------------------------
@@ -870,6 +1022,16 @@ export async function validarRegistro00(schoolId: string, anoLetivoId?: string):
 
   const email = school.email
   if (email) {
+    if (email.length > 100) {
+      addErro(
+        'email', 17,
+        'Endereço eletrônico (e-mail)',
+        'Deve ter até 100 caracteres.',
+        email,
+        'contato',
+        'email',
+      )
+    }
     const emailRegex = /^[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}$/
     if (!emailRegex.test(email)) {
       addErro(
@@ -881,6 +1043,18 @@ export async function validarRegistro00(schoolId: string, anoLetivoId?: string):
         'email',
       )
     }
+  }
+
+  const codigoOrgao = school.codigo_orgao_regional ? String(school.codigo_orgao_regional) : ''
+  if (codigoOrgao && codigoOrgao.length > 5) {
+    addErro(
+      'codigo_orgao_regional', 18,
+      'Órgão regional',
+      'Deve ter até 5 caracteres.',
+      codigoOrgao,
+      'endereco',
+      'codigo_orgao_regional',
+    )
   }
 
   return erros
@@ -1151,7 +1325,7 @@ export async function validarRegistro10(schoolId: string): Promise<ErroValidacao
   // 3. CONDICIONAIS
   // -----------------------------------------------------------------------
 
-  // forma_ocupacao: only if local_predio is true
+  // forma_ocupacao: 1/2/3 only if local_predio is true (v4 10.c9)
   if (!b('local_predio') && s('forma_ocupacao')) {
     erros.push(
       criarErro(
@@ -1160,9 +1334,17 @@ export async function validarRegistro10(schoolId: string): Promise<ErroValidacao
         schoolId, nomeEscola, schoolId, s('forma_ocupacao'), 'infraestrutura', 'forma_ocupacao',
       ),
     )
+  } else if (b('local_predio') && s('forma_ocupacao') && !['1', '2', '3'].includes(s('forma_ocupacao'))) {
+    erros.push(
+      criarErro(
+        '10', 'forma_ocupacao', 9, 'VALOR_INVALIDO',
+        'forma_ocupacao deve ser 1, 2 ou 3.',
+        schoolId, nomeEscola, schoolId, s('forma_ocupacao'), 'infraestrutura', 'forma_ocupacao',
+      ),
+    )
   }
 
-  // predio_compartilhado: only if local_predio is true
+  // predio_compartilhado: 0/1 only if local_predio is true (v4 10.c10)
   if (!b('local_predio') && b('predio_compartilhado')) {
     erros.push(
       criarErro(
@@ -1182,18 +1364,41 @@ export async function validarRegistro10(schoolId: string): Promise<ErroValidacao
 
   if (b('predio_compartilhado')) {
     let foundEmpty = false
+    const vistosComp = new Set<string>()
     for (const c of compartilhaCodes) {
       if (!c.val) {
         foundEmpty = true
-      } else if (foundEmpty) {
-        erros.push(
-          criarErro(
-            '10', c.col, c.num, 'SEQUENCIALIDADE',
-            `Códigos de compartilhamento devem ser preenchidos sequencialmente (sem lacunas). "${c.col}" está preenchido mas o código anterior está vazio.`,
-            schoolId, nomeEscola, schoolId, c.val, 'infraestrutura', c.col,
-          ),
-        )
-        break
+      } else {
+        if (foundEmpty) {
+          erros.push(
+            criarErro(
+              '10', c.col, c.num, 'SEQUENCIALIDADE',
+              `Códigos de compartilhamento devem ser preenchidos sequencialmente (sem lacunas). "${c.col}" está preenchido mas o código anterior está vazio.`,
+              schoolId, nomeEscola, schoolId, c.val, 'infraestrutura', c.col,
+            ),
+          )
+          break
+        }
+        // v4 10.c11-16: 8 numéricos, sem duplicar
+        if (!/^\d{8}$/.test(c.val)) {
+          erros.push(
+            criarErro(
+              '10', c.col, c.num, 'FORMATO_INVALIDO',
+              'Código da escola deve ter 8 caracteres numéricos.',
+              schoolId, nomeEscola, schoolId, c.val, 'infraestrutura', c.col,
+            ),
+          )
+        } else if (vistosComp.has(c.val)) {
+          erros.push(
+            criarErro(
+              '10', c.col, c.num, 'CODIGO_DUPLICADO',
+              'Códigos de compartilhamento não podem se repetir.',
+              schoolId, nomeEscola, schoolId, c.val, 'infraestrutura', c.col,
+            ),
+          )
+        } else {
+          vistosComp.add(c.val)
+        }
       }
     }
 
@@ -1375,13 +1580,32 @@ export async function validarRegistro10(schoolId: string): Promise<ErroValidacao
     )
   }
 
-  // rede_local: 0-3
+  // rede_local: 0-3 (v4 10.c118 n=1/2/3)
   const rl = s('rede_local')
   if (rl && !['0', '1', '2', '3'].includes(rl)) {
     erros.push(
       criarErro(
         '10', 'rede_local', 118, 'VALOR_INVALIDO',
         'rede_local deve ser 0, 1, 2 ou 3.',
+        schoolId, nomeEscola, schoolId, rl, 'infraestrutura', 'rede_local',
+      ),
+    )
+  } else if (rl === '1' || rl === '3') {
+    if (!b('eq_computadores') && !s('internet_equip_alunos')) {
+      erros.push(
+        criarErro(
+          '10', 'rede_local', 118, 'REDE_SEM_EQUIPAMENTO',
+          'rede_local não pode ser 1 ou 3 quando não há computadores nem equipamentos de acesso informados.',
+          schoolId, nomeEscola, schoolId, rl, 'infraestrutura', 'rede_local',
+        ),
+      )
+    }
+  }
+  if (rl && (iea === '2' || iea === '3') && rl !== '2' && rl !== '3') {
+    erros.push(
+      criarErro(
+        '10', 'rede_local', 118, 'REDE_EQUIP_ALUNOS',
+        'rede_local deve ser 2 ou 3 quando equipamentos de acesso dos alunos é 2 ou 3.',
         schoolId, nomeEscola, schoolId, rl, 'infraestrutura', 'rede_local',
       ),
     )
@@ -1399,7 +1623,8 @@ export async function validarRegistro10(schoolId: string): Promise<ErroValidacao
     )
   }
 
-  // codigo_lingua_indigena_1..3: only if lingua_ensino is 1 or 3
+  // codigo_lingua_indigena_1..3: only if lingua_ensino is 1 or 3;
+  // v4: código da Tabela de Línguas Indígenas, sem repetir
   if (le !== '1' && le !== '3') {
     for (let i = 1; i <= 3; i++) {
       const campo = `codigo_lingua_indigena_${i}`
@@ -1414,9 +1639,35 @@ export async function validarRegistro10(schoolId: string): Promise<ErroValidacao
         )
       }
     }
+  } else {
+    const vistosLingua = new Set<string>()
+    for (let i = 1; i <= 3; i++) {
+      const campo = `codigo_lingua_indigena_${i}`
+      const val = s(campo).trim()
+      if (!val) continue
+      if (!LINGUAS_INDIGENAS[val]) {
+        erros.push(
+          criarErro(
+            '10', campo, 160 + i, 'LINGUA_INVALIDA',
+            'Deve ser um código da Tabela de Línguas Indígenas.',
+            schoolId, nomeEscola, schoolId, val, 'infraestrutura', campo,
+          ),
+        )
+      } else if (vistosLingua.has(val)) {
+        erros.push(
+          criarErro(
+            '10', campo, 160 + i, 'LINGUA_DUPLICADA',
+            'Códigos de língua indígena não podem se repetir.',
+            schoolId, nomeEscola, schoolId, val, 'infraestrutura', campo,
+          ),
+        )
+      } else {
+        vistosLingua.add(val)
+      }
+    }
   }
 
-  // cota fields: only if exame_selecao is true
+  // cota fields: only if exame_selecao is true (0/1); grupo ≥1 quando exame=1
   const COTAS = [
     { col: 'cota_ppi', num: 165 },
     { col: 'cota_renda', num: 166 },
@@ -1437,18 +1688,26 @@ export async function validarRegistro10(schoolId: string): Promise<ErroValidacao
         )
       }
     }
+  } else if (!COTAS.some((c) => b(c.col))) {
+    erros.push(
+      criarErro(
+        '10', 'cota_ppi', 165, 'COTAS_OBRIGATORIAS',
+        'Pelo menos uma reserva de vagas (165 a 170) deve ser informada quando há exame de seleção.',
+        schoolId, nomeEscola, schoolId, '', 'infraestrutura', 'cota_ppi',
+      ),
+    )
   }
 
-  // educacao_ambiental: amb_* fields only if true
+  // educacao_ambiental: amb_* 0/1 only if true; grupo ≥1 quando true
+  const AMB_FIELDS = [
+    { col: 'amb_conteudo', num: 182 },
+    { col: 'amb_componente', num: 183 },
+    { col: 'amb_eixo', num: 184 },
+    { col: 'amb_eventos', num: 185 },
+    { col: 'amb_transversal', num: 186 },
+    { col: 'amb_nenhum', num: 187 },
+  ]
   if (!b('educacao_ambiental')) {
-    const AMB_FIELDS = [
-      { col: 'amb_conteudo', num: 182 },
-      { col: 'amb_componente', num: 183 },
-      { col: 'amb_eixo', num: 184 },
-      { col: 'amb_eventos', num: 185 },
-      { col: 'amb_transversal', num: 186 },
-      { col: 'amb_nenhum', num: 187 },
-    ]
     for (const a of AMB_FIELDS) {
       if (b(a.col)) {
         erros.push(
@@ -1460,9 +1719,49 @@ export async function validarRegistro10(schoolId: string): Promise<ErroValidacao
         )
       }
     }
+  } else if (!AMB_FIELDS.some((a) => b(a.col))) {
+    erros.push(
+      criarErro(
+        '10', 'amb_conteudo', 182, 'AMBIENTAL_OBRIGATORIO',
+        'Pelo menos uma forma de educação ambiental (182 a 187) deve ser informada.',
+        schoolId, nomeEscola, schoolId, '', 'infraestrutura', 'amb_conteudo',
+      ),
+    )
   }
 
-  // alimentacao_escolar: if true, must have at least one in-person/semi class (done via cross-check in validarVinculosAluno)
+  // ppp_atualizado: 0/1/2 (v4 10.c180)
+  const ppp = s('ppp_atualizado')
+  if (ppp && !['0', '1', '2'].includes(ppp)) {
+    erros.push(
+      criarErro(
+        '10', 'ppp_atualizado', 180, 'VALOR_INVALIDO',
+        'ppp_atualizado deve ser 0, 1 ou 2.',
+        schoolId, nomeEscola, schoolId, ppp, 'infraestrutura', 'ppp_atualizado',
+      ),
+    )
+  }
+
+  // alimentacao_escolar (v4 10.c139.n2): =1 exige ≥1 turma presencial/semi
+  if (b('alimentacao_escolar')) {
+    const { data: turmasAlim } = await supabase
+      .from('turmas')
+      .select('tipo_mediacao')
+      .eq('school_id', schoolId)
+      .eq('ativo', true)
+    const temPresOuSemi = ((turmasAlim || []) as any[]).some((t) => {
+      const m = String(t.tipo_mediacao || '')
+      return m === '1' || m === '2' || m === 'Presencial' || m === 'Semipresencial'
+    })
+    if (!temPresOuSemi) {
+      erros.push(
+        criarErro(
+          '10', 'alimentacao_escolar', 139, 'ALIMENTACAO_SEM_TURMA',
+          'Alimentação escolar exige ao menos uma turma presencial ou semipresencial na escola.',
+          schoolId, nomeEscola, schoolId, 'true', 'infraestrutura', 'alimentacao_escolar',
+        ),
+      )
+    }
+  }
 
   return erros
 }
@@ -1484,20 +1783,71 @@ export async function validarRegistro20(schoolId: string): Promise<ErroValidacao
     return erros
   }
 
-  // Pre-query professionals, students, and quadro de aulas for all turmas at once
+  // Pre-query professionals, students, quadro de aulas and disciplinas for all turmas at once
   const turmaIds = turmas.map((t) => t.id)
-  const [profResult, matResult, quadroResult] = await Promise.all([
-    supabase.from('turmas_profissionais').select('turma_id').in('turma_id', turmaIds),
+  const [profResult, matResult, quadroResult, discsResult] = await Promise.all([
+    supabase.from('turmas_profissionais').select('turma_id, vinculo_profissional_id').in('turma_id', turmaIds),
     supabase.from('academico_matriculas').select('turma_id').eq('situacao', 'Ativo').in('turma_id', turmaIds),
     supabase.from('quadro_aulas_horarios')
       .select('quadro_aula_id, dia_semana, horario_inicial, horario_final, quadro_aulas!inner(turma_id)')
       .in('quadro_aulas.turma_id', turmaIds)
       .eq('quadro_aulas.ativo', true)
       .eq('ativo', true),
+    supabase.from('turmas_disciplinas')
+      .select('turma_id, academico_matriz_disciplinas(academico_disciplinas(nome))')
+      .in('turma_id', turmaIds),
   ])
 
   const turmasComProfissional = new Set((profResult.data || []).map((r: { turma_id: string }) => r.turma_id))
   const turmasComAluno = new Set((matResult.data || []).map((r: { turma_id: string }) => r.turma_id))
+
+  // Docente (função 1 ou 5) por turma — v4 20.c24.n6: etapa ≠ 1 exige
+  // Docente ou Docente-titular EAD vinculado (Registro 50, campo 7)
+  const turmasComDocente = new Set<string>()
+  {
+    const vpIds = [...new Set(((profResult.data || []) as any[]).map((r) => r.vinculo_profissional_id).filter(Boolean))]
+    if (vpIds.length > 0) {
+      const { data: vps } = await supabase
+        .from('vinculos_profissionais')
+        .select('id, funcao_id')
+        .in('id', vpIds as string[])
+      const funcIds = [...new Set(((vps || []) as any[]).map((v) => v.funcao_id).filter(Boolean))]
+      const funcMap = new Map<string, string>()
+      if (funcIds.length > 0) {
+        const { data: funcs } = await supabase
+          .from('funcoes_profissionais')
+          .select('id, nome')
+          .in('id', funcIds as string[])
+        for (const f of (funcs || []) as any[]) funcMap.set(String(f.id), String(f.nome || ''))
+      }
+      const vpFuncao = new Map<string, string>()
+      for (const v of (vps || []) as any[]) {
+        if (v.funcao_id && funcMap.has(String(v.funcao_id))) {
+          vpFuncao.set(String(v.id), getFuncaoCenso50(funcMap.get(String(v.funcao_id)) || ''))
+        }
+      }
+      for (const r of (profResult.data || []) as any[]) {
+        const f = r.vinculo_profissional_id ? vpFuncao.get(String(r.vinculo_profissional_id)) : undefined
+        if (f === '1' || f === '5') turmasComDocente.add(String(r.turma_id))
+      }
+    }
+  }
+
+  // Areas derivadas das disciplinas vinculadas (mesma derivacao da exportacao).
+  // As colunas area_* de `turmas` sao legadas e podem estar vazias.
+  const nomesDiscPorTurma = new Map<string, string[]>()
+  for (const td of (discsResult.data || [])) {
+    const tid = String((td as any).turma_id)
+    const nome = (td as any).academico_matriz_disciplinas?.academico_disciplinas?.nome
+    if (!tid || !nome) continue
+    if (!nomesDiscPorTurma.has(tid)) nomesDiscPorTurma.set(tid, [])
+    nomesDiscPorTurma.get(tid)!.push(String(nome))
+  }
+  const areasDerivadasPorTurma = new Map<string, Set<string>>()
+  for (const [tid, nomes] of nomesDiscPorTurma) {
+    const areas = derivarAreasDeDisciplinas(nomes)
+    if (areas.size > 0) areasDerivadasPorTurma.set(tid, areas)
+  }
 
   // Derive INEP horarios from Quadro de Aulas
   // Map: turma_id → Record<dia_semana, { min: string, max: string }>
@@ -1574,7 +1924,14 @@ export async function validarRegistro20(schoolId: string): Promise<ErroValidacao
 
   for (const turma of turmas) {
     const nome = String(turma.nome ?? '')
-    const tipoMediacao = String(turma.tipo_mediacao ?? '')
+    // tipo_mediacao é gravado como rótulo (spec 029) — normaliza p/ código INEP
+    // (mesmo mapeamento da exportação em censo.ts e de tipoMediacaoCodigo abaixo)
+    const tipoMediacaoRaw = String(turma.tipo_mediacao ?? '')
+    const tipoMediacao =
+      tipoMediacaoRaw === 'Presencial' ? '1'
+      : tipoMediacaoRaw === 'Semipresencial' ? '2'
+      : tipoMediacaoRaw === 'Educação a Distância - EAD' ? '3'
+      : tipoMediacaoRaw
     // turmas armazena rótulos em `tipos_turma` (array) — converte p/ código INEP (spec 029 FR-020)
     const tipoTurma = codigoTipoTurma(turma.tipos_turma)
     const etapaCodigoRaw = turma.etapa_codigo ? String(turma.etapa_codigo) : ''
@@ -1583,6 +1940,19 @@ export async function validarRegistro20(schoolId: string): Promise<ErroValidacao
     const formacaoAlternancia = !!turma.formacao_alternancia
 
     const etapaNum = /^\d+$/.test(etapaCodigoRaw) ? parseInt(etapaCodigoRaw, 10) : null
+    const agregNum = /^\d+$/.test(etapaAgregada) ? parseInt(etapaAgregada, 10) : null
+    const tFgb = !!turma.fgb
+    const tIfa = !!turma.ifa
+    const tIftp = !!turma.iftp
+    const tTipoCursoIftp = turma.tipo_curso_iftp ? String(turma.tipo_curso_iftp) : ''
+    const tCodCursoTec = turma.codigo_curso_tecnico ? String(turma.codigo_curso_tecnico).trim() : ''
+    const tCargaCurso = turma.carga_horaria_curso != null && String(turma.carga_horaria_curso).trim() !== ''
+      ? Number(turma.carga_horaria_curso)
+      : null
+    const tEixo = turma.eixo_qualificacao ? String(turma.eixo_qualificacao).trim() : ''
+    const tEspecial = turma.turma_especial ? String(turma.turma_especial) : ''
+    const tIfaFlags = (['ifa_linguagens', 'ifa_matematica', 'ifa_natureza', 'ifa_humanas'] as const)
+      .filter((k) => !!(turma as any)[k])
 
     // -------------------------------------------------------------------
     // 1. nome: required, 1-80 chars
@@ -1604,8 +1974,18 @@ export async function validarRegistro20(schoolId: string): Promise<ErroValidacao
 
     // -------------------------------------------------------------------
     // 3. Horários (when tipo_mediacao = '1' — Presencial)
-    // Derivados do Quadro de Aulas (quadro_aulas_horarios)
+    // Derivados do Quadro de Aulas (quadro_aulas_horarios).
+    // v4 n=1 de cada dia: nulo quando mediação ≠ 1.
     // -------------------------------------------------------------------
+    const turmaHorariosGeral = horariosDerivados.get(turma.id as string)
+    const temHorarioDerivado = !!turmaHorariosGeral && Object.keys(turmaHorariosGeral).length > 0
+    if (tipoMediacao === '2' || tipoMediacao === '3') {
+      if (temHorarioDerivado) {
+        addErro(turma, 'horario_segunda', 3, 'Horários devem ser nulos',
+          'Horários devem ser nulos quando a mediação não é Presencial. Revise o Quadro de Aulas.',
+          '', 'horarios', 'horario_segunda')
+      }
+    }
     if (tipoMediacao === '1') {
       const turmaHorarios = horariosDerivados.get(turma.id as string)
       const horariosPreenchidos = DIAS_SEMANA.filter((h) => {
@@ -1636,6 +2016,13 @@ export async function validarRegistro20(schoolId: string): Promise<ErroValidacao
           const [hf, mf] = fim.split(':').map(Number)
 
           if (isNaN(hi) || isNaN(mi) || isNaN(hf) || isNaN(mf)) continue
+
+          if (hi < 0 || hi > 23 || hf < 0 || hf > 23 || mi < 0 || mi > 59 || mf < 0 || mf > 59) {
+            addErro(turma, campo, 3, 'Hora inválida',
+              `Horário "${campo}": horas de 00 a 23 e minutos de 00 a 59. Valor: ${valor}`,
+              valor, 'horarios', campo)
+            continue
+          }
 
           if (mi % 5 !== 0 || mf % 5 !== 0) {
             addErro(turma, campo, 3, 'Minutos do horário',
@@ -1685,6 +2072,24 @@ export async function validarRegistro20(schoolId: string): Promise<ErroValidacao
             'As atividades complementares não podem ter valores duplicados.',
             atvPreenchidas.join(', '), 'organizacao', 'atividade_complementar_1')
         }
+        // v4 20.c15-20.n1: código da Tabela de Atividades Complementares
+        const codigosAtv = new Set(CATALOGO_ATIVIDADES.map((a) => a.codigo))
+        const invalidas = atvPreenchidas.filter((c) => !codigosAtv.has(c))
+        if (invalidas.length > 0) {
+          addErro(turma, 'atividade_complementar_1', 5, 'Atividade complementar inválida',
+            `Código(s) fora da Tabela de Atividades Complementares: ${invalidas.join(', ')}.`,
+            invalidas.join(', '), 'organizacao', 'atividade_complementar_1')
+        }
+      }
+    } else {
+      // v4 20.c15-20.n1: nulas fora de tipo 4/9
+      const atvFora = ATIVIDADES_COMPLEMENTARES
+        .map((a) => (turma[a] ? String(turma[a]).trim() : ''))
+        .filter(Boolean)
+      if (atvFora.length > 0) {
+        addErro(turma, 'atividade_complementar_1', 5, 'Atividades devem ser nulas',
+          'Atividades complementares devem ser nulas quando o tipo de turma não é 4 ou 9.',
+          atvFora.join(', '), 'organizacao', 'atividade_complementar_1')
       }
     }
 
@@ -1728,14 +2133,65 @@ export async function validarRegistro20(schoolId: string): Promise<ErroValidacao
             etapaCodigoRaw, 'organizacao', 'etapa_codigo')
         }
       }
+
+      // v4 20.c24.n3: etapa permitida para a agregada (Tabela de Etapas)
+      if (etapaNum !== null && agregNum !== null) {
+        const etapaEntry = ETAPAS_ENSINO.find((e) => e.codigo === etapaNum)
+        if (!etapaEntry) {
+          addErro(turma, 'etapa_codigo', 7, 'Etapa inválida',
+            `Etapa "${etapaCodigoRaw}" não consta da Tabela de Etapas.`,
+            etapaCodigoRaw, 'organizacao', 'etapa_codigo')
+        } else if (etapaEntry.agregada !== agregNum) {
+          addErro(turma, 'etapa_codigo', 7, 'Etapa × Agregada',
+            `Etapa "${etapaEntry.nome}" pertence à agregada ${etapaEntry.agregada}, não à ${agregNum}.`,
+            etapaCodigoRaw, 'organizacao', 'etapa_codigo')
+        }
+      }
+
+      // v4 20.c24.n8/n9: EM por agregada (com FGB)
+      if (tFgb && agregNum === 304 && etapaNum !== null && ![25, 26, 27, 28, 29].includes(etapaNum)) {
+        addErro(turma, 'etapa_codigo', 7, 'Etapa do Ensino Médio',
+          'Com agregada 304 e FGB, a etapa deve ser 25, 26, 27, 28 ou 29.',
+          etapaCodigoRaw, 'organizacao', 'etapa_codigo')
+      }
+      if (tFgb && agregNum === 305 && etapaNum !== null && ![35, 36, 37, 38].includes(etapaNum)) {
+        addErro(turma, 'etapa_codigo', 7, 'Etapa do Normal/Magistério',
+          'Com agregada 305 e FGB, a etapa deve ser 35, 36, 37 ou 38.',
+          etapaCodigoRaw, 'organizacao', 'etapa_codigo')
+      }
+    }
+
+    // v4 20.c22: 0/1 quando tipo 6/9, senão nulo ('0'/false contam como nulo)
+    const especialVazio = !tEspecial || tEspecial === '0' || tEspecial === 'false'
+    if (tipoTurma === '6' || tipoTurma === '9') {
+      if (!especialVazio && !['0', '1'].includes(tEspecial)) {
+        addErro(turma, 'turma_especial', 22, 'Turma de Educação Especial',
+          'Turma de Educação Especial deve ser 0 ou 1.',
+          tEspecial, 'organizacao', 'turma_especial')
+      }
+    } else if (!especialVazio) {
+      addErro(turma, 'turma_especial', 22, 'Turma especial deve ser nula',
+        'Turma de Educação Especial deve ser nula quando o tipo de turma não é 6 ou 9.',
+        tEspecial, 'organizacao', 'turma_especial')
     }
 
     // -------------------------------------------------------------------
-    // 7. Forma de organização × Etapa (Anexo 6)
-    //    Only when etapa is not 1,2,3 (Educação Infantil has no forma)
+    // 7. Forma de organização (v4 20.c28: 1-5 quando Etapa≠1/2/3, senão nula;
+    // n2: conforme Anexo 6)
     // -------------------------------------------------------------------
-    if (etapaNum !== null && !ETAPAS_EDUCACAO_INFANTIL.has(etapaNum)) {
+    const etapaEI = etapaNum !== null && ETAPAS_EDUCACAO_INFANTIL.has(etapaNum)
+    if (etapaEI) {
       if (formaOrganizacao) {
+        addErro(turma, 'forma_organizacao', 8, 'Forma de organização deve ser nula',
+          'Forma de organização deve ser nula para Educação Infantil.',
+          formaOrganizacao, 'organizacao', 'forma_organizacao')
+      }
+    } else if (etapaNum !== null) {
+      if (!formaOrganizacao) {
+        addErro(turma, 'forma_organizacao', 8, 'Forma de organização obrigatória',
+          'Forma de organização (1 a 5) é obrigatória para esta etapa.',
+          '', 'organizacao', 'forma_organizacao')
+      } else {
         const etapaEntry = ETAPAS_FORMAS_ORGANIZACAO.find((e) => e.etapa_codigo === etapaNum)
         if (etapaEntry) {
           const formaNum = parseInt(codigoFormaOrganizacao(formaOrganizacao), 10)
@@ -1749,6 +2205,96 @@ export async function validarRegistro20(schoolId: string): Promise<ErroValidacao
     }
 
     // -------------------------------------------------------------------
+    // 7b. Organização curricular e cursos (v4 20.c25-27, c30-32, c37-38)
+    // -------------------------------------------------------------------
+    const agregEM = agregNum === 304 || agregNum === 305
+
+    // Grupo 30-32: ≥1 quando agregada 304/305
+    if (agregEM && !tFgb && !tIfa && !tIftp) {
+      addErro(turma, 'fgb', 30, 'Organização curricular',
+        'Pelo menos um de FGB, IFA ou IFTP deve ser informado quando a agregada é 304 ou 305.',
+        '', 'organizacao', 'fgb')
+    }
+    // Cada um nulo fora de 304/305
+    if (!agregEM) {
+      if (tFgb || tIfa || tIftp) {
+        addErro(turma, 'fgb', 30, 'Organização curricular deve ser nula',
+          'FGB, IFA e IFTP devem ser nulos quando a agregada não é 304 ou 305.',
+          [tFgb && 'FGB', tIfa && 'IFA', tIftp && 'IFTP'].filter(Boolean).join(', '), 'organizacao', 'fgb')
+      }
+      if (tIfaFlags.length > 0) {
+        addErro(turma, 'ifa_linguagens', 33, 'Itinerário deve ser nulo',
+          'Áreas do itinerário devem ser nulas quando a agregada não é 304 ou 305.',
+          tIfaFlags.join(', '), 'organizacao', 'ifa_linguagens')
+      }
+      if (tTipoCursoIftp) {
+        addErro(turma, 'tipo_curso_iftp', 37, 'Tipo de curso deve ser nulo',
+          'Tipo de curso do IFTP deve ser nulo quando a agregada não é 304 ou 305.',
+          tTipoCursoIftp, 'organizacao', 'tipo_curso_iftp')
+      }
+    }
+    // v4 20.c24.n2: FGB exige etapa
+    if (tFgb && !etapaCodigoRaw) {
+      addErro(turma, 'etapa_codigo', 7, 'Etapa obrigatória com FGB',
+        'Etapa é obrigatória quando FGB é informado.',
+        '', 'organizacao', 'etapa_codigo')
+    }
+    // Itinerário (33-36) nulo sem IFA
+    if (!tIfa && tIfaFlags.length > 0) {
+      addErro(turma, 'ifa_linguagens', 33, 'Itinerário deve ser nulo',
+        'Áreas do itinerário devem ser nulas quando IFA não é informado.',
+        tIfaFlags.join(', '), 'organizacao', 'ifa_linguagens')
+    }
+    // c37: 1/2 quando IFTP, senão nulo
+    if (tIftp) {
+      if (tTipoCursoIftp && !['1', '2'].includes(tTipoCursoIftp)) {
+        addErro(turma, 'tipo_curso_iftp', 37, 'Tipo de curso do IFTP',
+          'Tipo de curso do IFTP deve ser 1 ou 2.',
+          tTipoCursoIftp, 'organizacao', 'tipo_curso_iftp')
+      }
+    }
+    // c25: eixo válido quando etapa 67/68/73/75, senão nulo
+    const EP_ETAPAS = ['67', '68', '73', '75']
+    const CURSO_ETAPAS = ['39', '40', '64', '74']
+    if (tEixo && (!EIXOS_EP[tEixo] || !EP_ETAPAS.includes(etapaCodigoRaw))) {
+      addErro(turma, 'eixo_qualificacao', 25, 'Eixo de qualificação',
+        `Eixo "${tEixo}" inválido: deve ser um código da Tabela de Cursos EP e a etapa deve ser 67, 68, 73 ou 75.`,
+        tEixo, 'organizacao', 'eixo_qualificacao')
+    }
+    // c26: curso válido quando etapa 39/40/64/74, senão nulo
+    if (tCodCursoTec && (!getCursoEP(tCodCursoTec) || !CURSO_ETAPAS.includes(etapaCodigoRaw))) {
+      addErro(turma, 'codigo_curso_tecnico', 26, 'Código do curso',
+        `Código "${tCodCursoTec}" inválido: deve constar da Tabela de Cursos EP e a etapa deve ser 39, 40, 64 ou 74.`,
+        tCodCursoTec, 'organizacao', 'codigo_curso_tecnico')
+    }
+    // c38 usa o mesmo código quando c37=1 (nulo por construção na exportação)
+    // c27: carga 1-9999 só se IFTP; faixas por tipo
+    if (tCargaCurso !== null) {
+      if (!tIftp) {
+        addErro(turma, 'carga_horaria_curso', 27, 'Carga horária deve ser nula',
+          'Carga horária do curso deve ser nula quando IFTP não é informado.',
+          String(tCargaCurso), 'organizacao', 'carga_horaria_curso')
+      } else if (!Number.isInteger(tCargaCurso) || tCargaCurso < 1 || tCargaCurso > 9999) {
+        addErro(turma, 'carga_horaria_curso', 27, 'Carga horária inválida',
+          'Carga horária deve ter de 1 a 9999 horas.',
+          String(tCargaCurso), 'organizacao', 'carga_horaria_curso')
+      } else if (tTipoCursoIftp === '1') {
+        const curso = getCursoEP(tCodCursoTec)
+        const minima = curso?.cargaMinima || 0
+        if (tCargaCurso < minima || tCargaCurso > 2000) {
+          addErro(turma, 'carga_horaria_curso', 27, 'Carga horária fora da faixa',
+            `Com tipo de curso 1, a carga deve estar entre ${minima} e 2000 horas.`,
+            String(tCargaCurso), 'organizacao', 'carga_horaria_curso')
+        }
+      } else if (tTipoCursoIftp === '2') {
+        if (tCargaCurso < 160 || tCargaCurso > 800) {
+          addErro(turma, 'carga_horaria_curso', 27, 'Carga horária fora da faixa',
+            'Com tipo de curso 2, a carga deve estar entre 160 e 800 horas.',
+            String(tCargaCurso), 'organizacao', 'carga_horaria_curso')
+        }
+      }
+    }
+    // -------------------------------------------------------------------
     // 8. Formação em alternância × Etapa
     //    Must be false when etapa in [1,2,3,14,15,16,17,18,56]
     // -------------------------------------------------------------------
@@ -1759,15 +2305,47 @@ export async function validarRegistro20(schoolId: string): Promise<ErroValidacao
     }
 
     // -------------------------------------------------------------------
-    // 9. Áreas do conhecimento (when etapa not 1,2,3)
+    // 9. Áreas do conhecimento (v4 20.c39-65)
+    // Derivadas das disciplinas vinculadas (igual a exportacao); as colunas
+    // area_* de `turmas` entram como fallback legado.
     // -------------------------------------------------------------------
-    if (etapaNum !== null && !ETAPAS_EDUCACAO_INFANTIL.has(etapaNum)) {
-      const temArea = AREAS.some((a) => turma[a] === true)
+    const derivadas = areasDerivadasPorTurma.get(String(turma.id))
+    const boolAreasTrue = AREAS.filter((a) => turma[a] === true)
+    if (etapaNum !== null && ETAPAS_EDUCACAO_INFANTIL.has(etapaNum)) {
+      // EI: áreas saem nulas SÓ na exportação — as disciplinas são necessárias
+      // ao quadro de aulas, então não há correção viável por validação.
+    } else if (etapaNum !== null) {
+      const temArea = (derivadas && derivadas.size > 0) || boolAreasTrue.length > 0
       if (!temArea) {
-        addErro(turma, 'area_quimica', 10, 'Áreas do conhecimento',
-          'Pelo menos uma área do conhecimento deve ser informada para esta etapa.',
-          '', 'areas', 'area_quimica')
+        addErro(turma, 'areas_conhecimento', 10, 'Áreas do conhecimento',
+          'Nenhuma área do conhecimento identificada para esta etapa. Verifique as disciplinas vinculadas à turma.',
+          '', 'areas', 'areas_conhecimento')
+      } else {
+        // n2: área marcada deve ser compatível com a etapa (Tabela de Regras)
+        const desab = AREAS_DESABILITADAS_POR_ETAPA[etapaNum] || []
+        if (desab.length > 0) {
+          const ofertadas = new Set<string>([...(derivadas ? [...derivadas] : []), ...boolAreasTrue])
+          for (const num of desab) {
+            const key = AREA_KEY_POR_NUMERO[num]
+            if (key && ofertadas.has(key)) {
+              const amigavel = getCampoAmigavel(key) || key
+              addErro(turma, key, 10, 'Área × Etapa',
+                `"${amigavel}" não é habilitada para a etapa ${etapaCodigoRaw} (Tabela de Regras de Áreas).`,
+                '', 'areas', key)
+            }
+          }
+        }
       }
+    }
+
+    // -------------------------------------------------------------------
+    // 9b. Docente obrigatório (v4 20.c24.n6: etapa ≠ 1 exige Docente (1)
+    // ou Docente-titular EAD (5) vinculado no Registro 50)
+    // -------------------------------------------------------------------
+    if (etapaCodigoRaw && etapaCodigoRaw !== '1' && !turmasComDocente.has(String(turma.id))) {
+      addErro(turma, 'vinculo_profissional', 11, 'Docente obrigatório (Registro 50)',
+        `A turma "${nome}" (etapa ${etapaCodigoRaw}) exige ao menos um Docente (função 1) ou Docente-titular EAD (função 5) vinculado.`,
+        '', 'vinculos', 'vinculo_profissional')
     }
 
     // -------------------------------------------------------------------
@@ -1786,6 +2364,46 @@ export async function validarRegistro20(schoolId: string): Promise<ErroValidacao
       addErro(turma, 'vinculo_aluno', 12, 'Vínculo aluno (Registro 60)',
         `A turma "${nome}" não possui aluno vinculado com situação Ativo.`,
         '', 'vinculos', 'vinculo_aluno')
+    }
+  }
+
+  // -------------------------------------------------------------------
+  // 12. Turmas duplicadas (v4 Regras Gerais 25): mesmo nome, mediação,
+  // horários, tipo, local diferenciado, especial e etapa na mesma escola
+  // -------------------------------------------------------------------
+  {
+    const chavePorTurma = new Map<string, string[]>()
+    for (const turma of turmas) {
+      const med = String((turma as any).tipo_mediacao ?? '')
+      const medCod = med === 'Presencial' ? '1' : med === 'Semipresencial' ? '2' : med === 'Educação a Distância - EAD' ? '3' : med
+      const hd = horariosDerivados.get(String((turma as any).id))
+      const horarios = hd
+        ? Object.keys(hd).sort().map((d) => `${d}=${hd[d].inicio}-${hd[d].fim}`).join(';')
+        : ''
+      const chave = [
+        String((turma as any).nome || ''),
+        medCod,
+        horarios,
+        codigoTipoTurma((turma as any).tipos_turma),
+        '',
+        String((turma as any).turma_especial || ''),
+        String((turma as any).etapa_codigo || ''),
+      ].join('‖')
+      if (!chavePorTurma.has(chave)) chavePorTurma.set(chave, [])
+      chavePorTurma.get(chave)!.push(String((turma as any).id))
+    }
+    const nomesPorId = new Map(turmas.map((t: any) => [String(t.id), String(t.nome || '')]))
+    for (const ids of chavePorTurma.values()) {
+      if (ids.length > 1) {
+        const nomes = ids.map((id) => `"${nomesPorId.get(id) || id}"`).join(', ')
+        for (const id of ids) {
+          erros.push(
+            criarErro('20', 'nome', 1, 'Turma duplicada',
+              `Turma duplicada na escola (mesmo nome, mediação, horários, tipo e etapa): ${nomes}.`,
+              id, nomesPorId.get(id) || '', schoolId, '', 'identificacao', 'nome'),
+          )
+        }
+      }
     }
   }
 
@@ -1838,15 +2456,29 @@ export async function validarRegistro30(schoolId: string): Promise<ErroValidacao
   ])]
 
   const { data: turmasEtapas } = allTurmaIds.length > 0
-    ? await supabase.from('turmas').select('id, etapa_codigo').in('id', allTurmaIds)
+    ? await supabase.from('turmas').select('id, etapa_codigo, tipos_turma, turma_especial').in('id', allTurmaIds)
     : { data: null }
 
   const turmaEtapaMap = new Map<string, string>()
+  const turmaInfoMap = new Map<string, { tipos_turma: unknown; turma_especial: unknown }>()
   for (const t of (turmasEtapas || [])) {
     if (t.etapa_codigo) turmaEtapaMap.set(String(t.id), String(t.etapa_codigo))
+    turmaInfoMap.set(String(t.id), { tipos_turma: (t as any).tipos_turma, turma_especial: (t as any).turma_especial })
+  }
+
+  // Unicidade de CPF e INEP na escola (v4 30.c3.r1/c4.r1/c5.r2)
+  const cpfCount = new Map<string, number>()
+  const inepCount = new Map<string, number>()
+  for (const p of (pessoas || [])) {
+    const cpfD = String((p as any).cpf || '').replace(/\D/g, '')
+    if (cpfD) cpfCount.set(cpfD, (cpfCount.get(cpfD) || 0) + 1)
+    const inepD = String((p as any).inep_id || '').trim()
+    if (inepD) inepCount.set(inepD, (inepCount.get(inepD) || 0) + 1)
   }
 
   const anoAtual = new Date().getFullYear()
+  // Dia Nacional do Censo (última quarta-feira de maio de 2026, igual ao R60)
+  const DATA_REF_R30 = new Date(2026, 4, 27)
 
   // --- Helpers ---
 
@@ -1920,12 +2552,13 @@ export async function validarRegistro30(schoolId: string): Promise<ErroValidacao
     dislexia: 'Dislexia', tdah: 'TDAH', tpac: 'TPAC',
   }
 
-  // RECURSO campo → people column mapping
+  // RECURSO campo → people column mapping (v4 Registro 30, campos 36-49)
   const RECURSO_CAMPO_COL: Record<number, string> = {
     36: 'auxilio_ledor', 37: 'auxilio_transcricao', 38: 'guia_interprete',
     39: 'tradutor_libras', 40: 'leitura_labial', 41: 'prova_ampliada',
     42: 'prova_superampliada', 43: 'cd_audio', 44: 'prova_libras',
-    45: 'prova_video_libras', 46: 'material_braille', 48: 'tempo_adicional',
+    45: 'prova_video_libras', 46: 'material_braille', 47: 'prova_braille',
+    48: 'tempo_adicional', 49: 'nenhum_recurso',
   }
 
   const ETAPAS_CPF_OBRIGATORIO = new Set([67, 69, 70, 71, 72, 73, 74])
@@ -1989,9 +2622,41 @@ export async function validarRegistro30(schoolId: string): Promise<ErroValidacao
         cpf, 'documentos', 'cpf')
     }
 
+    // v4 30.c5.r2: CPF exclusivo na escola
+    const cpfDigitos = cpf.replace(/\D/g, '')
+    if (cpfDigitos && (cpfCount.get(cpfDigitos) || 0) > 1) {
+      addErro(pessoa, 'cpf', 1, 'CPF duplicado na escola',
+        `CPF ${cpf} já está em outra pessoa da escola (deve ser exclusivo).`,
+        cpf, 'documentos', 'cpf')
+    }
+
+    // v4 30.c4.r1: INEP exclusivo, 12 numéricos quando preenchido
+    const inepId = s(pessoa, 'inep_id').trim()
+    if (inepId) {
+      if (!/^\d{12}$/.test(inepId)) {
+        addErro(pessoa, 'inep_id', 4, 'INEP inválido',
+          'Identificação única (Inep) deve ter 12 caracteres numéricos.',
+          inepId, 'documentos', 'inep_id')
+      } else if ((inepCount.get(inepId) || 0) > 1) {
+        addErro(pessoa, 'inep_id', 4, 'INEP duplicado na escola',
+          `Identificação única (Inep) ${inepId} já está em outra pessoa da escola (deve ser exclusiva).`,
+          inepId, 'documentos', 'inep_id')
+      }
+    }
+
     // -------------------------------------------------------------------
-    // 2. Nome validation (when CPF is null)
+    // 2. Nome validation (v4 30.c6.r1: sempre obrigatório, até 100;
+    // sub-regras quando CPF nulo)
     // -------------------------------------------------------------------
+    if (!nomeCompleto.trim()) {
+      addErro(pessoa, 'nome_completo', 2, 'Nome obrigatório',
+        'Nome completo é obrigatório.',
+        '(vazio)', 'identificacao', 'nome_completo')
+    } else if (nomeCompleto.length > 100) {
+      addErro(pessoa, 'nome_completo', 2, 'Nome muito longo',
+        'Nome completo deve ter até 100 caracteres.',
+        nomeCompleto, 'identificacao', 'nome_completo')
+    }
     if (!cpf) {
       const palavras = nomeCompleto.trim().split(/\s+/).filter(Boolean)
 
@@ -2014,6 +2679,26 @@ export async function validarRegistro30(schoolId: string): Promise<ErroValidacao
           `Nome contém sequência de caracteres repetidos: "${repeatedMatch[0]}". Máximo permitido: 4 caracteres iguais consecutivos.`,
           nomeCompleto, 'identificacao', 'nome_completo')
       }
+    }
+
+    // -------------------------------------------------------------------
+    // 2b. Data de nascimento (v4 30.c7.r1: válida dd/mm/aaaa, ≤ Dia do Censo)
+    // -------------------------------------------------------------------
+    if (dataNascimento) {
+      const nasc = new Date(dataNascimento)
+      if (isNaN(nasc.getTime())) {
+        addErro(pessoa, 'data_nascimento', 3, 'Data de nascimento inválida',
+          'Data de nascimento inválida.',
+          dataNascimento, 'identificacao', 'data_nascimento')
+      } else if (nasc > DATA_REF_R30) {
+        addErro(pessoa, 'data_nascimento', 3, 'Data de nascimento futura',
+          'Data de nascimento deve ser igual ou anterior ao Dia Nacional do Censo Escolar.',
+          dataNascimento, 'identificacao', 'data_nascimento')
+      }
+    } else {
+      addErro(pessoa, 'data_nascimento', 3, 'Data de nascimento obrigatória',
+        'Data de nascimento é obrigatória.',
+        '(vazio)', 'identificacao', 'data_nascimento')
     }
 
     // -------------------------------------------------------------------
@@ -2051,6 +2736,101 @@ export async function validarRegistro30(schoolId: string): Promise<ErroValidacao
     }
 
     // -------------------------------------------------------------------
+    // 3b. Filiação e demográficos (v4 30.c8-c16)
+    // -------------------------------------------------------------------
+    const filiacao = s(pessoa, 'filiacao_declarada')
+    const fil1 = s(pessoa, 'filiacao_1').trim()
+    const fil2 = s(pessoa, 'filiacao_2').trim()
+    if (filiacao && !['0', '1'].includes(filiacao)) {
+      addErro(pessoa, 'filiacao_declarada', 8, 'Filiação inválida',
+        'Filiação deve ser 0 ou 1.',
+        filiacao, 'identificacao', 'filiacao_declarada')
+    }
+    if (filiacao === '0' && (fil1 || fil2)) {
+      addErro(pessoa, 'filiacao_1', 9, 'Filiação deve ser nula',
+        'Filiação 1 e 2 devem ser nulas quando Filiação for 0.',
+        [fil1, fil2].filter(Boolean).join(' / '), 'identificacao', 'filiacao_1')
+    }
+    if (!cpf && filiacao === '1') {
+      const nomeMaeRule = (valor: string, col: string, num: number, outraVazia: boolean) => {
+        if (!valor && !outraVazia) return
+        if (!valor) return
+        const pals = valor.split(/\s+/).filter(Boolean)
+        if (valor.length > 100 || pals.length <= 1 || pals[0].length <= 1 || pals[1].length <= 1 || /(.)\1{4,}/.test(valor)) {
+          addErro(pessoa, col, num, `Nome de filiação inválido`,
+            'Deve ter até 100 caracteres, mais de uma palavra, mais de 1 caractere nas duas primeiras e sem 5 repetidos em sequência.',
+            valor, 'identificacao', col)
+        }
+      }
+      nomeMaeRule(fil1, 'filiacao_1', 9, !fil2)
+      nomeMaeRule(fil2, 'filiacao_2', 10, !fil1)
+      if (fil1 && fil2 && fil1.toLowerCase() === fil2.toLowerCase()) {
+        addErro(pessoa, 'filiacao_2', 10, 'Filiações iguais',
+          'Filiação 2 deve ser diferente da Filiação 1.',
+          fil2, 'identificacao', 'filiacao_2')
+      }
+    }
+
+    const sexo = s(pessoa, 'sexo')
+    if (sexo && !['1', '2'].includes(sexo)) {
+      addErro(pessoa, 'sexo', 11, 'Sexo inválido',
+        'Sexo deve ser 1 ou 2.',
+        sexo, 'identificacao', 'sexo')
+    }
+    const corRaca = s(pessoa, 'cor_raca')
+    if (corRaca && !['0', '1', '2', '3', '4', '5'].includes(corRaca)) {
+      addErro(pessoa, 'cor_raca', 12, 'Cor/Raça inválida',
+        'Cor/Raça deve ser 0, 1, 2, 3, 4 ou 5.',
+        corRaca, 'identificacao', 'cor_raca')
+    }
+    const povo = s(pessoa, 'povo_indigena').trim()
+    if (povo) {
+      if (corRaca !== '5') {
+        addErro(pessoa, 'povo_indigena', 13, 'Povo indígena deve ser nulo',
+          'Povo indígena deve ser nulo quando Cor/Raça não é 5 (indígena).',
+          povo, 'identificacao', 'povo_indigena')
+      } else if (!POVOS_INDIGENAS[povo]) {
+        addErro(pessoa, 'povo_indigena', 13, 'Povo indígena inválido',
+          'Povo indígena deve ser um código da Tabela de Povos Indígenas.',
+          povo, 'identificacao', 'povo_indigena')
+      }
+    }
+    if (nacionalidade && !['1', '2', '3'].includes(nacionalidade)) {
+      addErro(pessoa, 'nacionalidade', 14, 'Nacionalidade inválida',
+        'Nacionalidade deve ser 1, 2 ou 3.',
+        nacionalidade, 'identificacao', 'nacionalidade')
+    }
+    const paisNac = s(pessoa, 'pais_nacionalidade').trim()
+    if (paisNac) {
+      if (!PAISES_CODIGOS.includes(paisNac)) {
+        addErro(pessoa, 'pais_nacionalidade', 15, 'País inválido',
+          'País de nacionalidade deve ser um código da Tabela de Países.',
+          paisNac, 'identificacao', 'pais_nacionalidade')
+      } else if (
+        ((nacionalidade === '1' || nacionalidade === '2') && paisNac !== '76') ||
+        (nacionalidade !== '' && nacionalidade !== '1' && nacionalidade !== '2' && paisNac === '76')
+      ) {
+        addErro(pessoa, 'pais_nacionalidade', 15, 'País × Nacionalidade',
+          'País deve ser 76 quando Nacionalidade for 1 ou 2, e outro código nos demais casos.',
+          paisNac, 'identificacao', 'pais_nacionalidade')
+      }
+    }
+    const munNasc = s(pessoa, 'municipio_nascimento').trim()
+    if (munNasc) {
+      // Pertinência à Tabela de Municípios não verificável (só há base do CE):
+      // checa formato + nulidade condicional.
+      if (!/^\d{7}$/.test(munNasc)) {
+        addErro(pessoa, 'municipio_nascimento', 16, 'Município inválido',
+          'Município de nascimento deve ter 7 caracteres numéricos.',
+          munNasc, 'identificacao', 'municipio_nascimento')
+      } else if (nacionalidade !== '' && nacionalidade !== '1') {
+        addErro(pessoa, 'municipio_nascimento', 16, 'Município deve ser nulo',
+          'Município de nascimento deve ser nulo quando Nacionalidade não é 1.',
+          munNasc, 'identificacao', 'municipio_nascimento')
+      }
+    }
+
+    // -------------------------------------------------------------------
     // 4. Deficiência incompatibility rules (10 rules)
     // -------------------------------------------------------------------
 
@@ -2083,9 +2863,17 @@ export async function validarRegistro30(schoolId: string): Promise<ErroValidacao
         '', 'deficiencias', 'visao_monocular')
     }
 
-    // Rules (a) + (j): Surdocegueira cannot coexist with Cegueira, Baixa Visão, Surdez, Def. Auditiva
+    // Rule (v4 j): Baixa Visão + Visão Monocular
+    if (defAtivasSet.has('baixa_visao') && defAtivasSet.has('visao_monocular')) {
+      addErro(pessoa, 'baixa_visao', 19, 'Incompatibilidade: Baixa Visão + Visão Monocular',
+        'Baixa Visão e Visão Monocular não podem ser marcadas simultaneamente.',
+        '', 'deficiencias', 'visao_monocular')
+    }
+
+    // Rules (a)-(e): Surdocegueira não coexiste com Cegueira, Baixa Visão,
+    // Visão Monocular (v4 c), Surdez, Def. Auditiva
     if (defAtivasSet.has('surdocegueira')) {
-      const conflitosSurdocegueira = ['cegueira', 'baixa_visao', 'surdez', 'deficiencia_auditiva']
+      const conflitosSurdocegueira = ['cegueira', 'baixa_visao', 'visao_monocular', 'surdez', 'deficiencia_auditiva']
         .filter((c) => defAtivasSet.has(c))
       for (const conflito of conflitosSurdocegueira) {
         const nomeConflito = DEF_CAMPOS.find(([col]) => col === conflito)?.[2] || conflito
@@ -2109,20 +2897,54 @@ export async function validarRegistro30(schoolId: string): Promise<ErroValidacao
         '', 'deficiencias', 'deficiencia_auditiva')
     }
 
-    // Rule (e): Deficiência Múltipla cannot coexist with any single deficiência (except surdocegueira)
+    // Rule (e) — v4 campo 26 regra 2: "Nao pode ser 1 a menos que haja mais de
+    // uma deficiencia informada com 1 nos campos 18 a 25". A multipla EXIGE a
+    // coexistencia com 2+ deficiencias especificas (nao a proibe).
     if (deficienciaMultipla) {
-      const defsExcetoSurdocegueira = defAtivas.filter((d) => d.col !== 'surdocegueira')
-      if (defsExcetoSurdocegueira.length > 0) {
-        addErro(pessoa, 'deficiencia_multipla', 26, 'Incompatibilidade: Def. Múltipla + deficiência específica',
-          `Deficiência Múltipla não pode coexistir com deficiências específicas: ${defNomes(defsExcetoSurdocegueira.map((d) => d.col))}.`,
-          '', 'deficiencias', 'deficiencia_multipla')
-      }
-      // Also validate >=2 of campos 18-25
       const qtdDef18a25 = DEF_CAMPOS.filter(([col]) => b(pessoa, col)).length
       if (qtdDef18a25 < 2) {
         addErro(pessoa, 'deficiencia_multipla', 26, 'Def. Múltipla sem deficiências suficientes',
           'Deficiência Múltipla marcada mas menos de 2 deficiências (campos 18-25) estão ativas.',
           '', 'deficiencias', 'deficiencia_multipla')
+      }
+    }
+
+    // v4 30.c17.r1/r2 + c18-28.r1: flag 0/1; =1 com vínculo 60 em Classe
+    // Especial/AEE; ≥1 de 18-28 quando flag=1; cada um nulo sem flag
+    const flagDef = b(pessoa, 'deficiencia')
+    const temDef1828 = defAtivas.length > 0 || tea || altasHabilidades
+    if (temAluno) {
+      const turmasAluno = alunoTurmasPorPessoa.get(pid) || []
+      const emEspecialAEE = turmasAluno.some((tid) => {
+        const info = turmaInfoMap.get(tid)
+        if (!info) return false
+        if (codigoTipoTurma(info.tipos_turma as any) === '5') return true
+        // turma_especial é VARCHAR: '0' como string é truthy — compara exato
+        const esp = info.turma_especial
+        return esp === true || esp === 1 || String(esp) === '1'
+      })
+      if (emEspecialAEE && !flagDef) {
+        addErro(pessoa, 'deficiencia', 17, 'Flag de deficiência obrigatória',
+          'Deve ser 1 quando há vínculo em Classe Especial ou AEE.',
+          '', 'deficiencias', 'deficiencia')
+      }
+    }
+    if (flagDef && !temDef1828) {
+      addErro(pessoa, 'deficiencia', 17, 'Tipo de deficiência obrigatório',
+        'Pelo menos um dos campos de 18 a 28 deve ser 1 quando a flag de deficiência for 1.',
+        '', 'deficiencias', 'auxilio_ledor')
+    }
+    if (!flagDef) {
+      const nulos1828: [string, number][] = [
+        ...DEF_CAMPOS.map(([col, num]) => [col, num] as [string, number]),
+        ['deficiencia_multipla', 26], ['tea', 27], ['altas_habilidades', 28],
+      ]
+      for (const [col, num] of nulos1828) {
+        if (b(pessoa, col)) {
+          addErro(pessoa, col, num, 'Deve ser nulo sem flag',
+            'Deve ser nulo quando a flag de deficiência (campo 17) não é 1.',
+            '', 'deficiencias', col)
+        }
       }
     }
 
@@ -2139,12 +2961,10 @@ export async function validarRegistro30(schoolId: string): Promise<ErroValidacao
       }
     }
 
-    // Rule (g): Any deficiência + Transtornos
-    if (temDeficiencia && temTranstorno) {
-      addErro(pessoa, 'transtorno_aprendizagem', 30, 'Incompatibilidade: Deficiência + Transtorno',
-        `Transtornos (${transtornosAtivos.map((c) => TRANSTORNO_NAMES[c] || c).join(', ')}) não devem ser marcados quando há deficiências ativas.`,
-        '', 'deficiencias', 'transtorno_aprendizagem')
-    }
+    // Rule (g) — REMOVIDA (v4 nao traz incompatibilidade entre deficiencias
+    // campos 18-28 e transtornos campos 30-35; a lista oficial a-j cobre
+    // apenas combinacoes visuais/auditivas. Transtornos como TDAH/TPAC podem
+    // coexistir com deficiencias ativas.
 
     // Rule (h): Altas Habilidades é exclusiva
     if (altasHabilidades && (temDeficiencia || temTranstorno)) {
@@ -2161,6 +2981,24 @@ export async function validarRegistro30(schoolId: string): Promise<ErroValidacao
     }
 
     // -------------------------------------------------------------------
+    // 4b. Flag e tipos de transtorno (v4 30.c29-c35)
+    // -------------------------------------------------------------------
+    // v4 30.c29-c35: flag↔grupo. O "nulo sem vínculo 60" não se aplica na
+    // prática a profissionais (cadastro exige os dados e o vínculo 60 é de
+    // aluno) — só valida a coerência flag × tipos.
+    const flagTranst = b(pessoa, 'transtorno_aprendizagem')
+    if (flagTranst && transtornosAtivos.length === 0) {
+      addErro(pessoa, 'transtorno_aprendizagem', 29, 'Tipo de transtorno obrigatório',
+        'Pelo menos um dos campos de 30 a 35 deve ser 1 quando a flag de transtorno for 1.',
+        '', 'deficiencias', 'discalculia')
+    }
+    if (!flagTranst && transtornosAtivos.length > 0) {
+      addErro(pessoa, transtornosAtivos[0], 30, 'Transtornos devem ser nulos',
+        'Tipos de transtorno devem ser nulos quando a flag (campo 29) não é 1.',
+        transtornosAtivos.join(', '), 'deficiencias', transtornosAtivos[0])
+    }
+
+    // -------------------------------------------------------------------
     // 5. Recursos × Deficiências (Anexo 4)
     // -------------------------------------------------------------------
     const recursosAtivos: { campo: number; col: string; nome: string }[] = []
@@ -2172,36 +3010,92 @@ export async function validarRegistro30(schoolId: string): Promise<ErroValidacao
       }
     }
 
-    if (recursosAtivos.length > 0 && !temDeficiencia) {
+    // v4 Registro 30 regra (campos 36-49): recursos exigidos quando a flag de
+    // deficiencia/TEA/AH ou a de transtorno for 1 (com vinculo no registro 60).
+    // Sem nenhuma dessas condicoes, recurso marcado e erro.
+    const temCondicaoParaRecurso = temDeficiencia || tea || altasHabilidades || temTranstorno
+    if (recursosAtivos.length > 0 && !temCondicaoParaRecurso) {
       addErro(pessoa, 'auxilio_ledor', 36, 'Recursos sem deficiência',
-        'Recursos de acessibilidade estão marcados mas a pessoa não possui nenhuma deficiência.',
+        'Recursos de acessibilidade estão marcados mas a pessoa não possui deficiência, TEA, altas habilidades ou transtorno.',
         '', 'recursos', 'auxilio_ledor')
     }
 
-    if (temDeficiencia) {
+    // D1 (decisão usuário): legenda do Anexo 4 — "Células vazias indicam
+    // incompatibilidade". Recurso ativo precisa de X em ao menos uma
+    // deficiência/TEA ativa (e nenhum N). AH não tem coluna na tabela
+    // e fica isenta desta exigência.
+    if (temDeficiencia || tea) {
+      const conds: { col: string; nome: string }[] = [
+        ...defAtivas,
+        ...(tea ? [{ col: 'tea', num: 27, nome: 'Transtorno do Espectro Autista' }] : []),
+      ]
       for (const recurso of recursosAtivos) {
         const entry = RECURSOS_DEFICIENCIAS.find((r) => r.recurso_campo === recurso.campo)
         if (!entry) continue
 
-        for (const def of defAtivas) {
+        let temX = false
+        for (const def of conds) {
           const compat = entry.compatibilidade[def.col]
           if (compat === 'N') {
             addErro(pessoa, recurso.col, recurso.campo, 'Recurso × Deficiência (Anexo 4 - regra N)',
-              `Recurso "${recurso.nome}" não é permitido para a deficiência "${def.nome}" (regra N do Anexo 4).`,
+              `Recurso "${recurso.nome}" não é permitido para "${def.nome}" (regra N do Anexo 4).`,
               '', 'recursos', recurso.col)
+          } else if (compat === 'X') {
+            temX = true
           }
+        }
+        if (!temX) {
+          addErro(pessoa, recurso.col, recurso.campo, 'Recurso × Deficiência (Anexo 4 - incompatível)',
+            `Recurso "${recurso.nome}" não é compatível com nenhuma das condições ativas (${conds.map((d) => d.nome).join(', ')}) conforme o Anexo 4.`,
+            '', 'recursos', recurso.col)
         }
       }
     }
 
+    // v4 30.c36-49.r1: ≥1 recurso quando (flag17 ou flag29) + vínculo 60
+    const comRecurso3649 = recursosAtivos.filter((r) => r.campo !== 49).length > 0
+    if ((flagDef || flagTranst) && temAluno && !comRecurso3649 && !b(pessoa, 'nenhum_recurso')) {
+      addErro(pessoa, 'auxilio_ledor', 36, 'Recurso obrigatório',
+        'Pelo menos um dos campos de 36 a 49 deve ser 1 quando há deficiência/transtorno e vínculo no registro 60.',
+        '', 'recursos', 'auxilio_ledor')
+    }
+    // v4 30.c37.r2: transcrição com CE/SC exige outro recurso 36-48
+    if (b(pessoa, 'auxilio_transcricao') && (b(pessoa, 'cegueira') || b(pessoa, 'surdocegueira'))) {
+      const outros3648 = recursosAtivos.filter((r) => r.campo >= 36 && r.campo <= 48 && r.campo !== 37)
+      if (outros3648.length === 0) {
+        addErro(pessoa, 'auxilio_transcricao', 37, 'Auxílio transcrição isolado',
+          'Com Cegueira ou Surdocegueira, o Auxílio Transcrição só pode ser 1 quando pelo menos mais um dos campos de 36 a 48 for 1.',
+          '', 'recursos', 'auxilio_transcricao')
+      }
+    }
+    // v4 30.c42.r2: superampliada exclui ampliada
+    if (b(pessoa, 'prova_superampliada') && b(pessoa, 'prova_ampliada')) {
+      addErro(pessoa, 'prova_superampliada', 42, 'Provas ampliadas conflitantes',
+        'Prova Superampliada não pode ser 1 quando Prova Ampliada for 1.',
+        '', 'recursos', 'prova_superampliada')
+    }
+    // v4 30.c49.r2: Nenhum exclusivo
+    if (b(pessoa, 'nenhum_recurso') && comRecurso3649) {
+      addErro(pessoa, 'nenhum_recurso', 49, 'Nenhum conflitante',
+        '"Nenhum" não pode ser 1 quando outro recurso do grupo for 1.',
+        '', 'recursos', 'nenhum_recurso')
+    }
+
     // -------------------------------------------------------------------
-    // 6. Recursos × Transtornos (only 36, 37, 48 allowed)
+    // 6. Recursos × Transtornos (Anexo 4, tabela 2: apenas 36, 37 e 48 tem X
+    // para transtornos). Mas se o recurso e permitido (X) para alguma
+    // deficiencia/TEA ativa da pessoa, vale a regra 5 — nao e erro.
+    // (Ex.: Material em Braille + Cegueira + TDAH e valido.)
     // -------------------------------------------------------------------
     if (temTranstorno && recursosAtivos.length > 0) {
       const RECURSOS_PERMITIDOS_TRANSTORNO = new Set([36, 37, 48])
-      const recursosInvalidos = recursosAtivos.filter((r) => !RECURSOS_PERMITIDOS_TRANSTORNO.has(r.campo))
+      const condicoesAtivas = [...defAtivas.map((d) => d.col), ...(tea ? ['tea'] : [])]
 
-      for (const recurso of recursosInvalidos) {
+      // Campo 49 (Nenhum) tem regra própria (exclusividade) acima
+      for (const recurso of recursosAtivos.filter((r) => r.campo !== 49)) {
+        if (RECURSOS_PERMITIDOS_TRANSTORNO.has(recurso.campo)) continue
+        const entry = RECURSOS_DEFICIENCIAS.find((r) => r.recurso_campo === recurso.campo)
+        if (entry && condicoesAtivas.some((col) => entry.compatibilidade[col] === 'X')) continue
         addErro(pessoa, recurso.col, recurso.campo, 'Recurso × Transtorno (não permitido)',
           `Recurso "${recurso.nome}" não é compatível com transtornos de aprendizagem. Apenas Auxílio Ledor (36), Auxílio Transcrição (37) e Tempo Adicional (48) são permitidos.`,
           '', 'recursos', recurso.col)
@@ -2210,47 +3104,284 @@ export async function validarRegistro30(schoolId: string): Promise<ErroValidacao
 
     // -------------------------------------------------------------------
     // 7. Formação acadêmica (if temGestor or temProfissional)
+    // v4 Registro 30, campos 56 e 58-66.
     // -------------------------------------------------------------------
     if (temGestor || temProfissional) {
       const escolaridade = s(pessoa, 'escolaridade')
       if (!escolaridade) {
-        addErro(pessoa, 'escolaridade', 6, 'Escolaridade obrigatória',
+        addErro(pessoa, 'escolaridade', 56, 'Escolaridade obrigatória',
           'Escolaridade é obrigatória para gestores e profissionais.',
           '', 'formacao', 'escolaridade')
       }
+      const temSuperior = escolaridade === '6'
 
-      // Cursos superiores: validate format
+      const anoNasc = dataNascimento ? new Date(dataNascimento).getFullYear() : null
+      const anoMin = anoNasc && !isNaN(anoNasc) ? Math.max(1940, anoNasc + 1) : 1940
+      const cursosVistos: string[] = []
+
+      // Cursos superiores, anos e IES (campos 58-66)
       for (let i = 1; i <= 3; i++) {
         const cursoCol = `curso_superior_${i}`
         const anoCol = `ano_conclusao_${i}`
         const iesCol = `ies_${i}`
+        const numBase = 55 + i * 3 // 58, 61, 64
 
-        const curso = s(pessoa, cursoCol)
-        const ano = s(pessoa, anoCol)
-        const ies = s(pessoa, iesCol)
+        // '0'/0 e legado de campo vazio (defaults antigos do banco)
+        const vazio = (v: string) => v === '' || v === '0'
+        const curso = vazio(s(pessoa, cursoCol).trim()) ? '' : s(pessoa, cursoCol).trim()
+        const ano = vazio(s(pessoa, anoCol).trim()) ? '' : s(pessoa, anoCol).trim()
+        const ies = vazio(s(pessoa, iesCol).trim()) ? '' : s(pessoa, iesCol).trim()
 
-        if (curso) {
-          if (curso.length !== 6 || !/^\d+$/.test(curso)) {
-            addErro(pessoa, cursoCol, 7, 'Código de curso superior inválido',
-              `Curso superior ${i}: código deve ter 6 dígitos numéricos.`,
-              curso, 'formacao', cursoCol)
+        if (!curso) {
+          if (i === 1 && temSuperior) {
+            addErro(pessoa, cursoCol, numBase, 'Código do Curso 1 obrigatório',
+              'Código do Curso 1 (Tabela de Cursos de Formação Superior) é obrigatório quando a escolaridade é Educação Superior.',
+              '(vazio)', 'formacao', cursoCol)
           }
+          if (ano) {
+            addErro(pessoa, anoCol, numBase + 1, 'Ano de conclusão sem curso',
+              `Ano de Conclusão ${i} deve ser nulo quando o Código do Curso ${i} não está preenchido.`,
+              ano, 'formacao', anoCol)
+          }
+          if (ies) {
+            addErro(pessoa, iesCol, numBase + 2, 'IES sem curso',
+              `Instituição de Educação Superior ${i} deve ser nula quando o Código do Curso ${i} não está preenchido.`,
+              ies, 'formacao', iesCol)
+          }
+          continue
         }
-        if (ano) {
+
+        if (!temSuperior) {
+          addErro(pessoa, cursoCol, numBase, 'Código do Curso sem Educação Superior',
+            `Código do Curso ${i} deve ser nulo quando a escolaridade não é Educação Superior.`,
+            curso, 'formacao', cursoCol)
+          continue
+        }
+
+        const nomeCurso = getNomeCursoSuperior(curso)
+        if (!nomeCurso) {
+          addErro(pessoa, cursoCol, numBase, 'Código de curso superior inválido',
+            `Curso superior ${i}: "${curso}" não consta da Tabela de Cursos de Formação Superior (código de 8 posições, ex. 0114M011).`,
+            curso, 'formacao', cursoCol)
+        } else if (cursosVistos.includes(curso)) {
+          addErro(pessoa, cursoCol, numBase, 'Código de curso duplicado',
+            `Curso superior ${i}: código "${curso}" já informado em outro curso.`,
+            curso, 'formacao', cursoCol)
+        } else {
+          cursosVistos.push(curso)
+        }
+
+        if (!ano) {
+          addErro(pessoa, anoCol, numBase + 1, 'Ano de conclusão obrigatório',
+            `Ano de Conclusão ${i} é obrigatório quando o Código do Curso ${i} está preenchido.`,
+            '(vazio)', 'formacao', anoCol)
+        } else {
           const anoNum = parseInt(ano, 10)
-          if (isNaN(anoNum) || anoNum < 1900 || anoNum > anoAtual) {
-            addErro(pessoa, anoCol, 7, 'Ano de conclusão inválido',
-              `Curso superior ${i}: ano de conclusão "${ano}" é inválido. Deve estar entre 1900 e ${anoAtual}.`,
+          if (!/^\d{4}$/.test(ano) || isNaN(anoNum) || anoNum < anoMin || anoNum > 2026) {
+            addErro(pessoa, anoCol, numBase + 1, 'Ano de conclusão inválido',
+              `Curso superior ${i}: ano de conclusão "${ano}" é inválido. Deve estar entre ${anoMin} e 2026.`,
               ano, 'formacao', anoCol)
           }
         }
-        if (ies) {
-          if (ies.length !== 6 || !/^\d+$/.test(ies)) {
-            addErro(pessoa, iesCol, 7, 'Código IES inválido',
-              `Curso superior ${i}: código da IES deve ter 6 dígitos numéricos.`,
-              ies, 'formacao', iesCol)
+
+        if (!ies) {
+          addErro(pessoa, iesCol, numBase + 2, 'IES obrigatória',
+            `Instituição de Educação Superior ${i} (Tabela de IES) é obrigatória quando o Código do Curso ${i} está preenchido.`,
+            '(vazio)', 'formacao', iesCol)
+        } else if (!/^\d{1,7}$/.test(ies)) {
+          addErro(pessoa, iesCol, numBase + 2, 'Código IES inválido',
+            `Curso superior ${i}: código da IES "${ies}" é inválido. Deve ser um código numérico da Tabela de IES.`,
+            ies, 'formacao', iesCol)
+        }
+      }
+    }
+
+    // -------------------------------------------------------------------
+    // 8. Certidão, residência, tipo médio, áreas, pós e formação (v4 30)
+    // -------------------------------------------------------------------
+    const certidao = s(pessoa, 'certidao_nascimento').trim()
+    if (certidao) {
+      if (!temAluno) {
+        addErro(pessoa, 'certidao_nascimento', 50, 'Certidão sem vínculo 60',
+          'Certidão de nascimento só pode ser preenchida quando houver vínculo no registro 60.',
+          certidao, 'documentos', 'certidao_nascimento')
+      } else if (!/^\d{30}(\d{2}|XX)$/.test(certidao)) {
+        addErro(pessoa, 'certidao_nascimento', 50, 'Certidão inválida',
+          'Certidão deve ter 30 caracteres numéricos mais 2 numéricos ou "XX".',
+          certidao, 'documentos', 'certidao_nascimento')
+      } else if (dataNascimento) {
+        const anoNascCert = new Date(dataNascimento).getFullYear()
+        const anoCert = parseInt(certidao.slice(9, 13), 10)
+        if (!isNaN(anoNascCert) && !isNaN(anoCert) && (anoCert < anoNascCert || anoCert > 2026)) {
+          addErro(pessoa, 'certidao_nascimento', 50, 'Ano da certidão inválido',
+            `Ano de registro da certidão deve estar entre o ano de nascimento (${anoNascCert}) e 2026.`,
+            certidao, 'documentos', 'certidao_nascimento')
+        }
+      }
+    }
+
+    const paisRes = s(pessoa, 'pais_residencia').trim()
+    const PAISES_RESIDENCIA = ['32', '68', '76', '170', '328', '254', '600', '604', '740', '858', '862']
+    if (paisRes && temAluno && !PAISES_RESIDENCIA.includes(paisRes)) {
+      addErro(pessoa, 'pais_residencia', 51, 'País de residência inválido',
+        'País de residência deve ser um dos códigos: 32, 68, 76, 170, 328, 254, 600, 604, 740, 858 ou 862.',
+        paisRes, 'endereco', 'pais_residencia')
+    }
+    const zonaRes = s(pessoa, 'zona_residencia')
+    // Domínio apenas: o "nulo sem vínculo 60" da v4 conflita com o cadastro,
+    // que exige zona de todo profissional — aplicar travaria a exportação
+    // sem caminho de correção. Decisão operacional: só valida 1/2.
+    if (zonaRes && !['1', '2'].includes(zonaRes)) {
+      addErro(pessoa, 'zona_residencia', 54, 'Zona inválida',
+        'Zona de residência deve ser 1 ou 2.',
+        zonaRes, 'endereco', 'zona_residencia')
+    }
+    const locDifRes = s(pessoa, 'localizacao_diferenciada').trim()
+    if (locDifRes) {
+      if (paisRes !== '76') {
+        addErro(pessoa, 'localizacao_diferenciada', 55, 'Localização deve ser nula',
+          'Localização diferenciada de residência deve ser nula quando o país não é 76.',
+          locDifRes, 'endereco', 'localizacao_diferenciada')
+      } else if (!['1', '2', '3', '7', '8'].includes(locDifRes)) {
+        addErro(pessoa, 'localizacao_diferenciada', 55, 'Localização inválida',
+          'Localização diferenciada de residência deve ser 1, 2, 3, 7 ou 8.',
+          locDifRes, 'endereco', 'localizacao_diferenciada')
+      } else if (locDifRes === '1' && zonaRes === '1') {
+        addErro(pessoa, 'localizacao_diferenciada', 55, 'Localização × Zona',
+          'Localização diferenciada não pode ser 1 quando a zona de residência é urbana.',
+          locDifRes, 'endereco', 'localizacao_diferenciada')
+      }
+    }
+
+    if (temGestor || temProfissional) {
+      const esc = s(pessoa, 'escolaridade')
+      const tipoMedio = s(pessoa, 'tipo_ensino_medio')
+      if (tipoMedio && ((esc !== '6' && esc !== '7') || !['1', '2', '3', '4'].includes(tipoMedio))) {
+        const motivo = esc !== '6' && esc !== '7'
+          ? 'Tipo de ensino médio deve ser nulo quando a escolaridade não é 6 ou 7.'
+          : 'Tipo de ensino médio deve ser 1, 2, 3 ou 4.'
+        addErro(pessoa, 'tipo_ensino_medio', 57, 'Tipo de ensino médio',
+          motivo, tipoMedio, 'formacao', 'tipo_ensino_medio')
+      }
+
+      // Áreas 67-69: só com superior + vínculo 50; ≠32,99; distintas
+      const areas6769 = [1, 2, 3].map((i) => s(pessoa, `area_pedagogica_${i}`).trim())
+      const codAreasConhec = new Set(AREAS_CONHECIMENTO.map((a) => a.codigo))
+      if (esc !== '6' || !temProfissional) {
+        areas6769.forEach((a, idx) => {
+          if (a) {
+            addErro(pessoa, `area_pedagogica_${idx + 1}`, 67 + idx, 'Área deve ser nula',
+              'Áreas 67-69 só podem ser preenchidas com Educação Superior e vínculo no registro 50.',
+              a, 'formacao', `area_pedagogica_${idx + 1}`)
+          }
+        })
+      } else {
+        const vistas = new Set<string>()
+        areas6769.forEach((a, idx) => {
+          if (!a) return
+          const norm = a.length === 1 ? `0${a}` : a
+          if (!codAreasConhec.has(norm) || norm === '32' || norm === '99') {
+            addErro(pessoa, `area_pedagogica_${idx + 1}`, 67 + idx, 'Área inválida',
+              'Deve ser um código da Tabela de Áreas do Conhecimento, diferente de 32 e 99.',
+              a, 'formacao', `area_pedagogica_${idx + 1}`)
+          } else if (vistas.has(norm)) {
+            addErro(pessoa, `area_pedagogica_${idx + 1}`, 67 + idx, 'Área repetida',
+              'Áreas 67-69 não podem se repetir.',
+              a, 'formacao', `area_pedagogica_${idx + 1}`)
+          } else {
+            vistas.add(norm)
+          }
+        })
+      }
+
+      // Pós 70-88: grupo quando esc=6; tipo/área/ano; sem repetição de trio.
+      // '0' é legado de vazio no banco — conta como não preenchido.
+      const vazioPos = (v: string) => v === '' || v === '0'
+      const triosPos: string[] = []
+      let temPos = false
+      for (let i = 1; i <= 6; i++) {
+        const tRaw = s(pessoa, `pos_tipo_${i}`).trim()
+        const aRaw = s(pessoa, `pos_area_${i}`).trim()
+        const yRaw = s(pessoa, `pos_ano_${i}`).trim()
+        const t = vazioPos(tRaw) ? '' : tRaw
+        const a = vazioPos(aRaw) ? '' : aRaw
+        const y = vazioPos(yRaw) ? '' : yRaw
+        if (!t && !a && !y) continue
+        temPos = true
+        if (esc !== '6') {
+          addErro(pessoa, `pos_tipo_${i}`, 70 + (i - 1) * 3, 'Pós deve ser nula',
+            'Pós-graduações só podem ser preenchidas com Educação Superior.',
+            [t, a, y].filter(Boolean).join('/'), 'formacao', `pos_tipo_${i}`)
+          continue
+        }
+        if (t && !['1', '2', '3'].includes(t)) {
+          addErro(pessoa, `pos_tipo_${i}`, 70 + (i - 1) * 3, 'Tipo de pós inválido',
+            'Tipo de pós-graduação deve ser 1, 2 ou 3.',
+            t, 'formacao', `pos_tipo_${i}`)
+        }
+        if (a && !AREAS_POS_GRADUACAO[a]) {
+          addErro(pessoa, `pos_area_${i}`, 71 + (i - 1) * 3, 'Área de pós inválida',
+            'Área deve ser um código da Tabela de Áreas de Pós-Graduação.',
+            a, 'formacao', `pos_area_${i}`)
+        }
+        if (y) {
+          const yNum = parseInt(y, 10)
+          const anosConc = [1, 2, 3]
+            .map((k) => parseInt(s(pessoa, `ano_conclusao_${k}`), 10))
+            .filter((n) => !isNaN(n))
+          const menorConc = anosConc.length > 0 ? Math.min(...anosConc) : 1900
+          if (!/^\d{4}$/.test(y) || isNaN(yNum) || yNum < menorConc) {
+            addErro(pessoa, `pos_ano_${i}`, 72 + (i - 1) * 3, 'Ano de pós inválido',
+              `Ano deve ter 4 dígitos e não ser anterior ao menor ano de conclusão (${menorConc}).`,
+              y, 'formacao', `pos_ano_${i}`)
+          }
+        } else if (a) {
+          addErro(pessoa, `pos_ano_${i}`, 72 + (i - 1) * 3, 'Ano de pós obrigatório',
+            'Ano é obrigatório quando a Área da pós está preenchida.',
+            '(vazio)', 'formacao', `pos_ano_${i}`)
+        }
+        const trio = [t, a, y].join('|')
+        if (t && a && y) {
+          if (triosPos.includes(trio)) {
+            addErro(pessoa, `pos_tipo_${i}`, 70 + (i - 1) * 3, 'Pós repetida',
+              'A combinação tipo+área+ano não pode se repetir.',
+              trio.replace(/\|/g, '/'), 'formacao', `pos_tipo_${i}`)
+          } else {
+            triosPos.push(trio)
           }
         }
+      }
+      const semPos = b(pessoa, 'sem_pos')
+      if (esc === '6' && (temGestor || temProfissional) && !temPos && !semPos) {
+        addErro(pessoa, 'sem_pos', 88, 'Pós-graduação obrigatória',
+          'Com Educação Superior, informe ao menos uma pós-graduação ou que não tem.',
+          '', 'formacao', 'sem_pos')
+      }
+      if (semPos && temPos) {
+        addErro(pessoa, 'sem_pos', 88, 'Sem pós conflitante',
+          '"Não tem pós-graduação" só pode ser 1 quando nenhuma pós foi informada.',
+          '', 'formacao', 'sem_pos')
+      }
+
+      // Formação 89-109: grupo quando vínculo 40/50; Nenhum exclusivo
+      const FORM_COLS = [
+        'form_creche', 'form_pre_escola', 'form_alfabetizacao', 'form_anos_iniciais',
+        'form_anos_finais', 'form_medio', 'form_eja', 'form_especial', 'form_indigena',
+        'form_campo', 'form_ambiental', 'form_direitos', 'form_bilingue', 'form_tic',
+        'form_integral', 'form_genero', 'form_direitos_crianca', 'form_etnico_raciais',
+        'form_gestao_escolar', 'form_outros',
+      ]
+      const formsAtivos = FORM_COLS.filter((c) => b(pessoa, c))
+      const nenhumForm = b(pessoa, 'sem_formacao')
+      if (formsAtivos.length === 0 && !nenhumForm) {
+        addErro(pessoa, 'form_creche', 89, 'Formação obrigatória',
+          'Pelo menos um dos campos de 89 a 109 deve ser 1 para gestor/profissional.',
+          '', 'formacao', 'form_creche')
+      }
+      if (nenhumForm && formsAtivos.length > 0) {
+        addErro(pessoa, 'sem_formacao', 109, 'Nenhum conflitante',
+          '"Nenhum" não pode ser 1 quando outra formação foi informada.',
+          '', 'formacao', 'sem_formacao')
       }
     }
   }
@@ -2372,8 +3503,20 @@ export async function validarRegistro40(schoolId: string): Promise<ErroValidacao
   }
 
   // -----------------------------------------------------------------------
-  // 2. MAX 3 GESTORES
+  // 2. MÍNIMO 1 GESTOR em escola ativa (Regras Gerais 19: pelo menos um
+  // registro de cada para escolas em atividade) + MÁXIMO 3 (regra 21)
   // -----------------------------------------------------------------------
+
+  if (gestores.length === 0 && situacao === '1') {
+    addErro(
+      'cargo', 5,
+      'Gestor obrigatório',
+      'A escola em atividade deve ter pelo menos um gestor cadastrado (Registro 40). Cadastre o gestor na tela da Unidade Escolar.',
+      schoolId, nomeEscola,
+      '(nenhum)',
+    )
+    return erros
+  }
 
   if (gestores.length > 3) {
     addErro(
@@ -2651,22 +3794,103 @@ export async function validarRegistro50(schoolId: string): Promise<ErroValidacao
     for (const fp of (fps || [])) funcaoProfMap.set(fp.id, fp)
   }
 
+  // disciplinas_ids guarda ids da MATRIZ — resolve area via helper (nunca
+  // bate buscando direto em academico_disciplinas)
   const allDiscIds = [...new Set(vinculos.flatMap((v) => (v.disciplinas_ids || []) as string[]))]
-  const discAreaMap = new Map<string, number>()
-  if (allDiscIds.length > 0) {
-    const { data: discs } = await supabase
-      .from('academico_disciplinas')
-      .select('id, area_codigo')
-      .in('id', allDiscIds)
-    for (const d of (discs || [])) {
-      if (d.area_codigo != null) discAreaMap.set(d.id, d.area_codigo)
+  const discAreaMap = await mapearAreasPorMatriz(supabase, allDiscIds)
+
+  // INEP das pessoas vinculadas (v4 50.campo4 é obrigatório)
+  const personIds50 = [...new Set(vinculos.map((v) => v.person_id).filter(Boolean))]
+  const inepPorPessoa50 = new Map<string, string>()
+  const nomePorPessoa50 = new Map<string, string>()
+  if (personIds50.length > 0) {
+    const { data: pessoas50 } = await supabase
+      .from('people')
+      .select('id, inep_id, nome_completo')
+      .in('id', personIds50 as string[])
+    for (const p of (pessoas50 || [])) {
+      const pid = String((p as any).id)
+      if ((p as any).inep_id) inepPorPessoa50.set(pid, String((p as any).inep_id))
+      if ((p as any).nome_completo) nomePorPessoa50.set(pid, String((p as any).nome_completo))
     }
+  }
+
+  // Areas ofertadas por turma derivadas das disciplinas vinculadas
+  // (turmas_disciplinas) — mesma derivacao da exportacao; uniao com as
+  // colunas area_* legadas de `turmas`.
+  const nomesDiscPorTurma50 = new Map<string, string[]>()
+  if (turmaIds.length > 0) {
+    const { data: turmasDiscs50 } = await supabase
+      .from('turmas_disciplinas')
+      .select('turma_id, academico_matriz_disciplinas(academico_disciplinas(nome))')
+      .in('turma_id', turmaIds)
+    for (const td of (turmasDiscs50 || [])) {
+      const tid = String((td as any).turma_id)
+      const nome = (td as any).academico_matriz_disciplinas?.academico_disciplinas?.nome
+      if (!tid || !nome) continue
+      if (!nomesDiscPorTurma50.has(tid)) nomesDiscPorTurma50.set(tid, [])
+      nomesDiscPorTurma50.get(tid)!.push(String(nome))
+    }
+  }
+  const getCodigosAreaTurmaOfertada = (turma: Record<string, unknown>): string[] => {
+    const codigos = new Set(getCodigosAreaTurma(turma))
+    const derivadas = derivarAreasDeDisciplinas(nomesDiscPorTurma50.get(String(turma.id)) || [])
+    for (const key of derivadas) {
+      const cod = AREA_BOOL_TO_CODIGO[key]
+      if (cod) codigos.add(cod)
+    }
+    return [...codigos]
   }
 
   const derivarFuncao = (v: any): string => {
     const vp = v.vinculo_profissional_id ? vinculoProfMap.get(v.vinculo_profissional_id) : null
     const fp = vp?.funcao_id ? funcaoProfMap.get(vp.funcao_id) : null
     return getFuncaoCenso50(fp?.nome || '')
+  }
+
+  // Surdez na turma (v4 50.c7.r8: função 4 exige aluno ou outro
+  // profissional com surdez/def. auditiva/surdocegueira na turma)
+  const surdosPorTurma = new Map<string, Set<string>>()
+  if (turmaIds.length > 0) {
+    const { data: mats50 } = await supabase
+      .from('academico_matriculas')
+      .select('aluno_id, turma_id')
+      .in('turma_id', turmaIds)
+      .eq('ativo', true)
+    const profIds50 = [...new Set(vinculos.map((v) => v.person_id).filter(Boolean))]
+    const idsPessoas50 = [...new Set([
+      ...((mats50 || []).map((m: any) => m.aluno_id).filter(Boolean)),
+      ...(profIds50.map((id) => String(id))),
+    ])]
+    if (idsPessoas50.length > 0) {
+      const { data: pessoasSurdez } = await supabase
+        .from('people')
+        .select('id, surdez, deficiencia_auditiva, surdocegueira')
+        .in('id', idsPessoas50)
+      const comSurdez = new Set(
+        ((pessoasSurdez || []) as any[])
+          .filter((p) => p.surdez || p.deficiencia_auditiva || p.surdocegueira)
+          .map((p) => String(p.id)),
+      )
+      const profsPorTurma = new Map<string, string[]>()
+      for (const v of vinculos) {
+        const tid = String(v.turma_id)
+        if (!profsPorTurma.has(tid)) profsPorTurma.set(tid, [])
+        if (v.person_id) profsPorTurma.get(tid)!.push(String(v.person_id))
+      }
+      for (const tid of turmaIds.map((t) => String(t))) {
+        const set = new Set<string>()
+        for (const m of (mats50 || []) as any[]) {
+          if (String(m.turma_id) === tid && m.aluno_id && comSurdez.has(String(m.aluno_id))) {
+            set.add(String(m.aluno_id))
+          }
+        }
+        for (const pid of profsPorTurma.get(tid) || []) {
+          if (comSurdez.has(pid)) set.add(pid)
+        }
+        if (set.size > 0) surdosPorTurma.set(tid, set)
+      }
+    }
   }
 
   const vinculosPorTurma = new Map<string, typeof vinculos>()
@@ -2683,7 +3907,7 @@ export async function validarRegistro50(schoolId: string): Promise<ErroValidacao
     if (!turma) continue
     const turmaNome = (turma.nome as string) || turmaId
     const turmaEad = isEad(turma)
-    const codigosAreaTurma = getCodigosAreaTurma(turma)
+    const codigosAreaTurma = getCodigosAreaTurmaOfertada(turma as Record<string, unknown>)
     const turmaFgb = !!turma.fgb
     const turmaIfa = !!turma.ifa
     const turmaIftp = !!turma.iftp
@@ -2717,6 +3941,31 @@ export async function validarRegistro50(schoolId: string): Promise<ErroValidacao
         addErro('funcao_censo', 9, 'Função obrigatória',
           'A função INEP (funcao_censo) deve ser informada (1-9).', '(vazio)')
         continue
+      }
+
+      // 1b. Identificação única (v4 50.campo4 é obrigatória).
+      // Entidade = a PESSOA (é nela que se preenche o INEP) — o "Corrigir"
+      // abre o cadastro da pessoa, não o Quadro de Aulas.
+      if (v.person_id && !inepPorPessoa50.get(String(v.person_id))) {
+        const pid = String(v.person_id)
+        erros.push(
+          criarErro('50', 'inep_id', 4, 'Identificação única obrigatória (Registro 50)',
+            `A pessoa vinculada à turma "${turmaNome}" precisa ter Identificação única (Inep) — campo 4 do Registro 50 é obrigatório.`,
+            pid, nomePorPessoa50.get(pid) || `Pessoa ${pid}`, schoolId,
+            '(vazio)', 'profissionais', 'inep_id'),
+        )
+      }
+
+      // 1c. Função 4 exige surdez na turma (v4 50.c7.r8): aluno ou OUTRO
+      // profissional com surdez/def. auditiva/surdocegueira (o próprio não conta)
+      if (funcao === '4') {
+        const surdos = surdosPorTurma.get(String(v.turma_id)) || new Set<string>()
+        const outros = [...surdos].filter((pid) => pid !== String(v.person_id))
+        if (outros.length === 0) {
+          addErro('funcao_censo', 9, 'Função × Surdez na turma',
+            'Função "4" (Tradutor/Intérprete de Libras) exige ao menos um aluno ou outro profissional com surdez, deficiência auditiva ou surdocegueira vinculado à turma.',
+            funcao)
+        }
       }
 
       // 2. Função × Tipo de Mediação
@@ -2757,11 +4006,12 @@ export async function validarRegistro50(schoolId: string): Promise<ErroValidacao
         }
       }
 
-      // 5. Função '9' (Auxiliar AEE) apenas quando turma.iftp = true
+      // 5. Função '9' (v4 50.c7.r6: só quando IFTP=1 E Etapa 39,40,73,74,64,67,68)
       if (funcao === '9') {
-        if (!turmaIftp) {
-          addErro('funcao_censo', 9, 'Função × IFTP',
-            'Função "9" (Auxiliar AEE) só é permitida para turmas com IFTP.',
+        const etapa50 = String((turma as any).etapa_codigo || '')
+        if (!turmaIftp || !['39', '40', '73', '74', '64', '67', '68'].includes(etapa50)) {
+          addErro('funcao_censo', 9, 'Função × IFTP/Etapa',
+            'Função "9" só é permitida para turmas com IFTP e etapa 39, 40, 64, 67, 68, 73 ou 74.',
             funcao)
         }
       }
@@ -2778,18 +4028,29 @@ export async function validarRegistro50(schoolId: string): Promise<ErroValidacao
         }
       }
 
-      // 7. Situação funcional (função '1','5','6' + pública)
-      if (['1', '5', '6'].includes(funcao) && isPublica) {
+      // 7. Situação funcional (v4 50.c8: 1-4 quando função 1/5/6 + pública).
+      // Sem o "nulo fora disso": o cadastro exige regime de todo vínculo
+      // (CLT existe na privada) — travar seria sem caminho de correção.
+      {
         const vpSit = v.vinculo_profissional_id ? vinculoProfMap.get(v.vinculo_profissional_id) : null
         const sf = vpSit?.regime_contratacao || ''
-        if (!sf) {
-          addErro('situacao_funcional', 10, 'Situação funcional obrigatória',
-            'Situação funcional é obrigatória para docentes em escolas públicas.', '(vazio)')
-        } else if (!['1', '2', '3', '4'].includes(sf)) {
+        if (['1', '5', '6'].includes(funcao) && isPublica) {
+          if (!sf) {
+            addErro('situacao_funcional', 10, 'Situação funcional obrigatória',
+              'Situação funcional é obrigatória para docentes em escolas públicas.', '(vazio)')
+          } else if (!['1', '2', '3', '4'].includes(sf)) {
+            addErro('situacao_funcional', 10, 'Situação funcional inválida',
+              `Situação funcional "${sf}" inválida. Deve ser 1 (Concursado), 2 (Contrato Temporário), 3 (Contrato Terceirizado) ou 4 (Contrato CLT).`, sf)
+          }
+        } else if (sf && !['1', '2', '3', '4'].includes(sf)) {
           addErro('situacao_funcional', 10, 'Situação funcional inválida',
-            `Situação funcional "${sf}" inválida. Deve ser 1 (Concursado), 2 (Contrato Temporário), 3 (Contrato Terceirizado) ou 4 (Contrato CLT).`, sf)
+            `Situação funcional "${sf}" inválida. Deve ser 1, 2, 3 ou 4.`, sf)
         }
       }
+
+      // 7b removida: áreas de vínculo com função ≠ 1/5 ficam nulas SÓ na
+      // exportação — o quadro usa disciplinas_ids operacionalmente e exigir
+      // a remoção travaria sem correção viável.
 
       // 8. Áreas — sequentiality (sem lacunas)
       if (funcao === '1' || funcao === '5') {
@@ -2829,19 +4090,25 @@ export async function validarRegistro50(schoolId: string): Promise<ErroValidacao
         }
       }
 
-      // 9. Itinerário (FGB+IFA) — pelo menos um leciona_* deve ser true
-      if (turmaFgb && turmaIfa) {
+      // 9. Itinerário (v4 50.r2): FGB+IFA simultâneos e Código 1 de área
+      // nulo → pelo menos um leciona_* deve ser true
+      {
         const itinAreas = (turma.areas_itinerario || []) as string[]
-        const lecLing = itinAreas.some((a: string) => /linguagens/i.test(a))
-        const lecMat = itinAreas.some((a: string) => /matemática/i.test(a))
-        const lecNat = itinAreas.some((a: string) => /natureza/i.test(a))
-        const lecHum = itinAreas.some((a: string) => /humanas/i.test(a))
-
-        if (!lecLing && !lecMat && !lecNat && !lecHum) {
-          addErro('leciona_linguagens', 36, 'Itinerário formativo obrigatório',
-            'Para turmas com FGB+IFA, pelo menos um dos campos "leciona_linguagens", "leciona_matematica", "leciona_natureza" ou "leciona_humanas" deve ser verdadeiro.',
-            '(todos false)')
+        const lecs = [
+          itinAreas.some((a: string) => /linguagens/i.test(a)),
+          itinAreas.some((a: string) => /matemática/i.test(a)),
+          itinAreas.some((a: string) => /natureza/i.test(a)),
+          itinAreas.some((a: string) => /humanas/i.test(a)),
+        ]
+        if (turmaFgb && turmaIfa && codigosAreaTurma.length === 0) {
+          if (!lecs.some(Boolean)) {
+            addErro('leciona_linguagens', 36, 'Itinerário formativo obrigatório',
+              'Para turmas com FGB+IFA, pelo menos um dos campos "leciona_linguagens", "leciona_matematica", "leciona_natureza" ou "leciona_humanas" deve ser verdadeiro.',
+              '(todos false)')
+          }
         }
+        // Leciona nulo fora de contexto SÓ na exportação (flags da turma,
+        // sem correção por vínculo) — aqui só a exigência r2 acima.
       }
     }
   }
@@ -2852,14 +4119,6 @@ export async function validarRegistro50(schoolId: string): Promise<ErroValidacao
 // ---------------------------------------------------------------------------
 // REGISTRO 60 — MATRÍCULAS DE ALUNOS
 // ---------------------------------------------------------------------------
-
-// Mapa: etapa_codigo da turma → turma_multi valores permitidos (6 regras)
-const TURMA_MULTI_PERMITIDOS: Record<string, number[]> = {
-  '3': [1, 2], // Ed Infantil Unificada → Creche ou Pré-escola
-  '22': [14, 15, 16, 17, 18, 19, 20, 21, 41], // Multi EF → anos iniciais/finais
-  '23': [14, 15, 16, 17, 18, 19, 20, 21, 41], // Correção de Fluxo → anos EF
-  '56': [69, 70, 72], // Multietapa → EJA EF
-}
 
 const AEE_FIELDS = [
   'aee_funcao_cognitiva', 'aee_vida_autonoma', 'aee_enriquecimento',
@@ -2888,20 +4147,6 @@ function calcularIdade(dataNascimento: string | null, dataRef: Date): number | n
     idade--
   }
   return idade
-}
-
-// Checa se turma_multi é compatível com etapa de EM (25-29, 35-38)
-function ehEtapaEM(etapaCodigo: string | null): boolean {
-  if (!etapaCodigo) return false
-  const cod = parseInt(etapaCodigo, 10)
-  if (isNaN(cod)) return false
-  return (cod >= 25 && cod <= 29) || (cod >= 35 && cod <= 38)
-}
-
-// Checa se turma_multi é compatível com etapa EJA EF (69, 70, 72)
-function ehEtapaEJAFund(etapaCodigo: string | null): boolean {
-  if (!etapaCodigo) return false
-  return ['69', '70', '72'].includes(etapaCodigo)
 }
 
 function turmaIsCurricular(turma: Record<string, unknown>): boolean {
@@ -2963,31 +4208,30 @@ export async function validarRegistro60(schoolId: string): Promise<ErroValidacao
     }
 
     // -------------------------------------------------------------------
-    // 1. TURMA MULTI
+    // 1. TURMA MULTI (v4 60.c8: nulo fora de 3,22,23,72,56,64)
     // -------------------------------------------------------------------
 
-    const turmaMultiRaw = m.turma_multi as string | null
+    const turmaMultiRaw = (m.turma_multi as string | null)?.trim() || ''
+    // Mapa v4 r3-r6 (etapa 3 sem regra de validacao)
+    const MULTI_POR_ETAPA: Record<string, { valores: number[]; rotulo: string }> = {
+      '22': { valores: [14, 15, 16, 17, 18, 19, 20, 21, 41], rotulo: 'etapas 22/23' },
+      '23': { valores: [14, 15, 16, 17, 18, 19, 20, 21, 41], rotulo: 'etapas 22/23' },
+      '72': { valores: [69, 70], rotulo: 'etapa 72' },
+      '56': { valores: [1, 2, 14, 15, 16, 17, 18, 19, 20, 21, 41], rotulo: 'etapa 56' },
+      '64': { valores: [39, 40], rotulo: 'etapa 64' },
+    }
+
     if (turmaMultiRaw) {
-      const turmaMultiCod = parseInt(turmaMultiRaw, 10)
-
-      let permitidos: number[] | null = null
-      let nomeRegra = ''
-
-      if (etapaCodigo && TURMA_MULTI_PERMITIDOS[etapaCodigo]) {
-        permitidos = TURMA_MULTI_PERMITIDOS[etapaCodigo]
-        nomeRegra = `Etapa ${etapaCodigo}`
-      } else if (ehEtapaEM(etapaCodigo)) {
-        permitidos = [25, 26, 27, 28, 29, 35, 36, 37, 38]
-        nomeRegra = 'Ensino Médio'
-      } else if (ehEtapaEJAFund(etapaCodigo)) {
-        permitidos = [69, 70, 72]
-        nomeRegra = 'EJA Ensino Fundamental'
-      }
-
-      if (permitidos) {
-        if (!permitidos.includes(turmaMultiCod)) {
-          addErro('turma_multi', 10, 'Turma Multi × Etapa',
-            `turma_multi "${turmaMultiRaw}" não é válido para ${nomeRegra}. Valores permitidos: ${permitidos.join(', ')}.`,
+      const regra = etapaCodigo ? MULTI_POR_ETAPA[etapaCodigo] : null
+      if (!regra && etapaCodigo !== '3') {
+        addErro('turma_multi', 8, 'Turma Multi deve ser nula',
+          `turma_multi deve ser nula quando a etapa é ${etapaCodigo || '(não informada)'}. Só as etapas 3, 22, 23, 56, 64 e 72 aceitam turma multi.`,
+          turmaMultiRaw)
+      } else if (regra) {
+        const turmaMultiCod = parseInt(turmaMultiRaw, 10)
+        if (!regra.valores.includes(turmaMultiCod)) {
+          addErro('turma_multi', 8, 'Turma Multi × Etapa',
+            `turma_multi "${turmaMultiRaw}" não é válida para ${regra.rotulo}. Valores permitidos: ${regra.valores.join(', ')}.`,
             turmaMultiRaw)
         }
       }
@@ -3016,7 +4260,7 @@ export async function validarRegistro60(schoolId: string): Promise<ErroValidacao
     }
 
     // -------------------------------------------------------------------
-    // 3. AEE (quando turma.tipo_turma = '5')
+    // 3. AEE (v4 60.c10-20: grupo quando tipo 5; 0/1; nulos fora)
     // -------------------------------------------------------------------
 
     if (turmaHasTipo(turma, 'aee') || turmaHasTipo(turma, '5')) {
@@ -3026,54 +4270,71 @@ export async function validarRegistro60(schoolId: string): Promise<ErroValidacao
           'Pelo menos um tipo de Atendimento Educacional Especializado (AEE) deve ser informado para turmas do tipo AEE.',
           '(nenhum)')
       }
-    }
-
-    // -------------------------------------------------------------------
-    // 4. TRANSPORTE
-    // -------------------------------------------------------------------
-
-    const paisResidencia = (pessoa.pais_residencia as string) || ''
-    if (
-      paisResidencia === '76' &&
-      ['1', '2'].includes(tipoMed) &&
-      turmaIsCurricular(turma)
-    ) {
-      const responsavel = (m.transporte_responsavel as string) || ''
-      const veiculosTrue = VEICULO_FIELDS.filter((f) => !!(m[f as keyof typeof m]))
-      const temVeiculo = veiculosTrue.length > 0
-      const temResponsavel = !!responsavel && ['2', '3'].includes(responsavel)
-
-      if (temResponsavel || temVeiculo) {
-        // Responsável obrigatório
-        if (!temResponsavel) {
-          addErro('transporte_responsavel', 25, 'Transporte escolar',
-            'O responsável pelo transporte escolar é obrigatório quando há veículos informados.',
-            '(vazio)')
-        }
-
-        // Pelo menos um veículo
-        if (!temVeiculo) {
-          addErro('veiculo_bicicleta', 26, 'Transporte escolar',
-            'Pelo menos um tipo de veículo de transporte escolar deve ser informado.',
-            '(nenhum)')
-        }
-
-        // Não podem estar TODOS os veículos true
-        if (veiculosTrue.length === VEICULO_FIELDS.length) {
-          addErro('veiculo_bicicleta', 26, 'Transporte escolar',
-            'Todos os veículos de transporte não podem estar marcados simultaneamente.',
-            'todos marcados')
-        }
+    } else {
+      const aeeFora = AEE_FIELDS.filter((f) => !!(m[f as keyof typeof m]))
+      if (aeeFora.length > 0) {
+        addErro('aee_funcao_cognitiva', 12, 'AEE deve ser nulo',
+          'Tipos de AEE devem ser nulos quando a turma não é do tipo AEE.',
+          aeeFora.join(', '))
       }
     }
 
     // -------------------------------------------------------------------
-    // 5. ESCOLARIZAÇÃO EXTERNA
+    // 4. TRANSPORTE (v4 60.c22-c33)
+    // -------------------------------------------------------------------
+
+    const paisResidencia = (pessoa.pais_residencia as string) || ''
+    const tipoCod60 = codigoTipoTurma(turma.tipos_turma as any)
+    const gateTransporte =
+      paisResidencia === '76' &&
+      ['1', '2'].includes(tipoMed) &&
+      ['6', '9'].includes(tipoCod60)
+    const transporte = !!(m.transporte_escolar as unknown)
+    const responsavel = ((m.transporte_responsavel as string) || '').trim()
+    const veiculosTrue = VEICULO_FIELDS.filter((f) => !!(m[f as keyof typeof m]))
+
+    if (!gateTransporte) {
+      if (transporte) {
+        addErro('transporte_escolar', 22, 'Transporte deve ser nulo',
+          'Transporte escolar público deve ser nulo quando o país não é 76, a mediação não é presencial/semipresencial ou o tipo de turma não é 6 ou 9.',
+          'Sim')
+      }
+      // Sem o nulo de responsável: o cadastro fixa '1' (Nenhum) sem opção
+      // vazia — travar seria sem correção. Vale o 1/2 quando há transporte.
+      if (veiculosTrue.length > 0) {
+        addErro('veiculo_bicicleta', 24, 'Veículos devem ser nulos',
+          'Tipos de veículo devem ser nulos quando não há transporte escolar público.',
+          veiculosTrue.join(', '))
+      }
+    } else if (transporte) {
+      // Responsável 1 ou 2 obrigatório
+      if (!['1', '2'].includes(responsavel)) {
+        addErro('transporte_responsavel', 23, 'Transporte escolar',
+          'O poder público responsável pelo transporte (1 ou 2) é obrigatório quando há transporte escolar público.',
+          responsavel || '(vazio)')
+      }
+
+      // Pelo menos um veículo, mas não todos
+      if (veiculosTrue.length === 0) {
+        addErro('veiculo_bicicleta', 24, 'Transporte escolar',
+          'Pelo menos um tipo de veículo de transporte escolar deve ser informado.',
+          '(nenhum)')
+      } else if (veiculosTrue.length === VEICULO_FIELDS.length) {
+        addErro('veiculo_bicicleta', 24, 'Transporte escolar',
+          'Os campos de veículo não podem ser todos 0 nem todos 1 simultaneamente.',
+          'todos marcados')
+      }
+    }
+
+    // -------------------------------------------------------------------
+    // 5. ESCOLARIZAÇÃO EXTERNA + CARGA IFTP (v4 60.c21/c9)
     // -------------------------------------------------------------------
 
     const turmaCurricular = turmaIsCurricular(turma)
     const isPresencial = tipoMed === '1'
 
+    // Sem o nulo fora disso: o cadastro fixa um rótulo sem opção vazia.
+    // Vale o 1/2/3 + obrigatório no curricular presencial; a exportação nula.
     if (turmaCurricular && isPresencial) {
       const escExt = m.escolarizacao_externa as string | null
       if (escExt && !['1', '2', '3'].includes(escExt)) {
@@ -3085,6 +4346,26 @@ export async function validarRegistro60(schoolId: string): Promise<ErroValidacao
         addErro('escolarizacao_externa', 23, 'Escolarização externa',
           'Escolarização externa deve ser informada (1=exclusiva, 2=complementar, 3=não se aplica) para turmas curriculares presenciais.',
           '(vazio)')
+      }
+    }
+
+    // c9: carga só com IFTP ou etapa 39/40/67/68/73/75
+    const cargaIftp = (m.carga_horaria_iftp as string | number | null)
+    const cargaIftpStr = cargaIftp === null || cargaIftp === undefined ? '' : String(cargaIftp).trim()
+    const tIftp60 = !!(turma as any).iftp
+    const etapaIftpOk = ['39', '40', '67', '68', '73', '75'].includes(etapaCodigo || '')
+    if (cargaIftpStr && cargaIftpStr !== '0') {
+      if (!tIftp60 && !etapaIftpOk) {
+        addErro('carga_horaria_iftp', 9, 'Carga deve ser nula',
+          'Carga horária só pode ser preenchida com IFTP ou etapa 39, 40, 67, 68, 73 ou 75.',
+          cargaIftpStr)
+      } else {
+        const cargaNum = Number(cargaIftpStr)
+        if (!Number.isFinite(cargaNum) || cargaNum < 1 || cargaNum > 9999) {
+          addErro('carga_horaria_iftp', 9, 'Carga inválida',
+            'Carga horária deve ter de 1 a 9999 horas.',
+            cargaIftpStr)
+        }
       }
     }
   }
@@ -3101,7 +4382,7 @@ export async function validarVinculosAluno(schoolId: string): Promise<ErroValida
 
   const { data: matriculas, error } = await supabase
     .from('academico_matriculas')
-    .select('aluno_id, turma_id, turmas!inner(id, nome, tipos_turma, etapa_codigo, tipo_mediacao, iftp)')
+    .select('aluno_id, turma_id, turmas!inner(id, nome, tipos_turma, etapa_codigo, tipo_mediacao, iftp, fgb)')
     .eq('school_id', schoolId)
     .eq('ativo', true)
     .eq('turmas.ativo', true)
@@ -3123,10 +4404,11 @@ export async function validarVinculosAluno(schoolId: string): Promise<ErroValida
 
     const turmaNomes = links.map((l) => (l.turmas as any)?.nome || '').filter(Boolean).join(', ')
 
-    // Total escolarizacao links (non-AEE): max 4
+    // Escolarização com etapa (v4 regra 32): max 4
     const escolarizacao = links.filter((l) => {
       const cod = codigoTipoTurma((l.turmas as any)?.tipos_turma)
-      return cod !== '5'
+      const etapa = String((l.turmas as any)?.etapa_codigo || '').trim()
+      return cod !== '5' && etapa !== ''
     })
     if (escolarizacao.length > 4) {
       erros.push(criarErro(
@@ -3149,10 +4431,10 @@ export async function validarVinculosAluno(schoolId: string): Promise<ErroValida
       ))
     }
 
-    // AEE/Complementar: max 4
+    // AEE/Complementar sem escolarização (v4 regra 34: só tipos 4 e 5): max 4
     const aee = links.filter((l) => {
       const cod = codigoTipoTurma((l.turmas as any)?.tipos_turma)
-      return cod === '5' || cod === '4' || cod === '9'
+      return cod === '5' || cod === '4'
     })
     if (aee.length > 4) {
       erros.push(criarErro(
@@ -3162,16 +4444,16 @@ export async function validarVinculosAluno(schoolId: string): Promise<ErroValida
       ))
     }
 
-    // IFTP exclusivo + etapas 1,2,14-18 conflict
-    const hasIftp = links.some((l) => !!(l.turmas as any)?.iftp)
+    // IFTP exclusivo (sem FGB) + etapas 1,2,14-18 (v4 regra 35)
+    const hasIftpExclusivo = links.some((l) => !!(l.turmas as any)?.iftp && !(l.turmas as any)?.fgb)
     const hasEtapaInfantil = links.some((l) => {
       const etapa = parseInt((l.turmas as any)?.etapa_codigo || '0', 10)
       return [1, 2, 14, 15, 16, 17, 18].includes(etapa)
     })
-    if (hasIftp && hasEtapaInfantil) {
+    if (hasIftpExclusivo && hasEtapaInfantil) {
       erros.push(criarErro(
         '60', 'iftp', 0, 'IFTP_CONFLITO_ETAPA',
-        `Aluno vinculado simultaneamente a turma IFTP e turma de Educação Infantil/EF Anos Iniciais. Isto não é permitido.`,
+        `Aluno vinculado simultaneamente a turma de itinerário formativo exclusivo e turma de Educação Infantil/EF Anos Iniciais. Isto não é permitido.`,
         alunoId, `Aluno ${alunoId}`, schoolId, '', 'vinculos', 'iftp',
       ))
     }
@@ -3184,6 +4466,32 @@ export async function validarVinculosAluno(schoolId: string): Promise<ErroValida
         '60', 'turma_id', 0, 'MATRICULA_DUPLICADA',
         `Aluno matriculado mais de uma vez na mesma turma.`,
         alunoId, `Aluno ${alunoId}`, schoolId, '', 'vinculos', 'turma_id',
+      ))
+    }
+  }
+
+  // Profissional × profissional na mesma turma (v4 regra 30)
+  const idsTurmasVinc = [...new Set((matriculas || []).map((m) => m.turma_id).filter(Boolean))]
+  if (idsTurmasVinc.length > 0) {
+    const { data: vincProf } = await supabase
+      .from('turmas_profissionais')
+      .select('person_id, turma_id')
+      .in('turma_id', idsTurmasVinc)
+      .not('person_id', 'is', null)
+
+    const vistos = new Set<string>()
+    const dupProf = new Set<string>()
+    for (const v of (vincProf || [])) {
+      const chave = `${v.person_id}|${v.turma_id}`
+      if (vistos.has(chave)) dupProf.add(chave)
+      vistos.add(chave)
+    }
+    for (const chave of dupProf) {
+      const [pid] = chave.split('|')
+      erros.push(criarErro(
+        '50', 'person_id', 0, 'VINCULO_PROFISSIONAL_DUPLICADO',
+        `Profissional vinculado mais de uma vez à mesma turma.`,
+        pid, `Pessoa ${pid}`, schoolId, '', 'vinculos', 'person_id',
       ))
     }
   }
@@ -3245,12 +4553,23 @@ export async function validarDescaracterizacao(schoolId: string): Promise<ErroVa
     }
   }
 
-  // 3. Profissional lecionando na turma onde é aluno
-  const { data: profs } = await supabase
-    .from('turmas_profissionais')
-    .select('person_id, turma_id')
-    .eq('turmas.school_id', schoolId)
-    .not('person_id', 'is', null)
+  // 3. Profissional lecionando na turma onde é aluno (v4 50.c5.r2).
+  // Escopo via turmas da escola (turmas_profissionais não tem school_id).
+  const { data: turmasEscola } = await supabase
+    .from('turmas')
+    .select('id')
+    .eq('school_id', schoolId)
+    .eq('ativo', true)
+
+  const idsTurmasEscola = (turmasEscola || []).map((t: any) => t.id)
+
+  const { data: profs } = idsTurmasEscola.length > 0
+    ? await supabase
+      .from('turmas_profissionais')
+      .select('person_id, turma_id')
+      .in('turma_id', idsTurmasEscola)
+      .not('person_id', 'is', null)
+    : { data: [] }
 
   const { data: mats } = await supabase
     .from('academico_matriculas')
@@ -3425,11 +4744,20 @@ function getCorrectionUrl(
     }
 
     case '40': {
-      // School gestores — school form opens in its default tab
-      return `/escolas/${schoolId}`
+      // Gestores da escola — abre direto na aba Gestores
+      let url = `/escolas/${schoolId}`
+      url += `?tab=gestores`
+      return url
     }
 
     case '50': {
+      // Erro no INEP da pessoa → cadastro da pessoa; demais → Quadro de Aulas
+      if (campo === 'inep_id') {
+        let url = `/gestao-usuarios/usuarios`
+        if (entidadeId) params.set('edit', entidadeId)
+        if (params.size > 0) url += `?${params.toString()}`
+        return url
+      }
       // Quadro de Aulas listing (vinculo profissional × turma)
       return `/gestao-turmas/quadro-aulas`
     }

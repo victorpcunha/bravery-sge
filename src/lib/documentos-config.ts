@@ -78,6 +78,7 @@ function formatarTelefones(ddd: string, num1: string, num2: string): string {
 export function seedDocumentosFromSchool(school: {
   nome_escola?: string | null
   cnpj?: string | null
+  cnpj_escola?: string | null
   endereco?: string | null
   numero?: string | null
   bairro?: string | null
@@ -90,7 +91,7 @@ export function seedDocumentosFromSchool(school: {
 }): ConfigDocumentosForm {
   return {
     nome_escola_doc: str(school.nome_escola),
-    cnpj_doc: strDigitos(school.cnpj),
+    cnpj_doc: strDigitos(school.cnpj_escola || school.cnpj),
     logradouro_doc: str(school.endereco),
     numero_doc: str(school.numero),
     bairro_doc: str(school.bairro),

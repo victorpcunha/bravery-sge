@@ -431,7 +431,7 @@ export function PessoaForm({ schoolId: propSchoolId, person, onSaved, onCancel }
       if (form.filiacao_declarada === '1' && !form.filiacao_2) { toast.error('Filiação 2 (pai) é obrigatória'); return }
     }
     if (isAluno && !form.whatsapp) { toast.error('Telefone principal (WhatsApp) é obrigatório'); return }
-    if (isProfissionalOuGestor && !form.email?.trim()) { toast.error('E-mail é obrigatório para Profissional/Gestor'); return }
+    if (isProfissionalOuGestor && !form.email?.trim()) { toast.error('E-mail é obrigatório para Profissional'); return }
     if (isAluno || isProfissionalOuGestor) {
       if (!form.pais_residencia) { toast.error('País de residência é obrigatório'); return }
       if (form.pais_residencia === '76') {
@@ -445,7 +445,7 @@ export function PessoaForm({ schoolId: propSchoolId, person, onSaved, onCancel }
       if (!form.localizacao_diferenciada) { toast.error('Localização diferenciada é obrigatória'); return }
     }
     if (isProfissionalOuGestor) {
-      if (!form.escolaridade) { toast.error('Escolaridade é obrigatória para Profissional/Gestor'); return }
+      if (!form.escolaridade) { toast.error('Escolaridade é obrigatória para Profissional'); return }
       if (form.escolaridade === '6') {
         const temPos = [1, 2, 3, 4, 5, 6].some(i => form[`pos_tipo_${i}`])
         if (!form.sem_pos && !temPos) { toast.error('Informe a Pós-Graduação ou marque "Não tem pós-graduação"'); return }
@@ -716,10 +716,12 @@ export function PessoaForm({ schoolId: propSchoolId, person, onSaved, onCancel }
     }
   }
 
+  // spec 037: pill "gestor" removida — papel de gestor vive em `managers`
+  // (aba Gestores da Unidade Escolar). `includes('gestor')` abaixo mantido
+  // por compatibilidade com linhas legadas.
   const perfis = [
     { value: 'aluno', label: 'Aluno' },
     { value: 'profissional', label: 'Profissional' },
-    { value: 'gestor', label: 'Gestor' },
     { value: 'responsavel', label: 'Responsável' },
   ]
 
@@ -1474,11 +1476,11 @@ export function PessoaForm({ schoolId: propSchoolId, person, onSaved, onCancel }
                       <Select value={form.localizacao_diferenciada} onValueChange={(v) => set('localizacao_diferenciada', v)}>
                         <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="1">Área de Assentamento</SelectItem>
-                          <SelectItem value="2">Terra Indígena</SelectItem>
-                          <SelectItem value="3">Comunidade Quilombola</SelectItem>
-                          <SelectItem value="7">Não está em área diferenciada</SelectItem>
-                          <SelectItem value="8">Comunidades Tradicionais</SelectItem>
+                          <SelectItem value="1">Área de assentamento</SelectItem>
+                          <SelectItem value="2">Terra indígena</SelectItem>
+                          <SelectItem value="3">Comunidade quilombola</SelectItem>
+                          <SelectItem value="7">Não está em área de localização diferenciada</SelectItem>
+                          <SelectItem value="8">Área onde se localizam povos e comunidades tradicionais</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>

@@ -54,6 +54,7 @@ import {
 import { EmptyState } from '@/components/ui/empty-state'
 import { PROFISSOES_CENSO } from '@/data/funcoes-censo'
 import { getProfissionaisCenso, type ProfissionalCenso } from '@/lib/actions/censo-profissionais'
+import { GestoresForm } from './gestores-form'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { toast } from 'sonner'
 import { MUNICIPIOS_CEARA } from '@/data/censo/municipios-ceara'
@@ -160,7 +161,7 @@ const CAMPO_PARA_ABA: Record<string, string> = {
 
   dependencia_administrativa: 'administrativo',
   categoria_escola_privada: 'administrativo',
-  cnpj: 'administrativo',
+  cnpj_escola: 'administrativo',
   cnpj_mantenedora: 'administrativo',
   regulamentacao: 'administrativo',
   esfera_regulamentacao: 'administrativo',
@@ -326,7 +327,7 @@ const escolaFormSchema = z.object({
   contr_mun_prestacao: checkboxValue,
   contr_mun_coop_tecnica: checkboxValue,
   contr_mun_consorcio: checkboxValue,
-  cnpj: digitString(14, 'CNPJ deve ter 14 dígitos'),
+  cnpj_escola: digitString(14, 'CNPJ deve ter 14 dígitos'),
   cnpj_mantenedora: z
     .string()
     .optional()
@@ -831,6 +832,7 @@ interface EscolaFormProps {
   title?: string
   readOnly?: boolean
   schoolId?: string | null
+  pessoaId?: string | null
 }
 
 // ───────────────────── Helpers ─────────────────────
@@ -1192,6 +1194,7 @@ export function EscolaForm({
   title = 'Nova Escola',
   readOnly = false,
   schoolId = null,
+  pessoaId = null,
 }: EscolaFormProps) {
   const form = useForm<EscolaFormValues>({
     resolver: zodResolver(escolaFormSchema),
@@ -1256,6 +1259,7 @@ export function EscolaForm({
     const TAB_VALIDAS = [
       'identificacao', 'endereco', 'administrativo', 'local-saneamento',
       'dependencias', 'acessibilidade', 'equipamentos', 'profissionais', 'gestao',
+      'gestores',
     ]
     const tabFromUrl = searchParams.get('tab')
     if (tabFromUrl && TAB_VALIDAS.includes(tabFromUrl)) setActiveTab(tabFromUrl)
@@ -1470,9 +1474,9 @@ export function EscolaForm({
   const localizacaoDiferenciadaOptions = [
     { value: '1', label: 'Área de assentamento' },
     { value: '2', label: 'Terra indígena' },
-    { value: '3', label: 'Área remanescente de quilombos' },
-    { value: '4', label: 'Unidade de uso sustentável' },
-    { value: '5', label: 'Não está em área de localização diferenciada' },
+    { value: '3', label: 'Comunidade quilombola' },
+    { value: '7', label: 'Não está em área de localização diferenciada' },
+    { value: '8', label: 'Área onde se localizam povos e comunidades tradicionais' },
   ]
 
   const formatoOrganizacionalOptions = [
@@ -2019,6 +2023,14 @@ export function EscolaForm({
                   Gestão Escolar
                   {renderBadgeErros('gestao')}
                 </TabsTrigger>
+                {schoolId && (
+                  <TabsTrigger
+                    value="gestores"
+                    className="h-10 min-h-[40px] rounded-md px-3 text-[14px] font-semibold text-foreground/80 transition-colors hover:bg-accent/10 hover:text-accent-foreground data-active:bg-primary data-active:text-primary-foreground data-active:shadow-sm data-active:hover:bg-primary data-active:hover:text-primary-foreground sm:px-4"
+                  >
+                    Gestores
+                  </TabsTrigger>
+                )}
               </TabsList>
               <fieldset disabled={readOnly} className="contents">
 
@@ -2652,7 +2664,7 @@ export function EscolaForm({
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <InputField
                       control={control}
-                      name="cnpj"
+                      name="cnpj_escola"
                       label="CNPJ da Escola"
                       placeholder="14 dígitos"
                       maxLength={14}
@@ -3477,6 +3489,11 @@ export function EscolaForm({
                 </CardContent>
               </Card>
             </TabsContent>
+            {schoolId && (
+              <TabsContent value="gestores">
+                <GestoresForm schoolId={schoolId} pessoaId={pessoaId} readOnly={readOnly} />
+              </TabsContent>
+            )}
             </fieldset>
           </Tabs>
 

@@ -3,6 +3,8 @@
 import { getSupabaseAdmin } from '@/lib/auth'
 import { getFuncaoCenso50 } from '@/data/censo/funcoes-registro-50'
 import { codigoTipoTurma, codigoFormaOrganizacao } from '@/data/censo/tipo-turma-codigos'
+import { derivarAreasDeDisciplinas } from '@/data/censo/areas-turma'
+import { mapearAreasPorMatriz } from '@/lib/censo-areas-prof'
 import { validarCenso as validarCensoInternal } from './censo-regras'
 import { ResultadoValidacao, ResultadoExportacao } from './censo-types'
 
@@ -98,28 +100,17 @@ export async function exportarCenso(schoolId: string, anoLetivoId: string): Prom
     .select('turma_id, academico_matriz_disciplinas(disciplina_id, academico_disciplinas(nome))')
     .in('turma_id', turmaIdsArr)
 
-  // Build map: turma_id → Set of INEP area codes (derive from disciplina names)
+  // Build map: turma_id → Set of INEP area keys (derive from disciplina names;
+  // mesma derivacao da validacao — ver src/data/censo/areas-turma.ts)
   const areasPorTurma = new Map<string, Set<string>>()
-  const AREA_NAME_MAP: Record<string, string> = {
-    'quimica': 'area_quimica', 'fisica': 'area_fisica', 'matematica': 'area_matematica_turma',
-    'biologia': 'area_biologia', 'ciencias': 'area_ciencias', 'portugues': 'area_portugues',
-    'português': 'area_portugues', 'ingles': 'area_ingles', 'inglês': 'area_ingles',
-    'espanhol': 'area_espanhol', 'arte': 'area_arte', 'artes': 'area_arte',
-    'educação física': 'area_ed_fisica', 'educacao fisica': 'area_ed_fisica', 'ed. física': 'area_ed_fisica',
-    'historia': 'area_historia', 'história': 'area_historia', 'geografia': 'area_geografia',
-    'filosofia': 'area_filosofia', 'informatica': 'area_informatica', 'informática': 'area_informatica',
-    'computação': 'area_informatica', 'libras': 'area_libras', 'ensino religioso': 'area_ensino_religioso',
-    'sociologia': 'area_sociologia', 'frances': 'area_frances', 'francês': 'area_frances',
-    'estagio': 'area_estagio', 'estágio': 'area_estagio', 'projeto de vida': 'area_projeto_vida',
-  }
   for (const td of (turmasDiscs || [])) {
     const turmaId = td.turma_id
-    const disc = (td as any).academico_matriz_disciplinas?.academico_disciplinas?.nome?.toLowerCase()
+    const disc = (td as any).academico_matriz_disciplinas?.academico_disciplinas?.nome
     if (!disc || !turmaId) continue
+    const derivadas = derivarAreasDeDisciplinas([String(disc)])
+    if (derivadas.size === 0) continue
     if (!areasPorTurma.has(turmaId)) areasPorTurma.set(turmaId, new Set())
-    for (const [keyword, areaKey] of Object.entries(AREA_NAME_MAP)) {
-      if (disc.includes(keyword)) areasPorTurma.get(turmaId)!.add(areaKey)
-    }
+    for (const areaKey of derivadas) areasPorTurma.get(turmaId)!.add(areaKey)
   }
 
   const profsDaEscola = (profissionais || []).filter((p: any) => turmaIds.has(p.turma_id))
@@ -146,59 +137,66 @@ export async function exportarCenso(schoolId: string, anoLetivoId: string): Prom
     for (const fp of (fps || [])) funcaoProfMapR50.set(fp.id, fp)
   }
 
+  // disciplinas_ids guarda ids da MATRIZ — resolve area via helper (nunca
+  // bate buscando direto em academico_disciplinas)
   const allDiscIdsR50 = [...new Set((profissionais || []).flatMap((p: any) => (p.disciplinas_ids || []) as string[]))]
-  const discAreaMapR50 = new Map<string, number>()
-  if (allDiscIdsR50.length > 0) {
-    const { data: discs } = await sb
-      .from('academico_disciplinas')
-      .select('id, area_codigo')
-      .in('id', allDiscIdsR50)
-    for (const d of (discs || [])) {
-      if (d.area_codigo != null) discAreaMapR50.set(d.id, d.area_codigo)
-    }
-  }
+  const discAreaMapR50 = await mapearAreasPorMatriz(sb, allDiscIdsR50)
 
   const turmasMapR50 = new Map((turmas || []).map((t: any) => [t.id, t]))
 
   const linhas: string[] = []
 
+  // Ordem v4 (Regras Gerais 11-17): 00, 10, 20, 30, 40, 50, 60, 99.
+  // Desativada (2/3): somente 00, 30 e 40 (regra 18).
   linhas.push(buildRegistro00(school, anoLetivo))
-  linhas.push(buildRegistro10(school))
+  if (!isDesativada) {
+    linhas.push(buildRegistro10(school))
+  }
+
+  // Mapa id → pessoa (chaves dos registros 30/40/50/60)
+  const pessoasMap = new Map((pessoas || []).map((p: any) => [String(p.id), p]))
 
     if (!isDesativada) {
       for (const turma of turmas || []) {
-        linhas.push(buildRegistro20(turma, horariosPorTurma, areasPorTurma))
+        linhas.push(buildRegistro20(turma, school, horariosPorTurma, areasPorTurma))
       }
-
-    for (const p of profsDaEscola) {
-      linhas.push(buildRegistro50(p, school, vinculoProfMapR50, funcaoProfMapR50, discAreaMapR50, turmasMapR50))
     }
 
-    for (const m of matsDaEscola) {
-      linhas.push(buildRegistro60(m, school))
-    }
+  // Pessoas com vínculo (mesma regra da validação R30): gestores, profissionais
+  // com turma ou alunos com matrícula. Responsáveis e afins não entram no 30.
+  // Gestores — tabela managers (cargo/critério/situação), mesma fonte da validação
+  const { data: managersRows } = await sb
+    .from('managers')
+    .select('id, person_id, cargo, criterio_acesso, situacao_funcional')
+    .not('person_id', 'is', null)
+
+  const idsComVinculo = new Set<string>()
+  for (const mng of managersRows || []) {
+    if ((mng as any).person_id) idsComVinculo.add(String((mng as any).person_id))
+  }
+  for (const p of profsDaEscola) {
+    if ((p as any).person_id) idsComVinculo.add(String((p as any).person_id))
+  }
+  for (const m of matsDaEscola) {
+    if ((m as any).aluno_id) idsComVinculo.add(String((m as any).aluno_id))
   }
 
+  let totalRegistro30 = 0
   for (const pessoa of pessoas || []) {
+    if (!idsComVinculo.has(String((pessoa as any).id))) continue
     linhas.push(buildRegistro30(pessoa, school))
+    totalRegistro30++
   }
-
-  // Gestores — query via vinculos_profissionais with funcao type "gestor"
-  const { data: gestores } = await sb
-    .from('vinculos_profissionais')
-    .select('*, people(id, nome_completo, inep_id, cpf, email), funcoes_profissionais(nome)')
-    .eq('school_id', schoolId)
-    .eq('situacao', '1')
 
   const gestorLines: string[] = []
   const seenGestorIds = new Set<string>()
-  for (const g of gestores || []) {
-    const personId = g.person_id
+  for (const mng of managersRows || []) {
+    const personId = mng.person_id ? String(mng.person_id) : ''
     if (!personId || seenGestorIds.has(personId)) continue
-    const nomeFuncao = (g.funcoes_profissionais as any)?.nome || ''
-    if (!/gestor|diretor|dirigente|coordenador/i.test(nomeFuncao)) continue
+    const pessoa = pessoasMap.get(personId)
+    if (!pessoa) continue
     seenGestorIds.add(personId)
-    gestorLines.push(buildRegistro40(g, school))
+    gestorLines.push(buildRegistro40(mng, pessoa, school))
   }
   if (gestorLines.length === 0 && !isDesativada) {
     // Fallback: check if any person has a perfil with gestor access
@@ -217,12 +215,25 @@ export async function exportarCenso(schoolId: string, anoLetivoId: string): Prom
         .limit(3)
 
       for (const pg of peopleGestor || []) {
-        gestorLines.push(buildRegistro40Fallback(pg, school))
+        gestorLines.push(buildRegistro40(
+          { cargo: '1', criterio_acesso: '', situacao_funcional: '' },
+          pg, school,
+        ))
       }
     }
   }
   for (const gl of gestorLines) {
     linhas.push(gl)
+  }
+
+  if (!isDesativada) {
+    for (const p of profsDaEscola) {
+      linhas.push(buildRegistro50(p, school, vinculoProfMapR50, funcaoProfMapR50, discAreaMapR50, turmasMapR50, pessoasMap))
+    }
+
+    for (const m of matsDaEscola) {
+      linhas.push(buildRegistro60(m, school, pessoasMap, turmasMapR50))
+    }
   }
 
   linhas.push('99|')
@@ -244,9 +255,9 @@ export async function exportarCenso(schoolId: string, anoLetivoId: string): Prom
       registros: {
         escola: 1,
         registro00: 1,
-        registro10: 1,
+        registro10: isDesativada ? 0 : 1,
         registro20: totalTurmas,
-        registro30: (pessoas || []).length,
+        registro30: totalRegistro30,
         registro40: gestorLines.length,
         registro50: totalProfs,
         registro60: totalMatriculas,
@@ -470,7 +481,7 @@ function buildRegistro10(school: any): string {
     b('internet_banda_larga'),
     s('rede_local'),
 
-    // Profissionais (116-135)
+    // Profissionais (119-138)
     s('prof_agronomos'),
     s('prof_assistente_social'),
     s('prof_aux_admin'),
@@ -492,7 +503,10 @@ function buildRegistro10(school: any): string {
     s('prof_revisor_braille'),
     s('prof_nenhum'),
 
-    // Materiais pedagógicos (136-155)
+    // Alimentação escolar (139) — v4 posiciona entre profissionais e materiais
+    b('alimentacao_escolar'),
+
+    // Materiais pedagógicos (140-159)
     b('mat_acervo_multimidia'),
     b('mat_brinquedos_infantil'),
     b('mat_cientificos'),
@@ -514,13 +528,13 @@ function buildRegistro10(school: any): string {
     b('mat_educacao_especial'),
     b('mat_nenhum'),
 
-    // Línguas (156-160)
+    // Línguas (160-163)
     s('lingua_ensino'),
     s('codigo_lingua_indigena_1'),
     s('codigo_lingua_indigena_2'),
     s('codigo_lingua_indigena_3'),
 
-    // Gestão escolar (161-167 + 168-185)
+    // Gestão escolar (164-173)
     b('exame_selecao'),
     b('cota_ppi'),
     b('cota_renda'),
@@ -532,7 +546,7 @@ function buildRegistro10(school: any): string {
     b('compartilha_espacos'),
     b('usa_entorno'),
 
-    // Órgãos colegiados (171-176)
+    // Órgãos colegiados (174-179)
     b('org_associacao_pais'),
     b('org_associacao_mestres'),
     b('org_conselho_escolar'),
@@ -540,7 +554,7 @@ function buildRegistro10(school: any): string {
     b('org_outros'),
     b('org_nenhum'),
 
-    // PPP e ambientais (177-185)
+    // PPP e ambientais (180-187)
     s('ppp_atualizado'),
     b('educacao_ambiental'),
     b('amb_conteudo'),
@@ -549,18 +563,20 @@ function buildRegistro10(school: any): string {
     b('amb_eventos'),
     b('amb_transversal'),
     b('amb_nenhum'),
-    b('alimentacao_escolar'),
   ]
 
   return fields.join('|')
 }
 
 // ---------------------------------------------------------------------------
-// REGISTRO 20 — TURMA
+// REGISTRO 20 — TURMA (v4: 66 campos)
 // ---------------------------------------------------------------------------
 
-function buildRegistro20(turma: any, horariosPorTurma?: Map<string, Record<string, string>>, areasPorTurma?: Map<string, Set<string>>): string {
+function buildRegistro20(turma: any, school: any, horariosPorTurma?: Map<string, Record<string, string>>, areasPorTurma?: Map<string, Set<string>>): string {
+  // EI não exporta áreas (v4: nulas) — as disciplinas seguem no quadro
+  const etapaEI20 = ['1', '2', '3'].includes(String(turma.etapa_codigo || ''))
   const b = (f: string) => {
+    if (etapaEI20) return ''
     if (areasPorTurma) {
       const areas = areasPorTurma.get(turma.id)
       if (areas) return areas.has(f) ? '1' : '0'
@@ -568,6 +584,8 @@ function buildRegistro20(turma: any, horariosPorTurma?: Map<string, Record<strin
     return boolToStr(turma[f])
   }
   const s = (f: string) => (turma[f] ?? '').toString()
+  // Campos 's' booleanos: sempre 0/1 (nunca nulo)
+  const obg01 = (v: any) => (v === true || v === 'true' || v === '1' || v === 1 ? '1' : '0')
 
   // Derive horarios from Quadro de Aulas if available, fallback to column
   const h = (dia: number): string => {
@@ -600,45 +618,56 @@ function buildRegistro20(turma: any, horariosPorTurma?: Map<string, Record<strin
     : s('tipo_mediacao')
   // Etapa só é exportada p/ Curricular / Curricular+Complementar (demais = nulo)
   const comEtapa = tiposLista.some(t => TIPOS_COM_ETAPA_CENSO.includes(t))
+  // v4: FGB/IFA/IFTP e itinerário nulos fora de agregada 304/305
+  const agregEM20 = ['304', '305'].includes(String(turma.etapa_agregada || ''))
+  const gFgb = agregEM20 && hasFgb
+  const gIfa = agregEM20 && hasIfa
+  const gIftp = agregEM20 && hasIftp
   const atv = (i: number) => {
     const v = turma[`atividade_complementar_${i}`]
     return v && String(v).trim() !== '' ? String(v).trim() : ''
   }
+  const codCursoTec = s('codigo_curso_tecnico')
 
+  // Ordem v4 (66 campos: 1 + 2..66)
   const fields = [
     '20',
-    turma.codigo_inep || s('id'),
+    school.codigo_inep || '', // 2 — escola
+    codTurmaEntidade(turma), // 3 — código na entidade
+    turma.codigo_inep || '', // 4 — código no INEP
+    s('nome'), // 5
+    mediacaoCodigo, // 6
 
-    // Identificação
-    s('nome'),
-    mediacaoCodigo,
-    tipoTurmaCodigo,
-    atv(1), atv(2), atv(3), atv(4), atv(5), atv(6),
-    comEtapa ? s('etapa_agregada') : '',
-    comEtapa ? s('etapa_codigo') : '',
-
-    // Horários (derivados do Quadro de Aulas)
+    // Horários (7-13, derivados do Quadro de Aulas)
     h(0), h(1), h(2), h(3), h(4), h(5), h(6),
 
-    // Organização
-    comEtapa ? codigoFormaOrganizacao(turma.forma_organizacao) : '',
-    s('turma_especial'),
-    b('formacao_alternancia'),
-    s('eixo_qualificacao'),
-    s('codigo_curso_tecnico'),
-    s('carga_horaria_curso'),
+    tipoTurmaCodigo, // 14
+    atv(1), atv(2), atv(3), atv(4), atv(5), atv(6), // 15-20
+    '', // 21 — local de funcionamento diferenciado (sem coluna)
+    s('turma_especial'), // 22
+    comEtapa ? s('etapa_agregada') : '', // 23
+    comEtapa ? s('etapa_codigo') : '', // 24
+    s('eixo_qualificacao'), // 25
+    hasIftp ? '' : codCursoTec, // 26 — código do curso
+    s('carga_horaria_curso'), // 27
+    comEtapa ? codigoFormaOrganizacao(turma.forma_organizacao) : '', // 28
+    obg01(turma.formacao_alternancia), // 29
 
-    // Itinerário formativo (derivado de organizacao_curricular + areas_itinerario)
-    hasFgb ? '1' : '0',
-    hasIfa ? '1' : '0',
-    hasIftp ? '1' : '0',
-    s('tipo_curso_iftp'),
-    hasIlinguagens ? '1' : '0',
-    hasImatematica ? '1' : '0',
-    hasInatureza ? '1' : '0',
-    hasIhumanas ? '1' : '0',
+    // Organização curricular (30-32)
+    gFgb ? '1' : (agregEM20 ? '0' : ''),
+    gIfa ? '1' : (agregEM20 ? '0' : ''),
+    gIftp ? '1' : (agregEM20 ? '0' : ''),
 
-    // Áreas do conhecimento (32-58)
+    // Itinerário formativo (33-36)
+    (gIfa && hasIlinguagens) ? '1' : (gIfa ? '0' : ''),
+    (gIfa && hasImatematica) ? '1' : (gIfa ? '0' : ''),
+    (gIfa && hasInatureza) ? '1' : (gIfa ? '0' : ''),
+    (gIfa && hasIhumanas) ? '1' : (gIfa ? '0' : ''),
+
+    s('tipo_curso_iftp') && gIftp ? s('tipo_curso_iftp') : '', // 37
+    hasIftp ? codCursoTec : '', // 38 — código do curso técnico
+
+    // Áreas do conhecimento (39-65)
     b('area_quimica'),
     b('area_fisica'),
     b('area_matematica_turma'),
@@ -667,52 +696,53 @@ function buildRegistro20(turma: any, horariosPorTurma?: Map<string, Record<strin
     b('area_projeto_vida'),
     b('area_outras'),
 
-    // Extra
-    s('turma_bilingue'),
+    obg01(turma.turma_bilingue), // 66
   ]
 
   return fields.join('|')
 }
 
 // ---------------------------------------------------------------------------
-// REGISTRO 30 — PESSOA (ALUNO / PROFISSIONAL / GESTOR)
+// REGISTRO 30 — PESSOA (v4: 110 campos)
 // ---------------------------------------------------------------------------
 
 function buildRegistro30(pessoa: any, school: any): string {
   const b = (f: string) => boolToStr(pessoa[f])
   const s = (f: string) => (pessoa[f] ?? '').toString()
+  // Campos numericos opcionais: '0'/0 e legado de vazio → exporta nulo (v4 exige nulo)
+  const n = (f: string) => {
+    const v = (pessoa[f] ?? '').toString().trim()
+    return v === '' || v === '0' ? '' : v
+  }
+  // localizacao_diferenciada pode vir boolean do banco legado → nulo
+  const locDifRaw = (pessoa as any).localizacao_diferenciada
+  const locDif = typeof locDifRaw === 'boolean' ? '' : (locDifRaw ?? '').toString()
 
   const fields = [
     '30',
-    school.codigo_inep || '',
+    school.codigo_inep || '', // 2
+    codPessoaSistema(pessoa), // 3 — código no sistema próprio (igual no 40/50/60)
 
-    // Identificadores (3-6)
+    // Identificadores (4-7)
     s('inep_id'),
     s('cpf'),
     s('nome_completo'),
     formatDate(pessoa.data_nascimento),
 
-    // Filiação (7-9)
+    // Filiação (8-10)
     s('filiacao_declarada'),
     s('filiacao_1'),
     s('filiacao_2'),
 
-    // Demográfico (10-15)
+    // Demográfico (11-16) — ordem v4: sexo, cor, povo, nacionalidade, país, município
     s('sexo'),
     s('cor_raca'),
+    s('povo_indigena'),
     s('nacionalidade'),
     s('pais_nacionalidade'),
     s('municipio_nascimento'),
-    s('povo_indigena'),
 
-    // Residência (16-21)
-    s('pais_residencia'),
-    s('cep'),
-    s('municipio_residencia'),
-    s('zona_residencia'),
-    (pessoa.localizacao_diferenciada || '').toString(),
-
-    // Deficiências (22-32)
+    // Deficiências (17-28)
     b('deficiencia'),
     b('cegueira'),
     b('baixa_visao'),
@@ -753,23 +783,31 @@ function buildRegistro30(pessoa: any, school: any): string {
     b('tempo_adicional'),
     b('nenhum_recurso'),
 
-    // Certidão (55)
+    // Certidão (50)
     s('certidao_nascimento'),
+
+  // Residência (51-55) — v4 posiciona após a certidão
+  s('pais_residencia'),
+  s('cep'),
+  s('municipio_residencia'),
+  s('zona_residencia'),
+  locDif,
 
     // Escolaridade (56-57)
     s('escolaridade'),
     s('tipo_ensino_medio'),
 
-    // Cursos superiores (58-66)
-    s('curso_superior_1'),
-    s('curso_superior_2'),
-    s('curso_superior_3'),
-    s('ano_conclusao_1'),
-    s('ano_conclusao_2'),
-    s('ano_conclusao_3'),
-    s('ies_1'),
-    s('ies_2'),
-    s('ies_3'),
+    // Cursos superiores (58-66) — '0' e legado de campo vazio: exporta nulo.
+    // Ordem v4: trio por curso (curso, ano, IES)
+    n('curso_superior_1'),
+    n('ano_conclusao_1'),
+    n('ies_1'),
+    n('curso_superior_2'),
+    n('ano_conclusao_2'),
+    n('ies_2'),
+    n('curso_superior_3'),
+    n('ano_conclusao_3'),
+    n('ies_3'),
 
     // Áreas pedagógicas (67-69)
     s('area_pedagogica_1'),
@@ -777,15 +815,15 @@ function buildRegistro30(pessoa: any, school: any): string {
     s('area_pedagogica_3'),
 
     // Pós-graduação (70-87)
-    s('pos_tipo_1'), s('pos_area_1'), s('pos_ano_1'),
-    s('pos_tipo_2'), s('pos_area_2'), s('pos_ano_2'),
-    s('pos_tipo_3'), s('pos_area_3'), s('pos_ano_3'),
-    s('pos_tipo_4'), s('pos_area_4'), s('pos_ano_4'),
-    s('pos_tipo_5'), s('pos_area_5'), s('pos_ano_5'),
-    s('pos_tipo_6'), s('pos_area_6'), s('pos_ano_6'),
-    s('sem_pos'),
+    s('pos_tipo_1'), s('pos_area_1'), n('pos_ano_1'),
+    s('pos_tipo_2'), s('pos_area_2'), n('pos_ano_2'),
+    s('pos_tipo_3'), s('pos_area_3'), n('pos_ano_3'),
+    s('pos_tipo_4'), s('pos_area_4'), n('pos_ano_4'),
+    s('pos_tipo_5'), s('pos_area_5'), n('pos_ano_5'),
+    s('pos_tipo_6'), s('pos_area_6'), n('pos_ano_6'),
+    b('sem_pos'),
 
-    // Formação continuada (88-108)
+    // Formação continuada (89-109)
     b('form_creche'),
     b('form_pre_escola'),
     b('form_alfabetizacao'),
@@ -808,54 +846,34 @@ function buildRegistro30(pessoa: any, school: any): string {
     b('form_outros'),
     b('sem_formacao'),
 
-    // Email (109)
-    s('email'),
+    // Email (110) — e-mail não admite espaço
+    s('email').replace(/\s+/g, ''),
   ]
 
   return fields.join('|')
 }
 
 // ---------------------------------------------------------------------------
-// REGISTRO 40 — GESTOR ESCOLAR (7 data fields)
+// REGISTRO 40 — GESTOR ESCOLAR (v4: 7 campos, sem e-mail)
+// Fonte: tabela managers (cargo/critério/situação), como a validação.
 // ---------------------------------------------------------------------------
 
-function buildRegistro40(vinculo: any, school: any): string {
-  const s = (obj: any, f: string) => ((obj || {})[f] ?? '').toString()
-  const pessoa = vinculo.people || {}
-
+function buildRegistro40(manager: any, pessoa: any, school: any): string {
   const fields = [
     '40',
-    school.codigo_inep || '',
-    s(pessoa, 'id'),
-    s(pessoa, 'inep_id'),
-    s(vinculo, 'funcao_id') || '1',
-    vinculo.regime_contratacao || '',
-    vinculo.situacao || '1',
-    s(pessoa, 'email'),
-  ]
-
-  return fields.join('|')
-}
-
-function buildRegistro40Fallback(pessoa: any, school: any): string {
-  const s = (f: string) => (pessoa[f] ?? '').toString()
-
-  const fields = [
-    '40',
-    school.codigo_inep || '',
-    s('id'),
-    s('inep_id'),
-    '1',
-    '',
-    '',
-    s('email'),
+    school.codigo_inep || '', // 2
+    codPessoaSistema(pessoa), // 3 — igual ao campo 3 do registro 30
+    ((pessoa.inep_id ?? '') as string).toString(), // 4
+    (manager.cargo ?? '').toString(), // 5 — 1 Diretor, 2 Outro
+    (manager.criterio_acesso ?? '').toString(), // 6
+    (manager.situacao_funcional ?? '').toString(), // 7
   ]
 
   return fields.join('|')
 }
 
 // ---------------------------------------------------------------------------
-// REGISTRO 50 — PROFISSIONAL POR TURMA (38 data fields)
+// REGISTRO 50 — PROFISSIONAL POR TURMA (v4: 38 campos)
 // ---------------------------------------------------------------------------
 
 function buildRegistro50(
@@ -865,112 +883,149 @@ function buildRegistro50(
   funcaoProfMap: Map<string, any>,
   discAreaMap: Map<string, number>,
   turmasMap: Map<string, any>,
+  pessoasMap: Map<string, any>,
 ): string {
-  const s = (f: string) => (prof[f] ?? '').toString()
+  const pessoa = prof.person_id ? pessoasMap.get(String(prof.person_id)) : null
+  const turma = prof.turma_id ? turmasMap.get(prof.turma_id) : null
 
   const vp = prof.vinculo_profissional_id ? vinculoProfMap.get(prof.vinculo_profissional_id) : null
   const fp = vp?.funcao_id ? funcaoProfMap.get(vp.funcao_id) : null
   const funcaoCenso = getFuncaoCenso50(fp?.nome || '')
-  const situacaoFuncional = vp?.regime_contratacao || ''
+  // v4 50.c8: 1-4 quando função 1/5/6 + pública, senão nulo
+  const depPub = ['1', '2', '3'].includes(String((school as any)?.dependencia_administrativa || ''))
+  const situacaoFuncional = (['1', '5', '6'].includes(funcaoCenso) && depPub)
+    ? (vp?.regime_contratacao || '')
+    : ''
 
+  const eDocente = funcaoCenso === '1' || funcaoCenso === '5'
   const disciplinasIds = (prof.disciplinas_ids || []) as string[]
-  const areaCodes = [...new Set(
+  // v4 50.c9-33: só função 1/5 (ordenadas)
+  const areaCodes = eDocente ? [...new Set(
     disciplinasIds
       .map((did: string) => discAreaMap.get(did))
       .filter((c): c is number => c != null)
       .map((c: number) => String(c).padStart(2, '0')),
-  )]
+  )].sort() : []
   const areaSlots: string[] = []
   for (let i = 0; i < 25; i++) {
     areaSlots.push(i < areaCodes.length ? areaCodes[i] : '')
   }
 
-  const turma = prof.turma_id ? turmasMap.get(prof.turma_id) : null
   const itinAreas = (turma?.areas_itinerario || []) as string[]
   const lecLinguagens = itinAreas.some((a: string) => /linguagens/i.test(a))
   const lecMatematica = itinAreas.some((a: string) => /matemática/i.test(a))
   const lecNatureza = itinAreas.some((a: string) => /natureza/i.test(a))
   const lecHumanas = itinAreas.some((a: string) => /humanas/i.test(a))
   const lecIftp = itinAreas.some((a: string) => /(técnica|tecnica|iftp)/i.test(a))
+  const tFgb50 = !!turma?.fgb
+  const tIfa50 = !!turma?.ifa
+  const tIftp50 = !!turma?.iftp
+  // v4 50.c34-37: só função 1/5 + FGB + IFA; c38: só 1/5/9 + IFTP
+  const lec134 = eDocente && tFgb50 && tIfa50
+  const lec8 = (eDocente || funcaoCenso === '9') && tIftp50
 
+  // Ordem v4 (38 campos)
   const fields = [
     '50',
-    school.codigo_inep || '',
-    s('person_id'),
-    s('turma_id'),
-    funcaoCenso,
-    situacaoFuncional,
-    areaSlots[0], areaSlots[1], areaSlots[2], areaSlots[3], areaSlots[4],
+    school.codigo_inep || '', // 2
+    codPessoaSistema(pessoa || { id: prof.person_id }), // 3 — igual ao campo 3 do 30
+    ((pessoa?.inep_id ?? '') as string).toString(), // 4
+    turma ? codTurmaEntidade(turma) : '', // 5
+    turma?.codigo_inep || '', // 6 — código da turma no INEP
+    funcaoCenso, // 7
+    situacaoFuncional, // 8
+    areaSlots[0], areaSlots[1], areaSlots[2], areaSlots[3], areaSlots[4], // 9-33
     areaSlots[5], areaSlots[6], areaSlots[7], areaSlots[8], areaSlots[9],
     areaSlots[10], areaSlots[11], areaSlots[12], areaSlots[13], areaSlots[14],
     areaSlots[15], areaSlots[16], areaSlots[17], areaSlots[18], areaSlots[19],
     areaSlots[20], areaSlots[21], areaSlots[22], areaSlots[23], areaSlots[24],
-    boolToStr(lecLinguagens),
-    boolToStr(lecMatematica),
-    boolToStr(lecNatureza),
-    boolToStr(lecHumanas),
-    boolToStr(lecIftp),
+    lec134 ? (lecLinguagens ? '1' : '0') : '', // 34
+    lec134 ? (lecMatematica ? '1' : '0') : '', // 35
+    lec134 ? (lecNatureza ? '1' : '0') : '', // 36
+    lec134 ? (lecHumanas ? '1' : '0') : '', // 37
+    lec8 ? (lecIftp ? '1' : '0') : '', // 38
   ]
 
   return fields.join('|')
 }
 
 // ---------------------------------------------------------------------------
-// REGISTRO 60 — MATRÍCULA DO ALUNO (33 data fields)
+// REGISTRO 60 — MATRÍCULA DO ALUNO (v4: 33 campos)
 // ---------------------------------------------------------------------------
 
-function buildRegistro60(matricula: any, school: any): string {
+function buildRegistro60(
+  matricula: any,
+  school: any,
+  pessoasMap: Map<string, any>,
+  turmasMap: Map<string, any>,
+): string {
   const b = (f: string) => boolToStr(matricula[f])
   const s = (f: string) => (matricula[f] ?? '').toString()
+  const pessoa = matricula.aluno_id ? pessoasMap.get(String(matricula.aluno_id)) : null
+  const turma = matricula.turma_id ? turmasMap.get(matricula.turma_id) : null
 
+  // Gates v4 (nulos fora de contexto)
+  const tiposLista60 = Array.isArray(turma?.tipos_turma) ? turma.tipos_turma as string[] : []
+  const tipoCod60 = codigoTipoTurma(tiposLista60)
+  const med60raw = String(turma?.tipo_mediacao || '')
+  const med60 = med60raw === 'Presencial' ? '1' : med60raw === 'Semipresencial' ? '2' : med60raw === 'Educação a Distância - EAD' ? '3' : med60raw
+  const ehAEE60 = tipoCod60 === '5'
+  const curricPres60 = (tipoCod60 === '6' || tipoCod60 === '9') && med60 === '1'
+  const pais76 = String(pessoa?.pais_residencia || '') === '76'
+  const gateTransp60 = pais76 && (med60 === '1' || med60 === '2') && (tipoCod60 === '6' || tipoCod60 === '9')
+  const temTransp60 = matricula.transporte_escolar === true || matricula.transporte_escolar === 'true' || matricula.transporte_escolar === '1'
+  const etapa60 = turma?.etapa_codigo ? String(turma.etapa_codigo) : ''
+  const gateCarga60 = !!turma?.iftp || ['39', '40', '67', '68', '73', '75'].includes(etapa60)
+  const aee = (f: string) => (ehAEE60 ? b(f) : '')
+  const veic = (f: string) => (temTransp60 ? b(f) : '')
+
+  // Ordem v4 (33 campos; sem "situação" — não existe no layout 2026)
   const fields = [
     '60',
-    school.codigo_inep || '',
+    school.codigo_inep || '', // 2
 
-    // Identificação (3-6)
-    s('aluno_id'),
-    s('inep_id'),
-    s('turma_id'),
-    s('codigo_matricula_censo'),
-
-    // Situação (7)
-    s('situacao'),
+    // Identificação (3-7)
+    codPessoaSistema(pessoa || { id: matricula.aluno_id }), // 3 — igual ao campo 3 do 30
+    ((pessoa?.inep_id ?? matricula.inep_id ?? '') as string).toString(), // 4
+    turma ? codTurmaEntidade(turma) : '', // 5
+    turma?.codigo_inep || '', // 6 — código da turma no INEP
+    s('codigo_matricula_censo'), // 7
 
     // Turma multi + carga horária IFTP (8-9)
     s('turma_multi'),
-    s('carga_horaria_iftp'),
+    gateCarga60 ? s('carga_horaria_iftp') : '',
 
     // AEE (10-20)
-    b('aee_funcao_cognitiva'),
-    b('aee_vida_autonoma'),
-    b('aee_enriquecimento'),
-    b('aee_informatica'),
-    b('aee_libras'),
-    b('aee_portugues_sl'),
-    b('aee_soroban'),
-    b('aee_braille'),
-    b('aee_orientacao'),
-    b('aee_caa'),
-    b('aee_recursos'),
+    aee('aee_funcao_cognitiva'),
+    aee('aee_vida_autonoma'),
+    aee('aee_enriquecimento'),
+    aee('aee_informatica'),
+    aee('aee_libras'),
+    aee('aee_portugues_sl'),
+    aee('aee_soroban'),
+    aee('aee_braille'),
+    aee('aee_orientacao'),
+    aee('aee_caa'),
+    aee('aee_recursos'),
 
     // Escolarização externa (21)
-    s('escolarizacao_externa'),
+    curricPres60 ? s('escolarizacao_externa') : '',
 
     // Transporte (22-23)
-    b('transporte_escolar'),
-    s('transporte_responsavel'),
+    gateTransp60 ? b('transporte_escolar') : '',
+    gateTransp60 && temTransp60 ? s('transporte_responsavel') : '',
 
     // Veículos (24-33)
-    b('veiculo_bicicleta'),
-    b('veiculo_microonibus'),
-    b('veiculo_onibus'),
-    b('veiculo_tracao'),
-    b('veiculo_vans'),
-    b('veiculo_outro'),
-    b('veiculo_aqua_5'),
-    b('veiculo_aqua_15'),
-    b('veiculo_aqua_35'),
-    b('veiculo_aqua_mais'),
+    veic('veiculo_bicicleta'),
+    veic('veiculo_microonibus'),
+    veic('veiculo_onibus'),
+    veic('veiculo_tracao'),
+    veic('veiculo_vans'),
+    veic('veiculo_outro'),
+    veic('veiculo_aqua_5'),
+    veic('veiculo_aqua_15'),
+    veic('veiculo_aqua_35'),
+    veic('veiculo_aqua_mais'),
   ]
 
   return fields.join('|')
@@ -984,6 +1039,29 @@ function boolToStr(val: any): string {
   if (val === true || val === 'true' || val === '1') return '1'
   if (val === false || val === 'false' || val === '0') return '0'
   return ''
+}
+
+/**
+ * "Código da pessoa física no sistema próprio" (v4 30/40/50/60, campo 3,
+ * tm 20 alfa). Regra única para o arquivo inteiro não quebrar a
+ * correspondência entre registros: inep_id → cpf → 20 hex do UUID.
+ */
+function codPessoaSistema(p: any): string {
+  const inep = ((p?.inep_id ?? '') as string).toString().trim()
+  if (inep) return inep.slice(0, 20)
+  const cpf = ((p?.cpf ?? '') as string).toString().replace(/\D/g, '')
+  if (cpf) return cpf.slice(0, 20)
+  return ((p?.id ?? '') as string).toString().replace(/-/g, '').slice(0, 20)
+}
+
+/**
+ * "Código da Turma na Entidade/Escola" (v4 20/50/60, tm 20 alfa).
+ * Regra única: nome (até 20) → 20 hex do UUID.
+ */
+function codTurmaEntidade(t: any): string {
+  const nome = ((t?.nome ?? '') as string).toString().trim()
+  if (nome) return nome.slice(0, 20)
+  return ((t?.id ?? '') as string).toString().replace(/-/g, '').slice(0, 20)
 }
 
 function formatDate(d: any): string {
