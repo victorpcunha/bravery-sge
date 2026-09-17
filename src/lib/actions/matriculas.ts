@@ -136,6 +136,103 @@ export async function getMatricula(id: string, schoolId?: string | null) {
   return data as any
 }
 
+// ------- Regra Geral de Matrícula (duplicidade + conflito de horário) -------
+// Vale para TODA criação de matrícula (Nova Matrícula, Rematrículas e qualquer
+// fluxo futuro), pois é aplicada no server antes de qualquer escrita:
+// 1. Um aluno não pode ter duas matrículas simultâneas em turmas Curriculares.
+// 2. Curricular + AEE/Atividade Complementar podem coexistir (tipos diferentes).
+// 3. Mesmo entre tipos diferentes, Turno + Dias de Funcionamento não podem se
+//    sobrepor (conflito de horário).
+
+type CategoriaTurma = 'curricular' | 'aee' | 'complementar' | 'outra'
+
+function classificarTurma(tiposTurma: unknown): CategoriaTurma {
+  const lista = Array.isArray(tiposTurma) ? tiposTurma.map(String) : tiposTurma ? [String(tiposTurma)] : []
+  const rotulo = (lista[0] || '').toLowerCase()
+  if (rotulo.includes('curricular')) return 'curricular'
+  if (rotulo.includes('aee') || rotulo.includes('atendimento educacional')) return 'aee'
+  if (rotulo.includes('complementar')) return 'complementar'
+  return 'outra'
+}
+
+function nomesTurnos(turnos: unknown): string[] {
+  if (!Array.isArray(turnos)) return []
+  return turnos
+    .map((t) => {
+      if (typeof t === 'string') return t
+      if (t && typeof t === 'object') return String((t as any).turno || '')
+      return ''
+    })
+    .map((s) => s.trim().toLowerCase())
+    .filter(Boolean)
+}
+
+function listaDias(dias: unknown): string[] {
+  if (!Array.isArray(dias)) return []
+  return dias.map(String).map((s) => s.trim().toLowerCase()).filter(Boolean)
+}
+
+// 'Integral' ocupa o dia todo: conflita com qualquer outro turno no mesmo dia.
+function turnosConflitam(a: string[], b: string[]): boolean {
+  if (a.length === 0 || b.length === 0) return false
+  if (a.includes('integral') || b.includes('integral')) return true
+  return a.some((t) => b.includes(t))
+}
+
+function diasSobrepostos(a: string[], b: string[]): string[] {
+  const setB = new Set(b)
+  return a.filter((d) => setB.has(d))
+}
+
+async function validarRegraGeralMatricula(args: {
+  aluno_id: string
+  ano_letivo_id: string
+  turma_id: string
+  ignoreMatriculaId?: string | null
+}) {
+  const { data: novaTurma, error: errTurma } = await supabase
+    .from('turmas')
+    .select('id, nome, tipos_turma, turnos, dias_funcionamento')
+    .eq('id', args.turma_id)
+    .maybeSingle()
+  if (errTurma) throw errTurma
+  if (!novaTurma) throw new Error('Turma não encontrada')
+
+  let query = supabase
+    .from('academico_matriculas')
+    .select('id, turma_id, turmas!inner(id, nome, tipos_turma, turnos, dias_funcionamento)')
+    .eq('aluno_id', args.aluno_id)
+    .eq('ano_letivo_id', args.ano_letivo_id)
+    .eq('ativo', true)
+    .eq('situacao', 'Ativo')
+  if (args.ignoreMatriculaId) query = query.neq('id', args.ignoreMatriculaId)
+
+  const { data: existentes, error } = await query
+  if (error) throw error
+  if (!existentes || existentes.length === 0) return
+
+  const novaCategoria = classificarTurma((novaTurma as any).tipos_turma)
+  const novosTurnos = nomesTurnos((novaTurma as any).turnos)
+  const novosDias = listaDias((novaTurma as any).dias_funcionamento)
+
+  for (const m of (existentes as any[])) {
+    const t = m.turmas
+    if (!t || t.id === args.turma_id) continue
+    const nomeExistente = t.nome || 'turma já matriculada'
+
+    // 1. Duplicidade curricular (vale mesmo sem sobreposição de horário)
+    if (novaCategoria === 'curricular' && classificarTurma(t.tipos_turma) === 'curricular') {
+      throw new Error(`Este aluno já possui uma matrícula ativa em turma Curricular (${nomeExistente})`)
+    }
+
+    // 2. Conflito de turno/dia (vale para qualquer combinação de tipos)
+    const diasEmComum = diasSobrepostos(novosDias, listaDias(t.dias_funcionamento))
+    if (diasEmComum.length > 0 && turnosConflitam(novosTurnos, nomesTurnos(t.turnos))) {
+      throw new Error(`Conflito de turno/dia com a turma ${nomeExistente}, já matriculada`)
+    }
+  }
+}
+
 // ------- CRUD Matrícula -------
 
 export async function createMatricula(data: {
@@ -153,6 +250,13 @@ export async function createMatricula(data: {
   transporte_veiculos?: any
 }, pessoaId?: string | null) {
   await garantirTurmaAberta(data.turma_id)
+
+  // Regra Geral de Matrícula: duplicidade curricular + conflito de turno/dia
+  await validarRegraGeralMatricula({
+    aluno_id: data.aluno_id,
+    ano_letivo_id: data.ano_letivo_id,
+    turma_id: data.turma_id,
+  })
 
   // Código sequencial de matrícula por escola (max+1; UNIQUE protege concorrência)
   const { data: ultimo } = await supabase
@@ -234,6 +338,16 @@ export async function updateMatricula(id: string, data: {
     .select('*')
     .eq('id', id)
     .maybeSingle()
+
+  // Troca de turma no Editar também respeita a Regra Geral (ignora o próprio vínculo)
+  if (data.turma_id && anterior && data.turma_id !== (anterior as any).turma_id) {
+    await validarRegraGeralMatricula({
+      aluno_id: (anterior as any).aluno_id,
+      ano_letivo_id: (anterior as any).ano_letivo_id,
+      turma_id: data.turma_id,
+      ignoreMatriculaId: id,
+    })
+  }
 
   const { error } = await supabase
     .from('academico_matriculas')

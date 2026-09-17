@@ -19,6 +19,7 @@ import {
   ClipboardList,
   Building2,
   DoorOpen,
+  Repeat,
   BarChart3,
   HeartHandshake,
   Puzzle,
@@ -55,6 +56,7 @@ import MetodoNovoPage from '@/app/(app)/gestao-academica/metodos/novo/page'
 import MetodoEditarPage from '@/app/(app)/gestao-academica/metodos/[id]/page'
 import MatriculasPage from '@/app/(app)/gestao-academica/matriculas/page'
 import MatriculaCadastroContent from '@/app/(app)/gestao-academica/matriculas/cadastro/content'
+import RematriculasPage from '@/app/(app)/gestao-academica/rematriculas/page'
 import IndicadoresPage from '@/app/(app)/gestao-pedagogica/indicadores/page'
 import DisciplinasPage from '@/app/(app)/gestao-pedagogica/disciplinas/page'
 import DiarioClassePage from '@/app/(app)/gestao-pedagogica/diario-classe/page'
@@ -98,6 +100,7 @@ export const TAB_MODULES = {
   'estrutura-academica': 'estrutura-academica',
   metodos: 'metodos',
   matriculas: 'matriculas',
+  rematriculas: 'rematriculas',
   indicadores: 'indicadores',
   disciplinas: 'disciplinas',
   'diario-classe': 'diario-classe',
@@ -143,6 +146,7 @@ export const MODULES: Record<TabModuleId, ModuleMeta> = {
   [TAB_MODULES['estrutura-academica']]: { title: 'Estrutura Acadêmica', icon: CalendarDays },
   [TAB_MODULES.metodos]: { title: 'Métodos de Avaliação', icon: ClipboardList },
   [TAB_MODULES.matriculas]: { title: 'Alunos Matriculados', icon: DoorOpen },
+  [TAB_MODULES.rematriculas]: { title: 'Rematrículas', icon: Repeat },
   [TAB_MODULES.indicadores]: { title: 'Indicadores de Avaliação', icon: BarChart3 },
   [TAB_MODULES.disciplinas]: { title: 'Disciplinas', icon: BookMarked },
   [TAB_MODULES['diario-classe']]: { title: 'Diário de Classe', icon: BookOpen },
@@ -262,6 +266,11 @@ const ROUTES: TabRoute[] = [
     module: TAB_MODULES.matriculas,
     match: exact('/gestao-academica/matriculas/cadastro'),
     Component: MatriculaCadastroWrapper,
+  },
+  {
+    module: TAB_MODULES.rematriculas,
+    match: exact('/gestao-academica/rematriculas'),
+    Component: RematriculasPage,
   },
 
   // Gestão Pedagógica

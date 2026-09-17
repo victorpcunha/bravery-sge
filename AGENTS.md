@@ -491,9 +491,9 @@ Nos PDFs react-pdf (sem acesso a tokens CSS), use SEMPRE `src/lib/pdf-palette.ts
 <!-- END:project-summary -->
 
 <!-- SPECKIT START -->
-Current plan: specs/028-painel-rendimento-escolar/plan.md
-Feature: Painel de Rendimento Escolar
-Spec: specs/028-painel-rendimento-escolar/spec.md
-Data model: specs/028-painel-rendimento-escolar/data-model.md
-Quickstart: specs/028-painel-rendimento-escolar/quickstart.md
+Current plan: specs/035-rematriculas/plan.md
+Feature: Tela de Rematrículas
+Spec: specs/035-rematriculas/spec.md
+Data model: specs/035-rematriculas/data-model.md
+Quickstart: specs/035-rematriculas/quickstart.md
 <!-- SPECKIT END -->
