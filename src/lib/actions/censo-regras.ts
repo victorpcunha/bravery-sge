@@ -2751,6 +2751,14 @@ export async function validarRegistro30(schoolId: string): Promise<ErroValidacao
         'Filiação 1 e 2 devem ser nulas quando Filiação for 0.',
         [fil1, fil2].filter(Boolean).join(' / '), 'identificacao', 'filiacao_1')
     }
+    // Filiação = 1 significa "Filiação 1 e/ou Filiação 2" (Registro 30, campo
+    // 8): pelo menos uma precisa estar preenchida — a outra pode ser nula
+    // (ignorada, ex.: só mãe ou só pai no registro).
+    if (filiacao === '1' && !fil1 && !fil2) {
+      addErro(pessoa, 'filiacao_1', 9, 'Filiação declarada sem nomes',
+        'Filiação 1 e Filiação 2 estão vazias. Informe ao menos uma ou use Filiação 0 (Não declarado/Ignorado).',
+        '', 'identificacao', 'filiacao_1')
+    }
     if (!cpf && filiacao === '1') {
       const nomeMaeRule = (valor: string, col: string, num: number, outraVazia: boolean) => {
         if (!valor && !outraVazia) return

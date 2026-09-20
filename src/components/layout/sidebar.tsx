@@ -18,6 +18,7 @@ import {
   PanelLeft,
   PanelRight,
   FileText,
+  FileUp,
   ScrollText,
 } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
@@ -161,10 +162,13 @@ const modules: Module[] = [
     ],
   },
   {
-    title: 'Censo Escolar',
-    href: '/censo-escolar',
-    icon: FileText,
-    recurso: 'censo-escolar',
+    title: 'Importação e Exportação',
+    icon: FileUp,
+    recurso: null,
+    submenu: [
+      { title: 'Censo Escolar', href: '/censo-escolar', recurso: 'censo-escolar' },
+      { title: 'Importação Inicial', href: '/importacao-inicial', recurso: 'importacao-exportacao.importacao-inicial' },
+    ],
   },
   {
     title: 'Documentos',

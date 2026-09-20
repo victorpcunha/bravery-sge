@@ -257,6 +257,10 @@ export function PessoaForm({ schoolId: propSchoolId, person, onSaved, onCancel }
   const [selectedSchoolId, setSelectedSchoolId] = useState<string>(allSchools[0]?.id || '')
   const schoolId = (!propSchoolId && isSuperAdmin) ? selectedSchoolId : propSchoolId
   const [form, setForm] = useState<FormData>({ ...defaultForm })
+  // "Ignorado" por filiação (Registro 30, campos 9/10): marcado = campo nulo
+  // e bloqueado. Estado só de UI — persiste como NULL (sem coluna nova).
+  const [fil1Ignorada, setFil1Ignorada] = useState(false)
+  const [fil2Ignorada, setFil2Ignorada] = useState(false)
   const [saving, setSaving] = useState(false)
   const [activeTab, setActiveTab] = useState('identificacao')
   const [alunosSearch, setAlunosSearch] = useState('')
@@ -288,6 +292,9 @@ export function PessoaForm({ schoolId: propSchoolId, person, onSaved, onCancel }
       data.perfil = person.perfil || []
       data.auxilio_transcricao = (person as any).auxilio_transcricao ?? false
       data.vinculos = []
+      // Ignorado deriva do valor: campo vazio/nulo abre marcado (bloqueado)
+      setFil1Ignorada(!String(data.filiacao_1 || '').trim())
+      setFil2Ignorada(!String(data.filiacao_2 || '').trim())
       if (person.codigo_pessoa) data.codigo_pessoa = person.codigo_pessoa
       setForm(data)
 
@@ -427,8 +434,16 @@ export function PessoaForm({ schoolId: propSchoolId, person, onSaved, onCancel }
       if (!form.nacionalidade) { toast.error('Nacionalidade é obrigatória'); return }
       if (!form.pais_nacionalidade) { toast.error('País de nacionalidade é obrigatório'); return }
       if (form.nacionalidade === '1' && !form.municipio_nascimento) { toast.error('Município de nascimento é obrigatório'); return }
-      if (form.filiacao_declarada === '1' && !form.filiacao_1) { toast.error('Filiação 1 (mãe) é obrigatória'); return }
-      if (form.filiacao_declarada === '1' && !form.filiacao_2) { toast.error('Filiação 2 (pai) é obrigatória'); return }
+      // Filiação parcial (Registro 30: 1 = "Filiação 1 e/ou Filiação 2"):
+      // cada campo deve estar preenchido ou marcado como Ignorado, e ao
+      // menos um dos dois precisa ter nome.
+      if (form.filiacao_declarada === '1') {
+        const f1 = String(form.filiacao_1 || '').trim()
+        const f2 = String(form.filiacao_2 || '').trim()
+        if (!f1 && !fil1Ignorada) { toast.error('Filiação 1 (mãe): preencha o nome ou marque Ignorado'); return }
+        if (!f2 && !fil2Ignorada) { toast.error('Filiação 2 (pai): preencha o nome ou marque Ignorado'); return }
+        if (!f1 && !f2) { toast.error('Informe ao menos uma filiação ou desmarque Filiação declarada'); return }
+      }
     }
     if (isAluno && !form.whatsapp) { toast.error('Telefone principal (WhatsApp) é obrigatório'); return }
     if (isProfissionalOuGestor && !form.email?.trim()) { toast.error('E-mail é obrigatório para Profissional'); return }
@@ -552,6 +567,12 @@ export function PessoaForm({ schoolId: propSchoolId, person, onSaved, onCancel }
       for (const key of Object.keys(payload)) {
         if (typeof payload[key] === 'boolean') continue
         if (payload[key] === '') payload[key] = null
+      }
+      // Filiação não declarada (0): garante 9 e 10 nulos mesmo com resíduo
+      // de edição anterior (regra EducaCenso campo 8 = 0 → 9 e 10 nulos).
+      if (payload.filiacao_declarada !== '1') {
+        payload.filiacao_1 = null
+        payload.filiacao_2 = null
       }
 
       delete payload.vinculos
@@ -1078,21 +1099,65 @@ export function PessoaForm({ schoolId: propSchoolId, person, onSaved, onCancel }
                 <ClickablePill
                   label="Filiação declarada"
                   active={form.filiacao_declarada === '1'}
-                  onClick={() => set('filiacao_declarada', form.filiacao_declarada === '1' ? '0' : '1')}
+                  onClick={() => {
+                    const next = form.filiacao_declarada === '1' ? '0' : '1'
+                    set('filiacao_declarada', next)
+                    // Ao declarar, campos vazios já abrem marcados como Ignorado
+                    if (next === '1') {
+                      if (!String(form.filiacao_1 || '').trim()) setFil1Ignorada(true)
+                      if (!String(form.filiacao_2 || '').trim()) setFil2Ignorada(true)
+                    }
+                  }}
                 />
               </div>
               {!form.filiacao_declarada || form.filiacao_declarada === '0' ? (
                 <p className="text-[13px] text-muted-foreground">Não declarado / Ignorado</p>
-              ) : null}
+              ) : (
+                <p className="text-[13px] text-muted-foreground">Apenas mãe ou apenas pai no registro? Preencha um campo e marque Ignorado no outro.</p>
+              )}
               {form.filiacao_declarada === '1' && (
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-2">
                   <div className="space-y-2">
-                    <Label>Filiação 1 (mãe) *</Label>
-                    <Input value={form.filiacao_1} onChange={(e) => set('filiacao_1', e.target.value)} />
+                    <div className="flex items-center justify-between gap-2">
+                      <Label>Filiação 1 (mãe)</Label>
+                      <ClickablePill
+                        label="Ignorado"
+                        active={fil1Ignorada}
+                        title="Marcar Filiação 1 como ignorada (campo fica nulo e bloqueado)"
+                        onClick={() => {
+                          const next = !fil1Ignorada
+                          setFil1Ignorada(next)
+                          if (next) set('filiacao_1', '')
+                        }}
+                      />
+                    </div>
+                    <Input
+                      value={form.filiacao_1}
+                      disabled={fil1Ignorada}
+                      placeholder={fil1Ignorada ? 'Ignorada' : 'Nome da mãe'}
+                      onChange={(e) => set('filiacao_1', e.target.value)}
+                    />
                   </div>
                   <div className="space-y-2">
-                    <Label>Filiação 2 (pai) *</Label>
-                    <Input value={form.filiacao_2} onChange={(e) => set('filiacao_2', e.target.value)} />
+                    <div className="flex items-center justify-between gap-2">
+                      <Label>Filiação 2 (pai)</Label>
+                      <ClickablePill
+                        label="Ignorado"
+                        active={fil2Ignorada}
+                        title="Marcar Filiação 2 como ignorada (campo fica nulo e bloqueado)"
+                        onClick={() => {
+                          const next = !fil2Ignorada
+                          setFil2Ignorada(next)
+                          if (next) set('filiacao_2', '')
+                        }}
+                      />
+                    </div>
+                    <Input
+                      value={form.filiacao_2}
+                      disabled={fil2Ignorada}
+                      placeholder={fil2Ignorada ? 'Ignorada' : 'Nome do pai'}
+                      onChange={(e) => set('filiacao_2', e.target.value)}
+                    />
                   </div>
                 </div>
               )}

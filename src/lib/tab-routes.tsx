@@ -33,6 +33,7 @@ import {
   ScrollText,
   Megaphone,
   AlertTriangle,
+  FileUp,
 } from 'lucide-react'
 import type { TabParams } from '@/lib/tab-params'
 
@@ -78,6 +79,7 @@ import BnccUnidadesPage from '@/app/(app)/bncc/unidades-tematicas/page'
 import BnccAreasPage from '@/app/(app)/bncc/areas-conhecimento/page'
 import BnccCompetenciasPage from '@/app/(app)/bncc/competencias-habilidades/page'
 import CensoEscolarPage from '@/app/(app)/(auth)/censo-escolar/page'
+import ImportacaoInicialPage from '@/app/(app)/(auth)/importacao-inicial/page'
 import DocentesPage from '@/app/(app)/docentes/page'
 import AuditoriaPage from '@/app/(app)/auditoria/page'
 import DocumentosPage from '@/app/(app)/documentos/page'
@@ -117,6 +119,7 @@ export const TAB_MODULES = {
   'bncc-areas': 'bncc-areas',
   'bncc-competencias': 'bncc-competencias',
   'censo-escolar': 'censo-escolar',
+  'importacao-exportacao': 'importacao-exportacao',
   docentes: 'docentes',
   auditoria: 'auditoria',
   documentos: 'documentos',
@@ -163,6 +166,7 @@ export const MODULES: Record<TabModuleId, ModuleMeta> = {
   [TAB_MODULES['bncc-areas']]: { title: 'Áreas do Conhecimento', icon: Layers },
   [TAB_MODULES['bncc-competencias']]: { title: 'Competências e Habilidades', icon: Sparkles },
   [TAB_MODULES['censo-escolar']]: { title: 'Censo Escolar', icon: FileText },
+  [TAB_MODULES['importacao-exportacao']]: { title: 'Importação e Exportação', icon: FileUp },
   [TAB_MODULES.docentes]: { title: 'Docentes', icon: Briefcase },
   [TAB_MODULES.auditoria]: { title: 'Auditoria', icon: ScrollText },
   [TAB_MODULES.documentos]: { title: 'Documentos', icon: FileText },
@@ -347,6 +351,8 @@ const ROUTES: TabRoute[] = [
 
   // Censo & Docentes
   { module: TAB_MODULES['censo-escolar'], match: exact('/censo-escolar'), Component: CensoEscolarPage },
+  // Importação e Exportação — Importação Inicial (mesma aba do Censo, spec 039)
+  { module: TAB_MODULES['importacao-exportacao'], match: exact('/importacao-inicial'), Component: ImportacaoInicialPage },
   { module: TAB_MODULES.docentes, match: exact('/docentes'), Component: DocentesPage },
 
   // Auditoria (exclusiva Superadmin)

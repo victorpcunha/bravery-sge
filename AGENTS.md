@@ -306,6 +306,15 @@ Sistema de Gestão Escolar completo: turmas, quadro de aulas, indicadores de ava
   - `DESIGN.md` v6 + sidecar + `AGENTS.md` + `catalog.md`; 6 PDFs nos literals novos
   - Limite honesto: success/info como texto pequeno ficam abaixo de AA — badges usam fills claros, nunca corpo
   - Notas: 0 migrations; 0 novas deps npm; `tsc` + `next build` verdes
+- **Importação Inicial de Usuários (spec 039, implementada 2026-09-17)**:
+  - Spec + plan + data-model + contracts + quickstart + tasks em `specs/039-importacao-inicial-usuarios/`
+  - **Módulo "Importação e Exportação"** no sidebar (submenu: Censo Escolar — rota/recurso inalterados — + Importação Inicial); tab-routes com módulo próprio para `/importacao-inicial` (padrão 1 submenu = 1 aba, como Gestão de Usuários)
+  - **Fluxo**: unidade (fixa p/ usuário comum, Select p/ superadmin) → tipo (cards Alunos/Profissionais) → download do modelo (Alunos CSV 7 cols; **Profissionais CSV 5 cols — só dados pessoais, sem vínculo**) → upload (`.csv`/`.xlsx`) → validar (preview) → confirmar (revalida + insere só válidas)
+  - **Arquivos**: `src/lib/importacao-modelos.ts` (neutro: tipos, cabeçalhos, `validarCabecalho`, consts), `src/lib/importacao-validacao.ts` (neutro: normalizadores código↔rótulo, `validarLinhasAluno/Profissional`, `resolverFuncaoPorNome`, `exigirEscopoEscola`; reusa `cpfValido` do Censo), `src/lib/actions/importacao.ts` (só actions async: `validarLoteImportacao`/`confirmarLoteImportacao` com `validarPermissaoEstrita` + reuso de `createPerson`/`createVinculoProfissional` + auditoria agregada), `src/components/importacao/` (form, upload via `xlsx` dinâmico, resultado com paginação, download do modelo via Blob), `src/app/(app)/(auth)/importacao-inicial/page.tsx`
+  - **Regras aplicadas**: só CSV (`;` c/ fallback `,`, UTF-8/BOM, `raw:false` p/ preservar zeros); cabeçalho exato com gate duplo cliente+servidor; aluno exige CPF **ou** certidão; filiação vazia → "Não declarado" (`filiacao_declarada 0/1`); profissional exige os 5 campos pessoais (vínculo completado na tela de Usuários); duplicado (arquivo + ativos da escola) = rejeitado; sem `criarAuthUser` em lote; lote efêmero (0 tabelas novas)
+  - **Seed**: `supabase-migrations/patch_recursos_importacao.sql` (`importacao-exportacao.importacao-inicial` — **aplicar via SQL Editor**)
+  - **Verificado**: `tsc` limpo + `next build` verde (54 rotas) + smoke executado (cabeçalhos + 25 asserts nos helpers puros, incl. `cpfValido` real); E2E do quickstart pendente de ambiente
+  - Notas: 0 migrations de tabela; 0 novas deps npm (`xlsx` já instalado); `'use server'` exporta só async (helpers em módulos neutros — Turbopack exige)
 
 ## Known Issues
 - All server actions use `'use server'` + `getSupabaseAdmin()` (service_role, bypass RLS)
@@ -491,9 +500,9 @@ Nos PDFs react-pdf (sem acesso a tokens CSS), use SEMPRE `src/lib/pdf-palette.ts
 <!-- END:project-summary -->
 
 <!-- SPECKIT START -->
-Current plan: specs/035-rematriculas/plan.md
-Feature: Tela de Rematrículas
-Spec: specs/035-rematriculas/spec.md
-Data model: specs/035-rematriculas/data-model.md
-Quickstart: specs/035-rematriculas/quickstart.md
+Current plan: specs/039-importacao-inicial-usuarios/plan.md
+Feature: Importação Inicial de Usuários
+Spec: specs/039-importacao-inicial-usuarios/spec.md
+Data model: specs/039-importacao-inicial-usuarios/data-model.md
+Quickstart: specs/039-importacao-inicial-usuarios/quickstart.md
 <!-- SPECKIT END -->
