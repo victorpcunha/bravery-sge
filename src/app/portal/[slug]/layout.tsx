@@ -24,6 +24,8 @@ export default async function SlugLayout({
         slug: escola.slug,
         nome: escola.branding.nome,
         branding: escola.branding,
+        modulosVisiveis: escola.modulosVisiveis,
+        documentosLiberados: escola.documentosLiberados,
       }}
     >
       <PortalShell>{children}</PortalShell>

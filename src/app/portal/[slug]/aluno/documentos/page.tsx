@@ -3,12 +3,17 @@
 import { FolderOpen } from 'lucide-react'
 import { PageContainer } from '@/components/layout/page-container'
 import { PageHeader } from '@/components/layout/page-header'
-import { EmptyState } from '@/components/ui/empty-state'
 import { usePortal } from '@/components/portal/portal-provider'
+import { ModuloBloqueado } from '@/components/portal/modulo-bloqueado'
+import DocumentosPortal from '@/components/portal/documentos-portal'
 
 export default function PortalDocumentosPage() {
-  const { aluno } = usePortal()
+  const { aluno, escola } = usePortal()
   if (!aluno) return null
+
+  if (escola?.modulosVisiveis.documentos === false) {
+    return <ModuloBloqueado titulo="Documentos" rotulo="os Documentos" icon={FolderOpen} />
+  }
 
   return (
     <PageContainer maxWidth="dashboard">
@@ -17,13 +22,7 @@ export default function PortalDocumentosPage() {
         description={`${aluno.nome} · ${aluno.turmaNome}`}
         icon={FolderOpen}
       />
-      <div className="rounded-xl border border-border bg-card shadow-xs">
-        <EmptyState
-          icon={FolderOpen}
-          title="Em breve"
-          description="Os documentos do aluno estarão disponíveis aqui em uma próxima versão."
-        />
-      </div>
+      <DocumentosPortal />
     </PageContainer>
   )
 }

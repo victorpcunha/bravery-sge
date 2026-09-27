@@ -1,7 +1,8 @@
 'use client'
 
-import { useState, useEffect, useMemo, useRef } from 'react'
+import { useState, useEffect, useMemo, useRef, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
+import { useTabActive } from '@/lib/tab-params'
 import { useAuth } from '@/components/providers/auth-provider'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -62,6 +63,23 @@ export function TabMatrizes({ schoolId }: TabMatrizesProps) {
 
   const effectiveSchoolId = selectedSchoolId || schoolId
   const lastKey = useRef('')
+  const tabActive = useTabActive()
+  const primeiroAtivo = useRef(true)
+
+  const loadMatrizes = useCallback(async () => {
+    try {
+      const data = await getMatrizes(effectiveSchoolId!, anoLetivoId || undefined, etapaFiltro === '__all__' ? undefined : etapaFiltro)
+      setMatrizes(data)
+      // Resumo batch (2 queries): períodos + disciplinas por matriz, sem N+1
+      const resumo = await getResumoMatrizes(data.map((m: any) => m.id))
+      setPeriodosPorMatriz(resumo.periodosPorMatriz)
+      setDisciplinasPorPeriodo(resumo.disciplinasPorPeriodo)
+      setContagemPorMatriz(resumo.contagemPorMatriz)
+    } catch (error) {
+      console.error('Erro ao carregar matrizes:', error)
+      toast.error('Erro ao carregar matrizes')
+    }
+  }, [effectiveSchoolId, anoLetivoId, etapaFiltro])
 
   const etapasAgrupadas = useMemo(() => {
     const grupos: Record<string, any[]> = {}
@@ -85,7 +103,20 @@ export function TabMatrizes({ schoolId }: TabMatrizesProps) {
   useEffect(() => {
     if (!effectiveSchoolId || !anoLetivoId) return
     loadMatrizes()
-  }, [effectiveSchoolId, anoLetivoId, etapaFiltro])
+  }, [effectiveSchoolId, anoLetivoId, loadMatrizes])
+
+  // Keep-alive das abas: ao voltar do cadastro/edição o painel é reativado
+  // sem remontar — refaz a busca para exibir registros criados/alterados.
+  // Recarrega só a lista (anos/etapas são catálogos estáveis já carregados).
+  useEffect(() => {
+    if (!tabActive) {
+      primeiroAtivo.current = false
+      return
+    }
+    if (primeiroAtivo.current) return
+    if (!effectiveSchoolId || !anoLetivoId) return
+    loadMatrizes()
+  }, [tabActive, effectiveSchoolId, anoLetivoId, loadMatrizes])
 
   async function loadInitialData() {
     if (!effectiveSchoolId) return
@@ -104,21 +135,6 @@ export function TabMatrizes({ schoolId }: TabMatrizesProps) {
       console.error('Erro ao carregar:', error)
     } finally {
       setLoading(false)
-    }
-  }
-
-  async function loadMatrizes() {
-    try {
-      const data = await getMatrizes(effectiveSchoolId!, anoLetivoId || undefined, etapaFiltro === '__all__' ? undefined : etapaFiltro)
-      setMatrizes(data)
-      // Resumo batch (2 queries): períodos + disciplinas por matriz, sem N+1
-      const resumo = await getResumoMatrizes(data.map((m: any) => m.id))
-      setPeriodosPorMatriz(resumo.periodosPorMatriz)
-      setDisciplinasPorPeriodo(resumo.disciplinasPorPeriodo)
-      setContagemPorMatriz(resumo.contagemPorMatriz)
-    } catch (error) {
-      console.error('Erro ao carregar matrizes:', error)
-      toast.error('Erro ao carregar matrizes')
     }
   }
 

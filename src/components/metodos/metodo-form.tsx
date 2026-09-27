@@ -386,12 +386,6 @@ export function MetodoForm({ schoolId, editId, onSaved, onCancel }: Props) {
               <Input id="frecuencia" type="number" min={0} max={100} value={form.frecuencia_minima} onChange={(e) => set('frecuencia_minima', Number(e.target.value) || 0)} />
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="faixa_atencao">Faixa de Atenção (pp)</Label>
-              <Input id="faixa_atencao" type="number" min={0} max={50} value={form.faixa_atencao_pp} onChange={(e) => set('faixa_atencao_pp', Number(e.target.value) || 0)} />
-              <p className="text-[13px] text-muted-foreground">Pontos percentuais acima do mínimo p/ o Painel de Rendimento.</p>
-            </div>
-
             <div className="space-y-2 pt-6">
               <Label>Status</Label>
               <div>
@@ -500,7 +494,7 @@ export function MetodoForm({ schoolId, editId, onSaved, onCancel }: Props) {
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                 <div className="space-y-2">
                   <LabelWithTooltip label="Tipo de Média do Período" tooltip="Ponderada: cada avaliação tem um peso. Somatória: soma simples das notas sem divisão." />
                   <div className="flex flex-wrap gap-2 pt-1">
@@ -537,6 +531,10 @@ export function MetodoForm({ schoolId, editId, onSaved, onCancel }: Props) {
                   <LabelWithTooltip label="Média Máxima no Período" tooltip="Nota máxima que um aluno pode atingir em cada período. Ex: 10, 100, etc." />
                   <Input id="media_maxima" type="number" step="0.1" min={0} value={form.media_maxima_periodo} onChange={(e) => set('media_maxima_periodo', Number(e.target.value) || 0)} />
                 </div>
+                <div className="space-y-2">
+                  <LabelWithTooltip label="Faixa de Atenção (pp)" tooltip="Pontos percentuais acima do mínimo que definem a faixa de Atenção no Painel de Rendimento (média e frequência). Ex.: mínima 6,0 em escala 0–10 com 5pp → atenção até 6,5; frequência 75% → 80%." />
+                  <Input id="faixa_atencao" type="number" min={0} max={50} value={form.faixa_atencao_pp} onChange={(e) => set('faixa_atencao_pp', Number(e.target.value) || 0)} />
+                </div>
               </div>
 
               <Separator className="bg-border" />
@@ -557,7 +555,7 @@ export function MetodoForm({ schoolId, editId, onSaved, onCancel }: Props) {
                   <CheckboxWithTooltip id="rec_periodo_substitutiva" checked={form.recuperacao_periodo_substitutiva} onCheckedChange={(v) => set('recuperacao_periodo_substitutiva', v)} label="A recuperação por período é substitutiva" tooltipKey="recuperacao_periodo_substitutiva" />
                 )}
                 {form.permite_recuperacao.includes('final') && (
-                  <CheckboxWithTooltip id="rec_final_substitutiva" checked={form.recuperacao_final_substitutiva} onCheckedChange={(v) => set('recuperacao_final_substitutiva', v)} label="A recuperação final é substitutiva" tooltipKey="recuperacao_final_substitutiva" />
+                  <CheckboxWithTooltip id="rec_final_substitutiva" checked={form.recuperacao_final_substitutiva} onCheckedChange={(v) => set('recuperacao_final_substitutiva', v)} label="Manter a maior nota entre a média anual e a recuperação final" tooltipKey="recuperacao_final_substitutiva" />
                 )}
                 <CheckboxWithTooltip id="reclassificacao" checked={form.realizava_avaliacao_reclassificacao} onCheckedChange={(v) => set('realizava_avaliacao_reclassificacao', v)} label="Realiza avaliação de reclassificação" tooltipKey="realizava_avaliacao_reclassificacao" />
 

@@ -1,7 +1,8 @@
 'use client'
 
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo, useCallback, useRef } from 'react'
 import { useRouter } from 'next/navigation'
+import { useTabActive } from '@/lib/tab-params'
 import { useAuth } from '@/components/providers/auth-provider'
 import { usePermissoes } from '@/hooks/use-permissoes'
 import { listarPlanosEnsino, type PlanoEnsino } from '@/lib/actions/plano-ensino'
@@ -40,6 +41,8 @@ export default function PlanoEnsinoPage() {
   const [selectedSchoolId, setSelectedSchoolId] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
   const [pessoaId, setPessoaId] = useState<string | null>(null)
+  const tabActive = useTabActive()
+  const primeiroAtivo = useRef(true)
 
   const { loaded: permLoaded, pessoaId: pid } = usePermissoes(schoolId || '')
 
@@ -67,7 +70,7 @@ export default function PlanoEnsinoPage() {
       .catch(() => {})
   }, [effectiveSchoolId])
 
-  useEffect(() => {
+  const carregar = useCallback(() => {
     if (!permLoaded) return
     if (!effectiveSchoolId || !anoLetivoId) {
       setTurmas([])
@@ -87,6 +90,21 @@ export default function PlanoEnsinoPage() {
       .catch(() => toast.error('Erro ao carregar turmas'))
       .finally(() => setLoading(false))
   }, [effectiveSchoolId, pessoaId, anoLetivoId, permLoaded])
+
+  useEffect(() => {
+    carregar()
+  }, [carregar])
+
+  // Keep-alive das abas: ao voltar do cadastro/detalhe o painel é reativado
+  // sem remontar — refaz a busca para exibir registros criados/alterados.
+  useEffect(() => {
+    if (!tabActive) {
+      primeiroAtivo.current = false
+      return
+    }
+    if (primeiroAtivo.current) return
+    carregar()
+  }, [tabActive, carregar])
 
   const turmasCards: TurmaCard[] = useMemo(() => {
     const porTurma = new Map<string, { total: number; ultima: string | null }>()

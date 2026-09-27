@@ -1,7 +1,8 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { useRouter } from 'next/navigation'
+import { useTabActive } from '@/lib/tab-params'
 import { useAuth } from '@/components/providers/auth-provider'
 import { usePermissoes } from '@/hooks/use-permissoes'
 import { Button } from '@/components/ui/button'
@@ -45,6 +46,8 @@ export default function QuadrosAulasPage() {
   const [search, setSearch] = useState('')
   const [selectedSchoolId, setSelectedSchoolId] = useState<string | null>(null)
   const [deleteId, setDeleteId] = useState<string | null>(null)
+  const tabActive = useTabActive()
+  const primeiroAtivo = useRef(true)
 
   useEffect(() => {
     if (!authLoading && !user) router.push('/login')
@@ -83,6 +86,17 @@ export default function QuadrosAulasPage() {
   useEffect(() => {
     loadQuadros()
   }, [loadQuadros])
+
+  // Keep-alive das abas: ao voltar do cadastro o painel é reativado
+  // sem remontar — refaz a busca para exibir registros criados/alterados.
+  useEffect(() => {
+    if (!tabActive) {
+      primeiroAtivo.current = false
+      return
+    }
+    if (primeiroAtivo.current) return
+    loadQuadros()
+  }, [tabActive, loadQuadros])
 
   const handleDelete = async () => {
     if (!deleteId) return

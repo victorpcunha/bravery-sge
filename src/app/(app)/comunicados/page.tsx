@@ -1,7 +1,8 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { useRouter } from 'next/navigation'
+import { useTabActive } from '@/lib/tab-params'
 import { useAuth } from '@/components/providers/auth-provider'
 import { usePermissoes } from '@/hooks/use-permissoes'
 import { listarComunicados, excluirComunicado, type ComunicadoLista } from '@/lib/actions/comunicados'
@@ -44,6 +45,8 @@ export default function ComunicadosPage() {
   const [currentPage, setCurrentPage] = useState(1)
   const [deleteId, setDeleteId] = useState<string | null>(null)
   const [deleting, setDeleting] = useState(false)
+  const tabActive = useTabActive()
+  const primeiroAtivo = useRef(true)
 
   const { loaded: permLoaded, pessoaId: pid, pode } = usePermissoes(schoolId || '')
 
@@ -109,7 +112,7 @@ export default function ComunicadosPage() {
       .catch(() => {})
   }, [effectiveSchoolId, anoLetivoId, etapaId])
 
-  useEffect(() => {
+  const carregar = useCallback(() => {
     if (!permLoaded || !podeVisualizar) {
       if (permLoaded) setLoading(false)
       return
@@ -131,6 +134,21 @@ export default function ComunicadosPage() {
       .catch(() => toast.error('Erro ao carregar comunicados'))
       .finally(() => setLoading(false))
   }, [effectiveSchoolId, pessoaId, anoLetivoId, etapaId, turmaId, dataEnvio, dataFinal, permLoaded, podeVisualizar])
+
+  useEffect(() => {
+    carregar()
+  }, [carregar])
+
+  // Keep-alive das abas: ao voltar do cadastro/edição o painel é reativado
+  // sem remontar — refaz a busca para exibir registros criados/alterados.
+  useEffect(() => {
+    if (!tabActive) {
+      primeiroAtivo.current = false
+      return
+    }
+    if (primeiroAtivo.current) return
+    carregar()
+  }, [tabActive, carregar])
 
   const goNovo = () => {
     const params = new URLSearchParams()

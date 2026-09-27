@@ -1,7 +1,8 @@
 'use client'
 
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo, useCallback, useRef } from 'react'
 import { useRouter } from 'next/navigation'
+import { useTabActive } from '@/lib/tab-params'
 import { useAuth } from '@/components/providers/auth-provider'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
@@ -33,6 +34,8 @@ export default function PerfisPage() {
   const [selectedSchoolId, setSelectedSchoolId] = useState<string | null>(null)
   const [currentPage, setCurrentPage] = useState(1)
   const { loaded: permLoaded, pode, pessoaId, isSetup } = usePermissoes(schoolId)
+  const tabActive = useTabActive()
+  const primeiroAtivo = useRef(true)
 
   useEffect(() => {
     if (!authLoading && !user) router.push('/login')
@@ -40,22 +43,7 @@ export default function PerfisPage() {
 
   const effectiveId = isSuperAdmin ? selectedSchoolId : schoolId
 
-  useEffect(() => {
-    loadPerfis()
-  }, [effectiveId, search, situacao])
-
-  useEffect(() => {
-    setCurrentPage(1)
-  }, [search, situacao, selectedSchoolId])
-
-  useEffect(() => {
-    if (permLoaded && effectiveId && !isSetup && !pode.visualizar('gestao-usuarios.perfis')) {
-      toast.error('Você não tem permissão para acessar esta página')
-      router.push('/')
-    }
-  }, [permLoaded, effectiveId, isSetup])
-
-  const loadPerfis = async () => {
+  const loadPerfis = useCallback(async () => {
     if (isSuperAdmin && !selectedSchoolId) {
       setPerfis([])
       setLoading(false)
@@ -71,7 +59,33 @@ export default function PerfisPage() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [effectiveId, search, situacao, isSuperAdmin, selectedSchoolId])
+
+  useEffect(() => {
+    loadPerfis()
+  }, [loadPerfis])
+
+  // Keep-alive das abas: ao voltar do cadastro/edição o painel é reativado
+  // sem remontar — refaz a busca para exibir registros criados/alterados.
+  useEffect(() => {
+    if (!tabActive) {
+      primeiroAtivo.current = false
+      return
+    }
+    if (primeiroAtivo.current) return
+    loadPerfis()
+  }, [tabActive, loadPerfis])
+
+  useEffect(() => {
+    setCurrentPage(1)
+  }, [search, situacao, selectedSchoolId])
+
+  useEffect(() => {
+    if (permLoaded && effectiveId && !isSetup && !pode.visualizar('gestao-usuarios.perfis')) {
+      toast.error('Você não tem permissão para acessar esta página')
+      router.push('/')
+    }
+  }, [permLoaded, effectiveId, isSetup])
 
   const totalPages = Math.max(1, Math.ceil(perfis.length / ITEMS_PER_PAGE))
   const perfisPaginados = useMemo(() => {

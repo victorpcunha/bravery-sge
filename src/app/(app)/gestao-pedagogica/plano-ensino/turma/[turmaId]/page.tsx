@@ -1,8 +1,8 @@
 'use client'
 
-import { Suspense, useState, useEffect } from 'react'
+import { Suspense, useState, useEffect, useCallback, useRef } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { useTabParams } from '@/lib/tab-params'
+import { useTabParams, useTabActive } from '@/lib/tab-params'
 import { useAuth } from '@/components/providers/auth-provider'
 import { usePermissoes } from '@/hooks/use-permissoes'
 import { listarPlanosEnsino, excluirPlanoEnsino, listarPeriodosPlanoEnsino, type PlanoEnsino } from '@/lib/actions/plano-ensino'
@@ -83,6 +83,8 @@ function TurmaPlanosContent() {
   const [planos, setPlanos] = useState<PlanoEnsino[]>([])
   const [loading, setLoading] = useState(true)
   const [pessoaId, setPessoaId] = useState<string | null>(null)
+  const tabActive = useTabActive()
+  const primeiroAtivo = useRef(true)
 
   const { loaded: permLoaded, pessoaId: pid } = usePermissoes(schoolId || '')
 
@@ -131,7 +133,7 @@ function TurmaPlanosContent() {
       .catch(() => setPeriodosDisponiveis([1, 2, 3, 4]))
   }, [turmaId])
 
-  useEffect(() => {
+  const carregarPlanos = useCallback(() => {
     if (!permLoaded) return
     if (!effectiveSchoolId || !anoLetivoId || !turmaId) {
       setPlanos([])
@@ -155,6 +157,21 @@ function TurmaPlanosContent() {
       .catch(() => toast.error('Erro ao carregar planos'))
       .finally(() => setLoading(false))
   }, [effectiveSchoolId, pessoaId, anoLetivoId, turmaId, disciplinaFiltro, periodosSelecionados, permLoaded])
+
+  useEffect(() => {
+    carregarPlanos()
+  }, [carregarPlanos])
+
+  // Keep-alive das abas: ao voltar do cadastro/detalhe o painel é reativado
+  // sem remontar — refaz a busca para exibir registros criados/alterados.
+  useEffect(() => {
+    if (!tabActive) {
+      primeiroAtivo.current = false
+      return
+    }
+    if (primeiroAtivo.current) return
+    carregarPlanos()
+  }, [tabActive, carregarPlanos])
 
   const togglePeriodo = (p: number) => {
     setPeriodosSelecionados(prev =>

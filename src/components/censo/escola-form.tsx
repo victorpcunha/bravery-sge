@@ -43,6 +43,8 @@ import { Combobox } from '@/components/ui/combobox'
 import { ClickablePill } from '@/components/ui/clickable-pill'
 import { PillToggleGroup } from '@/components/ui/pill-toggle'
 import { normalizarSlug, sugerirSlug } from '@/lib/portal-slug'
+import { MODULOS_PORTAL } from '@/lib/portal-modulos'
+import { DOCUMENTOS_PORTAL, type CategoriaDocumentoPortal } from '@/lib/portal-documentos'
 import { validarSlugUnico } from '@/lib/actions/portal-escola'
 import {
   Dialog,
@@ -271,6 +273,15 @@ const escolaFormSchema = z.object({
   // Portal do Responsável (uso interno; colunas de schools, fora do Censo)
   portal_habilitado: z.string().optional(),
   portal_slug: z.string().optional(),
+  // Visibilidade dos módulos do portal (spec 040; '1' = visível, '0' = oculto)
+  portal_vis_boletim: z.string().optional(),
+  portal_vis_frequencia: z.string().optional(),
+  portal_vis_horarios: z.string().optional(),
+  portal_vis_ocorrencias: z.string().optional(),
+  portal_vis_comunicados: z.string().optional(),
+  portal_vis_documentos: z.string().optional(),
+  // Documentos disponíveis no portal (spec 041; mapa id → liberado; ausente = liberado)
+  portal_documentos: z.record(z.string(), z.boolean()).optional(),
 
   // Tab 1: Identificação
   nome_escola: z.string().min(1, 'Nome da escola é obrigatório'),
@@ -2389,6 +2400,84 @@ export function EscolaForm({
                             </FormItem>
                           )}
                         />
+                        <Separator />
+                        <div>
+                          <h4 className="text-sm font-semibold text-foreground mb-1">Módulos visíveis no portal</h4>
+                          <p className="text-[12px] text-muted-foreground mb-3">
+                            Desmarque os módulos que os responsáveis não devem ver. Vale para todos os responsáveis desta escola.
+                          </p>
+                          <div className="flex flex-wrap gap-2">
+                            {MODULOS_PORTAL.map(m => (
+                              <FormField
+                                key={m.chave}
+                                control={control}
+                                name={m.coluna as 'portal_vis_boletim'}
+                                render={({ field }) => (
+                                  <ClickablePill
+                                    label={m.rotulo}
+                                    active={field.value !== '0'}
+                                    disabled={readOnly}
+                                    onClick={() => field.onChange(field.value === '0' ? '1' : '0')}
+                                  />
+                                )}
+                              />
+                            ))}
+                          </div>
+                        </div>
+                        <Separator />
+                        <div>
+                          <h4 className="text-sm font-semibold text-foreground mb-1">Documentos disponíveis no portal</h4>
+                          <p className="text-[13px] text-muted-foreground mb-3">
+                            Escolha quais documentos os responsáveis podem gerar pelo portal. Vale para todos os responsáveis desta escola.
+                          </p>
+                          <FormField
+                            control={control}
+                            name="portal_documentos"
+                            render={({ field }) => {
+                              const mapa = (field.value || {}) as Record<string, boolean>
+                              const liberado = (docId: string) => mapa[docId] !== false
+                              const alternar = (docId: string) =>
+                                field.onChange({ ...mapa, [docId]: !liberado(docId) })
+                              const grupos: { categoria: CategoriaDocumentoPortal; titulo: string }[] = [
+                                { categoria: 'oficial', titulo: 'Documentos Oficiais' },
+                                { categoria: 'manual', titulo: 'Preenchimento Manual' },
+                              ]
+                              return (
+                                <div className="flex flex-col gap-3">
+                                  {grupos.map(g => {
+                                    const docs = DOCUMENTOS_PORTAL.filter(d => d.categoria === g.categoria)
+                                    if (docs.length === 0) {
+                                      return (
+                                        <div key={g.categoria}>
+                                          <p className="text-[13px] font-medium text-foreground mb-1.5">{g.titulo}</p>
+                                          <p className="text-[13px] text-muted-foreground">
+                                            Em breve — ainda não há modelos disponíveis nesta categoria.
+                                          </p>
+                                        </div>
+                                      )
+                                    }
+                                    return (
+                                      <div key={g.categoria}>
+                                        <p className="text-[13px] font-medium text-foreground mb-1.5">{g.titulo}</p>
+                                        <div className="flex flex-wrap gap-2">
+                                          {docs.map(d => (
+                                            <ClickablePill
+                                              key={d.id}
+                                              label={d.titulo}
+                                              active={liberado(d.id)}
+                                              disabled={readOnly}
+                                              onClick={() => alternar(d.id)}
+                                            />
+                                          ))}
+                                        </div>
+                                      </div>
+                                    )
+                                  })}
+                                </div>
+                              )
+                            }}
+                          />
+                        </div>
                         <Separator />
                         <div>
                           <h4 className="text-sm font-semibold text-foreground mb-1">Identidade do login</h4>

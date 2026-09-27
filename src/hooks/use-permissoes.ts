@@ -14,6 +14,10 @@ type PermissoesState = {
 
 export function usePermissoes(schoolId: string | null) {
   const { user, isSuperAdmin, pessoaId: pessoaIdAuth } = useAuth()
+  // Deps estáveis: o objeto `user` ganha nova identidade a cada evento de sessão
+  // (ex.: TOKEN_REFRESHED ao voltar à guia) mesmo sem troca de usuário.
+  const userId = user?.id
+  const userEmail = user?.email
   const [state, setState] = useState<PermissoesState>({
     loaded: false,
     pessoaId: null,
@@ -22,7 +26,7 @@ export function usePermissoes(schoolId: string | null) {
   })
 
   useEffect(() => {
-    if (!user) return
+    if (!userId) return
 
     if (!schoolId && !isSuperAdmin) {
       setState({ loaded: true, pessoaId: null, permissoes: {}, error: 'Usuário sem escola vinculada' })
@@ -34,7 +38,7 @@ export function usePermissoes(schoolId: string | null) {
       return
     }
 
-    const email = user.email
+    const email = userEmail
     if (!email) {
       setState({ loaded: true, pessoaId: null, permissoes: {}, error: 'Usuário sem email' })
       return
@@ -52,7 +56,7 @@ export function usePermissoes(schoolId: string | null) {
       .catch(err => {
         setState({ loaded: true, pessoaId: null, permissoes: {}, error: err.message })
       })
-  }, [user, schoolId, isSuperAdmin])
+  }, [userId, userEmail, schoolId, isSuperAdmin])
 
   const isSetup = state.loaded && !state.pessoaId && !state.error && !isSuperAdmin
 

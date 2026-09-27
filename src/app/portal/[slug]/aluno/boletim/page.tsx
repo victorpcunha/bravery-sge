@@ -10,6 +10,7 @@ import { ModernTabs } from '@/components/ui/modern-tabs'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { usePortal } from '@/components/portal/portal-provider'
+import { ModuloBloqueado } from '@/components/portal/modulo-bloqueado'
 import { getBoletimPortal, type BoletimPortal } from '@/lib/actions/portal'
 
 function formatarNota(v: number | null) {
@@ -26,9 +27,10 @@ export default function PortalBoletimPage() {
   const [dados, setDados] = useState<BoletimPortal | null>(null)
   const [aba, setAba] = useState<string>('')
   const [loading, setLoading] = useState(true)
+  const bloqueado = escola?.modulosVisiveis.boletim === false
 
   useEffect(() => {
-    if (!sessao || !aluno) return
+    if (!sessao || !aluno || bloqueado) return
     setLoading(true)
     getBoletimPortal(sessao.responsavel.id, aluno.alunoId, aba ? Number(aba) : undefined, escola?.schoolId)
       .then(d => {
@@ -38,9 +40,11 @@ export default function PortalBoletimPage() {
       .catch(() => setDados(null))
       .finally(() => setLoading(false))
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [sessao?.responsavel.id, aluno?.alunoId, aba])
+  }, [sessao?.responsavel.id, aluno?.alunoId, aba, bloqueado])
 
   if (!aluno) return null
+
+  if (bloqueado) return <ModuloBloqueado titulo="Boletim" rotulo="o Boletim" icon={BookOpen} />
 
   return (
     <PageContainer maxWidth="dashboard">

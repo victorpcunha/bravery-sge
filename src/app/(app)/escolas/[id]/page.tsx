@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button'
 import { EscolaForm } from '@/components/censo/escola-form'
 import { getSchool, updateSchool, deleteSchool, type School } from '@/lib/actions/schools'
 import { getConfigDocumentos, salvarConfigDocumentos, type ConfigDocumentos } from '@/lib/actions/documentos-config'
+import { getDocumentosLiberados, salvarDocumentosPortal } from '@/lib/actions/portal-documentos'
 import { seedDocumentosFromSchool, type ConfigDocumentosForm } from '@/lib/documentos-config'
 import { toast } from 'sonner'
 import { PageContainer } from '@/components/layout/page-container'
@@ -89,13 +90,13 @@ export default function UnidadeEscolarPage() {
   useEffect(() => {
     if (!permLoaded || !podeVisualizar) return
 
-    Promise.all([getSchool(id, pessoaId || undefined), getConfigDocumentos(id)])
-      .then(([s, config]) => {
+    Promise.all([getSchool(id, pessoaId || undefined), getConfigDocumentos(id), getDocumentosLiberados(id)])
+      .then(([s, config, docsPortal]) => {
         setSchool(s)
         // Transição CNPJ: form lê `cnpj_escola`; espelha a legada `cnpj`
         // até o backfill (patch_censo_cnpj_escola_backfill.sql) rodar.
         const sAny = s as any
-        setDefaultValues({ ...sAny, cnpj_escola: sAny.cnpj_escola || sAny.cnpj || '', documentos: combinarConfigDocumentos(s, config) } as any)
+        setDefaultValues({ ...sAny, cnpj_escola: sAny.cnpj_escola || sAny.cnpj || '', documentos: combinarConfigDocumentos(s, config), portal_documentos: docsPortal } as any)
         setLoading(false)
       })
       .catch(() => {
@@ -108,12 +109,15 @@ export default function UnidadeEscolarPage() {
     if (!podeEditar) return
     setIsSubmitting(true)
     try {
-      const { documentos, ...censo } = data
+      const { documentos, portal_documentos, ...censo } = data
       // Espelha a canônica `cnpj_escola` na legada `cnpj` (leitores legados).
       if ('cnpj_escola' in censo) (censo as any).cnpj = (censo as any).cnpj_escola || null
       await updateSchool(id, censo, pessoaId || undefined)
       if (documentos) {
         await salvarConfigDocumentos(id, documentos as ConfigDocumentosForm, pessoaId || undefined)
+      }
+      if (portal_documentos) {
+        await salvarDocumentosPortal(id, portal_documentos as Record<string, boolean>, pessoaId || undefined)
       }
       toast.success('Unidade Escolar atualizada com sucesso!')
     } catch (err: any) {

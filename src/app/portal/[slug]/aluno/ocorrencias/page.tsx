@@ -10,6 +10,7 @@ import { ModernTabs } from '@/components/ui/modern-tabs'
 import { Button } from '@/components/ui/button'
 import { OcorrenciaModal } from '@/components/portal/ocorrencia-modal'
 import { usePortal } from '@/components/portal/portal-provider'
+import { ModuloBloqueado } from '@/components/portal/modulo-bloqueado'
 import { getOcorrenciasPortal, marcarOcorrenciaLida, type OcorrenciaResumo } from '@/lib/actions/portal'
 
 type Filtro = 'todas' | 'positiva' | 'negativa'
@@ -25,15 +26,16 @@ export default function PortalOcorrenciasPage() {
   const [lista, setLista] = useState<OcorrenciaResumo[]>([])
   const [aberta, setAberta] = useState<OcorrenciaResumo | null>(null)
   const [loading, setLoading] = useState(true)
+  const bloqueado = escola?.modulosVisiveis.ocorrencias === false
 
   useEffect(() => {
-    if (!sessao || !aluno) return
+    if (!sessao || !aluno || bloqueado) return
     setLoading(true)
     getOcorrenciasPortal(sessao.responsavel.id, aluno.alunoId, filtro, escola?.schoolId)
       .then(setLista)
       .catch(() => setLista([]))
       .finally(() => setLoading(false))
-  }, [sessao?.responsavel.id, aluno?.alunoId, filtro, escola?.schoolId])
+  }, [sessao?.responsavel.id, aluno?.alunoId, filtro, escola?.schoolId, bloqueado])
 
   async function abrir(o: OcorrenciaResumo) {
     setAberta(o)
@@ -46,6 +48,8 @@ export default function PortalOcorrenciasPage() {
   }
 
   if (!aluno) return null
+
+  if (bloqueado) return <ModuloBloqueado titulo="Ocorrências" rotulo="as Ocorrências" icon={Bell} />
 
   return (
     <PageContainer maxWidth="dashboard">

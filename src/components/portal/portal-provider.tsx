@@ -5,6 +5,7 @@ import { usePathname, useRouter } from 'next/navigation'
 import type { User } from '@supabase/supabase-js'
 import { getPortalSupabase } from '@/lib/portal-client'
 import { getSessaoPortal, type AlunoVinculado, type SessaoPortal } from '@/lib/actions/portal'
+import type { ModulosVisiveis } from '@/lib/portal-modulos'
 
 export type EscolaPortalCtx = {
   schoolId: string
@@ -16,6 +17,8 @@ export type EscolaPortalCtx = {
     imagemFundo: string | null
     textoLogin: string | null
   } | null
+  modulosVisiveis: ModulosVisiveis
+  documentosLiberados: Record<string, boolean>
 }
 
 type PortalContextValue = {

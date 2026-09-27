@@ -315,6 +315,28 @@ Sistema de Gestão Escolar completo: turmas, quadro de aulas, indicadores de ava
   - **Seed**: `supabase-migrations/patch_recursos_importacao.sql` (`importacao-exportacao.importacao-inicial` — **aplicar via SQL Editor**)
   - **Verificado**: `tsc` limpo + `next build` verde (54 rotas) + smoke executado (cabeçalhos + 25 asserts nos helpers puros, incl. `cpfValido` real); E2E do quickstart pendente de ambiente
   - Notas: 0 migrations de tabela; 0 novas deps npm (`xlsx` já instalado); `'use server'` exporta só async (helpers em módulos neutros — Turbopack exige)
+- **Visibilidade do Portal por Escola (spec 040, implementada 2026-09-27)**:
+  - Spec + plan + data-model + contracts + quickstart + tasks em `specs/040-configurar-visibilidade-portal/`
+  - **Config por escola** (sem perfil de responsável): grupo "Módulos visíveis no portal" com 6 `ClickablePill` no card "Portal do Responsável" (`escola-form.tsx`, só com portal ativo, herda `readOnly`); valores `'1'`/`'0'` viajam no `censo` p/ `updateSchool` (permissão `escolas/editar` + auditoria automáticas)
+  - **Persistência**: `supabase-migrations/patch_portal_modulos_visiveis.sql` (6 booleans `portal_vis_*` em `schools`, `DEFAULT TRUE` — **aplicar via SQL Editor**); Registro 00 ignora por construção (colunas explícitas)
+  - **Enforcement**: `exigirModuloVisivel` (`portal-escola.ts`) após `validarVinculoPortal` nas 8 actions de módulo (`portal.ts`); erro `Módulo indisponível no portal desta escola` (distinto de `Acesso negado`); `getInicioPortal` pula consultas de módulos ocultos via `getModulosVisiveis`
+  - **Portal**: `modulosVisiveis` em `getEscolaPortal` → `EscolaPortalCtx` → sidebar filtra `ITENS` (Início sempre), acesso rápido/KPIs/blocos do Início filtrados, páginas de módulo com `<ModuloBloqueado>` (`EmptyState` ShieldAlert + "Procure a secretaria"); mapa canônico em `src/lib/portal-modulos.ts` (neutro)
+  - **Verificado**: `tsc` limpo + `next build` verde; eslint só com achados pré-existentes; migration + quickstart E2E pendentes de ambiente
+- **Documentos no Portal do Responsável (spec 041, implementada 2026-09-27)**:
+  - Spec + plan + research + data-model + contracts + quickstart + tasks em `specs/041-documentos-portal/`
+  - **Config por escola**: seção "Documentos disponíveis no portal" no card "Portal do Responsável" (`escola-form.tsx`, `ClickablePill` por documento agrupado Oficial/Manual, herda `readOnly`); grupo `portal_documentos` (mapa id→boolean) salvo por action própria `salvarDocumentosPortal` após `updateSchool` (permissão `escolas/editar` + auditoria módulo `Portal — Documentos`)
+  - **Persistência**: `supabase-migrations/patch_portal_documentos_escola.sql` (tabela `escola_portal_documentos` PK `(school_id, documento_id)`, **ausência = liberado/opt-out** — **aplicar via SQL Editor**); zero colunas novas em `schools`; Registro 00 ignora por construção (campos explícitos)
+  - **Catálogo**: `src/lib/portal-documentos.ts` (neutro, espelha `portal-modulos.ts`): `DOCUMENTOS_PORTAL` (declaracao/ficha/boletim/historico) + `normalizarDocumentosLiberados`; futuros docs entram sozinhos (FR-009)
+  - **Portal**: `listarDocumentosDisponiveisPortal` + 5 wrappers em `portal.ts` (vínculo → módulo → `exigirDocumentoLiberado` → motor com `pessoaId` undefined, ctx do `PortalCtx`); `DocumentoGerador` com props opcionais `alunoFixo`/`anoLetivoFixo` (ocultam selects/busca); galeria em `src/components/portal/documentos-portal.tsx` (remount por chave aluno+escola, `EmptyState` + "Procure a secretaria" quando vazio, motivo do Boletim adaptado); `anoLetivoId` em `AlunoVinculado`
+  - **Verificado**: `tsc` limpo + `next build` verde; eslint zero novos achados (17=17 baseline); migration + quickstart E2E §1–§5 pendentes de ambiente
+- **Feriados Nacionais Automáticos (spec 042, implementada 2026-09-27)**:
+  - Spec + plan + research + data-model + contracts + quickstart + tasks em `specs/042-feriados-nacionais/`
+  - **Automático sem botão**: `createCalendario` semeia o intervalo inteiro; `updateCalendario` semeia só faixas novas vs. `anterior` + retry integral quando zero eventos com o prefixo (exclusão manual nunca ressuscita sem ampliação)
+  - **Fonte**: BrasilAPI `GET /api/feriados/v1/{ano}` (gratuita, sem chave) em `src/lib/feriados-api.ts` (neutro: `anosDoIntervalo`, `filtrarPorIntervalo`, `mapearParaEvento`, `buscarFeriadosNacionais` com `AbortSignal.timeout(8000)`); eventos `tipo='recesso'`, `descricao='Feriado Nacional – {nome}'`, dia único, `etapas=[]`; dedupe por sobreposição (`recesso`/`nao_letivo`/`dia_letivo` bloqueiam, `periodo_avaliativo` não)
+  - **Falha best-effort**: retorno `{calendario, feriados:{inseridos, ignorados, erro?}}`, nunca lança pela fonte; leitura 100% banco local (zero chamadas em grid/KPIs/modal/Boletim/Rendimento); toasts de contagem + warning orientando novo save
+  - **Backfill legados** (P2): `scripts/seed-feriados-existentes.mjs` (REST + service_role, `--dry-run`, idempotente, com auditoria)
+  - **Verificado**: `tsc` limpo + `next build` verde; QA vivo do quickstart §1–§6 pendente de ambiente
+  - Notas: 0 migrations; 0 novas deps npm
 
 ## Known Issues
 - All server actions use `'use server'` + `getSupabaseAdmin()` (service_role, bypass RLS)
@@ -500,9 +522,9 @@ Nos PDFs react-pdf (sem acesso a tokens CSS), use SEMPRE `src/lib/pdf-palette.ts
 <!-- END:project-summary -->
 
 <!-- SPECKIT START -->
-Current plan: specs/039-importacao-inicial-usuarios/plan.md
-Feature: Importação Inicial de Usuários
-Spec: specs/039-importacao-inicial-usuarios/spec.md
-Data model: specs/039-importacao-inicial-usuarios/data-model.md
-Quickstart: specs/039-importacao-inicial-usuarios/quickstart.md
+Current plan: specs/042-feriados-nacionais/plan.md
+Feature: Feriados Nacionais Automáticos no Calendário
+Spec: specs/042-feriados-nacionais/spec.md
+Data model: specs/042-feriados-nacionais/data-model.md
+Quickstart: specs/042-feriados-nacionais/quickstart.md
 <!-- SPECKIT END -->

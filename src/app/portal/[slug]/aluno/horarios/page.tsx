@@ -9,6 +9,7 @@ import { EmptyState } from '@/components/ui/empty-state'
 import { ModernTabs } from '@/components/ui/modern-tabs'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { usePortal } from '@/components/portal/portal-provider'
+import { ModuloBloqueado } from '@/components/portal/modulo-bloqueado'
 import { getHorariosPortal, type HorarioPortal } from '@/lib/actions/portal'
 
 const DIAS = ['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado']
@@ -50,9 +51,10 @@ export default function PortalHorariosPage() {
   const [turma, setTurma] = useState('')
   const [horarios, setHorarios] = useState<HorarioPortal[]>([])
   const [loading, setLoading] = useState(true)
+  const bloqueado = escola?.modulosVisiveis.horarios === false
 
   useEffect(() => {
-    if (!sessao || !aluno) return
+    if (!sessao || !aluno || bloqueado) return
     setLoading(true)
     getHorariosPortal(sessao.responsavel.id, aluno.alunoId, escola?.schoolId)
       .then(d => {
@@ -61,7 +63,7 @@ export default function PortalHorariosPage() {
       })
       .catch(() => setHorarios([]))
       .finally(() => setLoading(false))
-  }, [sessao?.responsavel.id, aluno?.alunoId, escola?.schoolId])
+  }, [sessao?.responsavel.id, aluno?.alunoId, escola?.schoolId, bloqueado])
 
   const dias = useMemo(
     () => [...new Set(horarios.map(h => h.dia_semana))].sort((a, b) => a - b),
@@ -95,6 +97,8 @@ export default function PortalHorariosPage() {
     horarios.find(h => h.dia_semana === dia && h.inicio === inicio && h.fim === fim)
 
   if (!aluno) return null
+
+  if (bloqueado) return <ModuloBloqueado titulo="Horários" rotulo="os Horários" icon={GraduationCap} />
 
   return (
     <PageContainer maxWidth="dashboard">

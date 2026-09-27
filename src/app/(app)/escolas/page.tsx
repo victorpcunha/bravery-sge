@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback, useMemo } from 'react'
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { Plus, School as SchoolIcon, Hash, Phone, Mail, ShieldAlert, ChevronRight } from 'lucide-react'
@@ -15,6 +15,7 @@ import { FilterBar } from '@/components/layout/filter-bar'
 import { Pagination } from '@/components/ui/pagination'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { getSchoolsEscopadas, type School } from '@/lib/actions/schools'
+import { useTabActive } from '@/lib/tab-params'
 import { useAuth } from '@/components/providers/auth-provider'
 import { usePermissoes } from '@/hooks/use-permissoes'
 import { toast } from 'sonner'
@@ -70,6 +71,8 @@ export default function EscolasPage() {
   const [dependenciaFiltro, setDependenciaFiltro] = useState('')
   const [localizacaoFiltro, setLocalizacaoFiltro] = useState('')
   const [currentPage, setCurrentPage] = useState(1)
+  const tabActive = useTabActive()
+  const primeiroAtivo = useRef(true)
 
   const podeCriar = pode.criar('escolas')
   const podeVisualizar = pode.visualizar('escolas')
@@ -90,6 +93,17 @@ export default function EscolasPage() {
   useEffect(() => {
     if (permLoaded) loadSchools()
   }, [permLoaded, loadSchools])
+
+  // Keep-alive das abas: ao voltar do cadastro/edição o painel é reativado
+  // sem remontar — refaz a busca para exibir registros criados/alterados.
+  useEffect(() => {
+    if (!tabActive) {
+      primeiroAtivo.current = false
+      return
+    }
+    if (primeiroAtivo.current) return
+    if (permLoaded) loadSchools()
+  }, [tabActive, permLoaded, loadSchools])
 
   useEffect(() => {
     if (!authLoading && !user) router.push('/login')

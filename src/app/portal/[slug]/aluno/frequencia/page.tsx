@@ -12,6 +12,7 @@ import { ModernTabs } from '@/components/ui/modern-tabs'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { CalendarCheck, CalendarX, AlertTriangle } from 'lucide-react'
 import { usePortal } from '@/components/portal/portal-provider'
+import { ModuloBloqueado } from '@/components/portal/modulo-bloqueado'
 import { getFrequenciaPortal, type FrequenciaPortal } from '@/lib/actions/portal'
 
 function TabelaDisciplinas({ dados }: { dados: FrequenciaPortal }) {
@@ -57,9 +58,10 @@ export default function PortalFrequenciaPage() {
   const [bimestre, setBimestre] = useState<FrequenciaPortal | null>(null)
   const [abaBimestre, setAbaBimestre] = useState<string>('')
   const [loading, setLoading] = useState(true)
+  const bloqueado = escola?.modulosVisiveis.frequencia === false
 
   useEffect(() => {
-    if (!sessao || !aluno) return
+    if (!sessao || !aluno || bloqueado) return
     setLoading(true)
     getFrequenciaPortal(sessao.responsavel.id, aluno.alunoId, undefined, escola?.schoolId)
       .then(d => {
@@ -72,13 +74,15 @@ export default function PortalFrequenciaPage() {
   }, [sessao?.responsavel.id, aluno?.alunoId])
 
   useEffect(() => {
-    if (!sessao || !aluno || !abaBimestre) return
+    if (!sessao || !aluno || !abaBimestre || bloqueado) return
     getFrequenciaPortal(sessao.responsavel.id, aluno.alunoId, Number(abaBimestre), escola?.schoolId)
       .then(setBimestre)
       .catch(() => setBimestre(null))
-  }, [sessao?.responsavel.id, aluno?.alunoId, abaBimestre, escola?.schoolId])
+  }, [sessao?.responsavel.id, aluno?.alunoId, abaBimestre, escola?.schoolId, bloqueado])
 
   if (!aluno) return null
+
+  if (bloqueado) return <ModuloBloqueado titulo="Frequência" rotulo="a Frequência" icon={CalendarDays} />
 
   return (
     <PageContainer maxWidth="dashboard">

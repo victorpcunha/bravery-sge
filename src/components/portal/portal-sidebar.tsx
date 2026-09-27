@@ -23,15 +23,16 @@ import { Sheet, SheetContent, SheetTitle } from '@/components/ui/sheet'
 import { usePortal } from '@/components/portal/portal-provider'
 import { TrocarAlunoModal } from '@/components/portal/trocar-aluno-modal'
 import { TermosModal } from '@/components/portal/termos-modal'
+import type { ModuloPortal } from '@/lib/portal-modulos'
 
-const ITENS = [
+const ITENS: Array<{ href: string; label: string; icon: typeof Home; modulo?: ModuloPortal }> = [
   { href: '/aluno', label: 'Início', icon: Home },
-  { href: '/aluno/boletim', label: 'Boletim', icon: Star },
-  { href: '/aluno/frequencia', label: 'Frequência', icon: CalendarDays },
-  { href: '/aluno/horarios', label: 'Horários', icon: GraduationCap },
-  { href: '/aluno/ocorrencias', label: 'Ocorrências', icon: Bell },
-  { href: '/aluno/comunicados', label: 'Comunicados', icon: Megaphone },
-  { href: '/aluno/documentos', label: 'Documentos', icon: FolderOpen },
+  { href: '/aluno/boletim', label: 'Boletim', icon: Star, modulo: 'boletim' },
+  { href: '/aluno/frequencia', label: 'Frequência', icon: CalendarDays, modulo: 'frequencia' },
+  { href: '/aluno/horarios', label: 'Horários', icon: GraduationCap, modulo: 'horarios' },
+  { href: '/aluno/ocorrencias', label: 'Ocorrências', icon: Bell, modulo: 'ocorrencias' },
+  { href: '/aluno/comunicados', label: 'Comunicados', icon: Megaphone, modulo: 'comunicados' },
+  { href: '/aluno/documentos', label: 'Documentos', icon: FolderOpen, modulo: 'documentos' },
 ]
 
 function ConteudoSidebar({ aoNavegar }: { aoNavegar?: () => void }) {
@@ -74,7 +75,7 @@ function ConteudoSidebar({ aoNavegar }: { aoNavegar?: () => void }) {
           <Button
             variant="outline"
             size="sm"
-            className="mt-3 w-full border-sidebar-border bg-sidebar-accent/60 text-sidebar-foreground hover:bg-sidebar-accent hover:text-accent-foreground"
+            className="mt-3 w-full border-sidebar-border bg-sidebar-accent/60 text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-foreground"
             onClick={() => {
               aoNavegar?.()
               setTrocarOpen(true)
@@ -87,7 +88,7 @@ function ConteudoSidebar({ aoNavegar }: { aoNavegar?: () => void }) {
       </div>
 
       <nav className="flex-1 overflow-y-auto p-2" aria-label="Navegação do portal">
-        {ITENS.map(item => {
+        {ITENS.filter(item => !item.modulo || escola?.modulosVisiveis[item.modulo] !== false).map(item => {
           const href = `${base}${item.href}`
           const ativo = pathname === href
           const Icon = item.icon
@@ -99,17 +100,14 @@ function ConteudoSidebar({ aoNavegar }: { aoNavegar?: () => void }) {
               className={cn(
                 'relative flex items-center gap-3 px-3 py-2.5 rounded-md text-sm font-medium transition-colors w-full mb-0.5',
                 ativo
-                  ? 'bg-sidebar-accent text-accent-foreground dark:text-sidebar-accent-foreground'
-                  : 'text-sidebar-foreground hover:text-accent-foreground hover:bg-sidebar-accent dark:hover:text-sidebar-accent-foreground'
+                  ? 'bg-sidebar-primary text-sidebar-primary-foreground'
+                  : 'text-sidebar-foreground hover:text-sidebar-foreground hover:bg-sidebar-accent'
               )}
               aria-current={ativo ? 'page' : undefined}
             >
-              {ativo && (
-                <span className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-5 bg-sidebar-primary rounded-full" />
-              )}
               <Icon className={cn(
                 'h-4 w-4 shrink-0',
-                ativo ? 'text-accent-foreground dark:text-sidebar-accent-foreground' : ''
+                ativo ? 'text-sidebar-primary-foreground' : ''
               )} />
               <span className="truncate">{item.label}</span>
             </Link>
@@ -146,7 +144,7 @@ export function PortalSidebar() {
       {/* Mobile drawer */}
       <div className="lg:hidden fixed top-0 left-0 right-0 z-30 bg-sidebar/95 backdrop-blur border-b border-sidebar-border">
         <div className="flex items-center gap-2 px-4 h-14">
-          <Button variant="ghost" size="icon-sm" onClick={() => setAberto(true)} aria-label="Abrir menu">
+          <Button variant="ghost" size="icon-sm" onClick={() => setAberto(true)} aria-label="Abrir menu" className="text-sidebar-foreground hover:text-sidebar-foreground hover:bg-sidebar-accent">
             <Menu className="h-5 w-5" />
           </Button>
           <span className="text-[14px] font-bold text-sidebar-foreground">Portal do Responsável</span>
@@ -156,7 +154,7 @@ export function PortalSidebar() {
         <SheetContent side="left" className="w-72 p-0 bg-sidebar border-sidebar-border">
           <SheetTitle className="sr-only">Menu do portal</SheetTitle>
           <div className="flex justify-end p-2">
-            <Button variant="ghost" size="icon-sm" onClick={() => setAberto(false)} aria-label="Fechar menu">
+            <Button variant="ghost" size="icon-sm" onClick={() => setAberto(false)} aria-label="Fechar menu" className="text-sidebar-foreground hover:text-sidebar-foreground hover:bg-sidebar-accent">
               <X className="h-5 w-5" />
             </Button>
           </div>

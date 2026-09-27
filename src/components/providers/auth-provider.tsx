@@ -59,8 +59,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     })
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setSession(session)
-      setUser(session?.user ?? null)
+      // Evita refetch em cascata ao voltar à guia do navegador: o GoTrue emite
+      // TOKEN_REFRESHED com nova identidade de objeto mesmo sem troca de usuário.
+      // Só propaga o que realmente mudou (mesmo padrão do portal-provider).
+      // SIGNED_OUT / troca de usuário continuam propagando normalmente.
+      setSession((prev) => {
+        if (prev?.access_token === session?.access_token && prev?.user?.id === session?.user?.id) return prev
+        return session
+      })
+      setUser((prev) => {
+        const next = session?.user ?? null
+        if (prev?.id === next?.id && prev?.email === next?.email) return prev
+        return next
+      })
       setLoading(false)
     })
 
@@ -80,7 +91,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const carregarInfo = () => {
       getUserAuthInfo(user.id, user.email || '').then((info) => {
         setIsSuperAdmin(info.isSuperAdmin)
-        setAllSchools(info.allSchools)
+        // Estabiliza a referência: array novo a cada resposta refazia os efeitos
+        // das páginas que dependem de `allSchools` (ex.: Turmas) mesmo sem mudança.
+        setAllSchools((prev) => {
+          const next = info.allSchools
+          if (prev.length === next.length && prev.every((s, i) => s.id === next[i]?.id && s.nome_escola === next[i]?.nome_escola)) return prev
+          return next
+        })
         if (info.isSuperAdmin) {
           setSchoolId(null)
         } else if (info.schoolIds.length > 0) {

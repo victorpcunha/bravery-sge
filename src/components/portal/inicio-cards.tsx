@@ -9,12 +9,14 @@ import { EmptyState } from '@/components/ui/empty-state'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { ComunicadoModal } from '@/components/portal/comunicado-modal'
 import { marcarComunicadoLido, type ComunicadoResumo, type InicioPortal, type MediasInicio } from '@/lib/actions/portal'
+import type { ModulosVisiveis } from '@/lib/portal-modulos'
 
 type Props = {
   dados: InicioPortal
   responsavelId: string
   alunoId: string
   schoolId?: string
+  modulosVisiveis?: ModulosVisiveis
   periodoCard: string
   onPeriodoCardChange: (ordem: string) => void
   cardMedias: MediasInicio | null
@@ -28,9 +30,10 @@ function formatarData(iso: string) {
   return d && m && a ? `${d}/${m}/${a}` : iso
 }
 
-export function InicioCards({ dados, responsavelId, alunoId, schoolId, periodoCard, onPeriodoCardChange, cardMedias, onVerComunicados, onVerBoletim, onVerOcorrencias }: Props) {
+export function InicioCards({ dados, responsavelId, alunoId, schoolId, modulosVisiveis, periodoCard, onPeriodoCardChange, cardMedias, onVerComunicados, onVerBoletim, onVerOcorrencias }: Props) {
   // Card com filtro próprio, independente do KPI de Média geral
   const medias = cardMedias?.mediasDisciplina ?? dados.mediasDisciplina
+  const ver = (m: 'boletim' | 'comunicados' | 'ocorrencias') => modulosVisiveis?.[m] !== false
   const [aberto, setAberto] = useState<ComunicadoResumo | null>(null)
   const [lidosExtras, setLidosExtras] = useState<Set<string>>(new Set())
 
@@ -48,6 +51,7 @@ export function InicioCards({ dados, responsavelId, alunoId, schoolId, periodoCa
   return (
     <>
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+      {ver('comunicados') && (
       <PageSection
         title="Comunicados Recentes"
         actions={<Button size="sm" onClick={onVerComunicados}>Ver Todos</Button>}
@@ -79,7 +83,9 @@ export function InicioCards({ dados, responsavelId, alunoId, schoolId, periodoCa
           </ul>
         )}
       </PageSection>
+      )}
 
+      {ver('boletim') && (
       <PageSection
         title="Média do Bimestre por Disciplina"
       >
@@ -120,7 +126,9 @@ export function InicioCards({ dados, responsavelId, alunoId, schoolId, periodoCa
           </ul>
         )}
       </PageSection>
+      )}
 
+      {ver('ocorrencias') && (
       <PageSection
         title="Ocorrências Recentes"
         actions={<Button size="sm" onClick={onVerOcorrencias}>Ver Todos</Button>}
@@ -144,6 +152,7 @@ export function InicioCards({ dados, responsavelId, alunoId, schoolId, periodoCa
           </ul>
         )}
       </PageSection>
+      )}
     </div>
     <ComunicadoModal comunicado={aberto} open={!!aberto} onOpenChange={v => !v && setAberto(null)} />
     </>

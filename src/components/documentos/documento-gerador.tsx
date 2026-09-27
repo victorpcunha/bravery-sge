@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react'
 import { toast } from 'sonner'
-import { ArrowLeft, CalendarRange, Download, FileText, Loader2, PenLine, Search, ShieldAlert, User, X, AlertTriangle, type LucideIcon } from 'lucide-react'
+import { ArrowLeft, CalendarRange, CheckCircle2, Download, FileText, Loader2, PenLine, Search, ShieldAlert, User, X, AlertTriangle, type LucideIcon } from 'lucide-react'
 import { buscarAlunosPorAnoLetivo, type AlunoResumidoDocumento } from '@/lib/actions/documentos'
 import { getAnosLetivos, type AnoLetivo } from '@/lib/actions/calendarios'
 import { type PeriodoBoletim } from '@/lib/actions/boletim'
@@ -106,20 +106,39 @@ async function rasterizarPdf(blob: Blob): Promise<string[]> {
   return imagens
 }
 
+export type AlunoFixoDocumento = Pick<
+  AlunoResumidoDocumento,
+  'id' | 'nome_completo' | 'turma_nome' | 'situacao' | 'cpf'
+>
+
 export default function DocumentoGerador({
   config,
   schoolId,
   pessoaId,
   onVoltar,
+  alunoFixo = null,
+  anoLetivoFixo = null,
+  geracaoDireta: geracaoDiretaProp = false,
 }: {
   config: DocumentoConfig
   schoolId: string
   pessoaId: string | null
   onVoltar: () => void
+  // Contexto travado (Portal do Responsável, spec 041): quando presentes,
+  // os seletores de ano letivo e a busca de aluno são ocultados e os ids
+  // fixos são usados nas buscas. O responsável nunca escolhe aluno/turma.
+  alunoFixo?: AlunoFixoDocumento | null
+  anoLetivoFixo?: { id: string; descricao: string } | null
+  // Geração direta (Portal do Responsável, spec 041): ao concluir o
+  // carregamento dos dados, gera o PDF e dispara o download automaticamente,
+  // sem pré-visualização e sem edição de assinatura (vale a da escola).
+  geracaoDireta?: boolean
 }) {
   const [anos, setAnos] = useState<AnoLetivo[]>([])
-  const [anoLetivoId, setAnoLetivoId] = useState('')
-  const [buscandoAluno, setBuscandoAluno] = useState<AlunoResumidoDocumento | null>(null)
+  const [anoLetivoId, setAnoLetivoId] = useState(anoLetivoFixo?.id || '')
+  const [buscandoAluno, setBuscandoAluno] = useState<AlunoResumidoDocumento | null>(alunoFixo)
+  const geracaoDireta = geracaoDiretaProp === true
+  const diretoDisparado = useRef(false)
 
   const [openBusca, setOpenBusca] = useState(false)
   const [termo, setTermo] = useState('')
@@ -147,7 +166,7 @@ export default function DocumentoGerador({
   const rasterizando = !!dados && !!previewUrl && previewImagens === null && !previewErro
 
   useEffect(() => {
-    if (!dados) return
+    if (!dados || geracaoDireta) return
 
     let cancelado = false
     const timer = setTimeout(async () => {
@@ -187,7 +206,55 @@ export default function DocumentoGerador({
       cancelado = true
       clearTimeout(timer)
     }
-  }, [dados, responsavelNome, responsavelCargo, config])
+  }, [dados, responsavelNome, responsavelCargo, config, geracaoDireta])
+
+  // Geração direta (portal): gera o PDF com a assinatura padrão da escola e
+  // dispara o download automaticamente, sem pré-visualização.
+  useEffect(() => {
+    if (!geracaoDireta || !dados || diretoDisparado.current) return
+    diretoDisparado.current = true
+
+    let cancelado = false
+    const gerar = async () => {
+      try {
+        const [{ pdf }, modulo] = await Promise.all([
+          import('@react-pdf/renderer'),
+          config.carregarPdf(),
+        ])
+        const Componente = modulo.Componente
+        const padrao = (dados as {
+          escola?: { responsavel_nome?: string; responsavel_cargo?: string }
+        }).escola
+        const blob = await pdf(
+          <Componente
+            documento={dados}
+            responsavelNome={padrao?.responsavel_nome || ''}
+            responsavelCargo={padrao?.responsavel_cargo || ''}
+          />
+        ).toBlob()
+        if (cancelado) return
+        const url = URL.createObjectURL(blob)
+        setPreviewUrl(url)
+        setPreviewErro(null)
+        const a = document.createElement('a')
+        a.href = url
+        a.download = config.nomeArquivo(dados)
+        document.body.appendChild(a)
+        a.click()
+        a.remove()
+        toast.success('Documento gerado com sucesso.')
+      } catch (err) {
+        if (cancelado) return
+        diretoDisparado.current = false
+        setPreviewErro(err instanceof Error ? err.message : 'Erro ao gerar o PDF')
+      }
+    }
+    gerar()
+
+    return () => {
+      cancelado = true
+    }
+  }, [geracaoDireta, dados, config])
 
   useEffect(() => {
     return () => {
@@ -196,10 +263,11 @@ export default function DocumentoGerador({
   }, [previewUrl])
 
   useEffect(() => {
+    if (anoLetivoFixo) return
     getAnosLetivos(schoolId)
       .then(setAnos)
       .catch(err => toast.error(err?.message || 'Erro ao carregar anos letivos'))
-  }, [schoolId])
+  }, [schoolId, anoLetivoFixo])
 
   useEffect(() => {
     const buscarPeriodos = config.buscarPeriodos
@@ -396,7 +464,7 @@ export default function DocumentoGerador({
               : 'md:grid-cols-2'
         }`}
       >
-        {!config.semAnoLetivo && (
+        {!config.semAnoLetivo && !anoLetivoFixo && (
           <div>
             <Label className="mb-1.5 block text-[14px] font-medium text-foreground">
               Ano Letivo <span className="text-destructive">*</span>
@@ -416,6 +484,7 @@ export default function DocumentoGerador({
           </div>
         )}
 
+        {!alunoFixo && (
         <div>
           <Label className="mb-1.5 block text-[14px] font-medium text-foreground">
             Aluno <span className="text-destructive">*</span>
@@ -538,6 +607,7 @@ export default function DocumentoGerador({
             </PopoverContent>
           </Popover>
         </div>
+        )}
 
         {config.buscarPeriodos && (
           <div>
@@ -583,6 +653,7 @@ export default function DocumentoGerador({
 
       {!loadingDados && dados != null && (
         <>
+          {!geracaoDireta && (
           <div className="mb-5 rounded-md border border-border bg-muted/30 p-4">
             <div className="flex items-center gap-2 mb-1">
               <PenLine className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
@@ -614,6 +685,7 @@ export default function DocumentoGerador({
               </div>
             </div>
           </div>
+          )}
 
           {gerando && (
             <div className="flex h-[560px] items-center justify-center rounded-md border border-border bg-muted/20">
@@ -624,7 +696,7 @@ export default function DocumentoGerador({
             </div>
           )}
 
-          {rasterizando && (
+          {!geracaoDireta && rasterizando && (
             <div className="flex h-[560px] items-center justify-center rounded-md border border-border bg-muted/20">
               <div className="flex flex-col items-center gap-2 text-muted-foreground">
                 <Loader2 className="h-5 w-5 animate-spin" />
@@ -637,7 +709,15 @@ export default function DocumentoGerador({
             <EmptyState icon={AlertTriangle} title="Erro ao gerar o PDF" description={previewErro} />
           )}
 
-          {!gerando && !rasterizando && !previewErro && previewImagens && previewImagens.length > 0 && (
+          {geracaoDireta && !gerando && !previewErro && previewUrl && (
+            <EmptyState
+              icon={CheckCircle2}
+              title="Documento gerado"
+              description="O download foi iniciado automaticamente. Use o botão Baixar PDF acima para baixar novamente."
+            />
+          )}
+
+          {!geracaoDireta && !gerando && !rasterizando && !previewErro && previewImagens && previewImagens.length > 0 && (
             <div className="max-h-[560px] overflow-y-auto space-y-4 rounded-md border border-border bg-card p-4">
               {previewImagens.map((src, i) => (
                 // eslint-disable-next-line @next/next/no-img-element

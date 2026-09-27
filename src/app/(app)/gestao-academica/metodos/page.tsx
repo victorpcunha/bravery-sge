@@ -1,8 +1,9 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/components/providers/auth-provider'
+import { useTabActive } from '@/lib/tab-params'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
@@ -35,6 +36,8 @@ export default function MetodosAvaliacaoPage() {
   const [selectedSchoolId, setSelectedSchoolId] = useState<string | null>(null)
   const [search, setSearch] = useState('')
   const [statusFilter, setStatusFilter] = useState<'ativos' | 'inativos'>('ativos')
+  const tabActive = useTabActive()
+  const primeiroAtivo = useRef(true)
 
   useEffect(() => {
     if (!authLoading && !user) router.push('/login')
@@ -60,6 +63,17 @@ export default function MetodosAvaliacaoPage() {
   }, [effectiveSchoolId])
 
   useEffect(() => { loadMetodos() }, [loadMetodos])
+
+  // Keep-alive das abas: ao voltar do cadastro/edição o painel é reativado
+  // sem remontar — refaz a busca para exibir registros criados/alterados.
+  useEffect(() => {
+    if (!tabActive) {
+      primeiroAtivo.current = false
+      return
+    }
+    if (primeiroAtivo.current) return
+    loadMetodos()
+  }, [tabActive, loadMetodos])
 
   const handleDelete = async () => {
     if (!deleteTarget) return

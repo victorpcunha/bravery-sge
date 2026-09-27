@@ -305,7 +305,7 @@ export function TabCalendarios({ schoolId }: TabCalendariosProps) {
     if (calendarioForm.etapas.length === 0) { toast.error('Selecione ao menos uma Etapa de Ensino.'); return }
 
     try {
-      const novo = await createCalendario({
+      const { calendario: novo, feriados } = await createCalendario({
         ano_letivo_id: selectedAno.id,
         descricao: calendarioForm.descricao,
         data_inicio: calendarioForm.data_inicio,
@@ -314,11 +314,18 @@ export function TabCalendarios({ schoolId }: TabCalendariosProps) {
       }, pessoaId)
       setCalendarios([...calendarios, novo])
       setSelectedCalendario(novo)
-      setEventos([])
+      const evtsNovo = await getEventos(novo.id)
+      setEventos(evtsNovo)
       setShowCalendarioModal(false)
       setCalendarioEditId(null)
       setCalendarioForm({ descricao: '', data_inicio: '', data_termino: '', etapas: [] })
-      toast.success('Calendário criado!')
+      if (feriados.erro) {
+        toast.warning('Calendário salvo, mas os feriados nacionais não puderam ser carregados. Salve novamente para tentar.')
+      } else if (feriados.inseridos > 0) {
+        toast.success(`Calendário criado com ${feriados.inseridos} feriado(s) nacional(is)!`)
+      } else {
+        toast.success('Calendário criado (nenhum feriado nacional no período).')
+      }
     } catch (error: any) {
       toast.error(error?.message || 'Erro ao criar calendário.')
     }
@@ -333,7 +340,7 @@ export function TabCalendarios({ schoolId }: TabCalendariosProps) {
     if (calendarioForm.etapas.length === 0) { toast.error('Selecione ao menos uma Etapa de Ensino.'); return }
 
     try {
-      const atualizado = await updateCalendario(calendarioEditId, {
+      const { calendario: atualizado, feriados } = await updateCalendario(calendarioEditId, {
         descricao: calendarioForm.descricao,
         data_inicio: calendarioForm.data_inicio,
         data_termino: calendarioForm.data_termino,
@@ -346,7 +353,13 @@ export function TabCalendarios({ schoolId }: TabCalendariosProps) {
       setShowCalendarioModal(false)
       setCalendarioEditId(null)
       setCalendarioForm({ descricao: '', data_inicio: '', data_termino: '', etapas: [] })
-      toast.success('Calendário atualizado!')
+      if (feriados.erro) {
+        toast.warning('Calendário salvo, mas os feriados nacionais não puderam ser carregados. Salve novamente para tentar.')
+      } else if (feriados.inseridos > 0) {
+        toast.success(`${feriados.inseridos} feriado(s) nacional(is) adicionado(s)!`)
+      } else {
+        toast.success('Calendário atualizado!')
+      }
     } catch (error: any) {
       toast.error(error?.message || 'Erro ao atualizar calendário.')
     }

@@ -35,6 +35,12 @@ export type School = {
   cep?: string | null
   portal_habilitado?: boolean | null
   portal_slug?: string | null
+  portal_vis_boletim?: boolean | null
+  portal_vis_frequencia?: boolean | null
+  portal_vis_horarios?: boolean | null
+  portal_vis_ocorrencias?: boolean | null
+  portal_vis_comunicados?: boolean | null
+  portal_vis_documentos?: boolean | null
   created_at: string
   updated_at: string
 }

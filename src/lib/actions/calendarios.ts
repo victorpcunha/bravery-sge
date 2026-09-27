@@ -2,6 +2,14 @@
 
 import { getSupabaseAdmin } from '@/lib/auth'
 import { registrarAuditoria } from '@/lib/auditoria'
+import {
+  PREFIXO_FERIADO_NACIONAL,
+  anosDoIntervalo,
+  buscarFeriadosNacionais,
+  filtrarPorIntervalo,
+  mapearParaEvento,
+  type FeriadoNacional,
+} from '@/lib/feriados-api'
 
 const supabase = getSupabaseAdmin()
 
@@ -207,7 +215,99 @@ export async function createCalendario(calendario: Partial<Calendario>, pessoaId
 
   const schoolId = await schoolIdDoAnoLetivo(data.ano_letivo_id)
   await registrar('criar', 'Estrutura Acadêmica — Calendários', 'academico_calendarios', data.id, pessoaId, schoolId, null, data)
-  return data as Calendario
+
+  const feriados = await semearFeriados(
+    { id: data.id, data_inicio: data.data_inicio, data_termino: data.data_termino },
+    pessoaId,
+    schoolId,
+    null
+  )
+  return { calendario: data as Calendario, feriados }
+}
+
+export type ResultadoSemeadura = { inseridos: number; ignorados: number; erro?: string }
+
+type Intervalo = { inicio: string; fim: string }
+
+function normalizarDia(valor: string): string {
+  return valor.split('T')[0]
+}
+
+function intervalosSobrepostos(inicioA: string, fimA: string, inicioB: string, fimB: string): boolean {
+  return normalizarDia(inicioA) <= normalizarDia(fimB) && normalizarDia(inicioB) <= normalizarDia(fimA)
+}
+
+const TIPOS_BLOQUEADORES = ['recesso', 'nao_letivo', 'dia_letivo']
+
+/**
+ * Semeia feriados nacionais como eventos `recesso` no calendário.
+ * Best-effort: falha da fonte nunca lança — retorna `erro` e o calendário segue persistido.
+ * Leitura nunca toca a API: tudo é lido/escrito em `academico_calendario_eventos`.
+ */
+async function semearFeriados(
+  calendario: { id: string; data_inicio: string; data_termino: string },
+  pessoaId: string | null | undefined,
+  schoolId: string | null,
+  somenteForaDe: Intervalo | null
+): Promise<ResultadoSemeadura> {
+  const inicio = normalizarDia(calendario.data_inicio)
+  const fim = normalizarDia(calendario.data_termino)
+
+  let todos: FeriadoNacional[] = []
+  try {
+    const porAno = await Promise.all(
+      anosDoIntervalo(inicio, fim).map(ano => buscarFeriadosNacionais(ano))
+    )
+    todos = porAno.flat()
+  } catch {
+    return { inseridos: 0, ignorados: 0, erro: 'falha-fonte' }
+  }
+
+  const { data: existentes } = await supabase
+    .from('academico_calendario_eventos')
+    .select('descricao, tipo, data_inicio, data_termino')
+    .eq('calendario_id', calendario.id)
+
+  const eventos = existentes || []
+  let inseridos = 0
+  let ignorados = 0
+
+  for (const feriado of filtrarPorIntervalo(todos, inicio, fim)) {
+    if (somenteForaDe && feriado.date >= somenteForaDe.inicio && feriado.date <= somenteForaDe.fim) {
+      ignorados++
+      continue
+    }
+    const bloqueado = eventos.some(
+      e => TIPOS_BLOQUEADORES.includes(e.tipo) &&
+        intervalosSobrepostos(e.data_inicio, e.data_termino, feriado.date, feriado.date)
+    )
+    if (bloqueado) {
+      ignorados++
+      continue
+    }
+    const { data, error } = await supabase
+      .from('academico_calendario_eventos')
+      .insert(mapearParaEvento(feriado, calendario.id))
+      .select()
+      .single()
+    if (error || !data) {
+      return { inseridos, ignorados, erro: 'falha-banco' }
+    }
+    eventos.push({ descricao: data.descricao, tipo: data.tipo, data_inicio: data.data_inicio, data_termino: data.data_termino })
+    await registrar('criar', 'Estrutura Acadêmica — Calendários', 'academico_calendario_eventos', data.id, pessoaId, schoolId, null, data)
+    inseridos++
+  }
+
+  return { inseridos, ignorados }
+}
+
+async function temFeriadoSemeado(calendarioId: string): Promise<boolean> {
+  const { count } = await supabase
+    .from('academico_calendario_eventos')
+    .select('id', { count: 'exact', head: true })
+    .eq('calendario_id', calendarioId)
+    .like('descricao', `${PREFIXO_FERIADO_NACIONAL}%`)
+  return (count || 0) > 0
 }
 
 export async function updateCalendario(id: string, calendario: Partial<Calendario>, pessoaId?: string | null) {
@@ -228,7 +328,18 @@ export async function updateCalendario(id: string, calendario: Partial<Calendari
 
   const schoolId = data.ano_letivo_id ? await schoolIdDoAnoLetivo(data.ano_letivo_id) : null
   await registrar('editar', 'Estrutura Acadêmica — Calendários', 'academico_calendarios', id, pessoaId, schoolId, anterior, data)
-  return data as Calendario
+
+  const semeado = await temFeriadoSemeado(id)
+  const somenteForaDe = semeado && anterior?.data_inicio && anterior?.data_termino
+    ? { inicio: normalizarDia(anterior.data_inicio), fim: normalizarDia(anterior.data_termino) }
+    : null
+  const feriados = await semearFeriados(
+    { id, data_inicio: data.data_inicio, data_termino: data.data_termino },
+    pessoaId,
+    schoolId,
+    somenteForaDe
+  )
+  return { calendario: data as Calendario, feriados }
 }
 
 export async function deleteCalendario(id: string, pessoaId?: string | null) {

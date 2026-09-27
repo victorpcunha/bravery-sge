@@ -2,6 +2,24 @@
 
 import { getSupabaseAdmin } from '@/lib/auth'
 import { registrarAuditoria } from '@/lib/auditoria'
+import { exigirDocumentoLiberado, exigirModuloVisivel, getModulosVisiveis } from './portal-escola'
+import { getDocumentosLiberados } from './portal-documentos'
+import { DOCUMENTOS_PORTAL } from '@/lib/portal-documentos'
+import {
+  getDadosDeclaracaoMatricula,
+  getDadosFichaIndividual,
+  type DadosDeclaracaoMatricula,
+  type DadosFichaIndividual,
+} from './documentos'
+import {
+  getDadosBoletim,
+  getPeriodosBoletim,
+  type DadosBoletim,
+} from './boletim'
+import {
+  getDadosHistoricoEscolar,
+  type DadosHistoricoEscolar,
+} from './historico-escolar'
 import {
   calcularFrequenciaBoletim,
   listarPeriodosAvaliativos,
@@ -32,6 +50,7 @@ export type AlunoVinculado = {
   etapaNome: string | null
   turnos: string[]
   principal: boolean
+  anoLetivoId: string
 }
 
 export type SessaoPortal = {
@@ -121,7 +140,7 @@ function turnosTexto(turnos: unknown): string[] {
 async function buscarMatriculaVigente(alunoId: string) {
   const { data } = await supabase
     .from('academico_matriculas')
-    .select('id, ativo, school_id, turma:turma_id(id, nome, turnos), etapa:etapa_ensino_id(etapa_nome)')
+    .select('id, ativo, school_id, ano_letivo_id, turma:turma_id(id, nome, turnos), etapa:etapa_ensino_id(etapa_nome)')
     .eq('aluno_id', alunoId)
     .order('ativo', { ascending: false })
     .order('data_matricula', { ascending: false })
@@ -131,6 +150,7 @@ async function buscarMatriculaVigente(alunoId: string) {
     id: string
     ativo: boolean
     school_id: string
+    ano_letivo_id: string
     turma: { id: string; nome: string; turnos: unknown } | null
     etapa: { etapa_nome: string } | null
   } | null
@@ -194,6 +214,7 @@ export async function getSessaoPortal(responsavelId: string, schoolId?: string):
       etapaNome: mat.etapa?.etapa_nome || null,
       turnos: turnosTexto(mat.turma.turnos),
       principal: v.principal || false,
+      anoLetivoId: mat.ano_letivo_id,
     })
   }
 
@@ -486,20 +507,26 @@ export async function getInicioPortal(
   schoolId?: string
 ): Promise<InicioPortal> {
   const ctx = await validarVinculoPortal(responsavelId, alunoId, schoolId)
+  // Módulos ocultos: pula as consultas (sem vazar nem computar dados) — spec 040
+  const vis = await getModulosVisiveis(ctx.schoolId)
   const metodo = await resolverMetodoBoletim(ctx.turmaId)
   const periodos = await listarPeriodosPortal(ctx, metodo.qtd)
   const ordem = periodoOrdem ?? periodos[0]?.ordem ?? 1
   const periodo = periodos.find(p => p.ordem === ordem) ?? periodos[0]
 
-  const freq = await calcularFrequenciaBoletim(
-    ctx.turmaId, alunoId, metodo.criterio, ctx.dataMatricula, ctx.dataSaida, null, null
-  )
-  const geral = agregarGeralFrequencia(freq, metodo.criterio)
+  const freq = vis.frequencia
+    ? await calcularFrequenciaBoletim(
+      ctx.turmaId, alunoId, metodo.criterio, ctx.dataMatricula, ctx.dataSaida, null, null
+    )
+    : null
+  const geral = freq
+    ? agregarGeralFrequencia(freq, metodo.criterio)
+    : { frequencia_percentual: null, total_faltas: null, total_aulas: 0 }
   const cfgNumerica = await getNumericoConfigCompleta(metodo.metodoId, metodo.qtd)
 
   let mediaGeral: number | null = null
   let mediasDisciplina: Array<{ disciplina: string; media: number | null }> = []
-  if (metodo.temNumerico) {
+  if (vis.boletim && metodo.temNumerico) {
     const nomes = await mapaNomesDisciplinas(ctx.turmaId)
     const disciplinas = [...nomes.entries()]
       .map(([id, nome]) => ({ id, nome }))
@@ -517,16 +544,18 @@ export async function getInicioPortal(
   }
 
   const [comunicadosRecentes, ocorrenciasRecentes] = await Promise.all([
-    listarComunicadosPortal(ctx, responsavelId, alunoId, 3),
-    listarOcorrenciasPortal(ctx, responsavelId, alunoId, 'todas', 3),
+    vis.comunicados ? listarComunicadosPortal(ctx, responsavelId, alunoId, 3) : Promise.resolve([]),
+    vis.ocorrencias ? listarOcorrenciasPortal(ctx, responsavelId, alunoId, 'todas', 3) : Promise.resolve([]),
   ])
 
-  const { count: totalOcorrencias } = await supabase
-    .from('ocorrencias_alunos')
-    .select('ocorrencia_id, ocorrencias!inner(school_id, apresentar_portal)', { count: 'exact', head: true })
-    .eq('aluno_id', alunoId)
-    .eq('ocorrencias.school_id', ctx.schoolId)
-    .eq('ocorrencias.apresentar_portal', true)
+  const { count: totalOcorrencias } = vis.ocorrencias
+    ? await supabase
+      .from('ocorrencias_alunos')
+      .select('ocorrencia_id, ocorrencias!inner(school_id, apresentar_portal)', { count: 'exact', head: true })
+      .eq('aluno_id', alunoId)
+      .eq('ocorrencias.school_id', ctx.schoolId)
+      .eq('ocorrencias.apresentar_portal', true)
+    : { count: 0 }
 
   return {
     presencaGeral: geral.frequencia_percentual,
@@ -558,6 +587,7 @@ export async function getMediasInicio(
   schoolId?: string
 ): Promise<MediasInicio> {
   const ctx = await validarVinculoPortal(responsavelId, alunoId, schoolId)
+  await exigirModuloVisivel(ctx.schoolId, 'boletim')
   const metodo = await resolverMetodoBoletim(ctx.turmaId)
   if (!metodo.temNumerico) {
     return { periodoNome: `Período ${periodoOrdem}`, mediaGeral: null, mediasDisciplina: [] }
@@ -605,6 +635,7 @@ export async function getBoletimPortal(
   schoolId?: string
 ): Promise<BoletimPortal> {
   const ctx = await validarVinculoPortal(responsavelId, alunoId, schoolId)
+  await exigirModuloVisivel(ctx.schoolId, 'boletim')
   const metodo = await resolverMetodoBoletim(ctx.turmaId)
 
   if (!metodo.metodoId || !metodo.temNumerico) {
@@ -737,6 +768,7 @@ export async function getFrequenciaPortal(
   schoolId?: string
 ): Promise<FrequenciaPortal> {
   const ctx = await validarVinculoPortal(responsavelId, alunoId, schoolId)
+  await exigirModuloVisivel(ctx.schoolId, 'frequencia')
   const metodo = await resolverMetodoBoletim(ctx.turmaId)
   const periodos = await listarPeriodosPortal(ctx, metodo.qtd)
   const ordem = periodoOrdem ?? null
@@ -819,6 +851,7 @@ export async function getHorariosPortal(
   schoolId?: string
 ): Promise<{ turma: string; horarios: HorarioPortal[] }> {
   const ctx = await validarVinculoPortal(responsavelId, alunoId, schoolId)
+  await exigirModuloVisivel(ctx.schoolId, 'horarios')
 
   const { data: quadro } = await supabase
     .from('quadro_aulas')
@@ -875,6 +908,7 @@ export async function getOcorrenciasPortal(
   schoolId?: string
 ): Promise<OcorrenciaResumo[]> {
   const ctx = await validarVinculoPortal(responsavelId, alunoId, schoolId)
+  await exigirModuloVisivel(ctx.schoolId, 'ocorrencias')
   return listarOcorrenciasPortal(ctx, responsavelId, alunoId, filtro, 100)
 }
 
@@ -885,6 +919,7 @@ export async function marcarOcorrenciaLida(
   schoolId?: string
 ): Promise<{ ok: true }> {
   const ctx = await validarVinculoPortal(responsavelId, alunoId, schoolId)
+  await exigirModuloVisivel(ctx.schoolId, 'ocorrencias')
 
   const { data: vinc } = await supabase
     .from('ocorrencias_alunos')
@@ -917,6 +952,7 @@ export async function getComunicadosPortal(
   schoolId?: string
 ): Promise<ComunicadoResumo[]> {
   const ctx = await validarVinculoPortal(responsavelId, alunoId, schoolId)
+  await exigirModuloVisivel(ctx.schoolId, 'comunicados')
   return listarComunicadosPortal(ctx, responsavelId, alunoId, 100)
 }
 
@@ -927,6 +963,7 @@ export async function marcarComunicadoLido(
   schoolId?: string
 ): Promise<{ ok: true }> {
   const ctx = await validarVinculoPortal(responsavelId, alunoId, schoolId)
+  await exigirModuloVisivel(ctx.schoolId, 'comunicados')
 
   const { data: comunicado } = await supabase
     .from('comunicados')
@@ -963,4 +1000,90 @@ export async function marcarComunicadoLido(
     )
 
   return { ok: true }
+}
+
+// ─── Documentos no portal (spec 041) ───
+//
+// Wrappers que validam vínculo + módulo Documentos + liberação por documento
+// e delegam ao motor de Documentos com pessoaId `undefined` (a autorização do
+// portal É o vínculo — padrão deste arquivo). Aluno/turma/ano vêm do PortalCtx:
+// o cliente nunca informa esses ids (FR-004/FR-006).
+
+export type DocumentoDisponivelPortal = {
+  id: string
+  titulo: string
+  categoria: 'oficial' | 'manual'
+}
+
+export async function listarDocumentosDisponiveisPortal(
+  responsavelId: string,
+  alunoId: string,
+  schoolId?: string
+): Promise<DocumentoDisponivelPortal[]> {
+  const ctx = await validarVinculoPortal(responsavelId, alunoId, schoolId)
+  await exigirModuloVisivel(ctx.schoolId, 'documentos')
+  const mapa = await getDocumentosLiberados(ctx.schoolId)
+  return DOCUMENTOS_PORTAL.filter(d => mapa[d.id] !== false).map(d => ({
+    id: d.id,
+    titulo: d.titulo,
+    categoria: d.categoria,
+  }))
+}
+
+async function ctxDocumentoPortal(
+  responsavelId: string,
+  alunoId: string,
+  documentoId: string,
+  schoolId?: string
+): Promise<PortalCtx> {
+  const ctx = await validarVinculoPortal(responsavelId, alunoId, schoolId)
+  await exigirModuloVisivel(ctx.schoolId, 'documentos')
+  await exigirDocumentoLiberado(ctx.schoolId, documentoId)
+  return ctx
+}
+
+export async function getDadosDeclaracaoPortal(
+  responsavelId: string,
+  alunoId: string,
+  schoolId?: string
+): Promise<DadosDeclaracaoMatricula> {
+  const ctx = await ctxDocumentoPortal(responsavelId, alunoId, 'declaracao', schoolId)
+  return getDadosDeclaracaoMatricula(alunoId, ctx.anoLetivoId, ctx.schoolId, undefined)
+}
+
+export async function getDadosFichaPortal(
+  responsavelId: string,
+  alunoId: string,
+  schoolId?: string
+): Promise<DadosFichaIndividual> {
+  const ctx = await ctxDocumentoPortal(responsavelId, alunoId, 'ficha', schoolId)
+  return getDadosFichaIndividual(alunoId, ctx.anoLetivoId, ctx.schoolId, undefined)
+}
+
+export async function getPeriodosBoletimPortal(
+  responsavelId: string,
+  alunoId: string,
+  schoolId?: string
+): Promise<{ periodos: PeriodoBoletim[]; bloqueado: boolean; motivo: string | null }> {
+  const ctx = await ctxDocumentoPortal(responsavelId, alunoId, 'boletim', schoolId)
+  return getPeriodosBoletim(alunoId, ctx.anoLetivoId, ctx.schoolId, undefined)
+}
+
+export async function getDadosBoletimPortal(
+  responsavelId: string,
+  alunoId: string,
+  periodoOrdem?: number,
+  schoolId?: string
+): Promise<DadosBoletim> {
+  const ctx = await ctxDocumentoPortal(responsavelId, alunoId, 'boletim', schoolId)
+  return getDadosBoletim(alunoId, ctx.anoLetivoId, ctx.schoolId, undefined, periodoOrdem)
+}
+
+export async function getDadosHistoricoPortal(
+  responsavelId: string,
+  alunoId: string,
+  schoolId?: string
+): Promise<DadosHistoricoEscolar> {
+  const ctx = await ctxDocumentoPortal(responsavelId, alunoId, 'historico', schoolId)
+  return getDadosHistoricoEscolar(alunoId, '', ctx.schoolId, undefined)
 }

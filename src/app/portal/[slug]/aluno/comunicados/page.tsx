@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button'
 import { StatusBadge } from '@/components/feedback/status-badge'
 import { ComunicadoModal } from '@/components/portal/comunicado-modal'
 import { usePortal } from '@/components/portal/portal-provider'
+import { ModuloBloqueado } from '@/components/portal/modulo-bloqueado'
 import { getComunicadosPortal, marcarComunicadoLido, type ComunicadoResumo } from '@/lib/actions/portal'
 
 function formatarData(iso: string) {
@@ -21,15 +22,16 @@ export default function PortalComunicadosPage() {
   const [lista, setLista] = useState<ComunicadoResumo[]>([])
   const [aberto, setAberto] = useState<ComunicadoResumo | null>(null)
   const [loading, setLoading] = useState(true)
+  const bloqueado = escola?.modulosVisiveis.comunicados === false
 
   useEffect(() => {
-    if (!sessao || !aluno) return
+    if (!sessao || !aluno || bloqueado) return
     setLoading(true)
     getComunicadosPortal(sessao.responsavel.id, aluno.alunoId, escola?.schoolId)
       .then(setLista)
       .catch(() => setLista([]))
       .finally(() => setLoading(false))
-  }, [sessao?.responsavel.id, aluno?.alunoId, escola?.schoolId])
+  }, [sessao?.responsavel.id, aluno?.alunoId, escola?.schoolId, bloqueado])
 
   async function abrir(c: ComunicadoResumo) {
     setAberto(c)
@@ -42,6 +44,8 @@ export default function PortalComunicadosPage() {
   }
 
   if (!aluno) return null
+
+  if (bloqueado) return <ModuloBloqueado titulo="Comunicados" rotulo="os Comunicados" icon={Megaphone} />
 
   return (
     <PageContainer maxWidth="dashboard">
