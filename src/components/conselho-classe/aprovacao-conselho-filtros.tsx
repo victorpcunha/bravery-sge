@@ -5,7 +5,7 @@ import { useAuth } from '@/components/providers/auth-provider'
 import { getAnosLetivosAtivos } from '@/lib/actions/quadro-aulas'
 import { listarTurmasConselho } from '@/lib/actions/conselho-classe'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { FilterBar } from '@/components/layout/filter-bar'
+import { FilterBar, FilterField } from '@/components/layout/filter-bar'
 import { PageSection } from '@/components/layout/page-section'
 
 type Turma = { id: string; nome: string; turnos: string[] }
@@ -72,43 +72,49 @@ export default function AprovacaoConselhoFiltros({ schoolId, onFilter }: Props) 
     <PageSection variant="compact" title="Filtros" className="mb-6">
       <FilterBar>
         {isSuperAdmin && allSchools.length > 0 && (
-          <Select
-            value={selectedSchoolId ?? '__none__'}
-            onValueChange={(v) => setSelectedSchoolId(v === '__none__' ? null : v)}
-          >
-            <SelectTrigger className="w-auto min-w-[200px] h-9">
-              <SelectValue placeholder="Selecione uma escola" />
+          <FilterField label="Unidade Escolar">
+            <Select
+              value={selectedSchoolId ?? '__none__'}
+              onValueChange={(v) => setSelectedSchoolId(v === '__none__' ? null : v)}
+            >
+              <SelectTrigger className="w-auto min-w-[200px] h-9">
+                <SelectValue placeholder="Selecione uma escola" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="__none__" disabled>Selecione uma escola</SelectItem>
+                {allSchools.map(s => (
+                  <SelectItem key={s.id} value={s.id}>{s.nome_escola}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </FilterField>
+        )}
+
+        <FilterField label="Ano Letivo">
+          <Select value={anoLetivoId} onValueChange={handleAnoLetivo}>
+            <SelectTrigger className="w-auto min-w-[160px] h-9" disabled={!effectiveSchoolId}>
+              <SelectValue placeholder="Ano letivo" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="__none__" disabled>Selecione uma escola</SelectItem>
-              {allSchools.map(s => (
-                <SelectItem key={s.id} value={s.id}>{s.nome_escola}</SelectItem>
+              {anosLetivos.map((a: any) => (
+                <SelectItem key={a.id} value={a.id}>{a.descricao || a.ano}</SelectItem>
               ))}
             </SelectContent>
           </Select>
-        )}
+        </FilterField>
 
-        <Select value={anoLetivoId} onValueChange={handleAnoLetivo}>
-          <SelectTrigger className="w-auto min-w-[160px] h-9" disabled={!effectiveSchoolId}>
-            <SelectValue placeholder="Ano letivo" />
-          </SelectTrigger>
-          <SelectContent>
-            {anosLetivos.map((a: any) => (
-              <SelectItem key={a.id} value={a.id}>{a.descricao || a.ano}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-
-        <Select value={turmaId} onValueChange={setTurmaId}>
-          <SelectTrigger className="w-auto min-w-[180px] h-9" disabled={!anoLetivoId}>
-            <SelectValue placeholder={loadingTurmas ? 'Carregando...' : 'Turma'} />
-          </SelectTrigger>
-          <SelectContent>
-            {turmas.map(t => (
-              <SelectItem key={t.id} value={t.id}>{t.nome}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        <FilterField label="Turma">
+          <Select value={turmaId} onValueChange={setTurmaId}>
+            <SelectTrigger className="w-auto min-w-[180px] h-9" disabled={!anoLetivoId}>
+              <SelectValue placeholder={loadingTurmas ? 'Carregando...' : 'Turma'} />
+            </SelectTrigger>
+            <SelectContent>
+              {turmas.map(t => (
+                <SelectItem key={t.id} value={t.id}>{t.nome}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </FilterField>
       </FilterBar>
     </PageSection>
   )

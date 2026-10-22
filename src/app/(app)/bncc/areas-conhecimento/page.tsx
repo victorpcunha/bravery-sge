@@ -8,7 +8,7 @@ import { BookOpen, Lightbulb } from 'lucide-react'
 import { PageContainer } from '@/components/layout/page-container'
 import { PageHeader } from '@/components/layout/page-header'
 import { PageSection } from '@/components/layout/page-section'
-import { FilterBar } from '@/components/layout/filter-bar'
+import { FilterBar, FilterField } from '@/components/layout/filter-bar'
 
 const areaColor = 'from-primary to-secondary'
 const areaBadgeColor = 'bg-primary/10 text-primary'
@@ -62,24 +62,28 @@ export default function AreasConhecimentoPage() {
 
       <PageSection variant="compact" title="Filtros" className="mb-6">
         <FilterBar>
-          <Select value={tipoEnsino} onValueChange={(v) => { setTipoEnsino(v); setSelectedArea(null) }}>
-            <SelectTrigger className="w-auto min-w-[200px] h-9">
-              <SelectValue placeholder="Selecione" />
-            </SelectTrigger>
-            <SelectContent position="popper" side="bottom" sideOffset={5}>
-              <SelectItem value="fundamental">Ensino Fundamental</SelectItem>
-              <SelectItem value="medio">Ensino Médio</SelectItem>
-            </SelectContent>
-          </Select>
+          <FilterField label="Tipo de Ensino">
+            <Select value={tipoEnsino} onValueChange={(v) => { setTipoEnsino(v); setSelectedArea(null) }}>
+              <SelectTrigger className="w-auto min-w-[200px] h-9">
+                <SelectValue placeholder="Selecione" />
+              </SelectTrigger>
+              <SelectContent position="popper" side="bottom" sideOffset={5}>
+                <SelectItem value="fundamental">Ensino Fundamental</SelectItem>
+                <SelectItem value="medio">Ensino Médio</SelectItem>
+              </SelectContent>
+            </Select>
+          </FilterField>
 
-          <Select value={selectedArea || ''} onValueChange={setSelectedArea}>
-            <SelectTrigger className="w-auto min-w-[220px] h-9">
-              <SelectValue placeholder="Selecione uma área" />
-            </SelectTrigger>
-            <SelectContent position="popper" side="bottom" sideOffset={5}>
-              {areas.map(a => <SelectItem key={a.id} value={a.id}>{a.nome}</SelectItem>)}
-            </SelectContent>
-          </Select>
+          <FilterField label="Área do Conhecimento">
+            <Select value={selectedArea || ''} onValueChange={setSelectedArea}>
+              <SelectTrigger className="w-auto min-w-[220px] h-9">
+                <SelectValue placeholder="Selecione uma área" />
+              </SelectTrigger>
+              <SelectContent position="popper" side="bottom" sideOffset={5}>
+                {areas.map(a => <SelectItem key={a.id} value={a.id}>{a.nome}</SelectItem>)}
+              </SelectContent>
+            </Select>
+          </FilterField>
         </FilterBar>
       </PageSection>
 

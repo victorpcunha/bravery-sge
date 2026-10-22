@@ -34,6 +34,9 @@ import {
   Megaphone,
   AlertTriangle,
   FileUp,
+  Wallet,
+  Receipt,
+  Settings2,
 } from 'lucide-react'
 import type { TabParams } from '@/lib/tab-params'
 
@@ -83,6 +86,9 @@ import ImportacaoInicialPage from '@/app/(app)/(auth)/importacao-inicial/page'
 import DocentesPage from '@/app/(app)/docentes/page'
 import AuditoriaPage from '@/app/(app)/auditoria/page'
 import DocumentosPage from '@/app/(app)/documentos/page'
+import FaturamentoVisaoPage from '@/app/(app)/faturamento/page'
+import FaturamentoCobrancasPage from '@/app/(app)/faturamento/cobrancas/page'
+import FaturamentoConfigPage from '@/app/(app)/faturamento/configuracao/page'
 import ComunicadosPage from '@/app/(app)/comunicados/page'
 import ComunicadoNovoPage from '@/app/(app)/comunicados/novo/page'
 import ComunicadoEditarPage from '@/app/(app)/comunicados/[id]/page'
@@ -125,6 +131,9 @@ export const TAB_MODULES = {
   documentos: 'documentos',
   comunicados: 'comunicados',
   ocorrencias: 'ocorrencias',
+  faturamento: 'faturamento',
+  'faturamento-cobrancas': 'faturamento-cobrancas',
+  'faturamento-configuracao': 'faturamento-configuracao',
 } as const
 
 export type TabModuleId = (typeof TAB_MODULES)[keyof typeof TAB_MODULES]
@@ -172,6 +181,9 @@ export const MODULES: Record<TabModuleId, ModuleMeta> = {
   [TAB_MODULES.documentos]: { title: 'Documentos', icon: FileText },
   [TAB_MODULES.comunicados]: { title: 'Comunicados', icon: Megaphone },
   [TAB_MODULES.ocorrencias]: { title: 'Ocorrências', icon: AlertTriangle },
+  [TAB_MODULES.faturamento]: { title: 'Faturamento', icon: Wallet },
+  [TAB_MODULES['faturamento-cobrancas']]: { title: 'Cobranças', icon: Receipt },
+  [TAB_MODULES['faturamento-configuracao']]: { title: 'Configuração', icon: Settings2 },
 }
 
 export type TabRoute = {
@@ -384,6 +396,11 @@ const ROUTES: TabRoute[] = [
     },
     Component: OcorrenciaEditarPage,
   },
+
+  // Faturamento — 1 aba por tela (padrão dos demais módulos)
+  { module: TAB_MODULES.faturamento, match: exact('/faturamento'), Component: FaturamentoVisaoPage },
+  { module: TAB_MODULES['faturamento-cobrancas'], match: exact('/faturamento/cobrancas'), Component: FaturamentoCobrancasPage },
+  { module: TAB_MODULES['faturamento-configuracao'], match: exact('/faturamento/configuracao'), Component: FaturamentoConfigPage },
 ]
 
 export function resolveTabRoute(pathname: string): ResolvedTabRoute | null {

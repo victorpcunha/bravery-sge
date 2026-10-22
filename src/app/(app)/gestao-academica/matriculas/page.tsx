@@ -4,19 +4,20 @@ import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { useAuth } from '@/components/providers/auth-provider'
+import { usePermissoes } from '@/hooks/use-permissoes'
+import { PlanoDialog } from '@/components/faturamento/plano-dialog'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Label } from '@/components/ui/label'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { PageContainer } from '@/components/layout/page-container'
 import { PageHeader } from '@/components/layout/page-header'
 import { PageSection } from '@/components/layout/page-section'
-import { FilterBar } from '@/components/layout/filter-bar'
+import { FilterBar, FilterField } from '@/components/layout/filter-bar'
 import { EmptyState } from '@/components/ui/empty-state'
 import { StatusBadge } from '@/components/feedback/status-badge'
 import { ConfirmDialog } from '@/components/feedback/confirm-dialog'
-import { Plus, DoorOpen, GraduationCap, Pencil, Trash2 } from 'lucide-react'
+import { Plus, DoorOpen, GraduationCap, Pencil, Trash2, Wallet } from 'lucide-react'
 import { getMatriculas, deleteMatricula } from '@/lib/actions/matriculas'
 import { getTurmasAtivas } from '@/lib/actions/matriculas'
 import { getAnosLetivosAtivos } from '@/lib/actions/quadro-aulas'
@@ -39,6 +40,9 @@ const SITUACOES = Object.values(SITUACOES_MATRICULA)
 
 export default function AlunosMatriculadosPage() {
   const { user, schoolId, isSuperAdmin, allSchools, loading: authLoading, pessoaId } = useAuth()
+  const { pode } = usePermissoes(schoolId)
+  const podeVerFinanceiro = pode.visualizar('faturamento.cobrancas')
+  const [planoTarget, setPlanoTarget] = useState<{ id: string; nome: string } | null>(null)
   const router = useRouter()
   const [matriculas, setMatriculas] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
@@ -124,57 +128,54 @@ export default function AlunosMatriculadosPage() {
       />
 
       <PageSection variant="compact" title="Filtros" className="mb-6">
-        <FilterBar searchValue={search} onSearchChange={setSearch} searchPlaceholder="Buscar por nome do aluno..." searchClassName="flex-none w-64">
+        <FilterBar searchValue={search} onSearchChange={setSearch} searchPlaceholder="Buscar por nome do aluno..." searchLabel="Buscar" searchClassName="flex-none w-64">
           {isSuperAdmin && allSchools.length > 0 && (
-            <Select value={selectedSchoolId ?? ''} onValueChange={(v) => { setSelectedSchoolId(v || null); setAnoLetivoFiltro(''); setTurmaFiltro('__all__') }}>
-              <SelectTrigger className="w-auto min-w-[200px] h-9 border-border">
-                <SelectValue placeholder="Selecione uma Escola" />
-              </SelectTrigger>
-              <SelectContent>
-                {allSchools.map((s: any) => <SelectItem key={s.id} value={s.id}>{s.nome_escola}</SelectItem>)}
-              </SelectContent>
-            </Select>
+            <FilterField label="Unidade Escolar">
+              <Select value={selectedSchoolId ?? ''} onValueChange={(v) => { setSelectedSchoolId(v || null); setAnoLetivoFiltro(''); setTurmaFiltro('__all__') }}>
+                <SelectTrigger className="w-auto min-w-[200px] h-9 border-border">
+                  <SelectValue placeholder="Selecione uma Escola" />
+                </SelectTrigger>
+                <SelectContent>
+                  {allSchools.map((s: any) => <SelectItem key={s.id} value={s.id}>{s.nome_escola}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </FilterField>
           )}
-        </FilterBar>
-        <div className="flex items-end gap-4 flex-wrap mt-3">
           {anosLetivos.length > 0 && (
-            <div>
-              <Label className="text-xs text-muted-foreground mb-1 block">Ano Letivo</Label>
-            <Select value={anoLetivoFiltro} onValueChange={setAnoLetivoFiltro}>
-              <SelectTrigger className="w-auto min-w-[140px] h-9 border-border">
-                <SelectValue placeholder="Selecione" />
+            <FilterField label="Ano Letivo">
+              <Select value={anoLetivoFiltro} onValueChange={setAnoLetivoFiltro}>
+                <SelectTrigger className="w-auto min-w-[140px] h-9 border-border">
+                  <SelectValue placeholder="Selecione" />
+                </SelectTrigger>
+                <SelectContent>
+                  {anosLetivos.map((a: any) => <SelectItem key={a.id} value={a.id}>{a.descricao}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </FilterField>
+          )}
+          <FilterField label="Turma">
+            <Select value={turmaFiltro} onValueChange={setTurmaFiltro}>
+              <SelectTrigger className="w-auto min-w-[180px] h-9 border-border">
+                <SelectValue placeholder="Todas" />
               </SelectTrigger>
               <SelectContent>
-                {anosLetivos.map((a: any) => <SelectItem key={a.id} value={a.id}>{a.descricao}</SelectItem>)}
+                <SelectItem value="__all__">Todas</SelectItem>
+                {turmas.map((t: any) => <SelectItem key={t.id} value={t.id}>{t.nome}</SelectItem>)}
               </SelectContent>
             </Select>
-            </div>
-          )}
-          <div>
-            <Label className="text-xs text-muted-foreground mb-1 block">Turma</Label>
-          <Select value={turmaFiltro} onValueChange={setTurmaFiltro}>
-            <SelectTrigger className="w-auto min-w-[180px] h-9 border-border">
-              <SelectValue placeholder="Todas" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="__all__">Todas</SelectItem>
-              {turmas.map((t: any) => <SelectItem key={t.id} value={t.id}>{t.nome}</SelectItem>)}
-            </SelectContent>
-          </Select>
-          </div>
-          <div>
-            <Label className="text-xs text-muted-foreground mb-1 block">Situação</Label>
-          <Select value={situacaoFilter} onValueChange={setSituacaoFilter}>
-            <SelectTrigger className="w-auto min-w-[140px] h-9 border-border">
-              <SelectValue placeholder="Todas" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="__all__">Todas</SelectItem>
-              {SITUACOES.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
-            </SelectContent>
-          </Select>
-          </div>
-        </div>
+          </FilterField>
+          <FilterField label="Situação">
+            <Select value={situacaoFilter} onValueChange={setSituacaoFilter}>
+              <SelectTrigger className="w-auto min-w-[140px] h-9 border-border">
+                <SelectValue placeholder="Todas" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="__all__">Todas</SelectItem>
+                {SITUACOES.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+              </SelectContent>
+            </Select>
+          </FilterField>
+        </FilterBar>
       </PageSection>
 
       {isSuperAdmin && !selectedSchoolId ? (
@@ -209,14 +210,25 @@ export default function AlunosMatriculadosPage() {
                     <span>{m.etapa?.etapa_nome || '—'}</span>
                     <span>{formatDate(m.data_matricula)}</span>
                   </div>
-                  <div className="flex gap-2 pt-3 border-t border-border">
-                    <Button variant="outline" size="sm" asChild className="flex-1 min-h-[44px]">
-                      <Link href={`/gestao-academica/matriculas/cadastro?id=${m.id}`}>
-                        <Pencil className="mr-1.5 h-4 w-4" />
-                        Editar
-                      </Link>
-                    </Button>
-                    <Button
+                    <div className="flex gap-2 pt-3 border-t border-border">
+                      <Button variant="outline" size="sm" asChild className="flex-1 min-h-[44px]">
+                        <Link href={`/gestao-academica/matriculas/cadastro?id=${m.id}`}>
+                          <Pencil className="mr-1.5 h-4 w-4" />
+                          Editar
+                        </Link>
+                      </Button>
+                      {podeVerFinanceiro && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setPlanoTarget({ id: m.id, nome: m.aluno?.nome_completo || m.pessoa?.nome_completo || 'Aluno' })}
+                          className="flex-1 min-h-[44px]"
+                        >
+                          <Wallet className="mr-1.5 h-4 w-4" />
+                          Financeiro
+                        </Button>
+                      )}
+                      <Button
                       variant="outline"
                       size="sm"
                       onClick={() => setDeleteTarget(m.id)}
@@ -263,6 +275,11 @@ export default function AlunosMatriculadosPage() {
                       <Button variant="ghost" size="icon-sm" asChild>
                         <Link href={`/gestao-academica/matriculas/cadastro?id=${m.id}`}><Pencil className="h-4 w-4" /></Link>
                       </Button>
+                      {podeVerFinanceiro && (
+                        <Button variant="ghost" size="icon-sm" onClick={() => setPlanoTarget({ id: m.id, nome: m.aluno?.nome_completo || m.pessoa?.nome_completo || 'Aluno' })} aria-label="Situação financeira">
+                          <Wallet className="h-4 w-4" />
+                        </Button>
+                      )}
                       <Button variant="ghost" size="icon-sm" onClick={() => setDeleteTarget(m.id)}>
                         <Trash2 className="h-4 w-4 text-destructive" />
                       </Button>
@@ -284,6 +301,17 @@ export default function AlunosMatriculadosPage() {
         variant="destructive"
         onConfirm={handleDelete}
       />
+      {planoTarget && effectiveSchoolId && (
+        <PlanoDialog
+          open={!!planoTarget}
+          onOpenChange={(open) => { if (!open) setPlanoTarget(null) }}
+          schoolId={effectiveSchoolId}
+          matriculaId={planoTarget.id}
+          alunoNome={planoTarget.nome}
+          pessoaId={pessoaId || null}
+          onDone={loadMatriculas}
+        />
+      )}
     </PageContainer>
   )
 }

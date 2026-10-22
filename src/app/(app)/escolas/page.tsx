@@ -11,7 +11,7 @@ import { PageHeader } from '@/components/layout/page-header'
 import { EmptyState } from '@/components/ui/empty-state'
 import { StatusBadge } from '@/components/feedback/status-badge'
 import { PageSection } from '@/components/layout/page-section'
-import { FilterBar } from '@/components/layout/filter-bar'
+import { FilterBar, FilterField } from '@/components/layout/filter-bar'
 import { Pagination } from '@/components/ui/pagination'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { getSchoolsEscopadas, type School } from '@/lib/actions/schools'
@@ -204,7 +204,9 @@ export default function EscolasPage() {
           searchValue={search}
           onSearchChange={setSearch}
           searchPlaceholder="Buscar por nome ou INEP..."
+          searchLabel="Buscar"
         >
+          <FilterField label="Situação">
           <Select value={situacaoFiltro || '__all__'} onValueChange={(v) => setSituacaoFiltro(v === '__all__' ? '' : v)}>
             <SelectTrigger className="w-auto min-w-[190px] h-9">
               <SelectValue placeholder="Situação" />
@@ -215,6 +217,8 @@ export default function EscolasPage() {
               ))}
             </SelectContent>
           </Select>
+          </FilterField>
+          <FilterField label="Dependência">
           <Select value={dependenciaFiltro || '__all__'} onValueChange={(v) => setDependenciaFiltro(v === '__all__' ? '' : v)}>
             <SelectTrigger className="w-auto min-w-[200px] h-9">
               <SelectValue placeholder="Dependência" />
@@ -225,6 +229,8 @@ export default function EscolasPage() {
               ))}
             </SelectContent>
           </Select>
+          </FilterField>
+          <FilterField label="Localização">
           <Select value={localizacaoFiltro || '__all__'} onValueChange={(v) => setLocalizacaoFiltro(v === '__all__' ? '' : v)}>
             <SelectTrigger className="w-auto min-w-[170px] h-9">
               <SelectValue placeholder="Localização" />
@@ -235,6 +241,7 @@ export default function EscolasPage() {
               ))}
             </SelectContent>
           </Select>
+          </FilterField>
         </FilterBar>
       </PageSection>
 

@@ -20,6 +20,7 @@ import {
   FileText,
   FileUp,
   ScrollText,
+  Wallet,
 } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import {
@@ -61,13 +62,15 @@ type Module = {
 const isSubmenuGroup = (entry: SubmenuEntry): entry is SubmenuGroup =>
   'group' in entry && Array.isArray((entry as SubmenuGroup).items)
 
+// Ativo por segmento de rota: '/faturamento/cobrancas' não deve ativar '/faturamento'
+const isPathActive = (href: string, pathname: string): boolean =>
+  pathname === href || (href !== '/' && pathname.startsWith(href + '/'))
+
 const submenuMatchesPath = (entry: SubmenuEntry, pathname: string): boolean => {
   if (isSubmenuGroup(entry)) {
-    return entry.items.some(
-      i => pathname === i.href || (i.href !== '/' && pathname.startsWith(i.href))
-    )
+    return entry.items.some(i => isPathActive(i.href, pathname))
   }
-  return pathname === entry.href || (entry.href !== '/' && pathname.startsWith(entry.href))
+  return isPathActive(entry.href, pathname)
 }
 
 const modules: Module[] = [
@@ -159,6 +162,16 @@ const modules: Module[] = [
           { title: 'Competências e Habilidades', href: '/bncc/competencias-habilidades', recurso: 'bncc.competencias-habilidades' },
         ],
       },
+    ],
+  },
+  {
+    title: 'Faturamento',
+    icon: Wallet,
+    recurso: null,
+    submenu: [
+      { title: 'Visão Geral', href: '/faturamento', recurso: 'faturamento.visao-geral' },
+      { title: 'Cobranças', href: '/faturamento/cobrancas', recurso: 'faturamento.cobrancas' },
+      { title: 'Configuração', href: '/faturamento/configuracao', recurso: 'faturamento.configuracao' },
     ],
   },
   {
@@ -312,7 +325,7 @@ export function AppSidebar() {
                   const isActive = module.title === 'Escolas'
                     ? pathname.startsWith('/escolas')
                     : module.href
-                      ? (pathname === module.href || (module.href !== '/' && pathname.startsWith(module.href)))
+                      ? isPathActive(module.href, pathname)
                       : false
 
                   const hasSubmenu = module.submenu && module.submenu.length > 0
@@ -321,6 +334,20 @@ export function AppSidebar() {
                   const isSubmenuActive = hasSubmenu && module.submenu!.some(entry =>
                     submenuMatchesPath(entry, pathname)
                   )
+
+                  // Quando dois subitens casam (ex.: '/faturamento' e
+                  // '/faturamento/cobrancas'), só o de correspondência mais
+                  // longa fica ativo — mantendo o estilo de ativo existente.
+                  const allSubHrefs: string[] = []
+                  if (hasSubmenu) {
+                    module.submenu!.forEach(entry => {
+                      if (isSubmenuGroup(entry)) entry.items.forEach(i => allSubHrefs.push(i.href))
+                      else allSubHrefs.push(entry.href)
+                    })
+                  }
+                  const activeSubHref = allSubHrefs
+                    .filter(h => isPathActive(h, pathname))
+                    .sort((a, b) => b.length - a.length)[0]
 
                   const effectiveActive = isActive || isSubmenuActive
 
@@ -432,8 +459,7 @@ export function AppSidebar() {
                                       {!isGroupCollapsed && (
                                         <SidebarMenuSub className="!flex">
                                           {entry.items.map((subitem) => {
-                                            const isSubActive = pathname === subitem.href ||
-                                              (subitem.href !== '/' && pathname.startsWith(subitem.href))
+                                            const isSubActive = subitem.href === activeSubHref
                                             return (
                                               <SidebarMenuSubItem key={subitem.href}>
                                                 <Link
@@ -455,8 +481,7 @@ export function AppSidebar() {
                                     </SidebarMenuSubItem>
                                   )
                                 }
-                                const isSubActive = pathname === entry.href ||
-                                  (entry.href !== '/' && pathname.startsWith(entry.href))
+                                const isSubActive = entry.href === activeSubHref
 
                                 return (
                                   <SidebarMenuSubItem key={entry.href}>

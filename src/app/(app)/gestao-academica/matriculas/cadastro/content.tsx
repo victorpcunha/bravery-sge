@@ -38,6 +38,9 @@ import {
   type Movimentacao,
 } from '@/lib/actions/matriculas'
 import { labelTipoMovimentacao, variantTipoMovimentacao } from '@/lib/situacoes-matricula'
+import { tratarSaidaMatricula } from '@/lib/actions/faturamento'
+
+const TIPOS_SAIDA_FATURAMENTO = ['Transferencia', 'Desistencia', 'Obito']
 
 function formatData(data: string) {
   if (!data) return ''
@@ -127,7 +130,7 @@ export default function MatriculaCadastroContent({ searchParams }: { searchParam
     etapa_ensino_id: '',
     subetapa_id: '',
     forma_ingresso: 'Normal',
-    escolarizacao_externa: 'Não recebe escolarização fora da escola',
+    escolarizacao_externa: '1',
     observacoes: '',
     transporte_responsavel: '1',
     // INEP Registro 60
@@ -146,6 +149,7 @@ export default function MatriculaCadastroContent({ searchParams }: { searchParam
   const [movimentacoes, setMovimentacoes] = useState<any[]>([])
   const [movSalvas, setMovSalvas] = useState(false)
   const [nomesMov, setNomesMov] = useState<{ etapas: Record<string, string>; turmas: Record<string, string> }>({ etapas: {}, turmas: {} })
+  const [cancelarFuturasFaturamento, setCancelarFuturasFaturamento] = useState(true)
 
   // Modais de movimentação
   const [modalTransferencia, setModalTransferencia] = useState(false)
@@ -240,7 +244,11 @@ export default function MatriculaCadastroContent({ searchParams }: { searchParam
         etapa_ensino_id: m.etapa_ensino_id,
         subetapa_id: m.subetapa_id || '',
         forma_ingresso: m.forma_ingresso,
-        escolarizacao_externa: m.escolarizacao_externa || 'Não recebe escolarização fora da escola',
+        // Legado pré-Censo gravava rótulos; a coluna hoje é VARCHAR(1)
+        escolarizacao_externa:
+          m.escolarizacao_externa === 'Em domicílio' ? '2'
+          : m.escolarizacao_externa === 'Em hospital' ? '3'
+          : (m.escolarizacao_externa || '1'),
         observacoes: m.observacoes || '',
         transporte_responsavel: m.transporte_responsavel || '1',
         turma_multi: (m as any).turma_multi || '',
@@ -308,6 +316,7 @@ export default function MatriculaCadastroContent({ searchParams }: { searchParam
   }
 
   const handleTurmaChange = async (turmaId: string) => {
+    const turmaSelecionada = turmas.find((t: any) => t.id === turmaId)
     setForm(p => ({ ...p, turma_id: turmaId, etapa_ensino_id: '', subetapa_id: '' }))
     setEtapasDisponiveis([])
     setSubetapasDisponiveis([])
@@ -315,13 +324,32 @@ export default function MatriculaCadastroContent({ searchParams }: { searchParam
     if (!turmaId) return
 
     const etapas = await getEtapasDaTurma(turmaId)
-    setEtapasDisponiveis(etapas)
+    let listaEtapas = etapas
 
-    // Auto-select etapa if single
-    if (etapas.length === 1) {
-      setForm(p => ({ ...p, etapa_ensino_id: etapas[0].id }))
-      const subs = await getSubetapasDaEtapa(etapas[0].id)
-      setSubetapasDisponiveis(subs)
+    // Fallback: a etapa da turma pode estar inativada (filtrada em
+    // getEtapasDaTurma) — busca direta pela etapa canônica da turma
+    // para não travar o cadastro
+    if (listaEtapas.length === 0) {
+      const etapaIdCanonica =
+        (turmaSelecionada as any)?.etapa_ensino_id ||
+        turmaSelecionada?.etapas_ensino_ids?.[0]
+      if (etapaIdCanonica) {
+        const extra = await getEtapaById(etapaIdCanonica)
+        if (extra) listaEtapas = [extra]
+      }
+    }
+    setEtapasDisponiveis(listaEtapas)
+
+    // Turma comum (não multietapa): a etapa é a da turma — sempre
+    // preenchida automaticamente, pois o campo fica desabilitado.
+    // Turma multietapa: preenche sozinha só quando há opção única.
+    if (!turmaSelecionada?.multietapa || listaEtapas.length === 1) {
+      const etapaUnica = listaEtapas[0]
+      if (etapaUnica) {
+        setForm(p => ({ ...p, etapa_ensino_id: etapaUnica.id }))
+        const subs = await getSubetapasDaEtapa(etapaUnica.id)
+        setSubetapasDisponiveis(subs)
+      }
     }
   }
 
@@ -546,6 +574,19 @@ export default function MatriculaCadastroContent({ searchParams }: { searchParam
               dados_complementares: m.dados_complementares,
             }))
           )
+
+          // Faturamento: saída encerra obrigação de cobrança (spec 043 §18)
+          if (
+            cancelarFuturasFaturamento &&
+            movimentacoes.some(m => TIPOS_SAIDA_FATURAMENTO.includes(m.tipo))
+          ) {
+            try {
+              const r = await tratarSaidaMatricula(editId, true, pessoaId || null)
+              if (r.canceladas > 0) toast.success(`${r.canceladas} mensalidade(s) futura(s) cancelada(s)`)
+            } catch {
+              toast.error('Movimentação salva, mas houve falha ao cancelar mensalidades futuras')
+            }
+          }
         }
 
         toast.success('Matrícula atualizada')
@@ -740,8 +781,12 @@ export default function MatriculaCadastroContent({ searchParams }: { searchParam
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  {['Não recebe escolarização fora da escola', 'Em domicílio', 'Em hospital'].map(op => (
-                    <SelectItem key={op} value={op}>{op}</SelectItem>
+                  {[
+                    { value: '1', label: 'Não recebe escolarização fora da escola' },
+                    { value: '2', label: 'Em domicílio' },
+                    { value: '3', label: 'Em hospital' },
+                  ].map(op => (
+                    <SelectItem key={op.value} value={op.value}>{op.label}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
@@ -875,6 +920,13 @@ export default function MatriculaCadastroContent({ searchParams }: { searchParam
               </Button>
             </div>
             )}
+            <label className="flex items-center gap-2 text-[13px] text-muted-foreground mt-2">
+              <Checkbox
+                checked={cancelarFuturasFaturamento}
+                onCheckedChange={v => setCancelarFuturasFaturamento(v === true)}
+              />
+              Em caso de saída (transferência, desistência, óbito), cancelar mensalidades futuras não pagas
+            </label>
 
             {/* Histórico de movimentações */}
             {movimentacoes.length > 0 && (

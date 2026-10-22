@@ -7,12 +7,11 @@ import { useTabActive } from '@/lib/tab-params'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Label } from '@/components/ui/label'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { PageContainer } from '@/components/layout/page-container'
 import { PageHeader } from '@/components/layout/page-header'
 import { PageSection } from '@/components/layout/page-section'
-import { FilterBar } from '@/components/layout/filter-bar'
+import { FilterBar, FilterField } from '@/components/layout/filter-bar'
 import { EmptyState } from '@/components/ui/empty-state'
 import { StatusBadge } from '@/components/feedback/status-badge'
 import { ConfirmDialog } from '@/components/feedback/confirm-dialog'
@@ -107,27 +106,26 @@ export default function MetodosAvaliacaoPage() {
         />
 
         <PageSection variant="compact" title="Filtros" className="mb-6">
-        <FilterBar searchValue={search} onSearchChange={setSearch} searchPlaceholder="Buscar por nome..." searchClassName="flex-none w-1/3 min-w-[220px]">
+        <FilterBar searchValue={search} onSearchChange={setSearch} searchPlaceholder="Buscar por nome..." searchLabel="Buscar" searchClassName="flex-none w-1/3 min-w-[220px]">
           {isSuperAdmin && allSchools.length > 0 && (
-            <Select value={selectedSchoolId ?? ''} onValueChange={(v) => setSelectedSchoolId(v || null)}>
-              <SelectTrigger className="w-auto min-w-[200px] h-9 border-border">
-                <SelectValue placeholder="Selecione uma Escola" />
-              </SelectTrigger>
-              <SelectContent>
-                {allSchools.map((s: any) => <SelectItem key={s.id} value={s.id}>{s.nome_escola}</SelectItem>)}
-              </SelectContent>
-            </Select>
+            <FilterField label="Unidade Escolar">
+              <Select value={selectedSchoolId ?? ''} onValueChange={(v) => setSelectedSchoolId(v || null)}>
+                <SelectTrigger className="w-auto min-w-[200px] h-9 border-border">
+                  <SelectValue placeholder="Selecione uma Escola" />
+                </SelectTrigger>
+                <SelectContent>
+                  {allSchools.map((s: any) => <SelectItem key={s.id} value={s.id}>{s.nome_escola}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </FilterField>
           )}
+          <FilterField label="Status">
+            <div className="flex gap-1">
+              <Button size="sm" variant={statusFilter === 'ativos' ? 'default' : 'outline'} onClick={() => setStatusFilter('ativos')}>Ativos</Button>
+              <Button size="sm" variant={statusFilter === 'inativos' ? 'default' : 'outline'} onClick={() => setStatusFilter('inativos')}>Inativos</Button>
+            </div>
+          </FilterField>
         </FilterBar>
-        <div className="flex items-end gap-4 flex-wrap mt-3">
-          <div>
-            <Label className="text-xs text-muted-foreground mb-1 block">Status</Label>
-          <div className="flex gap-1">
-            <Button size="sm" variant={statusFilter === 'ativos' ? 'default' : 'outline'} onClick={() => setStatusFilter('ativos')}>Ativos</Button>
-            <Button size="sm" variant={statusFilter === 'inativos' ? 'default' : 'outline'} onClick={() => setStatusFilter('inativos')}>Inativos</Button>
-          </div>
-          </div>
-        </div>
         </PageSection>
 
         {isSuperAdmin && !selectedSchoolId ? (

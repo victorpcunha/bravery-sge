@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { PageContainer } from '@/components/layout/page-container'
 import { PageHeader } from '@/components/layout/page-header'
-import { FilterBar } from '@/components/layout/filter-bar'
+import { FilterBar, FilterField } from '@/components/layout/filter-bar'
 import { PageSection } from '@/components/layout/page-section'
 import { StatusBadge } from '@/components/feedback/status-badge'
 import { EmptyState } from '@/components/ui/empty-state'
@@ -75,8 +75,11 @@ export function ListPage() {
           searchValue={search}
           onSearchChange={setSearch}
           searchPlaceholder="Buscar por nome ou email..."
+          searchLabel="Buscar"
         >
-          <Button variant="outline" size="sm">Filtrar</Button>
+          <FilterField label="Ações">
+            <Button variant="outline" size="sm">Filtrar</Button>
+          </FilterField>
         </FilterBar>
       </PageSection>
 

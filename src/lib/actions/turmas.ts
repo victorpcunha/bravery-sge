@@ -275,10 +275,17 @@ export async function createTurma(data: {
   validarAtividadesTurma(data as any)
   const { disciplinas, multietapa_etapas, multietapa_subetapas_ids, ...turmaData } = data
 
+  // Mantém o JSONB etapas_ensino_ids sincronizado (etapa principal +
+  // extras multietapa) — leitores como Matrículas/Rematrículas o utilizam
+  const etapasSincronizadas = [...new Set(
+    [turmaData.etapa_ensino_id, ...(multietapa_etapas || [])].filter(Boolean)
+  )] as string[]
+
   const { data: turma, error } = await supabase
     .from('turmas')
     .insert({
       ...turmaData,
+      etapas_ensino_ids: etapasSincronizadas,
       educacao_bilingue_surdos: turmaData.educacao_bilingue_surdos || false,
       formacao_alternancia: turmaData.formacao_alternancia || false,
       multietapa: turmaData.multietapa || false,
@@ -372,6 +379,22 @@ export async function updateTurma(id: string, data: {
 
   const { error } = await supabase.from('turmas').update({
     ...updateData,
+    // Mantém o JSONB etapas_ensino_ids sincronizado quando a etapa
+    // principal ou as extras multietapa mudam
+    ...((updateData.etapa_ensino_id !== undefined || multietapa_etapas !== undefined)
+      ? {
+          etapas_ensino_ids: [...new Set(
+            [
+              updateData.etapa_ensino_id !== undefined
+                ? updateData.etapa_ensino_id
+                : (anterior as any)?.etapa_ensino_id,
+              ...(multietapa_etapas !== undefined
+                ? multietapa_etapas
+                : (((anterior as any)?.etapas_ensino_ids || []) as string[])),
+            ].filter(Boolean)
+          )] as string[],
+        }
+      : {}),
     multietapa_subetapas_ids: multietapa_subetapas_ids || (updateData as any).multietapa_subetapas_ids || [],
   }).eq('id', id)
   if (error) throw error

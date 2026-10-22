@@ -9,7 +9,7 @@ import { BookOpen, Lightbulb, ChevronDown, ChevronRight } from 'lucide-react'
 import { PageContainer } from '@/components/layout/page-container'
 import { PageHeader } from '@/components/layout/page-header'
 import { PageSection } from '@/components/layout/page-section'
-import { FilterBar } from '@/components/layout/filter-bar'
+import { FilterBar, FilterField } from '@/components/layout/filter-bar'
 
 const areaColor = 'from-primary to-secondary'
 
@@ -126,27 +126,33 @@ export default function CompetenciasHabilidadesPage() {
 
       <PageSection variant="compact" title="Filtros" className="mb-6">
         <FilterBar>
-          <div className="h-9 flex items-center px-3 bg-card border border-border rounded-sm text-sm text-foreground font-medium">
-            Ensino Médio
-          </div>
-          <Select value={selectedArea} onValueChange={setSelectedArea}>
-            <SelectTrigger className="w-auto min-w-[220px] h-9">
-              <SelectValue placeholder="Selecione uma área" />
-            </SelectTrigger>
-            <SelectContent position="popper" side="bottom" sideOffset={5}>
-              {areas.map((a: any) => <SelectItem key={a.id} value={a.id}>{a.nome}</SelectItem>)}
-            </SelectContent>
-          </Select>
-          {showComponente && (
-            <Select value={componente} onValueChange={setComponente}>
-              <SelectTrigger className="w-auto min-w-[180px] h-9">
-                <SelectValue />
+          <FilterField label="Tipo de Ensino">
+            <div className="h-9 flex items-center px-3 bg-card border border-border rounded-sm text-sm text-foreground font-medium">
+              Ensino Médio
+            </div>
+          </FilterField>
+          <FilterField label="Área do Conhecimento">
+            <Select value={selectedArea} onValueChange={setSelectedArea}>
+              <SelectTrigger className="w-auto min-w-[220px] h-9">
+                <SelectValue placeholder="Selecione uma área" />
               </SelectTrigger>
               <SelectContent position="popper" side="bottom" sideOffset={5}>
-                <SelectItem value="geral">Geral</SelectItem>
-                <SelectItem value="lingua_portuguesa">Língua Portuguesa</SelectItem>
+                {areas.map((a: any) => <SelectItem key={a.id} value={a.id}>{a.nome}</SelectItem>)}
               </SelectContent>
             </Select>
+          </FilterField>
+          {showComponente && (
+            <FilterField label="Componente">
+              <Select value={componente} onValueChange={setComponente}>
+                <SelectTrigger className="w-auto min-w-[180px] h-9">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent position="popper" side="bottom" sideOffset={5}>
+                  <SelectItem value="geral">Geral</SelectItem>
+                  <SelectItem value="lingua_portuguesa">Língua Portuguesa</SelectItem>
+                </SelectContent>
+              </Select>
+            </FilterField>
           )}
           {selectedArea && totalHabilidades > 0 && (
             <span className="inline-flex items-center gap-2 rounded-lg bg-primary px-3 py-1.5 shadow-sm">

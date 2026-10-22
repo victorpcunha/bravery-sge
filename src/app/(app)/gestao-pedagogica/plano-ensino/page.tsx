@@ -15,7 +15,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { PageContainer } from '@/components/layout/page-container'
 import { PageHeader } from '@/components/layout/page-header'
 import { PageSection } from '@/components/layout/page-section'
-import { FilterBar } from '@/components/layout/filter-bar'
+import { FilterBar, FilterField } from '@/components/layout/filter-bar'
 import { EmptyState } from '@/components/ui/empty-state'
 import { StatusBadge } from '@/components/feedback/status-badge'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -157,32 +157,36 @@ export default function PlanoEnsinoPage() {
       <PageSection variant="compact" title="Filtros" className="mb-6">
         <FilterBar>
           {isSuperAdmin && allSchools.length > 0 && (
-            <Select
-              value={selectedSchoolId ?? '__none__'}
-              onValueChange={(v) => setSelectedSchoolId(v === '__none__' ? null : v)}
-            >
-              <SelectTrigger className="w-auto min-w-[200px] h-9">
-                <SelectValue placeholder="Selecione uma escola" />
+            <FilterField label="Unidade Escolar">
+              <Select
+                value={selectedSchoolId ?? '__none__'}
+                onValueChange={(v) => setSelectedSchoolId(v === '__none__' ? null : v)}
+              >
+                <SelectTrigger className="w-auto min-w-[200px] h-9">
+                  <SelectValue placeholder="Selecione uma escola" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="__none__" disabled>Selecione uma escola</SelectItem>
+                  {allSchools.map(s => (
+                    <SelectItem key={s.id} value={s.id}>{s.nome_escola}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </FilterField>
+          )}
+
+          <FilterField label="Ano Letivo">
+            <Select value={anoLetivoId} onValueChange={setAnoLetivoId}>
+              <SelectTrigger className="w-auto min-w-[160px] h-9" disabled={!effectiveSchoolId}>
+                <SelectValue placeholder="Ano letivo" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="__none__" disabled>Selecione uma escola</SelectItem>
-                {allSchools.map(s => (
-                  <SelectItem key={s.id} value={s.id}>{s.nome_escola}</SelectItem>
+                {anosLetivos.map((a: any) => (
+                  <SelectItem key={a.id} value={a.id}>{a.descricao || a.ano}</SelectItem>
                 ))}
               </SelectContent>
             </Select>
-          )}
-
-          <Select value={anoLetivoId} onValueChange={setAnoLetivoId}>
-            <SelectTrigger className="w-auto min-w-[160px] h-9" disabled={!effectiveSchoolId}>
-              <SelectValue placeholder="Ano letivo" />
-            </SelectTrigger>
-            <SelectContent>
-              {anosLetivos.map((a: any) => (
-                <SelectItem key={a.id} value={a.id}>{a.descricao || a.ano}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          </FilterField>
         </FilterBar>
       </PageSection>
 

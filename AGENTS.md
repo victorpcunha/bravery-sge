@@ -337,6 +337,14 @@ Sistema de Gestão Escolar completo: turmas, quadro de aulas, indicadores de ava
   - **Backfill legados** (P2): `scripts/seed-feriados-existentes.mjs` (REST + service_role, `--dry-run`, idempotente, com auditoria)
   - **Verificado**: `tsc` limpo + `next build` verde; QA vivo do quickstart §1–§6 pendente de ambiente
   - Notas: 0 migrations; 0 novas deps npm
+- **Gestão de Faturamento (spec 043, implementada 2026-09-30)**:
+  - Spec + plan + research + data-model + contracts + quickstart + tasks em `specs/043-gestao-faturamento/`
+  - **Módulo próprio top-level** `Faturamento` (Visão Geral `/faturamento`, Cobranças `/faturamento/cobrancas`, Configuração `/faturamento/configuracao`); sidebar + 3 módulos de aba (`faturamento`, `faturamento-cobrancas`, `faturamento-configuracao` — 1 aba por tela, padrão dos demais módulos); recursos `faturamento.visao-geral/cobrancas/configuracao` com auto-grant de `gestao-academica.matriculas`
+  - **Domínio**: Matrícula → Plano (`faturamento_planos`, UNIQUE `matricula_id`, `config_origem_id` NULL = exceção, responsável único via `responsavel_alunos`) → Mensalidades (`faturamento_mensalidades`, UNIQUE por competência, `pendente/pago/cancelado/isento`; "Vencida" derivada); config por escola/ano com `etapa_ids[]` (NULL = geral) + resolução mais-específica-vence
+  - **Fluxo**: `simularGeracao` (só leitura) → wizard abrangência→revisão→confirmar → `gerarPlanosEmMassa` (preserva por padrão, `substituir` com confirmação dupla, inserts em lote, auditoria só agregada); baixa manual em lote + isenção/cancelamento com motivo; `tratarSaidaMatricula` via checkbox no diálogo de movimentações (cancela pendentes com vencimento > `data_saida`, preserva pagas, plano → `encerrado`); `PlanoDialog` acessível da listagem de matrículas (botão Financeiro/Wallet)
+  - **Integração futura**: colunas `asaas_*` NULL e invisíveis (FR-024); sem provedor no MVP
+  - **Verificado**: `tsc` limpo + `next build` verde (59 rotas); lint só com achados do padrão pré-existente (`any`, set-state-in-effect); migrations `faturamento.sql` + `patch_recursos_faturamento.sql` **pendentes de aplicação via SQL Editor** (T003); QA do quickstart §1–§7 pendente de ambiente
+  - Notas: 2 migrations (a aplicar); 0 novas deps npm
 
 ## Known Issues
 - All server actions use `'use server'` + `getSupabaseAdmin()` (service_role, bypass RLS)
@@ -522,9 +530,9 @@ Nos PDFs react-pdf (sem acesso a tokens CSS), use SEMPRE `src/lib/pdf-palette.ts
 <!-- END:project-summary -->
 
 <!-- SPECKIT START -->
-Current plan: specs/042-feriados-nacionais/plan.md
-Feature: Feriados Nacionais Automáticos no Calendário
-Spec: specs/042-feriados-nacionais/spec.md
-Data model: specs/042-feriados-nacionais/data-model.md
-Quickstart: specs/042-feriados-nacionais/quickstart.md
+Current plan: specs/043-gestao-faturamento/plan.md
+Feature: Gestão de Faturamento (Matrícula → Plano → Mensalidades, geração em massa, baixa manual)
+Spec: specs/043-gestao-faturamento/spec.md
+Data model: specs/043-gestao-faturamento/data-model.md
+Quickstart: specs/043-gestao-faturamento/quickstart.md
 <!-- SPECKIT END -->

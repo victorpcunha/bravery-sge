@@ -18,7 +18,7 @@ import { PessoaForm } from './PessoaForm'
 import { toast } from 'sonner'
 import { PageContainer } from '@/components/layout/page-container'
 import { PageHeader } from '@/components/layout/page-header'
-import { FilterBar } from '@/components/layout/filter-bar'
+import { FilterBar, FilterField } from '@/components/layout/filter-bar'
 import { PageSection } from '@/components/layout/page-section'
 import { StatusBadge } from '@/components/feedback/status-badge'
 import { ConfirmDialog } from '@/components/feedback/confirm-dialog'
@@ -272,21 +272,24 @@ export default function UsuariosPage() {
             searchValue={search}
             onSearchChange={setSearch}
             searchPlaceholder="Buscar por nome..."
+            searchLabel="Buscar"
           >
             {isSuperAdmin && allSchools.length > 0 && (
-              <Select
-                value={selectedSchoolId ?? ''}
-                onValueChange={(v) => setSelectedSchoolId(v || null)}
-              >
-                <SelectTrigger className="w-auto min-w-[180px] h-9">
-                  <SelectValue placeholder="Selecione uma escola" />
-                </SelectTrigger>
-                <SelectContent>
-                  {allSchools.map(s => (
-                    <SelectItem key={s.id} value={s.id}>{s.nome_escola}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <FilterField label="Unidade Escolar">
+                <Select
+                  value={selectedSchoolId ?? ''}
+                  onValueChange={(v) => setSelectedSchoolId(v || null)}
+                >
+                  <SelectTrigger className="w-auto min-w-[180px] h-9">
+                    <SelectValue placeholder="Selecione uma escola" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {allSchools.map(s => (
+                      <SelectItem key={s.id} value={s.id}>{s.nome_escola}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </FilterField>
             )}
             <div className="flex flex-col gap-1.5">
               <Label className="text-[13px] font-semibold uppercase tracking-wider text-muted-foreground">Tipo</Label>

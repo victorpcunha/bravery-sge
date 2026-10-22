@@ -152,7 +152,7 @@ export async function rematricularLote(input: {
   const turmaIds = [...new Set(itens.map(i => i.turmaDestinoId))]
   const { data: turmasDest } = await supabase
     .from('turmas')
-    .select('id, nome, ano_letivo_id, school_id, ativo, etapas_ensino_ids')
+    .select('id, nome, ano_letivo_id, school_id, ativo, etapa_ensino_id, etapas_ensino_ids')
     .in('id', turmaIds)
   const turmaMap = new Map(((turmasDest || []) as any[]).map(t => [t.id as string, t]))
 
@@ -203,7 +203,7 @@ export async function rematricularLote(input: {
       })
       continue
     }
-    if (!((turma.etapas_ensino_ids || []) as string[]).includes(item.etapaDestinoId)) {
+    if (!((turma.etapa_ensino_id === item.etapaDestinoId) || ((turma.etapas_ensino_ids || []) as string[]).includes(item.etapaDestinoId))) {
       falhas.push({
         alunoId: item.alunoId, nome,
         motivo: `A turma ${turma.nome} não pertence à etapa de destino selecionada.`,
@@ -240,7 +240,7 @@ export async function rematricularLote(input: {
         etapa_ensino_id: item.etapaDestinoId,
         data_matricula: dataMatricula,
         forma_ingresso: 'Normal',
-        escolarizacao_externa: 'Não recebe escolarização fora da escola',
+        escolarizacao_externa: '1',
         observacoes: origemDesc || null,
       }, pessoaId)
       idsNoDestino.add(item.alunoId)

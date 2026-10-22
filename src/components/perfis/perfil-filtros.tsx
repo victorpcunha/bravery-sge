@@ -2,7 +2,7 @@
 
 import { Label } from '@/components/ui/label'
 import { ClickablePill } from '@/components/ui/clickable-pill'
-import { FilterBar } from '@/components/layout/filter-bar'
+import { FilterBar, FilterField } from '@/components/layout/filter-bar'
 
 const SITUACAO_OPCOES = [
   { value: 'todas', label: 'Todos' },
@@ -24,8 +24,9 @@ export function PerfilFiltros({ search, onSearchChange, situacao, onSituacaoChan
       searchValue={search}
       onSearchChange={onSearchChange}
       searchPlaceholder="Buscar por nome do perfil..."
+      searchLabel="Buscar"
     >
-      {escolaFiltro}
+      {escolaFiltro ? <FilterField label="Unidade Escolar">{escolaFiltro}</FilterField> : null}
       <div className="flex flex-col gap-1.5">
         <Label className="text-[13px] font-semibold uppercase tracking-wider text-muted-foreground">Situação</Label>
         <div className="flex gap-2 flex-wrap">

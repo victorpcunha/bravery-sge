@@ -40,7 +40,9 @@ interface GrupoEtapas {
   etapas: Etapa[]
 }
 
-const gruposEtapas: GrupoEtapas[] = [
+export type { Etapa as EtapaCatalogo, GrupoEtapas as GrupoEtapasCatalogo }
+
+export const gruposEtapas: GrupoEtapas[] = [
   {
     titulo: 'Educação Infantil',
     etapas: [

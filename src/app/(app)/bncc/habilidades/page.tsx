@@ -12,7 +12,7 @@ import { useAuth } from '@/components/providers/auth-provider'
 import { PageContainer } from '@/components/layout/page-container'
 import { PageHeader } from '@/components/layout/page-header'
 import { PageSection } from '@/components/layout/page-section'
-import { FilterBar } from '@/components/layout/filter-bar'
+import { FilterBar, FilterField } from '@/components/layout/filter-bar'
 import { SearchInput } from '@/components/layout/search-input'
 import { cn } from '@/lib/utils'
 
@@ -235,33 +235,39 @@ export default function HabilidadesPage() {
 
       <PageSection variant="compact" title="Filtros" className="mb-6">
         <FilterBar>
-          <Select value={disciplina} onValueChange={setDisciplina}>
-            <SelectTrigger className="w-auto min-w-[200px] h-9">
-              <SelectValue placeholder="Selecione uma disciplina" />
-            </SelectTrigger>
-            <SelectContent position="popper" side="bottom" sideOffset={5}>
-              {disciplinasList.map(d => (
-                <SelectItem key={d.id} value={d.nome}>{d.nome}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <FilterField label="Disciplina">
+            <Select value={disciplina} onValueChange={setDisciplina}>
+              <SelectTrigger className="w-auto min-w-[200px] h-9">
+                <SelectValue placeholder="Selecione uma disciplina" />
+              </SelectTrigger>
+              <SelectContent position="popper" side="bottom" sideOffset={5}>
+                {disciplinasList.map(d => (
+                  <SelectItem key={d.id} value={d.nome}>{d.nome}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </FilterField>
 
-          <Select value={etapa} onValueChange={setEtapa}>
-            <SelectTrigger className="w-auto min-w-[200px] h-9">
-              <SelectValue placeholder="Selecione uma Etapa de Ensino" />
-            </SelectTrigger>
-            <SelectContent position="popper" side="bottom" sideOffset={5}>
-              {etapasList.map(e => (
-                <SelectItem key={e.id} value={e.etapa_nome}>{e.etapa_nome}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <FilterField label="Etapa de Ensino">
+            <Select value={etapa} onValueChange={setEtapa}>
+              <SelectTrigger className="w-auto min-w-[200px] h-9">
+                <SelectValue placeholder="Selecione uma Etapa de Ensino" />
+              </SelectTrigger>
+              <SelectContent position="popper" side="bottom" sideOffset={5}>
+                {etapasList.map(e => (
+                  <SelectItem key={e.id} value={e.etapa_nome}>{e.etapa_nome}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </FilterField>
 
-          <SearchInput
-            value={searchTerm}
-            onChange={setSearchTerm}
-            placeholder="Buscar por código ou descrição..."
-          />
+          <FilterField label="Buscar" className="flex-1 min-w-[200px]">
+            <SearchInput
+              value={searchTerm}
+              onChange={setSearchTerm}
+              placeholder="Buscar por código ou descrição..."
+            />
+          </FilterField>
         </FilterBar>
       </PageSection>
 

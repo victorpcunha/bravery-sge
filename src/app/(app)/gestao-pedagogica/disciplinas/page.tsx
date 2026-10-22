@@ -6,6 +6,7 @@ import { useAuth } from '@/components/providers/auth-provider'
 import { PageContainer } from '@/components/layout/page-container'
 import { PageHeader } from '@/components/layout/page-header'
 import { PageSection } from '@/components/layout/page-section'
+import { FilterBar, FilterField } from '@/components/layout/filter-bar'
 import { StatusBadge } from '@/components/feedback/status-badge'
 import { ConfirmDialog } from '@/components/feedback/confirm-dialog'
 import { EmptyState } from '@/components/ui/empty-state'
@@ -201,17 +202,15 @@ export default function DisciplinasPage() {
       />
 
       <PageSection variant="compact" title="Filtros" className="mb-6">
-        <div className="flex items-end gap-4 flex-wrap">
-          <div className="flex-1 min-w-[180px] max-w-[280px]">
-            <Label className="text-xs text-muted-foreground mb-1 block">Buscar</Label>
-            <div className="relative">
-              <svg className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8" /><path d="m21 21-4.3-4.3" /></svg>
-              <input type="text" value={searchTerm} onChange={e => setSearchTerm(e.target.value)} placeholder="Buscar por nome ou sigla..." className="h-9 w-full rounded-md border border-border bg-transparent pl-10 pr-3 py-1 text-sm shadow-xs transition-[color,box-shadow] outline-none placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50" />
-            </div>
-          </div>
+        <FilterBar
+          searchValue={searchTerm}
+          onSearchChange={setSearchTerm}
+          searchPlaceholder="Buscar por nome ou sigla..."
+          searchLabel="Buscar"
+          searchClassName="max-w-[280px]"
+        >
           {isSuperAdmin && allSchools.length > 0 && (
-            <div>
-              <Label className="text-xs text-muted-foreground mb-1 block">Escola</Label>
+            <FilterField label="Unidade Escolar">
               <Select value={selectedSchoolId ?? ''} onValueChange={v => setSelectedSchoolId(v || null)}>
                 <SelectTrigger className="w-auto min-w-[200px] h-9 border-border">
                   <SelectValue placeholder="Selecione uma Escola" />
@@ -220,10 +219,9 @@ export default function DisciplinasPage() {
                   {allSchools.map((s: any) => <SelectItem key={s.id} value={s.id}>{s.nome_escola}</SelectItem>)}
                 </SelectContent>
               </Select>
-            </div>
+            </FilterField>
           )}
-          <div>
-            <Label className="text-xs text-muted-foreground mb-1 block">Status</Label>
+          <FilterField label="Status">
             <Select value={filtroAtivo} onValueChange={v => setFiltroAtivo(v as any)}>
               <SelectTrigger className="w-auto min-w-[130px] h-9 border-border">
                 <SelectValue placeholder="Todas" />
@@ -234,9 +232,8 @@ export default function DisciplinasPage() {
                 <SelectItem value="inativos">Inativas</SelectItem>
               </SelectContent>
             </Select>
-          </div>
-          <div>
-            <Label className="text-xs text-muted-foreground mb-1 block">Diretriz</Label>
+          </FilterField>
+          <FilterField label="Diretriz">
             <Select value={diretrizFilter} onValueChange={setDiretrizFilter}>
               <SelectTrigger className="w-auto min-w-[150px] h-9 border-border">
                 <SelectValue placeholder="Todas" />
@@ -247,8 +244,8 @@ export default function DisciplinasPage() {
                 <SelectItem value="parte_diversificada">Parte Diversificada</SelectItem>
               </SelectContent>
             </Select>
-          </div>
-        </div>
+          </FilterField>
+        </FilterBar>
       </PageSection>
 
       <PageSection

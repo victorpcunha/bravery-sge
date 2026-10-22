@@ -15,7 +15,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { PageContainer } from '@/components/layout/page-container'
 import { PageHeader } from '@/components/layout/page-header'
 import { PageSection } from '@/components/layout/page-section'
-import { FilterBar } from '@/components/layout/filter-bar'
+import { FilterBar, FilterField } from '@/components/layout/filter-bar'
 import { EmptyState } from '@/components/ui/empty-state'
 import { ClickablePill } from '@/components/ui/clickable-pill'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -249,30 +249,33 @@ function TurmaPlanosContent() {
 
       <PageSection variant="compact" title="Filtros" className="mb-6">
         <FilterBar>
-          <Select value={disciplinaFiltro} onValueChange={setDisciplinaFiltro}>
-            <SelectTrigger className="w-auto min-w-[190px] h-9">
-              <SelectValue placeholder="Selecione uma disciplina" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="__all__">Todas as disciplinas</SelectItem>
-              {disciplinas.map((d: any) => (
-                <SelectItem key={d.matriz_disciplina_id} value={d.matriz_disciplina_id}>{d.nome}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <FilterField label="Disciplina">
+            <Select value={disciplinaFiltro} onValueChange={setDisciplinaFiltro}>
+              <SelectTrigger className="w-auto min-w-[190px] h-9">
+                <SelectValue placeholder="Selecione uma disciplina" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="__all__">Todas as disciplinas</SelectItem>
+                {disciplinas.map((d: any) => (
+                  <SelectItem key={d.matriz_disciplina_id} value={d.matriz_disciplina_id}>{d.nome}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </FilterField>
 
-          <div className="flex flex-wrap items-center gap-2">
-            <span className="text-[13px] font-medium text-muted-foreground">Períodos:</span>
-            {periodosDisponiveis.map(per => (
-              <ClickablePill
-                key={per}
-                label={`${per}º`}
-                title={`${per}º Período`}
-                active={periodosSelecionados.includes(per)}
-                onClick={() => togglePeriodo(per)}
-              />
-            ))}
-          </div>
+          <FilterField label="Períodos">
+            <div className="flex flex-wrap items-center gap-2">
+              {periodosDisponiveis.map(per => (
+                <ClickablePill
+                  key={per}
+                  label={`${per}º`}
+                  title={`${per}º Período`}
+                  active={periodosSelecionados.includes(per)}
+                  onClick={() => togglePeriodo(per)}
+                />
+              ))}
+            </div>
+          </FilterField>
         </FilterBar>
       </PageSection>
 

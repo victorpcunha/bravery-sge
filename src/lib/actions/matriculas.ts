@@ -144,6 +144,23 @@ export async function getMatricula(id: string, schoolId?: string | null) {
 // 3. Mesmo entre tipos diferentes, Turno + Dias de Funcionamento não podem se
 //    sobrepor (conflito de horário).
 
+// Normalizadores INEP: escolarizacao_externa e transporte_responsavel são
+// VARCHAR(1) (códigos 1/2/3), mas chamadores podem enviar os rótulos
+// descritivos legados — converte na borda para nunca estourar a coluna.
+function codigoEscolarizacaoExterna(v: unknown): string {
+  const s = String(v ?? '').trim()
+  if (s === '2' || s === 'Em domicílio') return '2'
+  if (s === '3' || s === 'Em hospital') return '3'
+  return '1'
+}
+
+function codigoTransporteResponsavel(v: unknown): string {
+  const s = String(v ?? '').trim()
+  if (s === '2' || s === 'Municipal') return '2'
+  if (s === '3' || s === 'Estadual') return '3'
+  return '1'
+}
+
 type CategoriaTurma = 'curricular' | 'aee' | 'complementar' | 'outra'
 
 function classificarTurma(tiposTurma: unknown): CategoriaTurma {
@@ -280,9 +297,9 @@ export async function createMatricula(data: {
       data_matricula: data.data_matricula,
       codigo_matricula: proximoCodigo,
       forma_ingresso: data.forma_ingresso,
-      escolarizacao_externa: data.escolarizacao_externa,
+      escolarizacao_externa: codigoEscolarizacaoExterna(data.escolarizacao_externa),
       observacoes: data.observacoes || null,
-      transporte_responsavel: data.transporte_responsavel || '1',
+      transporte_responsavel: codigoTransporteResponsavel(data.transporte_responsavel),
       turma_multi: (data as any).turma_multi || null,
       carga_horaria_iftp: (data as any).carga_horaria_iftp || null,
       aee_funcao_cognitiva: (data as any).aee_funcao_cognitiva || false,
@@ -351,7 +368,15 @@ export async function updateMatricula(id: string, data: {
 
   const { error } = await supabase
     .from('academico_matriculas')
-    .update(data)
+    .update({
+      ...data,
+      ...(data.escolarizacao_externa !== undefined
+        ? { escolarizacao_externa: codigoEscolarizacaoExterna(data.escolarizacao_externa) }
+        : {}),
+      ...(data.transporte_responsavel !== undefined
+        ? { transporte_responsavel: codigoTransporteResponsavel(data.transporte_responsavel) }
+        : {}),
+    })
     .eq('id', id)
 
   if (error) throw error
@@ -568,7 +593,7 @@ export async function getAlunos(schoolId: string | null) {
 export async function getTurmasAtivas(schoolId: string | null, anoLetivoId: string) {
   let query = supabase
     .from('turmas')
-    .select('id, nome, codigo_inep, turnos, tipos_turma, etapas_ensino_ids, multietapa')
+    .select('id, nome, codigo_inep, turnos, tipos_turma, etapa_ensino_id, etapas_ensino_ids, multietapa')
     .eq('ano_letivo_id', anoLetivoId)
     .eq('ativo', true)
     .order('nome')
@@ -583,24 +608,38 @@ export async function getTurmasAtivas(schoolId: string | null, anoLetivoId: stri
 export async function getEtapasDaTurma(turmaId: string) {
   const { data: turma } = await supabase
     .from('turmas')
-    .select('etapas_ensino_ids, multietapa')
+    .select('etapa_ensino_id, etapas_ensino_ids, multietapa')
     .eq('id', turmaId)
     .single()
 
   if (!turma) return []
 
-  if (turma.etapas_ensino_ids && turma.etapas_ensino_ids.length > 0) {
-    const { data: etapas } = await supabase
-      .from('academico_etapas_ensino')
-      .select('id, etapa_nome')
-      .in('id', turma.etapas_ensino_ids)
-      .eq('ativa', true)
-      .order('etapa_nome')
-
-    return (etapas || []) as any[]
+  // União de todas as fontes: a etapa canônica (etapa_ensino_id, sempre
+  // gravada) + o JSONB legado (etapas_ensino_ids, nem sempre sincronizado)
+  // + as extras de turmas_multietapa
+  const ids = new Set<string>()
+  if ((turma as any).etapa_ensino_id) ids.add((turma as any).etapa_ensino_id)
+  for (const id of ((turma as any).etapas_ensino_ids || []) as string[]) {
+    if (id) ids.add(id)
+  }
+  const { data: multi } = await supabase
+    .from('turmas_multietapa')
+    .select('etapa_ensino_id')
+    .eq('turma_id', turmaId)
+  for (const m of (multi || []) as any[]) {
+    if (m.etapa_ensino_id) ids.add(m.etapa_ensino_id)
   }
 
-  return []
+  if (ids.size === 0) return []
+
+  const { data: etapas } = await supabase
+    .from('academico_etapas_ensino')
+    .select('id, etapa_nome')
+    .in('id', [...ids])
+    .eq('ativa', true)
+    .order('etapa_nome')
+
+  return (etapas || []) as any[]
 }
 
 export async function getSubetapasDaEtapa(etapaId: string) {

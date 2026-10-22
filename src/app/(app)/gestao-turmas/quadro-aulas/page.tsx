@@ -12,7 +12,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { PageContainer } from '@/components/layout/page-container'
 import { PageHeader } from '@/components/layout/page-header'
 import { PageSection } from '@/components/layout/page-section'
-import { FilterBar } from '@/components/layout/filter-bar'
+import { FilterBar, FilterField } from '@/components/layout/filter-bar'
 import { EmptyState } from '@/components/ui/empty-state'
 import { ConfirmDialog } from '@/components/feedback/confirm-dialog'
 import { StatusBadge } from '@/components/feedback/status-badge'
@@ -141,34 +141,39 @@ export default function QuadrosAulasPage() {
             searchValue={search}
             onSearchChange={setSearch}
             searchPlaceholder="Buscar por nome da turma..."
+            searchLabel="Buscar"
           >
             {isSuperAdmin && allSchools.length > 0 && (
-              <Select
-                value={selectedSchoolId ?? '__all__'}
-                onValueChange={(v) => setSelectedSchoolId(v === '__all__' ? null : v)}
-              >
-                <SelectTrigger className="w-auto min-w-[180px] h-9">
-                  <SelectValue placeholder="Todas as escolas" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="__all__">Todas as escolas</SelectItem>
-                  {allSchools.map((s: any) => (
-                    <SelectItem key={s.id} value={s.id}>{s.nome_escola}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <FilterField label="Unidade Escolar">
+                <Select
+                  value={selectedSchoolId ?? '__all__'}
+                  onValueChange={(v) => setSelectedSchoolId(v === '__all__' ? null : v)}
+                >
+                  <SelectTrigger className="w-auto min-w-[180px] h-9">
+                    <SelectValue placeholder="Todas as escolas" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="__all__">Todas as escolas</SelectItem>
+                    {allSchools.map((s: any) => (
+                      <SelectItem key={s.id} value={s.id}>{s.nome_escola}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </FilterField>
             )}
             {anosLetivos.length > 0 && (
-              <Select value={anoFiltro} onValueChange={setAnoFiltro}>
-                <SelectTrigger className="w-auto min-w-[140px] h-9">
-                  <SelectValue placeholder="Ano letivo" />
-                </SelectTrigger>
-                <SelectContent>
-                  {anosLetivos.map((a: any) => (
-                    <SelectItem key={a.id} value={a.id}>{a.descricao}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <FilterField label="Ano Letivo">
+                <Select value={anoFiltro} onValueChange={setAnoFiltro}>
+                  <SelectTrigger className="w-auto min-w-[140px] h-9">
+                    <SelectValue placeholder="Ano letivo" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {anosLetivos.map((a: any) => (
+                      <SelectItem key={a.id} value={a.id}>{a.descricao}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </FilterField>
             )}
           </FilterBar>
         </PageSection>

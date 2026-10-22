@@ -10,7 +10,7 @@ import { getEtapasEnsino, type EtapaEnsino } from '@/lib/actions/etapas-ensino'
 import { PageContainer } from '@/components/layout/page-container'
 import { PageHeader } from '@/components/layout/page-header'
 import { PageSection } from '@/components/layout/page-section'
-import { FilterBar } from '@/components/layout/filter-bar'
+import { FilterBar, FilterField } from '@/components/layout/filter-bar'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -124,60 +124,69 @@ export default function DiarioClassePage() {
           searchValue={search}
           onSearchChange={setSearch}
           searchPlaceholder="Buscar turma por nome..."
+          searchLabel="Buscar"
         >
           {isSuperAdmin && allSchools.length > 0 && (
-            <Select
-              value={selectedSchoolId ?? '__none__'}
-              onValueChange={(v) => setSelectedSchoolId(v === '__none__' ? null : v)}
-            >
-              <SelectTrigger className="w-auto min-w-[200px] h-9">
-                <SelectValue placeholder="Selecione uma escola" />
+            <FilterField label="Unidade Escolar">
+              <Select
+                value={selectedSchoolId ?? '__none__'}
+                onValueChange={(v) => setSelectedSchoolId(v === '__none__' ? null : v)}
+              >
+                <SelectTrigger className="w-auto min-w-[200px] h-9">
+                  <SelectValue placeholder="Selecione uma escola" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="__none__" disabled>Selecione uma escola</SelectItem>
+                  {allSchools.map(s => (
+                    <SelectItem key={s.id} value={s.id}>{s.nome_escola}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </FilterField>
+          )}
+
+          <FilterField label="Ano Letivo">
+            <Select value={anoLetivoId} onValueChange={setAnoLetivoId}>
+              <SelectTrigger className="w-auto min-w-[160px] h-9">
+                <SelectValue placeholder="Ano letivo" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="__none__" disabled>Selecione uma escola</SelectItem>
-                {allSchools.map(s => (
-                  <SelectItem key={s.id} value={s.id}>{s.nome_escola}</SelectItem>
+                {anosLetivos.map((a: any) => (
+                  <SelectItem key={a.id} value={a.id}>{a.descricao || a.ano}</SelectItem>
                 ))}
               </SelectContent>
             </Select>
-          )}
+          </FilterField>
 
-          <Select value={anoLetivoId} onValueChange={setAnoLetivoId}>
-            <SelectTrigger className="w-auto min-w-[160px] h-9">
-              <SelectValue placeholder="Ano letivo" />
-            </SelectTrigger>
-            <SelectContent>
-              {anosLetivos.map((a: any) => (
-                <SelectItem key={a.id} value={a.id}>{a.descricao || a.ano}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <FilterField label="Etapa de Ensino">
+            <Select value={etapaFiltro} onValueChange={(v) => setEtapaFiltro(v === '__all__' ? '' : v)}>
+              <SelectTrigger className="w-auto min-w-[180px] h-9">
+                <SelectValue placeholder="Etapa de ensino" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="__all__">Todas as etapas</SelectItem>
+                {etapaTiposUnicos.map(e => (
+                  <SelectItem key={e.etapa_tipo} value={e.etapa_tipo}>
+                    {etapaTipoLabels[e.etapa_tipo] || e.etapa_tipo}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </FilterField>
 
-          <Select value={etapaFiltro} onValueChange={(v) => setEtapaFiltro(v === '__all__' ? '' : v)}>
-            <SelectTrigger className="w-auto min-w-[180px] h-9">
-              <SelectValue placeholder="Etapa de ensino" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="__all__">Todas as etapas</SelectItem>
-              {etapaTiposUnicos.map(e => (
-                <SelectItem key={e.etapa_tipo} value={e.etapa_tipo}>
-                  {etapaTipoLabels[e.etapa_tipo] || e.etapa_tipo}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-
-          <Select value={turnoFiltro} onValueChange={(v) => setTurnoFiltro(v === '__all__' ? '' : v)}>
-            <SelectTrigger className="w-auto min-w-[150px] h-9">
-              <SelectValue placeholder="Turno" />
-            </SelectTrigger>
-            <SelectContent>
+          <FilterField label="Turno">
+            <Select value={turnoFiltro} onValueChange={(v) => setTurnoFiltro(v === '__all__' ? '' : v)}>
+              <SelectTrigger className="w-auto min-w-[150px] h-9">
+                <SelectValue placeholder="Turno" />
+              </SelectTrigger>
+              <SelectContent>
               <SelectItem value="__all__">Todos os turnos</SelectItem>
               {TURNOS.map(t => (
                 <SelectItem key={t} value={t}>{t}</SelectItem>
               ))}
             </SelectContent>
           </Select>
+          </FilterField>
         </FilterBar>
       </PageSection>
 

@@ -11,7 +11,7 @@ import { useAuth } from '@/components/providers/auth-provider'
 import { PageContainer } from '@/components/layout/page-container'
 import { PageHeader } from '@/components/layout/page-header'
 import { PageSection } from '@/components/layout/page-section'
-import { FilterBar } from '@/components/layout/filter-bar'
+import { FilterBar, FilterField } from '@/components/layout/filter-bar'
 
 type EtapaEnsino = {
   id: string
@@ -220,74 +220,82 @@ export default function BNCCConsultaPage() {
 
       <PageSection variant="compact" title="Filtros" className="mb-6">
         <FilterBar>
-          <Select value={etapa} onValueChange={setEtapa}>
-            <SelectTrigger className="w-auto min-w-[240px] h-9">
-              <SelectValue placeholder="Selecione uma Etapa de Ensino" />
-            </SelectTrigger>
-            <SelectContent position="popper" side="bottom" sideOffset={5}>
-              {(() => {
-                const grupos: Record<string, EtapaEnsino[]> = {}
-                for (const e of etapas) {
-                  const chave = getBroadTipo(e.etapa_tipo)
-                  if (!grupos[chave]) grupos[chave] = []
-                  grupos[chave].push(e)
-                }
-                const labels: Record<string, string> = {
-                  infantil: 'Educação Infantil',
-                  fundamental: 'Ensino Fundamental',
-                  medio: 'Ensino Médio'
-                }
-                return Object.entries(grupos).flatMap(([tipo, lista]) => [
-                  <SelectGroup key={tipo}>
-                    <SelectLabel className="text-xs font-semibold text-muted-foreground uppercase tracking-wider px-2 py-1">
-                      {labels[tipo] || tipo}
-                    </SelectLabel>
-                    {lista.map(e => (
-                      <SelectItem key={e.id} value={e.etapa_nome}>{e.etapa_nome}</SelectItem>
-                    ))}
-                  </SelectGroup>
-                ])
-              })()}
-            </SelectContent>
-          </Select>
-
-          {tipo === 'infantil' && (
-            <Select value={faixaEtaria} onValueChange={setFaixaEtaria}>
-              <SelectTrigger className="w-auto min-w-[220px] h-9">
-                <SelectValue placeholder="Selecione uma faixa etária" />
+          <FilterField label="Etapa de Ensino">
+            <Select value={etapa} onValueChange={setEtapa}>
+              <SelectTrigger className="w-auto min-w-[240px] h-9">
+                <SelectValue placeholder="Selecione uma Etapa de Ensino" />
               </SelectTrigger>
               <SelectContent position="popper" side="bottom" sideOffset={5}>
-                {faixas.map(f => (
-                  <SelectItem key={f} value={f}>{f}</SelectItem>
-                ))}
+                {(() => {
+                  const grupos: Record<string, EtapaEnsino[]> = {}
+                  for (const e of etapas) {
+                    const chave = getBroadTipo(e.etapa_tipo)
+                    if (!grupos[chave]) grupos[chave] = []
+                    grupos[chave].push(e)
+                  }
+                  const labels: Record<string, string> = {
+                    infantil: 'Educação Infantil',
+                    fundamental: 'Ensino Fundamental',
+                    medio: 'Ensino Médio'
+                  }
+                  return Object.entries(grupos).flatMap(([tipo, lista]) => [
+                    <SelectGroup key={tipo}>
+                      <SelectLabel className="text-xs font-semibold text-muted-foreground uppercase tracking-wider px-2 py-1">
+                        {labels[tipo] || tipo}
+                      </SelectLabel>
+                      {lista.map(e => (
+                        <SelectItem key={e.id} value={e.etapa_nome}>{e.etapa_nome}</SelectItem>
+                      ))}
+                    </SelectGroup>
+                  ])
+                })()}
               </SelectContent>
             </Select>
+          </FilterField>
+
+          {tipo === 'infantil' && (
+            <FilterField label="Faixa Etária">
+              <Select value={faixaEtaria} onValueChange={setFaixaEtaria}>
+                <SelectTrigger className="w-auto min-w-[220px] h-9">
+                  <SelectValue placeholder="Selecione uma faixa etária" />
+                </SelectTrigger>
+                <SelectContent position="popper" side="bottom" sideOffset={5}>
+                  {faixas.map(f => (
+                    <SelectItem key={f} value={f}>{f}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </FilterField>
           )}
 
           {tipo === 'fundamental' && (
-            <Select value={disciplina} onValueChange={setDisciplina}>
-              <SelectTrigger className="w-auto min-w-[200px] h-9">
-                <SelectValue placeholder="Selecione uma disciplina" />
-              </SelectTrigger>
-              <SelectContent position="popper" side="bottom" sideOffset={5}>
-                {disciplinas.map(d => (
-                  <SelectItem key={d.id} value={d.nome}>{d.nome}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <FilterField label="Disciplina">
+              <Select value={disciplina} onValueChange={setDisciplina}>
+                <SelectTrigger className="w-auto min-w-[200px] h-9">
+                  <SelectValue placeholder="Selecione uma disciplina" />
+                </SelectTrigger>
+                <SelectContent position="popper" side="bottom" sideOffset={5}>
+                  {disciplinas.map(d => (
+                    <SelectItem key={d.id} value={d.nome}>{d.nome}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </FilterField>
           )}
 
           {tipo === 'medio' && (
-            <Select value={areaId} onValueChange={setAreaId}>
-              <SelectTrigger className="w-auto min-w-[200px] h-9">
-                <SelectValue placeholder="Selecione uma área" />
-              </SelectTrigger>
-              <SelectContent position="popper" side="bottom" sideOffset={5}>
-                {areas.map(a => (
-                  <SelectItem key={a.id} value={a.id}>{a.nome}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <FilterField label="Área do Conhecimento">
+              <Select value={areaId} onValueChange={setAreaId}>
+                <SelectTrigger className="w-auto min-w-[200px] h-9">
+                  <SelectValue placeholder="Selecione uma área" />
+                </SelectTrigger>
+                <SelectContent position="popper" side="bottom" sideOffset={5}>
+                  {areas.map(a => (
+                    <SelectItem key={a.id} value={a.id}>{a.nome}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </FilterField>
           )}
 
           {dados.length > 0 && (
