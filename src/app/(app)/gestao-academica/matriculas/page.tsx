@@ -60,6 +60,14 @@ export default function AlunosMatriculadosPage() {
 
   const effectiveSchoolId = selectedSchoolId || schoolId
 
+  const cadastroHref = (id?: string) => {
+    const params = new URLSearchParams()
+    if (id) params.set('id', id)
+    if (isSuperAdmin && effectiveSchoolId) params.set('escola', effectiveSchoolId)
+    const qs = params.toString()
+    return `/gestao-academica/matriculas/cadastro${qs ? `?${qs}` : ''}`
+  }
+
   useEffect(() => {
     if (isSuperAdmin && allSchools.length > 0 && !selectedSchoolId) return
     if (!effectiveSchoolId) { setLoading(false); return }
@@ -183,10 +191,10 @@ export default function AlunosMatriculadosPage() {
       ) : loading ? (
         <Card className="shadow-sm"><CardContent className="p-6 space-y-3">{[1,2,3].map(i => <div key={i} className="h-10 bg-muted rounded-lg animate-pulse" />)}</CardContent></Card>
       ) : filtered.length === 0 ? (
-        <Card className="shadow-sm"><CardContent className="py-16"><EmptyState icon={DoorOpen} title={search ? 'Nenhum aluno encontrado' : 'Nenhuma matrícula'} description={search ? 'Tente outro nome.' : 'Cadastre a primeira matrícula.'} action={<Link href="/gestao-academica/matriculas/cadastro"><Button><Plus className="mr-2 h-4 w-4" />Nova Matrícula</Button></Link>} /></CardContent></Card>
+        <Card className="shadow-sm"><CardContent className="py-16"><EmptyState icon={DoorOpen} title={search ? 'Nenhum aluno encontrado' : 'Nenhuma matrícula'} description={search ? 'Tente outro nome.' : 'Cadastre a primeira matrícula.'} action={<Link href={cadastroHref()}><Button><Plus className="mr-2 h-4 w-4" />Nova Matrícula</Button></Link>} /></CardContent></Card>
       ) : (
         <PageSection variant="flush" title={`${filtered.length} aluno(s) matriculado(s)`} actions={
-          <Link href="/gestao-academica/matriculas/cadastro"><Button size="sm"><Plus className="mr-2 h-4 w-4" />Nova Matrícula</Button></Link>
+          <Link href={cadastroHref()}><Button size="sm"><Plus className="mr-2 h-4 w-4" />Nova Matrícula</Button></Link>
         }>
           {/* Mobile: lista de cards */}
           <ul className="block md:hidden space-y-3 p-4">
@@ -212,7 +220,7 @@ export default function AlunosMatriculadosPage() {
                   </div>
                     <div className="flex gap-2 pt-3 border-t border-border">
                       <Button variant="outline" size="sm" asChild className="flex-1 min-h-[44px]">
-                        <Link href={`/gestao-academica/matriculas/cadastro?id=${m.id}`}>
+                        <Link href={cadastroHref(m.id)}>
                           <Pencil className="mr-1.5 h-4 w-4" />
                           Editar
                         </Link>
@@ -273,7 +281,7 @@ export default function AlunosMatriculadosPage() {
                     <TableCell><StatusBadge status={mapSituacao(status)}>{status}</StatusBadge></TableCell>
                     <TableCell>
                       <Button variant="ghost" size="icon-sm" asChild>
-                        <Link href={`/gestao-academica/matriculas/cadastro?id=${m.id}`}><Pencil className="h-4 w-4" /></Link>
+                        <Link href={cadastroHref(m.id)}><Pencil className="h-4 w-4" /></Link>
                       </Button>
                       {podeVerFinanceiro && (
                         <Button variant="ghost" size="icon-sm" onClick={() => setPlanoTarget({ id: m.id, nome: m.aluno?.nome_completo || m.pessoa?.nome_completo || 'Aluno' })} aria-label="Situação financeira">

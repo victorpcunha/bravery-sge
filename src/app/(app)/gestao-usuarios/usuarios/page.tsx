@@ -514,6 +514,7 @@ export default function UsuariosPage() {
             </DialogDescription>
           </DialogHeader>
           <PessoaForm
+            key={editPerson?.id ?? 'novo'}
             schoolId={effectiveSchoolId ?? null}
             person={editPerson}
             onSaved={handleSaved}

@@ -1,11 +1,13 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
+import { Suspense, useState, useEffect } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { useTabParams } from '@/lib/tab-params'
 import { useAuth } from '@/components/providers/auth-provider'
-import { ChevronLeft, Shield, Trash2 } from 'lucide-react'
+import { ChevronLeft, School, Shield, Trash2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { Card } from '@/components/ui/card'
+import { EmptyState } from '@/components/ui/empty-state'
 import { ConfirmDialog } from '@/components/feedback/confirm-dialog'
 import { PageContainer } from '@/components/layout/page-container'
 import { PageHeader } from '@/components/layout/page-header'
@@ -25,18 +27,38 @@ import { usePermissoes } from '@/hooks/use-permissoes'
 import { toast } from 'sonner'
 
 export default function PerfilCadastroPage() {
+  return (
+    <Suspense
+      fallback={
+        <PageContainer>
+          <div className="flex items-center justify-center py-16">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
+          </div>
+        </PageContainer>
+      }
+    >
+      <PerfilCadastroForm />
+    </Suspense>
+  )
+}
+
+function PerfilCadastroForm() {
   const { id } = useTabParams()
   const isNew = id === 'novo'
 
-  const { user, loading: authLoading, schoolId } = useAuth()
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const escolaParam = searchParams.get('escola')
+  const { user, loading: authLoading, schoolId: authSchoolId, isSuperAdmin, pessoaId: pessoaIdAuth } = useAuth()
+  const schoolId = isSuperAdmin ? escolaParam : authSchoolId
   const [perfil, setPerfil] = useState<Perfil | null>(null)
   const [recursos, setRecursos] = useState<RecursoComPermissao[]>([])
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [deleteOpen, setDeleteOpen] = useState(false)
   const [deleting, setDeleting] = useState(false)
-  const { loaded: permLoaded, pode, isSetup, pessoaId } = usePermissoes(schoolId)
+  const { loaded: permLoaded, pode, isSetup, pessoaId: pessoaIdPerm } = usePermissoes(schoolId)
+  const pessoaId = pessoaIdPerm || pessoaIdAuth
 
   useEffect(() => {
     if (!authLoading && !user) router.push('/login')
@@ -45,8 +67,9 @@ export default function PerfilCadastroPage() {
 
 
   useEffect(() => {
+    if (isSuperAdmin && !escolaParam) return
     loadData()
-  }, [schoolId])
+  }, [schoolId, isSuperAdmin, escolaParam])
 
   useEffect(() => {
     if (permLoaded && !isSetup) {
@@ -119,6 +142,30 @@ export default function PerfilCadastroPage() {
     } finally {
       setSaving(false)
     }
+  }
+
+  if (isSuperAdmin && !escolaParam) {
+    return (
+      <PageContainer>
+        <PageHeader
+          title={isNew ? 'Novo Perfil' : 'Editar Perfil'}
+          description="Gerencie os perfis de acesso e permissões do sistema"
+          icon={Shield}
+        />
+        <Card className="shadow-sm">
+          <EmptyState
+            icon={School}
+            title="Selecione uma escola"
+            description="Volte para a lista de perfis, selecione uma escola e crie ou edite o perfil por lá."
+            action={
+              <Button variant="outline" onClick={() => router.push('/gestao-usuarios/perfis')}>
+                <ChevronLeft className="mr-2 h-4 w-4" /> Voltar
+              </Button>
+            }
+          />
+        </Card>
+      </PageContainer>
+    )
   }
 
   if (authLoading || loading || !permLoaded) {

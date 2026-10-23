@@ -25,6 +25,7 @@
 - [x] T002 Corrigir `src/data/censo/etapas-ensino.ts` (69=iniciais, 70=finais, 64→308, nomes oficiais; decidir 30–34 e "Escolarização")
 - [x] T003 Completar `src/data/censo/tipo-turma-mediacao.ts` (+EAD/305, tipo 9 sem 56/305, 305-tipo-9 vazio) + criar `src/data/censo/tipo-turma-codigos.ts`
 - [ ] T004 [P] APLICAR no banco via SQL Editor `supabase-migrations/patch_turmas_atividades_complementares.sql` (M-01 — arquivo criado; **obrigatória antes de usar**: inserts com as novas colunas falham sem ela)
+- [x] T004a HOTFIX pós-aplicação: `patch_turmas_atividade_complementar_varchar5.sql` amplia `atividade_complementar_1..6` de `VARCHAR(3)` → `VARCHAR(5)` (códigos INEP têm 5 dígitos; corrige o erro `22001` ao salvar turma complementar)
 - [ ] T005 [P] APLICAR no banco via SQL Editor `supabase-migrations/patch_turmas_profissionais_atividades.sql` (M-02 — arquivo criado)
 
 **Checkpoint**: Catálogos + colunas no banco — stories podem começar

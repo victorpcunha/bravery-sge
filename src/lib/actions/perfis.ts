@@ -88,6 +88,10 @@ export async function criarPerfil(data: {
   usa_vinculo_turma?: boolean
   created_by?: string
 }) {
+  if (!data.school_id) {
+    throw new Error('Selecione uma escola para criar o perfil')
+  }
+
   if (data.created_by) {
     await validarPermissaoServer(data.created_by, 'gestao-usuarios.perfis', 'criar')
   }
@@ -317,27 +321,91 @@ export type PermissoesPorRecurso = Record<string, {
   excluir: boolean
 }>
 
+export async function getPerfilIdsDaPessoa(
+  pessoaId: string,
+  opts?: { apenasAtivos?: boolean },
+): Promise<string[]> {
+  const { data: vinculos, error } = await supabase
+    .from('people_perfis')
+    .select('perfil_id')
+    .eq('person_id', pessoaId)
+
+  let ids: string[]
+  if (error) {
+    // Compatibilidade durante o deploy: usa o espelho legado enquanto a
+    // migration `people_perfis` ainda não foi aplicada.
+    const { data: pessoa } = await supabase
+      .from('people')
+      .select('perfil_id')
+      .eq('id', pessoaId)
+      .maybeSingle()
+    ids = pessoa?.perfil_id ? [pessoa.perfil_id] : []
+  } else {
+    ids = (vinculos || []).map(v => v.perfil_id as string)
+  }
+
+  if (ids.length === 0) {
+    // Compatibilidade com vínculos legados que ainda não foram backfillados.
+    const { data: pessoa } = await supabase
+      .from('people')
+      .select('perfil_id')
+      .eq('id', pessoaId)
+      .maybeSingle()
+    if (pessoa?.perfil_id) ids = [pessoa.perfil_id]
+  }
+
+  if (ids.length === 0) return []
+  if (opts?.apenasAtivos === false) return ids
+
+  const { data: perfis } = await supabase
+    .from('perfis')
+    .select('id')
+    .in('id', ids)
+    .eq('ativo', true)
+
+  return (perfis || []).map(p => p.id as string)
+}
+
+export async function pessoaUsaVinculoTurma(pessoaId: string): Promise<boolean> {
+  const perfilIds = await getPerfilIdsDaPessoa(pessoaId)
+  if (perfilIds.length === 0) return false
+
+  const { data: perfis } = await supabase
+    .from('perfis')
+    .select('usa_vinculo_turma')
+    .in('id', perfilIds)
+
+  if (!perfis || perfis.length === 0) return false
+
+  // Escopo global quando QUALQUER perfil selecionado não usa vínculo de turma.
+  return perfis.every(p => p.usa_vinculo_turma === true)
+}
+
 export async function getPermissoesPorPessoa(pessoaId: string): Promise<PermissoesPorRecurso> {
   const { data: pessoa, error: errPessoa } = await supabase
     .from('people')
-    .select('school_id, perfil_id')
+    .select('school_id')
     .eq('id', pessoaId)
     .single()
 
-  if (errPessoa || !pessoa || !pessoa.perfil_id) return {}
+  if (errPessoa || !pessoa) return {}
+
+  const perfilIds = await getPerfilIdsDaPessoa(pessoaId)
+  if (perfilIds.length === 0) return {}
 
   const { data: permissoes, error } = await supabase
     .from('perfis_permissoes')
     .select('recurso_id, visualizar, criar, editar, excluir')
-    .eq('perfil_id', pessoa.perfil_id)
+    .in('perfil_id', perfilIds)
     .eq('school_id', pessoa.school_id)
 
-  if (error || !permissoes) return {}
+  if (error || !permissoes || permissoes.length === 0) return {}
 
+  const recursoIds = [...new Set(permissoes.map(p => p.recurso_id))]
   const { data: recursos } = await supabase
     .from('recursos')
     .select('id, codigo')
-    .in('id', permissoes.map(p => p.recurso_id))
+    .in('id', recursoIds)
 
   if (!recursos) return {}
 
@@ -346,13 +414,14 @@ export async function getPermissoesPorPessoa(pessoaId: string): Promise<Permisso
 
   for (const p of permissoes) {
     const codigo = recursoCodigoMap.get(p.recurso_id)
-    if (codigo) {
-      result[codigo] = {
-        visualizar: p.visualizar,
-        criar: p.criar,
-        editar: p.editar,
-        excluir: p.excluir,
-      }
+    if (!codigo) continue
+
+    const atual = result[codigo] || { visualizar: false, criar: false, editar: false, excluir: false }
+    result[codigo] = {
+      visualizar: atual.visualizar || p.visualizar === true,
+      criar: atual.criar || p.criar === true,
+      editar: atual.editar || p.editar === true,
+      excluir: atual.excluir || p.excluir === true,
     }
   }
 
@@ -366,21 +435,15 @@ export async function validarPermissao(
 ) {
   const { data: pessoa } = await supabase
     .from('people')
-    .select('school_id, perfil_id, is_super_admin')
+    .select('school_id, is_super_admin')
     .eq('id', pessoaId)
     .maybeSingle()
 
   if (!pessoa) return true
   if (pessoa.is_super_admin) return true
-  if (!pessoa.perfil_id) return true
 
-  const { data: perfil } = await supabase
-    .from('perfis')
-    .select('ativo')
-    .eq('id', pessoa.perfil_id)
-    .single()
-
-  if (!perfil || !perfil.ativo) return false
+  const perfilIds = await getPerfilIdsDaPessoa(pessoaId)
+  if (perfilIds.length === 0) return false
 
   const { data: recurso } = await supabase
     .from('recursos')
@@ -390,16 +453,15 @@ export async function validarPermissao(
 
   if (!recurso) return false
 
-  const { data: permissao } = await supabase
+  const { data: permissoes } = await supabase
     .from('perfis_permissoes')
     .select(acao)
-    .eq('perfil_id', pessoa.perfil_id)
+    .in('perfil_id', perfilIds)
     .eq('recurso_id', recurso.id)
     .eq('school_id', pessoa.school_id)
-    .single()
 
-  if (!permissao) return false
-  return (permissao as any)[acao] === true
+  if (!permissoes || permissoes.length === 0) return false
+  return permissoes.some(p => (p as unknown as Record<string, boolean>)[acao] === true)
 }
 
 export async function validarPermissaoServer(
@@ -426,7 +488,7 @@ export async function validarPermissaoEstrita(
 
   const { data: pessoa } = await supabase
     .from('people')
-    .select('perfil_id, is_super_admin')
+    .select('is_super_admin')
     .eq('id', pessoaId)
     .maybeSingle()
 
@@ -439,7 +501,8 @@ export async function validarPermissaoEstrita(
     return
   }
 
-  if (!pessoa.perfil_id) {
+  const perfilIds = await getPerfilIdsDaPessoa(pessoaId)
+  if (perfilIds.length === 0) {
     throw new Error('Acesso negado: permissão insuficiente')
   }
 

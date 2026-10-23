@@ -78,12 +78,16 @@ O Bravery SGE é uma solução SaaS multi-tenant para escolas particulares brasi
 ### Gestão de Usuários
 - **Pessoas** (Registro 30): cadastro único com perfis dinâmicos (Aluno, Profissional, Gestor, Responsável)
   - Abas: Identificação, Deficiência/TEA, Endereço, Escolaridade, Pós-Graduação, Formação, Vínculo, Contato
-  - "Permitir acesso ao sistema": checkbox que expande Nome de acesso, Senha, Confirmação, Perfil de acesso
+  - "Permitir acesso ao sistema": pill que expande Senha, Confirmação e **múltiplos perfis** de acesso
+  - Em edição, o estado reflete a credencial existente; senha em branco mantém a atual
+  - Desmarcar bloqueia o login (ban no Supabase Auth); troca de e-mail sincroniza a credencial
   - Rota: `/gestao-usuarios/usuarios`
 - **Funções Profissionais**: CRUD para cargos/funções
   - Rota: `/gestao-usuarios/funcoes`
 - **Perfis e Permissões**: RBAC completo
   - Perfis (CRUD), Matriz de Permissões (Visualizar/Criar/Editar/Excluir por recurso)
+  - Pessoa pode ter **N perfis** (`people_perfis`); permissões são a união (OR) dos perfis ativos
+  - `usa_vinculo_turma`: escopo global se qualquer perfil for global; restrito só se todos exigirem vínculo
   - Proteção visual (hooks), validação server-side, auditoria
   - Rotas: `/gestao-usuarios/perfis`, `/gestao-usuarios/perfis/[id]`
 - **Painel do Aluno (Visão 360º)**:
@@ -165,7 +169,7 @@ src/
 
 ~45 arquivos SQL em `supabase-migrations/`, incluindo:
 - Tabelas principais: schools, people, turmas, quadro_aulas, matriculas, indicadores
-- Módulo perfis: perfis.sql, recursos.sql, perfis_permissoes.sql, add_perfil_id_to_people.sql, perfis_auditoria.sql
+- Módulo perfis: perfis.sql, recursos.sql, perfis_permissoes.sql, add_perfil_id_to_people.sql, perfis_auditoria.sql, patch_people_perfis.sql, patch_fn_buscar_auth_users_pessoa.sql
 - Módulo acadêmico: calendários, disciplinas, etapas_ensino, matrizes, métodos
 - Módulo plano de ensino: plano_ensino.sql, patch_planos_aula_periodos.sql, patch_diario_planos_aplicados.sql
 - Módulo painel aluno: saude_estudantes.sql, ocorrencias.sql, historico_manual.sql, patch_add_permite_historico_manual.sql, patch_recurso_painel_aluno.sql, fn_buscar_pessoas_matriculadas.sql

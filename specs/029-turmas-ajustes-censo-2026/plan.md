@@ -96,9 +96,9 @@ supabase-migrations/
 
 Extrair das planilhas (lidas em 2026-09-15 via `Tabelas Auxiliares`): corrigir `etapas-ensino.ts` (69=iniciais, 70=finais, 64→308, nomes oficiais); completar `tipo-turma-mediacao.ts` (+EAD/305, tipo 9 = 302[14–41]+303[22,23]+304[25–29], 305-tipo-9 vazio); criar `tipo-turma-codigos.ts` (4↔Atividade Complementar, 5↔AEE, 6↔Curricular, 9↔Curricular com Atividade Complementar; forma organização rótulo→código Anexo 6); criar `atividades-complementares.ts` (~150 itens, pulando nomes vazios 15002/15003/19101/19104/19105/22032, carry-forward de Área/Subárea mescladas). Verificar "Escolarização" e códigos 30–34 (Edge Cases da spec).
 
-### Phase 1 — Banco (3 migrations, via SQL Editor)
+### Phase 1 — Banco (3 migrations + hotfix condicional, via SQL Editor)
 
-M-01 `turmas.atividade_complementar_1..6 VARCHAR(3)`; M-02 `turmas_profissionais.atividades_ids TEXT[] DEFAULT '{}'`; M-03 `DROP COLUMN turmas.modalidade` (após UI sem referências; conferir dashboard). Auditoria: nenhuma mudança (trilha existente).
+M-01 `turmas.atividade_complementar_1..6 VARCHAR(5)` (códigos INEP de 5 dígitos — ver M-01a); M-02 `turmas_profissionais.atividades_ids TEXT[] DEFAULT '{}'`; M-03 `DROP COLUMN turmas.modalidade` (após UI sem referências; conferir dashboard). Auditoria: nenhuma mudança (trilha existente).
 
 ### Phase 2 — Modal Turma (US1+US2, núcleo)
 

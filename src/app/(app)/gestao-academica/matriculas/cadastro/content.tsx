@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { useAuth } from '@/components/providers/auth-provider'
@@ -20,7 +20,7 @@ import { ptBR } from 'date-fns/locale'
 import { toast } from 'sonner'
 import {
   ArrowLeft, Save, Pencil, Trash2, X, CalendarIcon,
-  Bus, History, AlertCircle, DoorOpen, UserPlus
+  Bus, History, AlertCircle, DoorOpen, UserPlus, School
 } from 'lucide-react'
 import { PageContainer } from '@/components/layout/page-container'
 import { PageHeader } from '@/components/layout/page-header'
@@ -28,6 +28,7 @@ import { FormCard } from '@/components/layout/form-card'
 import { ConfirmDialog } from '@/components/feedback/confirm-dialog'
 import { ClickablePill } from '@/components/ui/clickable-pill'
 import { StatusBadge } from '@/components/feedback/status-badge'
+import { EmptyState } from '@/components/ui/empty-state'
 import { getAnosLetivosAtivos } from '@/lib/actions/quadro-aulas'
 import {
   getMatricula, createMatricula, updateMatricula, deleteMatricula,
@@ -38,6 +39,7 @@ import {
   type Movimentacao,
 } from '@/lib/actions/matriculas'
 import { labelTipoMovimentacao, variantTipoMovimentacao } from '@/lib/situacoes-matricula'
+import { useTabActive } from '@/lib/tab-params'
 import { tratarSaidaMatricula } from '@/lib/actions/faturamento'
 
 const TIPOS_SAIDA_FATURAMENTO = ['Transferencia', 'Desistencia', 'Obito']
@@ -104,13 +106,52 @@ const motivosDesistencia = [
   'Não está frequentando', 'Sem informação',
 ]
 
-export default function MatriculaCadastroContent({ searchParams }: { searchParams: { id?: string } }) {
+const FORM_INICIAL = {
+  aluno_id: '',
+  data_matricula: '',
+  turma_id: '',
+  etapa_ensino_id: '',
+  subetapa_id: '',
+  forma_ingresso: 'Normal',
+  escolarizacao_externa: '1',
+  observacoes: '',
+  transporte_responsavel: '1',
+  // INEP Registro 60
+  turma_multi: '',
+  carga_horaria_iftp: '',
+  aee_funcao_cognitiva: false, aee_vida_autonoma: false, aee_enriquecimento: false,
+  aee_informatica: false, aee_libras: false, aee_portugues_sl: false,
+  aee_soroban: false, aee_braille: false, aee_orientacao: false,
+  aee_caa: false, aee_recursos: false,
+  veiculo_bicicleta: false, veiculo_microonibus: false, veiculo_onibus: false,
+  veiculo_tracao: false, veiculo_vans: false, veiculo_outro: false,
+  veiculo_aqua_5: false, veiculo_aqua_15: false, veiculo_aqua_35: false, veiculo_aqua_mais: false,
+}
+
+const MOV_FORM_INICIAL = {
+  data_movimentacao: '',
+  nova_etapa_id: '',
+  nova_turma_id: '',
+  turma_destino_id: '',
+  motivo_desistencia: '',
+  observacoes: '',
+}
+
+export default function MatriculaCadastroContent({ searchParams }: { searchParams: { id?: string; escola?: string } }) {
   const router = useRouter()
   const editId = searchParams?.id
-  const { user, schoolId, loading: authLoading } = useAuth()
-  const { pode, pessoaId } = usePermissoes(schoolId || '')
+  const { user, schoolId, isSuperAdmin, loading: authLoading } = useAuth()
+  // Superadmin não possui escola fixa: usa a escola selecionada na listagem
+  // (propagada via ?escola=). Usuário comum usa o vínculo resolvido no auth.
+  const effectiveSchoolId = isSuperAdmin ? (searchParams?.escola || null) : schoolId
+  const { pode, pessoaId, error: permissoesError } = usePermissoes(schoolId || '')
   const podeMovimentar = pode.editar('gestao-academica.matriculas.movimentacoes')
   const isEditing = !!editId
+  const tabActive = useTabActive()
+  // Captura o modo no mount: o wrapper lê os search params globais, então
+  // `isEditing` pode oscilar enquanto a entrada fica em segundo plano.
+  const isEditingRef = useRef(isEditing)
+  const wasTabActiveRef = useRef(tabActive)
 
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
@@ -123,27 +164,7 @@ export default function MatriculaCadastroContent({ searchParams }: { searchParam
   const [subetapasDisponiveis, setSubetapasDisponiveis] = useState<any[]>([])
 
   // Form principal
-  const [form, setForm] = useState({
-    aluno_id: '',
-    data_matricula: '',
-    turma_id: '',
-    etapa_ensino_id: '',
-    subetapa_id: '',
-    forma_ingresso: 'Normal',
-    escolarizacao_externa: '1',
-    observacoes: '',
-    transporte_responsavel: '1',
-    // INEP Registro 60
-    turma_multi: '',
-    carga_horaria_iftp: '',
-    aee_funcao_cognitiva: false, aee_vida_autonoma: false, aee_enriquecimento: false,
-    aee_informatica: false, aee_libras: false, aee_portugues_sl: false,
-    aee_soroban: false, aee_braille: false, aee_orientacao: false,
-    aee_caa: false, aee_recursos: false,
-    veiculo_bicicleta: false, veiculo_microonibus: false, veiculo_onibus: false,
-    veiculo_tracao: false, veiculo_vans: false, veiculo_outro: false,
-    veiculo_aqua_5: false, veiculo_aqua_15: false, veiculo_aqua_35: false, veiculo_aqua_mais: false,
-  })
+  const [form, setForm] = useState(FORM_INICIAL)
 
   // Movimentações (estado pendente)
   const [movimentacoes, setMovimentacoes] = useState<any[]>([])
@@ -159,14 +180,7 @@ export default function MatriculaCadastroContent({ searchParams }: { searchParam
   const [editMovId, setEditMovId] = useState<string | null>(null)
 
   // Form de movimentação
-  const [movForm, setMovForm] = useState({
-    data_movimentacao: '',
-    nova_etapa_id: '',
-    nova_turma_id: '',
-    turma_destino_id: '',
-    motivo_desistencia: '',
-    observacoes: '',
-  })
+  const [movForm, setMovForm] = useState(MOV_FORM_INICIAL)
 
   // Etapas/turmas para reclassificação
   const [etapasPosteriores, setEtapasPosteriores] = useState<any[]>([])
@@ -194,36 +208,61 @@ export default function MatriculaCadastroContent({ searchParams }: { searchParam
   }
 
   const resetMovForm = () => {
-    setMovForm({ data_movimentacao: '', nova_etapa_id: '', nova_turma_id: '', turma_destino_id: '', motivo_desistencia: '', observacoes: '' })
+    setMovForm(MOV_FORM_INICIAL)
     setEditMovId(null)
   }
+
+  // A aba mantém a entrada montada (keep-alive). Ao sair de uma "Nova
+  // Matrícula", limpa o formulário para que a próxima abertura comece vazia.
+  const resetCreateForm = useCallback(() => {
+    setForm({ ...FORM_INICIAL, data_matricula: hojeLocalIso() })
+    setMatricula(null)
+    setMovimentacoes([])
+    setMovSalvas(false)
+    setNomesMov({ etapas: {}, turmas: {} })
+    setCancelarFuturasFaturamento(true)
+    setEtapasDisponiveis([])
+    setSubetapasDisponiveis([])
+    setEtapasPosteriores([])
+    setTurmasPorEtapa([])
+    setTurmasRemanejamento([])
+    setModalTransferencia(false)
+    setModalReclassificar(false)
+    setModalRemanejar(false)
+    setModalDesistencia(false)
+    setEditMovId(null)
+    setMovForm(MOV_FORM_INICIAL)
+    setDeleteOpen(false)
+  }, [])
+
+  useEffect(() => {
+    if (wasTabActiveRef.current && !tabActive && !isEditingRef.current) {
+      resetCreateForm()
+    }
+    wasTabActiveRef.current = tabActive
+  }, [tabActive, resetCreateForm])
 
   useEffect(() => {
     if (!authLoading && !user) router.push('/login')
   }, [user, authLoading, router])
 
-  useEffect(() => {
-    if (!user) return
-    loadInitial()
-  }, [user])
-
   const loadInitial = async () => {
     try {
       const [ativo, alunosList] = await Promise.all([
-        getAnoLetivoAtivo(schoolId!),
-        getAlunos(schoolId!),
+        getAnoLetivoAtivo(effectiveSchoolId),
+        getAlunos(effectiveSchoolId),
       ])
       setAnoLetivo(ativo)
       setAlunos(alunosList)
 
       if (ativo) {
-        const turmasDoAno = await getTurmasAtivas(schoolId!, ativo.id)
+        const turmasDoAno = await getTurmasAtivas(effectiveSchoolId, ativo.id)
         setTurmas(turmasDoAno)
-        setForm(p => ({ ...p, data_matricula: new Date().toISOString().substring(0, 10) }))
+        setForm(p => ({ ...p, data_matricula: hojeLocalIso() }))
       }
 
       if (isEditing && editId) {
-        await loadMatricula(schoolId!, editId, ativo)
+        await loadMatricula(effectiveSchoolId, editId, ativo)
       }
     } catch (e: any) {
       console.error('Erro init:', e)
@@ -315,6 +354,12 @@ export default function MatriculaCadastroContent({ searchParams }: { searchParam
     }
   }
 
+  useEffect(() => {
+    if (!user) return
+    if (!effectiveSchoolId) return
+    loadInitial()
+  }, [user, effectiveSchoolId])
+
   const handleTurmaChange = async (turmaId: string) => {
     const turmaSelecionada = turmas.find((t: any) => t.id === turmaId)
     setForm(p => ({ ...p, turma_id: turmaId, etapa_ensino_id: '', subetapa_id: '' }))
@@ -405,7 +450,7 @@ export default function MatriculaCadastroContent({ searchParams }: { searchParam
     }
     // Carregar etapas posteriores
     const { getEtapasEnsino } = await import('@/lib/actions/etapas-ensino')
-    const todas = await getEtapasEnsino(schoolId!)
+    const todas = await getEtapasEnsino(effectiveSchoolId)
     const etapaAtualIdx = todas.findIndex((e: any) => e.id === form.etapa_ensino_id)
     if (etapaAtualIdx >= 0) {
       setEtapasPosteriores(todas.slice(etapaAtualIdx + 1))
@@ -419,7 +464,7 @@ export default function MatriculaCadastroContent({ searchParams }: { searchParam
   const handleEtapaReclassificacaoChange = async (etapaId: string) => {
     setMovForm(p => ({ ...p, nova_etapa_id: etapaId, nova_turma_id: '' }))
     if (!etapaId || !anoLetivo) { setTurmasPorEtapa([]); return }
-    const turmas = await getTurmasAtivas(schoolId!, anoLetivo.id)
+    const turmas = await getTurmasAtivas(effectiveSchoolId, anoLetivo.id)
     setTurmasPorEtapa(turmas.filter((t: any) => {
       if (t.multietapa) return t.etapas_ensino_ids?.includes(etapaId)
       return t.etapas_ensino_ids?.[0] === etapaId
@@ -462,7 +507,7 @@ export default function MatriculaCadastroContent({ searchParams }: { searchParam
     }
     // Carregar turmas da mesma etapa (exceto atual)
     const { getTurmasAtivas } = await import('@/lib/actions/matriculas')
-    const todas = await getTurmasAtivas(schoolId!, anoLetivo?.id || '')
+    const todas = await getTurmasAtivas(effectiveSchoolId, anoLetivo?.id || '')
     setTurmasRemanejamento(todas.filter((t: any) => {
       if (t.id === form.turma_id) return false
       if (t.multietapa) return t.etapas_ensino_ids?.includes(form.etapa_ensino_id)
@@ -529,6 +574,7 @@ export default function MatriculaCadastroContent({ searchParams }: { searchParam
     if (!form.data_matricula) { toast.error('Informe a data de matrícula'); return }
     if (!form.turma_id) { toast.error('Selecione a turma'); return }
     if (!form.etapa_ensino_id) { toast.error('Selecione a etapa de ensino'); return }
+    if (!effectiveSchoolId) { toast.error('Escola não selecionada'); return }
 
     setSaving(true)
     try {
@@ -592,7 +638,7 @@ export default function MatriculaCadastroContent({ searchParams }: { searchParam
         toast.success('Matrícula atualizada')
       } else {
         const nova = await createMatricula({
-          school_id: schoolId!,
+          school_id: effectiveSchoolId,
           aluno_id: form.aluno_id,
           ano_letivo_id: anoLetivo?.id || '',
           turma_id: form.turma_id,
@@ -630,6 +676,37 @@ export default function MatriculaCadastroContent({ searchParams }: { searchParam
     } finally {
       setSaving(false)
     }
+  }
+
+  if (!authLoading && !effectiveSchoolId && (isSuperAdmin || permissoesError)) {
+    return (
+      <PageContainer>
+        <PageHeader
+          icon={isEditing ? Pencil : UserPlus}
+          title={isEditing ? 'Editar Matrícula' : 'Nova Matrícula'}
+          description={isEditing ? 'Edite os dados da matrícula do aluno' : 'Registre um novo aluno na turma'}
+        />
+        <div className="rounded-lg border border-border bg-card">
+          <EmptyState
+            icon={School}
+            title={isSuperAdmin ? 'Selecione uma escola' : 'Sem escola vinculada'}
+            description={
+              isSuperAdmin
+                ? "Volte para a lista de alunos matriculados, selecione uma escola e clique em 'Nova Matrícula'."
+                : 'Sua conta não está vinculada a nenhuma unidade escolar. Procure o administrador do sistema.'
+            }
+            action={
+              <Link href="/gestao-academica/matriculas">
+                <Button variant="outline">
+                  <ArrowLeft className="mr-2 h-4 w-4" />
+                  Voltar
+                </Button>
+              </Link>
+            }
+          />
+        </div>
+      </PageContainer>
+    )
   }
 
   if (authLoading || loading) {

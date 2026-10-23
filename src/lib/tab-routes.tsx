@@ -198,11 +198,12 @@ export type ResolvedTabRoute = {
   Component: ComponentType
 }
 
-/* MatriculaCadastroContent espera um prop `searchParams` com o id opcional. */
+/* MatriculaCadastroContent espera props `searchParams` com id/escola opcionais. */
 function MatriculaCadastroWrapper() {
   const sp = useSearchParams()
   const id = sp.get('id') ?? undefined
-  return <MatriculaCadastroContent searchParams={{ id }} />
+  const escola = sp.get('escola') ?? undefined
+  return <MatriculaCadastroContent searchParams={{ id, escola }} />
 }
 
 const exact =

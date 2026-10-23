@@ -38,7 +38,7 @@ export function usePermissoes(schoolId: string | null) {
       return
     }
 
-    const email = userEmail
+    const email = userEmail?.trim().toLowerCase()
     if (!email) {
       setState({ loaded: true, pessoaId: null, permissoes: {}, error: 'Usuário sem email' })
       return
@@ -46,12 +46,13 @@ export function usePermissoes(schoolId: string | null) {
 
     getPessoaPorEmail(email, schoolId!)
       .then(pessoa => {
-        if (pessoa?.perfil_id) {
-          return getPermissoesPorPessoa(pessoa.id).then(permissoes => {
-            setState({ loaded: true, pessoaId: pessoa.id, permissoes, error: null })
-          })
+        if (!pessoa) {
+          setState({ loaded: true, pessoaId: null, permissoes: {}, error: null })
+          return
         }
-        setState({ loaded: true, pessoaId: pessoa?.id || null, permissoes: {}, error: null })
+        return getPermissoesPorPessoa(pessoa.id).then(permissoes => {
+          setState({ loaded: true, pessoaId: pessoa.id, permissoes, error: null })
+        })
       })
       .catch(err => {
         setState({ loaded: true, pessoaId: null, permissoes: {}, error: err.message })

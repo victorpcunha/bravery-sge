@@ -101,8 +101,11 @@ export default function PerfisPage() {
     setCurrentPage(1)
   }
 
+  const escolaQuery = isSuperAdmin && selectedSchoolId ? `?escola=${selectedSchoolId}` : ''
+  const goNovo = () => router.push(`/gestao-usuarios/perfis/novo${escolaQuery}`)
+
   const handleEdit = (perfil: Perfil) => {
-    router.push(`/gestao-usuarios/perfis/${perfil.id}`)
+    router.push(`/gestao-usuarios/perfis/${perfil.id}${escolaQuery}`)
   }
 
   const handleDelete = async () => {
@@ -183,7 +186,7 @@ export default function PerfisPage() {
             <div className="flex items-center gap-2">
               <span className="text-[14px] text-muted-foreground tabular-nums">{perfis.length} registro(s)</span>
               {pode.criar('gestao-usuarios.perfis') && (
-                <Button onClick={() => router.push('/gestao-usuarios/perfis/novo')} size="sm">
+                <Button onClick={goNovo} size="sm">
                   <Plus className="mr-2 h-4 w-4" /> Novo Perfil
                 </Button>
               )}
@@ -217,7 +220,7 @@ export default function PerfisPage() {
                   title="Nenhum perfil cadastrado"
                   description="Crie perfis para organizar as permissões de acesso ao sistema."
                   action={
-                    <Button onClick={() => router.push('/gestao-usuarios/perfis/novo')}>
+                    <Button onClick={goNovo}>
                       <Plus className="mr-2 h-4 w-4" />
                       Novo Perfil
                     </Button>

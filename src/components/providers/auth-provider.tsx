@@ -152,10 +152,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
     }
 
-    const { error } = await supabase.auth.signInWithPassword({
+    const { data, error } = await supabase.auth.signInWithPassword({
       email: emailFinal,
       password,
     })
+
+    if (
+      !error &&
+      data.user?.user_metadata?.portal_only === true &&
+      data.user.user_metadata?.system_access !== true
+    ) {
+      await supabase.auth.signOut()
+      return { error: new Error('Usuário ou senha inválidos') }
+    }
+
     return { error: error as Error | null }
   }
 

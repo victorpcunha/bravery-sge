@@ -2,6 +2,7 @@
 
 import { getSupabaseAdmin } from '@/lib/auth'
 import { registrarAuditoria } from '@/lib/auditoria'
+import { pessoaUsaVinculoTurma } from './perfis'
 
 const supabase = getSupabaseAdmin()
 
@@ -222,26 +223,7 @@ export async function listarPlanosEnsino(
 ) {
   await validarPermRead(RESOURCE, pessoaId)
 
-  let usaVinculo = false
-
-  if (pessoaId) {
-    const perfil = await supabase
-      .from('people')
-      .select('perfil_id')
-      .eq('id', pessoaId)
-      .maybeSingle()
-      .then(r => r.data)
-
-    if (perfil?.perfil_id) {
-      const { data: perfilData } = await supabase
-        .from('perfis')
-        .select('usa_vinculo_turma')
-        .eq('id', perfil.perfil_id)
-        .maybeSingle()
-
-      usaVinculo = perfilData?.usa_vinculo_turma ?? false
-    }
-  }
+  const usaVinculo = pessoaId ? await pessoaUsaVinculoTurma(pessoaId) : false
 
   let query = supabase
     .from('planos_ensino')

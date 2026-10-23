@@ -3,6 +3,7 @@
 import { getSupabaseAdmin } from '@/lib/auth'
 import { registrarAuditoriaAgregada } from '@/lib/auditoria'
 import { verificarTurmaFechada } from './fechamento-turma'
+import { pessoaUsaVinculoTurma } from './perfis'
 
 const supabase = getSupabaseAdmin()
 
@@ -74,26 +75,7 @@ export async function listarTurmasDiario(
     turno?: string
   }
 ) {
-  let usaVinculo = false
-
-  if (pessoaId) {
-    const perfil = await supabase
-      .from('people')
-      .select('perfil_id')
-      .eq('id', pessoaId)
-      .maybeSingle()
-      .then(r => r.data)
-
-    if (perfil?.perfil_id) {
-      const { data: perfilData } = await supabase
-        .from('perfis')
-        .select('usa_vinculo_turma')
-        .eq('id', perfil.perfil_id)
-        .maybeSingle()
-
-      usaVinculo = perfilData?.usa_vinculo_turma ?? false
-    }
-  }
+  const usaVinculo = pessoaId ? await pessoaUsaVinculoTurma(pessoaId) : false
 
   let query = supabase
     .from('turmas')
@@ -486,26 +468,8 @@ export async function bloquearNumeracaoChamada(turmaId: string, pessoaId?: strin
 export async function getDisciplinasDiario(turmaId: string, pessoaId?: string | null) {
   await validarPermRead('gestao-pedagogica.diario-classe', pessoaId)
 
-  let usaVinculo = false
+  const usaVinculo = pessoaId ? await pessoaUsaVinculoTurma(pessoaId) : false
   let disciplinasFiltro: string[] | null = null
-
-  if (pessoaId) {
-    const { data: perfil } = await supabase
-      .from('people')
-      .select('perfil_id')
-      .eq('id', pessoaId)
-      .maybeSingle()
-
-    if (perfil?.perfil_id) {
-      const { data: perfilData } = await supabase
-        .from('perfis')
-        .select('usa_vinculo_turma')
-        .eq('id', perfil.perfil_id)
-        .maybeSingle()
-
-      usaVinculo = perfilData?.usa_vinculo_turma ?? false
-    }
-  }
 
   if (usaVinculo && pessoaId) {
     const { data: vinculos } = await supabase

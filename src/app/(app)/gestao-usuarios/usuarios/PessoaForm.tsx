@@ -26,10 +26,10 @@ import Link from 'next/link'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog'
 import { useAuth } from '@/components/providers/auth-provider'
 import { usePermissoes } from '@/hooks/use-permissoes'
-import { createPerson, updatePerson, Person, getVinculosResponsavel, vincularResponsavel, desvincularResponsavel, buscarAlunos, criarAuthUser, definirSenhaPortal, provisionarAcessoPortal, alternarAcessoPortal, atualizarEmailPortal, salvarSaudeEstudante, type MatriculaAtivaInfo } from '@/lib/actions/people'
-import { getVinculosProfissionais, createVinculoProfissional, updateVinculoProfissional, deleteVinculoProfissional, type VinculoProfissionalWithFuncao } from '@/lib/actions/vinculos-profissionais'
+import { createPerson, updatePerson, Person, getVinculosResponsavel, vincularResponsavel, desvincularResponsavel, buscarAlunos, definirSenhaPortal, provisionarAcessoPortal, alternarAcessoPortal, atualizarEmailPortal, getAcessoAuthPessoa, provisionarAcessoAcesso, alternarAcessoAcesso, atualizarEmailAcesso, salvarPerfisPessoa, salvarSaudeEstudante, type MatriculaAtivaInfo } from '@/lib/actions/people'
+import { getVinculosProfissionais, createVinculoProfissional, updateVinculoProfissional, type VinculoProfissionalWithFuncao } from '@/lib/actions/vinculos-profissionais'
 import { getFuncoes, type FuncaoProfissional } from '@/lib/actions/funcoes-profissionais'
-import { listarPerfis, type Perfil } from '@/lib/actions/perfis'
+import { listarPerfis, getPerfilIdsDaPessoa, type Perfil } from '@/lib/actions/perfis'
 
 const DEFICIENCIA_CAMPOS = [
   { key: 'cegueira', label: 'Cegueira' },
@@ -240,7 +240,6 @@ const defaultForm: FormData = {
   // Vinculos responsável
   vinculos: [] as any[],
   alunosBusca: [] as { id: string; nome_completo: string }[],
-  perfil_id: null,
   perfis_acesso: [] as string[],
   permitir_acesso: false,
   senha: '',
@@ -273,13 +272,15 @@ export function PessoaForm({ schoolId: propSchoolId, person, onSaved, onCancel }
   const [vinculosProfissionais, setVinculosProfissionais] = useState<VinculoProfissionalWithFuncao[]>([])
   const [funcoesOptions, setFuncoesOptions] = useState<FuncaoProfissional[]>([])
   const [perfisAcesso, setPerfisAcesso] = useState<Perfil[]>([])
+  const [acessoExistente, setAcessoExistente] = useState(false)
+  const [acessoCarregado, setAcessoCarregado] = useState(!person)
 
   const set = (field: string, value: any) => setForm(prev => ({ ...prev, [field]: value }))
 
   // Carregar funções disponíveis
   useEffect(() => {
     getFuncoes(schoolId).then(setFuncoesOptions).catch(() => {})
-    listarPerfis(schoolId, { ativo: true }).then(setPerfisAcesso).catch(() => {})
+    listarPerfis(schoolId).then(setPerfisAcesso).catch(() => {})
   }, [schoolId])
 
   useEffect(() => {
@@ -297,6 +298,15 @@ export function PessoaForm({ schoolId: propSchoolId, person, onSaved, onCancel }
       setFil2Ignorada(!String(data.filiacao_2 || '').trim())
       if (person.codigo_pessoa) data.codigo_pessoa = person.codigo_pessoa
       setForm(data)
+
+      getPerfilIdsDaPessoa(person.id, { apenasAtivos: false })
+        .then(perfilIds => {
+          setForm(prev => ({ ...prev, perfis_acesso: perfilIds }))
+        })
+        .catch(() => {
+          const perfisLegado = person.perfil_id ? [person.perfil_id] : []
+          setForm(prev => ({ ...prev, perfis_acesso: perfisLegado }))
+        })
 
       // Carregar vínculos profissionais na edição
       if (person.perfil?.includes('profissional') || person.perfil?.includes('gestor')) {
@@ -338,6 +348,38 @@ export function PessoaForm({ schoolId: propSchoolId, person, onSaved, onCancel }
       }
     }
   }, [person])
+
+  // A credencial é carregada em efeito próprio: depende de pessoaId (validação de
+  // permissão), mas não pode reinicializar o formulário quando a permissão resolve.
+  useEffect(() => {
+    if (!person) return
+
+    let cancelado = false
+
+    getAcessoAuthPessoa(person.id, pessoaId)
+      .then((acesso) => {
+        if (cancelado) return
+        setAcessoExistente(acesso.temAcesso)
+        setForm(prev => ({ ...prev, permitir_acesso: acesso.temAcesso }))
+      })
+      .catch(() => {
+        if (cancelado) return
+        const perfisLegado = person.perfil_id ? [person.perfil_id] : []
+        setAcessoExistente(perfisLegado.length > 0)
+        setForm(prev => ({
+          ...prev,
+          permitir_acesso: perfisLegado.length > 0,
+        }))
+        toast.error('Não foi possível carregar as informações de acesso do usuário')
+      })
+      .finally(() => {
+        if (!cancelado) setAcessoCarregado(true)
+      })
+
+    return () => {
+      cancelado = true
+    }
+  }, [person, pessoaId])
 
   // Auto-select Brasil quando nacionalidade for Brasileira
   useEffect(() => {
@@ -412,6 +454,7 @@ export function PessoaForm({ schoolId: propSchoolId, person, onSaved, onCancel }
   }
 
   const handleSave = async () => {
+    if (person && !acessoCarregado) { toast.error('Carregando informações de acesso. Tente novamente em instantes.'); return }
     if (!form.nome_completo.trim()) { toast.error('Nome completo é obrigatório'); return }
     if (!form.perfil || form.perfil.length === 0) { toast.error('Selecione pelo menos um perfil'); return }
     if (isAluno && !form.cpf && !form.certidao_nascimento?.trim()) { toast.error('Informe CPF ou Matrícula da Certidão de Nascimento'); return }
@@ -497,12 +540,19 @@ export function PessoaForm({ schoolId: propSchoolId, person, onSaved, onCancel }
 
     if (form.permitir_acesso) {
       if (!form.email?.trim()) { toast.error('Informe o nome de acesso (e-mail)'); return }
-      if (!form.senha || form.senha.length < 10) { toast.error('Senha deve ter no mínimo 10 caracteres'); return }
-      if (!/[A-Z]/.test(form.senha)) { toast.error('Senha deve conter pelo menos uma letra maiúscula'); return }
-      if (!/[a-z]/.test(form.senha)) { toast.error('Senha deve conter pelo menos uma letra minúscula'); return }
-      if (!/[0-9]/.test(form.senha)) { toast.error('Senha deve conter pelo menos um número'); return }
-      if (!/[^A-Za-z0-9]/.test(form.senha)) { toast.error('Senha deve conter pelo menos um caractere especial'); return }
-      if (form.senha !== form.confirmacao_senha) { toast.error('Senhas não conferem'); return }
+      if (!acessoExistente && !form.senha) { toast.error('Informe a senha para habilitar o acesso ao sistema'); return }
+      if (form.senha) {
+        if (form.senha.length < 10) { toast.error('Senha deve ter no mínimo 10 caracteres'); return }
+        if (!/[A-Z]/.test(form.senha)) { toast.error('Senha deve conter pelo menos uma letra maiúscula'); return }
+        if (!/[a-z]/.test(form.senha)) { toast.error('Senha deve conter pelo menos uma letra minúscula'); return }
+        if (!/[0-9]/.test(form.senha)) { toast.error('Senha deve conter pelo menos um número'); return }
+        if (!/[^A-Za-z0-9]/.test(form.senha)) { toast.error('Senha deve conter pelo menos um caractere especial'); return }
+        if (form.senha !== form.confirmacao_senha) { toast.error('Senhas não conferem'); return }
+      }
+      if (!form.perfis_acesso || (form.perfis_acesso as string[]).length === 0) {
+        toast.error('Selecione pelo menos um perfil de acesso')
+        return
+      }
     }
 
     // Acesso ao Portal do Responsável (spec 022)
@@ -603,9 +653,13 @@ export function PessoaForm({ schoolId: propSchoolId, person, onSaved, onCancel }
         // Sincroniza o e-mail de login do portal antes do update
         // (a action compara com o valor atual do banco)
         const portalEnvolvido = portalAtivoNoCadastro || form.portal_acesso_habilitado === true
+        const sistemaEnvolvido = acessoExistente || form.permitir_acesso === true
         const emailTrocou = (person.email || '').trim().toLowerCase() !== (form.email || '').trim().toLowerCase()
         if (portalEnvolvido && emailTrocou) {
           await atualizarEmailPortal(person.id, (form.email || '').trim(), schoolId, pessoaId)
+        }
+        if (sistemaEnvolvido && emailTrocou) {
+          await atualizarEmailAcesso(person.id, (form.email || '').trim(), schoolId, pessoaId)
         }
         await updatePerson(person.id, payload, pessoaId)
         personId = person.id
@@ -698,6 +752,17 @@ export function PessoaForm({ schoolId: propSchoolId, person, onSaved, onCancel }
         }
       }
 
+      if (personId) {
+        const perfisSelecionados = form.permitir_acesso ? (form.perfis_acesso as string[]) || [] : []
+        await salvarPerfisPessoa(personId, schoolId, perfisSelecionados, pessoaId)
+
+        if (form.permitir_acesso) {
+          await provisionarAcessoAcesso(personId, schoolId, form.senha || null, pessoaId)
+        } else if (acessoExistente) {
+          await alternarAcessoAcesso(personId, false, schoolId, pessoaId)
+        }
+      }
+
       // Aplicar situação (ativa/inativa) com automações e auditoria
       if (personId) {
         const situacaoMudou = person ? person.ativo !== (form.ativo === true) : false
@@ -710,15 +775,6 @@ export function PessoaForm({ schoolId: propSchoolId, person, onSaved, onCancel }
             pessoaResponsavelId: pessoaId,
           })
         }
-      }
-
-      if (form.permitir_acesso && form.senha && personId) {
-        await criarAuthUser({
-          email: form.email,
-          password: form.senha,
-          personId,
-          schoolId,
-        }, pessoaId)
       }
 
       // Salvar informações de saúde
@@ -1265,41 +1321,69 @@ export function PessoaForm({ schoolId: propSchoolId, person, onSaved, onCancel }
           {!isAluno && !apenasResponsavel && (
             <>
               <div className="border-t pt-4 space-y-3">
-                <div className="flex items-center gap-2 flex-wrap">
-                  <ClickablePill
-                    label="Permitir acesso ao sistema"
-                    active={form.permitir_acesso === true}
-                    onClick={() => set('permitir_acesso', !form.permitir_acesso)}
-                  />
-                </div>
-                <p className="text-[13px] text-muted-foreground ml-6">Cria um usuário para login no sistema</p>
+                {!acessoCarregado ? (
+                  <div className="space-y-2" aria-live="polite" aria-busy="true">
+                    <div className="h-9 w-56 rounded-md bg-muted animate-pulse" />
+                    <p className="text-[13px] text-muted-foreground ml-6">Carregando informações de acesso...</p>
+                  </div>
+                ) : (
+                  <>
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <ClickablePill
+                        label="Permitir acesso ao sistema"
+                        active={form.permitir_acesso === true}
+                        onClick={() => set('permitir_acesso', !form.permitir_acesso)}
+                      />
+                    </div>
+                    <p className="text-[13px] text-muted-foreground ml-6">
+                      {acessoExistente ? 'Desmarque para bloquear o login no sistema' : 'Cria um usuário para login no sistema'}
+                    </p>
+                  </>
+                )}
               </div>
 
-              {form.permitir_acesso && (
+              {acessoCarregado && form.permitir_acesso && (
                 <div className="ml-6 space-y-4">
                   <p className="text-[15px] text-muted-foreground">O acesso ao sistema é feito com o e-mail cadastrado ou com o CPF.</p>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div className="space-y-2">
-                      <Label>Senha</Label>
-                      <Input type="password" value={form.senha} onChange={(e) => set('senha', e.target.value)} placeholder="Digite a senha" />
+                      <Label>{acessoExistente ? 'Nova senha (em branco mantém a atual)' : 'Senha'}</Label>
+                      <Input
+                        type="password"
+                        value={form.senha}
+                        onChange={(e) => set('senha', e.target.value)}
+                        placeholder={acessoExistente ? 'Deixe em branco para manter' : 'Digite a senha'}
+                        aria-required={acessoExistente ? undefined : 'true'}
+                      />
                       <p className="text-[14px] font-medium mt-1 rounded-lg border border-primary/30 bg-primary/5 px-3 py-2">Mínimo 10 caracteres: 1 maiúscula, 1 minúscula, 1 número e 1 caractere especial.</p>
                     </div>
                     <div className="space-y-2">
-                      <Label>Confirmação de senha</Label>
+                      <Label>Confirmar senha</Label>
                       <Input type="password" value={form.confirmacao_senha} onChange={(e) => set('confirmacao_senha', e.target.value)} placeholder="Repita a senha" />
                     </div>
                   </div>
+                  {person?.portal_acesso_habilitado && (
+                    <p className="text-[13px] text-muted-foreground">
+                      Este usuário também acessa o Portal do Responsável; a senha é compartilhada entre os dois acessos.
+                    </p>
+                  )}
                   <div className="space-y-2">
-                    <Label>Perfil de acesso</Label>
-                    <p className="text-[13px] text-muted-foreground">Define as permissões do usuário no sistema</p>
+                    <Label>Perfis de acesso</Label>
+                    <p className="text-[13px] text-muted-foreground">O usuário terá a união das permissões dos perfis selecionados.</p>
                     <div className="flex flex-wrap gap-2 pt-1">
+                      {perfisAcesso.length === 0 && (
+                        <p className="text-[13px] text-muted-foreground">Nenhum perfil cadastrado nesta escola. Cadastre em Perfis e Permissões.</p>
+                      )}
                       {perfisAcesso.map(p => {
                         const checked = form.perfis_acesso && (form.perfis_acesso as string[]).includes(p.id)
+                        const inativo = p.ativo === false
                         return (
                           <ClickablePill
                             key={p.id}
-                            label={p.nome}
+                            label={inativo ? `${p.nome} (inativo)` : p.nome}
                             active={checked || false}
+                            disabled={inativo}
+                            title={inativo ? 'Perfil inativo: não concede permissões' : undefined}
                             onClick={() => {
                               const current = (form.perfis_acesso as string[]) || []
                               if (checked) {
@@ -1926,6 +2010,11 @@ export function PessoaForm({ schoolId: propSchoolId, person, onSaved, onCancel }
               {form.portal_acesso_habilitado === true && (
                 <div className="ml-6 space-y-4 mt-4">
                   <p className="text-[15px] text-muted-foreground">O login do portal é o e-mail informado acima.</p>
+                  {(acessoExistente || form.permitir_acesso) && (
+                    <p className="text-[13px] text-muted-foreground">
+                      Este usuário também acessa o sistema; a senha é compartilhada entre os dois acessos.
+                    </p>
+                  )}
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <Label>{person ? 'Nova senha (em branco mantém a atual)' : 'Senha'}</Label>

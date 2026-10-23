@@ -124,7 +124,7 @@ A escola ativa etapas em Gestão Acadêmica → Estrutura Acadêmica → Etapas 
 
 ### Key Entities
 
-- **Turma (estendida)**: `atividade_complementar_1..6 VARCHAR(3)` (ordem de adição); `etapa_agregada` nula fora de Curricular/9; sem `modalidade`.
+- **Turma (estendida)**: `atividade_complementar_1..6 VARCHAR(5)` (ordem de adição; códigos INEP têm 5 dígitos); `etapa_agregada` nula fora de Curricular/9; sem `modalidade`.
 - **Vínculo profissional (estendido)**: `atividades_ids TEXT[]` (códigos de atividade da turma; alternativo a `disciplinas_ids`); `ativo` + `data_encerramento` para inativação com histórico.
 - **Catálogo de Atividades Complementares**: `{ codigo, nome, area, subarea }` semeado da planilha oficial (~150 itens, nomes vazios excluídos); UI mostra só `nome`.
 - **Matriz Tipo × Etapa**: `(tipo_mediacao, tipo_turma, etapa_agregada) → etapas habilitadas`, espelho da aba `Tipo de turma X Etapa` (incl. EAD+305; tipo 9 sem 56/305; 305-tipo-9 = vazio/bloqueado).

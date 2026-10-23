@@ -5,7 +5,7 @@ import MatriculaCadastroContent from './content'
 export default async function MatriculaCadastroPage({
   searchParams,
 }: {
-  searchParams: Promise<{ id?: string }>
+  searchParams: Promise<{ id?: string; escola?: string }>
 }) {
   const params = await searchParams
   return (

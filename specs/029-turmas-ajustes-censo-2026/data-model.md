@@ -3,16 +3,25 @@
 **Spec**: `spec.md` · **Plan**: `plan.md`
 **Fontes oficiais**: `documentacao_interna/Censo Escolar/Arquivos do INEP/2026/Matricula Inicial/v4/Tabelas Auxiliares/Tabela de Etapas 2026.xlsx` (abas `Etapas de ensino`, `Tipo de turma X Etapa`) e `Tabela de Tipo de Atividade Complementar 2026.xlsx` (aba `Tabela`). Conteúdo extraído em 2026-09-15.
 
-## 1. DDL (3 migrations, via SQL Editor)
+## 1. DDL (3 migrations + 1 hotfix condicional, via SQL Editor)
 
 ### M-01 `patch_turmas_atividades_complementares.sql` (NEW)
 
 ```sql
-ALTER TABLE turmas ADD COLUMN IF NOT EXISTS atividade_complementar_1 VARCHAR(3);
+ALTER TABLE turmas ADD COLUMN IF NOT EXISTS atividade_complementar_1 VARCHAR(5);
 ... (idem _2.._6)
 ```
 
-Paridade com `classrooms.atividade_complementar_1..6` (`censo_2026_tables.sql:288-293`). Ordem de adição na UI = posição 1–6; `<6` atividades → excedentes `NULL` (FR-017). Validação de unicidade/sequência já existe no motor (`censo-regras.ts:1667-1687`) e passa a operar sobre dados reais.
+Códigos da Tabela de Tipo de Atividade Complementar 2026 têm **5 dígitos** (ex.: `22019`, `11002`) — `VARCHAR(5)`. As colunas legadas de `classrooms` (`censo_2026_tables.sql:288-293`) permanecem `VARCHAR(3)` por serem de um schema antigo não utilizado pelo app. Ordem de adição na UI = posição 1–6; `<6` atividades → excedentes `NULL` (FR-017). Validação de unicidade/sequência já existe no motor (`censo-regras.ts:1667-1687`) e passa a operar sobre dados reais.
+
+### M-01a `patch_turmas_atividade_complementar_varchar5.sql` (HOTFIX)
+
+Necessária apenas para ambientes onde a M-01 já foi aplicada com `VARCHAR(3)` (o `INSERT` falhava com `22001 value too long for type character varying(3)`). Ajusta as 6 colunas para `VARCHAR(5)`; sem perda de dados (nenhum save com atividade era possível antes).
+
+```sql
+ALTER TABLE turmas ALTER COLUMN atividade_complementar_1 TYPE VARCHAR(5);
+... (idem _2.._6)
+```
 
 ### M-02 `patch_turmas_profissionais_atividades.sql` (NEW)
 

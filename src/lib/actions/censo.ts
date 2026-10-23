@@ -207,14 +207,33 @@ export async function exportarCenso(schoolId: string, anoLetivoId: string): Prom
       .limit(1)
 
     if (perfisGestor?.length) {
-      const { data: peopleGestor } = await sb
-        .from('people')
-        .select('*')
-        .eq('school_id', schoolId)
+      const { data: vinculosGestor, error: errVinculos } = await sb
+        .from('people_perfis')
+        .select('person_id')
         .eq('perfil_id', perfisGestor[0].id)
+        .eq('school_id', schoolId)
         .limit(3)
 
-      for (const pg of peopleGestor || []) {
+      let gestorPessoaIds: string[]
+      if (errVinculos) {
+        // Compatibilidade durante o deploy: usa o espelho legado enquanto a
+        // migration `people_perfis` ainda não foi aplicada.
+        const { data: peopleGestor } = await sb
+          .from('people')
+          .select('id')
+          .eq('school_id', schoolId)
+          .eq('perfil_id', perfisGestor[0].id)
+          .limit(3)
+        gestorPessoaIds = (peopleGestor || []).map(p => String(p.id))
+      } else {
+        gestorPessoaIds = (vinculosGestor || []).map(
+          v => String((v as { person_id: string }).person_id),
+        )
+      }
+
+      for (const personId of gestorPessoaIds) {
+        const pg = pessoasMap.get(personId)
+        if (!pg) continue
         gestorLines.push(buildRegistro40(
           { cargo: '1', criterio_acesso: '', situacao_funcional: '' },
           pg, school,

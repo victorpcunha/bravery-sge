@@ -139,9 +139,10 @@ export async function getMatricula(id: string, schoolId?: string | null) {
 // ------- Regra Geral de Matrícula (duplicidade + conflito de horário) -------
 // Vale para TODA criação de matrícula (Nova Matrícula, Rematrículas e qualquer
 // fluxo futuro), pois é aplicada no server antes de qualquer escrita:
-// 1. Um aluno não pode ter duas matrículas simultâneas em turmas Curriculares.
-// 2. Curricular + AEE/Atividade Complementar podem coexistir (tipos diferentes).
-// 3. Mesmo entre tipos diferentes, Turno + Dias de Funcionamento não podem se
+// 1. Um aluno não pode ter duas matrículas ativas na mesma turma.
+// 2. Um aluno não pode ter duas matrículas simultâneas em turmas Curriculares.
+// 3. Curricular + AEE/Atividade Complementar podem coexistir (tipos diferentes).
+// 4. Mesmo entre tipos diferentes, Turno + Dias de Funcionamento não podem se
 //    sobrepor (conflito de horário).
 
 // Normalizadores INEP: escolarizacao_externa e transporte_responsavel são
@@ -165,10 +166,10 @@ type CategoriaTurma = 'curricular' | 'aee' | 'complementar' | 'outra'
 
 function classificarTurma(tiposTurma: unknown): CategoriaTurma {
   const lista = Array.isArray(tiposTurma) ? tiposTurma.map(String) : tiposTurma ? [String(tiposTurma)] : []
-  const rotulo = (lista[0] || '').toLowerCase()
-  if (rotulo.includes('curricular')) return 'curricular'
-  if (rotulo.includes('aee') || rotulo.includes('atendimento educacional')) return 'aee'
-  if (rotulo.includes('complementar')) return 'complementar'
+  const rotulos = lista.map((r) => r.toLowerCase())
+  if (rotulos.some((r) => r.includes('curricular'))) return 'curricular'
+  if (rotulos.some((r) => r.includes('aee') || r.includes('atendimento educacional'))) return 'aee'
+  if (rotulos.some((r) => r.includes('complementar'))) return 'complementar'
   return 'outra'
 }
 
@@ -209,17 +210,21 @@ async function validarRegraGeralMatricula(args: {
 }) {
   const { data: novaTurma, error: errTurma } = await supabase
     .from('turmas')
-    .select('id, nome, tipos_turma, turnos, dias_funcionamento')
+    .select('id, nome, tipos_turma, turnos, dias_funcionamento, ano_letivo_id')
     .eq('id', args.turma_id)
     .maybeSingle()
   if (errTurma) throw errTurma
   if (!novaTurma) throw new Error('Turma não encontrada')
 
+  // O ano letivo da turma é a fonte de verdade: evita que um chamador com ano
+  // divergente burle a checagem de duplicidade.
+  const anoLetivoId = (novaTurma as { ano_letivo_id?: string | null }).ano_letivo_id || args.ano_letivo_id
+
   let query = supabase
     .from('academico_matriculas')
-    .select('id, turma_id, turmas!inner(id, nome, tipos_turma, turnos, dias_funcionamento)')
+    .select('id, codigo_matricula, turma_id, turmas!inner(id, nome, tipos_turma, turnos, dias_funcionamento)')
     .eq('aluno_id', args.aluno_id)
-    .eq('ano_letivo_id', args.ano_letivo_id)
+    .eq('ano_letivo_id', anoLetivoId)
     .eq('ativo', true)
     .eq('situacao', 'Ativo')
   if (args.ignoreMatriculaId) query = query.neq('id', args.ignoreMatriculaId)
@@ -234,8 +239,14 @@ async function validarRegraGeralMatricula(args: {
 
   for (const m of (existentes as any[])) {
     const t = m.turmas
-    if (!t || t.id === args.turma_id) continue
+    if (!t) continue
     const nomeExistente = t.nome || 'turma já matriculada'
+
+    // 0. Duplicidade exata: mesmo aluno + mesma turma (qualquer tipo)
+    if (t.id === args.turma_id) {
+      const codigo = m.codigo_matricula ? ` — matrícula ${m.codigo_matricula}` : ''
+      throw new Error(`Este aluno já possui uma matrícula ativa nesta turma (${nomeExistente}${codigo})`)
+    }
 
     // 1. Duplicidade curricular (vale mesmo sem sobreposição de horário)
     if (novaCategoria === 'curricular' && classificarTurma(t.tipos_turma) === 'curricular') {
@@ -253,7 +264,7 @@ async function validarRegraGeralMatricula(args: {
 // ------- CRUD Matrícula -------
 
 export async function createMatricula(data: {
-  school_id: string
+  school_id?: string | null
   aluno_id: string
   ano_letivo_id: string
   turma_id: string
@@ -275,11 +286,35 @@ export async function createMatricula(data: {
     turma_id: data.turma_id,
   })
 
+  // A escola e o ano letivo são derivados da turma (fonte de verdade). O
+  // cliente pode não ter contexto de escola (Superadmin) ou enviar um ano
+  // divergente antes da resolução do vínculo.
+  const { data: turma, error: turmaError } = await supabase
+    .from('turmas')
+    .select('id, school_id, ano_letivo_id')
+    .eq('id', data.turma_id)
+    .maybeSingle()
+
+  if (turmaError) throw turmaError
+  if (!turma) throw new Error('Turma não encontrada')
+  if (!turma.school_id) throw new Error('Não foi possível identificar a escola da turma')
+  if (!turma.ano_letivo_id) throw new Error('Não foi possível identificar o ano letivo da turma')
+
+  if (data.school_id && data.school_id !== turma.school_id) {
+    throw new Error('A turma selecionada não pertence à escola atual. Volte e selecione a escola correta.')
+  }
+
+  if (data.ano_letivo_id !== turma.ano_letivo_id) {
+    throw new Error('A turma selecionada não pertence ao ano letivo informado. Volte e selecione a turma correta.')
+  }
+
+  const schoolId = turma.school_id
+
   // Código sequencial de matrícula por escola (max+1; UNIQUE protege concorrência)
   const { data: ultimo } = await supabase
     .from('academico_matriculas')
     .select('codigo_matricula')
-    .eq('school_id', data.school_id)
+    .eq('school_id', schoolId)
     .order('codigo_matricula', { ascending: false })
     .limit(1)
     .maybeSingle()
@@ -288,7 +323,7 @@ export async function createMatricula(data: {
   const { data: matricula, error } = await supabase
     .from('academico_matriculas')
     .insert({
-      school_id: data.school_id,
+      school_id: schoolId,
       aluno_id: data.aluno_id,
       ano_letivo_id: data.ano_letivo_id,
       turma_id: data.turma_id,
